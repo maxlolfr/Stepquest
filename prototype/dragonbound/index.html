@@ -1080,7 +1080,21 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       b.disabled = F.busy || (sp && F.mp < sp.cost) || (id === 'pot' && (G.potions < 1 || (G.hp >= s.hp && !F.status.poison && !F.status.burn)))
         || (id === 'heal' && G.hp >= s.hp && !F.status.poison && !F.status.burn); });
   }
-  function burst(x, y, cols, n) { for (let i = 0; i < n; i++) fx.push({ type: 'spark', x, y, vx: rnd(-3, 3), vy: rnd(-4, 1), t0: performance.now(), col: cols[i % cols.length] }); }
+  function burst(x, y, cols, n, power = 1) {
+    if (reduce) n = Math.ceil(n / 3);
+    for (let i = 0; i < n; i++) { const a = rnd(0, Math.PI * 2), v = rnd(0.6, 2.6) * power;
+      fx.push({ type: 'pt', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.7 - 0.6, r: rnd(2, 4.5), drag: 0.92, grav: 0.03, glow: true, t0: performance.now(), dur: rnd(450, 750), col: cols[i % cols.length] }); }
+  }
+  // Big impact: flash, shockwave ring, embers and a bit of smoke, plus a small screen shake.
+  function impact(x, y, cols, power = 1, smoke = true) {
+    const t0 = performance.now();
+    fx.push({ type: 'flash', x, y, t0, dur: 260, col: cols[0], r: 70 * power });
+    fx.push({ type: 'ring', x, y, t0, dur: 420, col: cols[1], r: 80 * power });
+    burst(x, y, cols, Math.round(16 * power), 1.3 * power);
+    if (smoke && !reduce) for (let i = 0; i < 3; i++) fx.push({ type: 'pt', x: x + rnd(-12, 12), y: y + rnd(-8, 8), vx: rnd(-0.4, 0.4), vy: rnd(-0.9, -0.4), r: rnd(10, 16), grow: 0.25, drag: 0.98, grav: 0, t0, dur: rnd(700, 1000), col: 'rgba(120,100,90,.16)' });
+    if (F && !reduce) F.shake = { t0, amp: 5 * power };
+  }
+  function trail(x, y, cols, n = 2, spread = 4) { if (reduce) return; for (let i = 0; i < n; i++) fx.push({ type: 'pt', x: x + rnd(-spread, spread), y: y + rnd(-spread, spread), vx: rnd(-0.6, 0.2), vy: rnd(-0.6, 0.3), r: rnd(3, 7), grow: -0.06, drag: 0.95, grav: -0.02, glow: true, t0: performance.now(), dur: rnd(260, 420), col: cols[i % cols.length] }); }
   function floatTxt(text, x, y, color, big) { fx.push({ type: 'txt', text, x, y, color, big, t0: performance.now() }); }
   function dmgCalc(atk, def, mult = 1) { let d = atk * rnd(0.85, 1.15) * mult - def * 0.6; const crit = Math.random() < 0.12; if (crit) d *= 1.6; return { d: Math.max(1, Math.round(d)), crit }; }
   const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 120) : ms));
@@ -1111,11 +1125,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     } else if (kind === 'fire') {
       SFX.fire(); fx.push({ type: 'ball', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(420);
       const r = dmgCalc(s.mag * 1.7, F.foe.def * 0.3); hitFoe(r.d, r.crit, true, '#ffb347');
-      burst(ex, fy, ['#ffd76a', '#ff8a3c', '#ff4a2a'], 20); say(`Boule de feu ! ${r.d} dégâts.`);
+      impact(ex, fy, ['#fff1a8', '#ff8a3c', '#ff4a2a', '#ffd76a'], 1.2); say(`Boule de feu ! ${r.d} dégâts.`);
     } else if (kind === 'frost') {
       SFX.ice(); fx.push({ type: 'ice', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(380);
       const r = dmgCalc(s.mag * 1.25, F.foe.def * 0.4); hitFoe(r.d, r.crit, true, '#bfe8ff');
-      burst(ex, fy, ['#ffffff', '#bfe8ff', '#7ab8ff'], 22);
+      impact(ex, fy, ['#ffffff', '#bfe8ff', '#7ab8ff', '#e8f6ff'], 1, false);
       const frz = !F.foeSt.thawed && (!F.foe.boss ? Math.random() < 0.45 : Math.random() < 0.2);
       if (frz) { F.foeSt.frozen = true; fx.push({ type: 'snow', x: ex, y: fy, t0: now(), dur: 1400 }); }
       say(`Éclair de givre : ${r.d} dégâts${frz ? ' et l’ennemi est gelé !' : '.'}`);
@@ -1405,6 +1419,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     if (scv.width !== Math.round(r.width * dpr) || scv.height !== Math.round(r.height * dpr)) { scv.width = Math.round(r.width * dpr); scv.height = Math.round(r.height * dpr); }
     const c = sctx; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    if (F.shake) { const k = (performance.now() - F.shake.t0) / 300; if (k >= 1) F.shake = null; else c.translate(rnd(-1, 1) * F.shake.amp * (1 - k), rnd(-1, 1) * F.shake.amp * (1 - k)); }
     const W = r.width, H = r.height;
     const bk = F.bg;
     if (bk && ready(bk)) {
@@ -1445,6 +1460,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         c.beginPath(); c.arc(p.x - 10, p.y, 46, -1.2 + k * 0.6, 0.6 + k * 0.6); c.stroke(); c.strokeStyle = `rgba(255,215,106,${(1 - k) * .8})`; c.lineWidth = 2; c.beginPath(); c.arc(p.x - 10, p.y, 40, -1.1 + k * 0.6, 0.5 + k * 0.6); c.stroke(); }
       else if (p.type === 'arrow' || p.type === 'orb' || p.type === 'ice') {
         const x = p.x0 + (p.x1 - p.x0) * k, y = p.y0 + (p.y1 - p.y0) * k - Math.sin(k * Math.PI) * (p.type === 'arrow' ? 18 : 6);
+        if (p.type === 'ice') trail(x - 8, y, ['#e8f6ff', '#bfe8ff', '#7ab8ff'], 2, 4); else if (p.type === 'orb') trail(x - 6, y, ['#cfe4ff', '#9fd0ff'], 2, 3); else if (!reduce) fx.push({ type: 'pt', x, y, vx: 0, vy: 0, r: 2, grow: -0.05, drag: 1, grav: 0, t0: now, dur: 180, col: p.venom ? 'rgba(143,224,122,.7)' : 'rgba(255,255,255,.6)' });
         if (p.type === 'arrow') { c.save(); c.translate(x, y); c.rotate(Math.atan2(p.y1 - p.y0, p.x1 - p.x0) - Math.cos(k * Math.PI) * 0.3);
           c.strokeStyle = '#7a4a1e'; c.lineWidth = 3; c.beginPath(); c.moveTo(-26, 0); c.lineTo(8, 0); c.stroke();
           c.fillStyle = p.venom ? '#8fe07a' : '#c8d2da'; c.beginPath(); c.moveTo(14, 0); c.lineTo(4, -5); c.lineTo(4, 5); c.fill();
@@ -1472,8 +1488,16 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
           c.fillStyle = `rgba(143,224,122,${1 - k})`; c.font = `700 16px "Pixelify Sans", sans-serif`; c.textAlign = 'center';
           c.fillText('ᚱᚢᚾᛖᛋᚨᛚᛁ'[j], p.x + Math.cos(a) * rr, p.y - 70 + Math.sin(a) * rr * 0.5 - k * 40); }
         const g = c.createRadialGradient(p.x, p.y - 60, 4, p.x, p.y - 60, 80); g.addColorStop(0, `rgba(143,224,122,${.4 * (1 - k)})`); g.addColorStop(1, 'rgba(143,224,122,0)'); c.fillStyle = g; c.fillRect(p.x - 90, p.y - 150, 180, 180); }
-      else if (p.type === 'ball') { const x = p.x0 + (p.x1 - p.x0) * k, y = p.y0 + (p.y1 - p.y0) * k - Math.sin(k * Math.PI) * 30;
-        const g = c.createRadialGradient(x, y, 2, x, y, 22); g.addColorStop(0, '#fff1a8'); g.addColorStop(0.4, '#ff8a3c'); g.addColorStop(1, 'rgba(255,60,30,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, 22, 0, 7); c.fill(); }
+      else if (p.type === 'ball') { const e = k * k * (3 - 2 * k), x = p.x0 + (p.x1 - p.x0) * e, y = p.y0 + (p.y1 - p.y0) * e - Math.sin(e * Math.PI) * 26;
+        trail(x - 6, y, ['#ffb347', '#ff6a2a', '#ffd76a'], 3, 5);
+        const R = 15 + Math.sin(now / 40) * 2 + k * 4; c.save(); c.globalCompositeOperation = 'lighter';
+        const g = c.createRadialGradient(x, y, 1, x, y, R * 2.2); g.addColorStop(0, 'rgba(255,200,120,.55)'); g.addColorStop(1, 'rgba(255,80,20,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, R * 2.2, 0, 7); c.fill();
+        const g2 = c.createRadialGradient(x + 3, y - 2, 1, x, y, R); g2.addColorStop(0, '#ffffff'); g2.addColorStop(0.35, '#fff1a8'); g2.addColorStop(0.7, '#ff8a3c'); g2.addColorStop(1, 'rgba(255,60,30,0)'); c.fillStyle = g2; c.beginPath(); c.arc(x, y, R, 0, 7); c.fill(); c.restore(); }
+      else if (p.type === 'pt') { p.vx *= p.drag; p.vy = p.vy * p.drag + p.grav; p.x += p.vx; p.y += p.vy; p.r = Math.max(0.3, p.r + (p.grow || 0));
+        c.save(); if (p.glow) c.globalCompositeOperation = 'lighter'; c.globalAlpha = (1 - k) * (p.glow ? 0.9 : 1); c.fillStyle = p.col; c.beginPath(); c.arc(p.x, p.y, p.r, 0, 7); c.fill(); c.restore(); }
+      else if (p.type === 'flash') { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(p.x, p.y, 2, p.x, p.y, p.r * (0.6 + k * 0.6));
+        g.addColorStop(0, `rgba(255,255,255,${0.9 * (1 - k)})`); g.addColorStop(0.4, p.col); g.addColorStop(1, 'rgba(0,0,0,0)'); c.globalAlpha = 1 - k; c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, p.r * 1.2, 0, 7); c.fill(); c.restore(); }
+      else if (p.type === 'ring') { c.save(); c.globalAlpha = (1 - k) * 0.8; c.strokeStyle = p.col; c.lineWidth = 4 * (1 - k) + 1; c.beginPath(); c.ellipse(p.x, p.y, p.r * k, p.r * k * 0.55, 0, 0, 7); c.stroke(); c.restore(); }
       else { p.x += p.vx; p.y += p.vy; p.vy += 0.15; c.globalAlpha = 1 - k; c.fillStyle = p.col; c.fillRect(p.x, p.y, 4, 4); c.globalAlpha = 1; }
       return true;
     });
