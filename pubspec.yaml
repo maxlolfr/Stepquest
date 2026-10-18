@@ -1,17 +1,19 @@
 name: stepquest
 description: StepQuest — marche, défis et progression.
 publish_to: 'none'
-version: 0.1.0+1
+version: 0.2.0+2
 
 environment:
   sdk: ^3.5.0
 
-# Dependencies are kept to the strict minimum at this stage.
-# Riverpod, Drift and the health plugin will be added in their own modules,
-# after checking their current versions on pub.dev (see docs/DECISIONS.md D03).
+# Drift and the health plugin will be added in their own modules
+# (see docs/DECISIONS.md D03).
 dependencies:
   flutter:
     sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  flutter_riverpod: ^3.4.3
 
 dev_dependencies:
   flutter_test:

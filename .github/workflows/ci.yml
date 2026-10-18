@@ -5,6 +5,13 @@ on:
   pull_request:
   workflow_dispatch:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -33,5 +40,44 @@ jobs:
       - name: Static analysis
         run: flutter analyze --no-fatal-infos
 
-      - name: Unit tests
+      - name: Tests
         run: flutter test --reporter expanded
+
+  # Web preview of the prototype, published only when tests pass on main.
+  web:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Generate web folder
+        run: flutter create . --platforms=web --org com.stepquest --project-name stepquest
+
+      - name: Build web preview
+        run: |
+          flutter pub get
+          flutter build web --release --base-href /${{ github.event.repository.name }}/
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: build/web
+
+  deploy:
+    needs: web
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
