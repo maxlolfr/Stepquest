@@ -366,7 +366,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     <div class="pill" title="Potions"><i>🧪</i><span id="potPill">0</span></div>
     <button class="pill snd" type="button" id="sndBtn" aria-label="Son"><i>🔊</i></button>
   </div>
-  <audio id="bgm" src="audio/theme.mp3" loop preload="auto"></audio>
+  <audio id="bgm" src="audio/map1.mp3" preload="auto"></audio>
 
   <!-- HÉROS -->
   <section class="view" id="v-hero" style="display:flex; flex-direction:column; gap:22px">
@@ -570,7 +570,21 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   };
   const bgm = document.getElementById('bgm');
   if (bgm) bgm.volume = VOL.music;
+  // Playlists by situation: calm on the map, two alternating battle themes, two boss themes.
+  const PL = { map: ['map1', 'map2'], fight: ['fight1', 'fight2'], boss: ['boss1', 'boss2'] };
+  const plIdx = { map: 0, fight: 0, boss: 0 };
+  let musMode = 'map';
   function playMusic() { if (soundOn && bgm && bgm.paused) bgm.play().catch(() => {}); }
+  function trackSrc(mode) { const l = PL[mode]; return `audio/${l[plIdx[mode] % l.length]}.mp3`; }
+  function setMusic(mode, force) {
+    if (!bgm || (mode === musMode && !force)) return;
+    if (mode !== musMode) plIdx[mode]++;
+    musMode = mode;
+    const go = () => { bgm.src = trackSrc(mode); bgm.load(); if (MUSG) { MUSG.gain.cancelScheduledValues(AC.currentTime); MUSG.gain.setValueAtTime(0, AC.currentTime); MUSG.gain.linearRampToValueAtTime(VOL.music, AC.currentTime + 0.8); } playMusic(); };
+    if (MUSG && !bgm.paused) { MUSG.gain.cancelScheduledValues(AC.currentTime); MUSG.gain.setValueAtTime(MUSG.gain.value, AC.currentTime); MUSG.gain.linearRampToValueAtTime(0, AC.currentTime + 0.5); setTimeout(go, 520); }
+    else go();
+  }
+  if (bgm) bgm.addEventListener('ended', () => { plIdx[musMode]++; bgm.src = trackSrc(musMode); bgm.load(); playMusic(); });
   function setSound(on) {
     soundOn = on; try { localStorage.setItem('dragonbound.sound', on ? 'on' : 'off'); } catch (e) {}
     ['sndBtn', 'sndBtn2'].forEach(id => { const b = document.getElementById(id); if (b) b.innerHTML = id === 'sndBtn' ? `<i>${on ? '🔊' : '🔇'}</i>` : (on ? '🔊' : '🔇'); });
@@ -1077,7 +1091,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     F.foe = { ...f, id: k, hpMax: Math.round(f.hp * L), hp: Math.round(f.hp * L), atk: f.atk * (0.5 + L * 0.5) * A, charging: false, howl: false, anim: { lunge: 0, hit: 0, dead: 0 } };
     F.hero = { lunge: 0, hit: 0, shield: 0, heal: 0 };
     F.turn = 0; F.defending = false; F.busy = false; F.foeSt = {};
-    $('foeName').textContent = f.name;
+    $('foeName').textContent = f.name; setMusic(f.boss ? 'boss' : 'fight');
     $('roomTxt').textContent = `${F.mode.medal}${F.w + 1}-${F.i + 1} · ${F.room + 1}/${F.rooms.length}`;
     say(f.boss ? `${f.name} se dresse devant toi !` : `${f.name} surgit ! ${f.tip || ''}`);
     $('intent').hidden = true; updFight();
@@ -1312,14 +1326,14 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       </div>`);
   }
   async function lose() {
-    say('Tu t’effondres…'); SFX.lose(); await wait(700);
+    say('Tu t’effondres…'); SFX.lose(); setMusic('map'); await wait(700);
     G.hp = Math.max(1, Math.round(stats().hp * 0.15)); G.hpAt = Date.now(); save(); render();
     modal('Défaite', 'r', `<div style="font-family:var(--emoji); font-size:46px">💫</div>
       <div class="note">Tu as été ramené au camp, très affaibli (15 % de vie). Tu gardes ce que tu as gagné : ${F.loot.xp} XP et ${F.loot.gold} 🪙.</div>
       <div class="note">Conseil : équipe ton meilleur butin, forge ton arme, et pare quand l'ennemi prépare une attaque spéciale.</div>
       <button class="btn" type="button" data-home="1"><i>🗺️</i> Retour à la carte</button>`);
   }
-  function endRun(toMap) { F = null; $('fight').hidden = true; document.body.style.overflow = ''; G.hp = Math.max(1, G.hp); G.hpAt = Date.now(); save(); render(); if (toMap) show('adv'); }
+  function endRun(toMap) { setMusic('map'); F = null; $('fight').hidden = true; document.body.style.overflow = ''; G.hp = Math.max(1, G.hp); G.hpAt = Date.now(); save(); render(); if (toMap) show('adv'); }
 
   function modal(title, rib, body) { $('mRib').textContent = title; $('mRib').className = 'ribbon ' + rib; $('mBody').innerHTML = body; $('mBody').style.display = 'grid'; $('mBody').style.gap = '10px'; $('modal').hidden = false; }
   const closeModal = () => { $('modal').hidden = true; };
