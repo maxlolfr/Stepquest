@@ -1333,7 +1333,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     fx.push({ type: 'ring', x, y, t0, dur: 420, col: cols[1], r: 80 * power });
     burst(x, y, cols, Math.round(16 * power), 1.3 * power);
     if (smoke && !reduce) for (let i = 0; i < 3; i++) fx.push({ type: 'pt', x: x + rnd(-12, 12), y: y + rnd(-8, 8), vx: rnd(-0.4, 0.4), vy: rnd(-0.9, -0.4), r: rnd(10, 16), grow: 0.25, drag: 0.98, grav: 0, t0, dur: rnd(700, 1000), col: 'rgba(120,100,90,.16)' });
-    if (F && !reduce) F.shake = { t0, amp: 5 * power };
+    if (F && !reduce) F.shake = { t0, amp: Math.min(6, 5 * power) };
   }
   function trail(x, y, cols, n = 2, spread = 4) { if (reduce || fx.length > 240) return; for (let i = 0; i < n; i++) fx.push({ type: 'pt', x: x + rnd(-spread, spread), y: y + rnd(-spread, spread), vx: rnd(-0.6, 0.2), vy: rnd(-0.6, 0.3), r: rnd(3, 7), grow: -0.06, drag: 0.95, grav: -0.02, glow: true, t0: performance.now(), dur: rnd(260, 420), col: cols[i % cols.length] }); }
   function floatTxt(text, x, y, color, big, crit) { fx.push({ type: 'txt', text, x, y, color, big, crit, t0: performance.now(), dur: crit ? 1300 : 1100 }); }
@@ -1374,7 +1374,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const s = stats(), C = CL(), { W, H, hx, hy, ex, ey } = pos(), fh = H * (F.foe.size || .5) * ZOOM, now = () => performance.now();
     const atk = s.atk * (F.buff ? 1.4 : 1) * (winded ? 0.5 : 1), fy = ey - fh * 0.5, hyC = hy - H * 0.33 * ZOOM;
     if (winded) floatTxt('Essoufflé…', hx, hy - H * 0.55, '#ffe58a');
-    F.defending = false;
+    F.defending = false; F.barrier = 0;
     if (sp) F.mp -= sp.cost;
     if (kind === 'atk') {
       if (C.atk.fx === 'slash') { F.hero.wind = now(); await wait(140); SFX.slash(); await tick(F.hero, 'lunge', 200); fx.push({ type: 'slash', x: ex, y: fy, t0: now() }); }
@@ -1415,7 +1415,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       floatTxt('Force +40 %', hx, hy - H * 0.56, '#ff8a6a', true); say('Cri de guerre ! Ta force augmente pendant 3 tours.'); await wait(500);
     } else if (kind === 'rain') {
       let tot = 0;
-      for (let k = 0; k < 3; k++) { SFX.arrow(); fx.push({ type: 'rainArrow', t0: now(), x: ex + (k - 1) * 18, y: fy }); await wait(170);
+      for (let k = 0; k < 3; k++) { SFX.arrow(); fx.push({ type: 'rainArrow', t0: now(), x: ex + (k - 1) * 18, y: fy }); await wait(200);
         const r = dmgCalc(atk * 0.72, F.foe.def); tot += r.d; hitFoe(r.d, r.crit); burst(ex + (k - 1) * 18, fy, ['#fff1a8', '#ffe08a'], 6, 0.8); }
       say(`Pluie de flèches : ${tot} dégâts en 3 tirs.`);
     } else if (kind === 'venom') {
@@ -1427,7 +1427,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       const cls = G.cls || 'guerrier'; F.defending = true; F.hero.shield = now(); F.mp = Math.min(s.mp, F.mp + 6);
       if (cls === 'guerrier') { SFX.clang(); say('Tu lèves ton bouclier ! (bloque 75 % des dégâts)'); }
       else if (cls === 'archer') { SFX.whoosh(); say('Tu te prépares à rouler sur le côté…'); }
-      else { SFX.zap(); F.barrier = Math.round(s.mag * 2.5 + s.def); say(`Barrière d\u2019énergie : absorbe ${F.barrier} dégâts.`); }
+      else { SFX.zap(); F.barrier = Math.round(s.mag * 0.9 + s.def * 0.5); say(`Barrière d\u2019énergie : absorbe ${F.barrier} dégâts.`); }
       floatTxt('+6 💧', hx, hy - H * 0.5, '#7ab8ff'); await wait(380);
     } else if (kind === 'pot') {
       SFX.heal(); G.potions--; const heal = Math.round(s.hp * 0.45); G.hp = Math.min(s.hp, G.hp + heal); F.hero.heal = now(); F.status = {};
@@ -1586,7 +1586,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <div class="note">Conseil : équipe ton meilleur butin, forge ton arme, et pare quand l'ennemi prépare une attaque spéciale.</div>
       <button class="btn" type="button" data-home="1"><i>🗺️</i> Retour à la carte</button>`);
   }
-  function endRun(toMap) { setMusic('map'); F = null; $('fight').hidden = true; document.body.style.overflow = ''; G.hp = Math.max(1, G.hp); G.hpAt = Date.now(); save(); render(); if (toMap) show('adv'); }
+  function endRun(toMap) { setMusic('map'); F = null; fx = []; $('fight').hidden = true; document.body.style.overflow = ''; G.hp = Math.max(1, G.hp); G.hpAt = Date.now(); save(); render(); if (toMap) show('adv'); }
 
   function modal(title, rib, body) { $('mRib').textContent = title; $('mRib').className = 'ribbon ' + rib; $('mBody').innerHTML = body; $('mBody').style.display = 'grid'; $('mBody').style.gap = '10px'; $('modal').hidden = false; }
   const closeModal = () => { $('modal').hidden = true; };
@@ -1766,7 +1766,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (recoil) { c.translate(ex, ey); c.rotate(recoil * 0.004); c.translate(-ex, -ey); }
     c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(ex, ey, size * 0.42, 8, 0, 0, Math.PI * 2); c.fill();
     if (f.charging || f.howl) { const g = c.createRadialGradient(ex, ey - size * 0.5 - fly, 4, ex, ey - size * 0.5 - fly, size * 0.7); g.addColorStop(0, `rgba(255,80,60,${0.35 + 0.2 * Math.sin(now / 120)})`); g.addColorStop(1, 'rgba(255,80,60,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.4 - fly, size * 2, size * 1.6); }
-    sprite(c, f.id, ex + fl, ey - fly + bobF * 0.3, size + bobF, fh * 0.75, f.emoji);
+    sprite(c, f.id, ex + fl, ey - fly + bobF * 0.3, size + bobF, fh * 0.5, f.emoji);
     if (F.foeSt && F.foeSt.frozen) { c.fillStyle = 'rgba(160,215,255,.28)'; c.beginPath(); c.ellipse(ex, ey - size * 0.5 - fly, size * 0.48, size * 0.55, 0, 0, 7); c.fill();
       c.strokeStyle = 'rgba(230,246,255,.8)'; c.lineWidth = 2; c.stroke(); }
     if (F.foeSt && F.foeSt.poison && !reduce) for (let j = 0; j < 3; j++) { const k = ((t / 900) + j / 3) % 1; c.fillStyle = `rgba(143,224,122,${.7 * (1 - k)})`; c.beginPath(); c.arc(ex - 20 + j * 20, ey - size * 0.3 - k * size * 0.6 - fly, 4, 0, 7); c.fill(); }
@@ -1836,6 +1836,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       else { p.x += p.vx; p.y += p.vy; p.vy += 0.15; c.globalAlpha = 1 - k; c.fillStyle = p.col; c.fillRect(p.x, p.y, 4, 4); c.globalAlpha = 1; }
       return true;
     });
+    if (fx.length > 260) { let extra = fx.length - 260; fx = fx.filter(p => !(extra > 0 && (p.type === 'pt' || p.type === 'gather') && extra--)); }
   }
 
   // ---------- Actions ----------
@@ -1956,7 +1957,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Bêta 1.3';
+  const VERSION = 'Bêta 1.4';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
