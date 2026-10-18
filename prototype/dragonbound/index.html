@@ -35,7 +35,7 @@
   --rib-p: #6c4ab6;
   --rib-b: #2f5fa8;
   --rib-r: #b53a2c;
-  --r0: #a7a29a; --r1: #3d8be0; --r2: #9b59d0; --r3: #f08c1a;
+  --r0: #a7a29a; --r1: #4cae4c; --r2: #3d8be0; --r3: #9b59d0; --r4: #f08c1a;
   --font-display: "Lilita One", "Nunito", system-ui, sans-serif;
   --font-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
   --emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
@@ -123,7 +123,7 @@ body {
 .slot.empty { font-size: 0; }
 .slot.empty::after { content: attr(data-ghost); font-family: var(--emoji); font-size: 26px; opacity: .25; filter: grayscale(1); }
 .slot .up { position: absolute; right: 2px; bottom: 0; font-family: var(--font-display); font-size: 11px; color: #fff; text-shadow: 0 1px 1px #000; }
-.slot.r1 { border-color: var(--r1); } .slot.r2 { border-color: var(--r2); } .slot.r3 { border-color: var(--r3); }
+.slot.r1 { border-color: var(--r1); } .slot.r2 { border-color: var(--r2); } .slot.r3 { border-color: var(--r3); box-shadow: inset 0 0 0 2px #e8c891, 0 0 8px rgba(155,89,208,.55); } .slot.r4 { border-color: var(--r4); box-shadow: inset 0 0 0 2px #ffe08a, 0 0 12px rgba(255,170,40,.8); animation: legGlow 1.6s ease-in-out infinite; } @keyframes legGlow { 50% { box-shadow: inset 0 0 0 2px #ffe08a, 0 0 20px rgba(255,190,60,1); } }
 .herobox { text-align: center; }
 .herobox canvas { width: 100%; height: 190px; display: block; }
 .hname { font-family: var(--font-display); font-weight: 700; font-size: 22px; }
@@ -165,7 +165,8 @@ body {
 .foes span.beaten { filter: grayscale(1); opacity: .45; }
 
 /* Inventory */
-.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; container-type: inline-size; }
+.grid > .cell { height: calc((100cqw - 28px) / 5); }
 .cell { aspect-ratio: 1; max-width: 100%; font-size: 26px; width: 100%; height: auto; }
 .cell .cnt { position: absolute; right: 3px; bottom: 1px; font-family: var(--font-display); font-size: 12px; color: #fff; text-shadow: 0 1px 1px #000; }
 .cell.sel { outline: 3px solid var(--gold); outline-offset: 1px; }
@@ -182,7 +183,8 @@ body {
 .tip .sts { display: flex; flex-direction: column; gap: 2px; font-family: var(--font-display); font-size: 15px; }
 .up-g { color: #8fe07a; } .down-r { color: #ff8a7a; }
 .tip .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
-.r0t { color: var(--r0) !important; } .r1t { color: #7ec8ff !important; } .r2t { color: #d29bff !important; } .r3t { color: #ffb347 !important; }
+.r0t { color: var(--r0) !important; } .r1t { color: #8fe07a !important; } .r2t { color: #7ec8ff !important; } .r3t { color: #d29bff !important; } .r4t { color: #ffb347 !important; }
+.dice { font-size: 12px; font-weight: 800; color: #ffe58a; margin-top: 2px; } .pity { font-size: 12px; font-weight: 800; color: var(--muted); }
 
 /* Walk */
 .bigsteps { font-family: var(--font-display); font-weight: 700; font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -565,6 +567,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <div class="ribbon">Inventaire</div>
       <div class="grid" id="bagGrid"></div>
       <div class="note" id="bagNote" style="margin-top:8px"></div>
+      <div class="pity" id="pityNote"></div>
+      <button class="btn small" id="sellJunk" type="button" style="margin-top:6px">🧹 Vendre les objets gris et verts</button>
     </div>
     <div id="tipWrap" style="margin-top:14px"></div>
   </section>
@@ -598,7 +602,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       </div>
       <div class="shoprow">
         <div class="slot" data-ico="uiEnergy" aria-hidden="true">⚡</div>
-        <div><b>Recharge d'énergie</b><div class="note">+20 ⚡ tout de suite, même au-delà du maximum.</div></div>
+        <div><b>Recharge d'énergie</b><div class="note">+20 ⚡ tout de suite, même au-delà du maximum. Le prix monte à chaque achat du jour.</div></div>
         <button class="btn small green" id="buyEn" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 60</button>
       </div>
       <div class="shoprow">
@@ -607,13 +611,13 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         <button class="btn small green" id="buyBox" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 120</button>
       </div>
       <div class="shoprow">
-        <div class="slot r1" data-ico="uiChest2" aria-hidden="true">🎁</div>
-        <div><b>Coffre rare</b><div class="note">Un objet Rare ou mieux. 15 % de chance d'Épique.</div></div>
+        <div class="slot r2" data-ico="uiChest2" aria-hidden="true">🎁</div>
+        <div><b>Coffre rare</b><div class="note">Un objet Rare (bleu) ou mieux. 15 % de chance d'Épique.</div></div>
         <button class="btn small green" id="buyRare" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 350</button>
       </div>
       <div class="shoprow">
-        <div class="slot r3" data-ico="uiChest3" aria-hidden="true">👑</div>
-        <div><b>Coffre légendaire</b><div class="note">Un objet Épique ou mieux. 25 % de chance de Légendaire.</div></div>
+        <div class="slot r4" data-ico="uiChest3" aria-hidden="true">👑</div>
+        <div><b>Coffre épique</b><div class="note">Un objet Épique ou mieux. 25 % de chance de Légendaire.</div></div>
         <button class="btn small green" id="buyLeg" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 1 200</button>
       </div>
       <div class="shoprow">
@@ -802,8 +806,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     { id: 'arme', name: 'Arme', ghost: '🗡️' }, { id: 'casque', name: 'Casque', ghost: '🪖' }, { id: 'armure', name: 'Armure', ghost: '🥋' },
     { id: 'bottes', name: 'Bottes', ghost: '🥾' }, { id: 'amulette', name: 'Amulette', ghost: '📿' },
   ];
-  const RAR = ['Commun', 'Rare', 'Épique', 'Légendaire'];
-  const ADJ = ['de fer', 'des runes', 'du Crépuscule', 'de Draconis'];
+  const RAR = ['Commun', 'Peu commun', 'Rare', 'Épique', 'Légendaire'];
+  const ADJ = ['de fer', 'd\u2019acier', 'des runes', 'du Crépuscule', 'de Draconis'];
   const KINDS = { arme: [['Épée', '🗡️'], ['Hache', '🪓'], ['Masse', '🔨']], casque: [['Heaume', '🪖']], armure: [['Cuirasse', '🥋']], bottes: [['Bottes', '🥾']], amulette: [['Amulette', '📿']] };
   const DESC = { arme: 'Une arme solide et fiable.', casque: 'Protège la tête des mauvais coups.', armure: 'Encaisse les coups à ta place.', bottes: 'Idéales pour les longues routes.', amulette: 'Vibre d’une magie ancienne.' };
 
@@ -945,7 +949,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // ---------- Save ----------
   const KEY = 'dragonbound.v2';
   const fresh = () => ({
-    lvl: 1, xp: 0, gold: 30, potions: 3, energy: EN_MAX, enAt: Date.now(), nextId: 2, stars: {}, daily: { last: '', streak: 0 }, cls: null, mats: {},
+    v22: 1, lvl: 1, xp: 0, gold: 30, potions: 3, energy: EN_MAX, enAt: Date.now(), nextId: 2, stars: {}, daily: { last: '', streak: 0 }, cls: null, mats: {},
     inv: [],
     eq: {},
   });
@@ -989,8 +993,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const itemStats = it => { const m = 1 + 0.15 * it.up, o = {}; for (const k in it.base) o[k] = Math.round(it.base[k] * m); return o; };
   const itemById = id => G.inv.find(i => i.id === id);
   const itemIcon = it => it.img && OPT.has(it.img) ? `<img src="img/${it.img}.webp" alt="" style="width:85%;height:85%;object-fit:contain">` : it.icon;
+  // 2.2: numbers stay small. Everything (hero, loot, monsters) is scaled by the same factor of progression, so the balance is unchanged.
+  const wEq = L => { for (let w = WORLDS.length - 1; w >= 0; w--) if (L >= WORLDS[w].lvl) { const nx = WORLDS[w + 1] ? WORLDS[w + 1].lvl : WORLDS[w].lvl + 3; return Math.min(9, w + (L - WORLDS[w].lvl) / (nx - WORLDS[w].lvl)); } return 0; };
+  const kAt = L => 1 / (1 + 0.45 * wEq(L));
   function stats() {
-    const L = G.lvl, m = CL().mult, s = { hp: (64 + 12 * (L - 1)) * m.hp, atk: (7 + 2.4 * (L - 1)) * m.atk, def: (2 + 1.3 * (L - 1)) * m.def, mag: (9 + 2.6 * (L - 1)) * m.mag };
+    const L = G.lvl, m = CL().mult, kk = kAt(L), s = { hp: (64 + 12 * (L - 1)) * m.hp * kk, atk: (7 + 2.4 * (L - 1)) * m.atk * kk, def: (2 + 1.3 * (L - 1)) * m.def * kk, mag: (9 + 2.6 * (L - 1)) * m.mag * kk };
     for (const sl in G.eq) { const it = itemById(G.eq[sl]); if (!it) continue; const st = itemStats(it); for (const k in st) s[k] += st[k]; }
     const sb = setBonus();
     if (sb.n >= 2) s.hp *= 1.1;
@@ -1006,6 +1013,13 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     return best;
   }
   const xpNeed = () => 80 + 95 * (G.lvl - 1);
+  if (!G.v22) { // 2.2: 5 rarities and smaller numbers
+    const kk = kAt(G.lvl);
+    for (const it of G.inv) { if (it.r >= 1) it.r++; if (it.base && !(it.set == null && it.name && /apprenti/.test(it.name) && G.lvl <= 1)) for (const k in it.base) { const v = Math.round(it.base[k] * (it.set != null ? kAt(WORLDS[it.set].lvl + 2) : kk)); it.base[k] = v || (it.base[k] > 0 ? 1 : 0); }
+      if (it.slot === 'arme' && it.k == null && it.cls) it.k = Math.max(0, CLASSES[it.cls].weapons.findIndex(x => x[2] === it.img)); }
+    G.v22 = 1; G.hp = null;
+  }
+  G.pity = G.pity || 0;
   if (G.hp == null) G.hp = stats().hp;
 
   // ---------- Levels ----------
@@ -1022,7 +1036,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const starsHtml = (n, cls = 'stars') => `<div class="${cls}">${[0, 1, 2].map(k => `<span class="${k < n ? '' : 'off'}">⭐</span>`).join('')}</div>`;
 
   // ---------- Celebrations ----------
-  const RARX = [{ n: 'COMMUN', c: '#c8d2da' }, { n: 'RARE', c: '#5fb0ff' }, { n: 'ÉPIQUE', c: '#c47bff' }, { n: 'LÉGENDAIRE', c: '#ffc23a' }];
+  const RARX = [{ n: 'COMMUN', c: '#c8d2da' }, { n: 'PEU COMMUN', c: '#6fd05a' }, { n: 'RARE', c: '#5fb0ff' }, { n: 'ÉPIQUE', c: '#c47bff' }, { n: 'LÉGENDAIRE', c: '#ffc23a' }];
+  const chestOf = r => OPT.has('chestR' + r) ? 'chestR' + r : r >= 3 ? 'uiChest3' : r >= 2 ? 'uiChest2' : 'uiChest1';
   function confetti(n, cols) {
     if (reduce) return '';
     return Array.from({ length: n }, () => `<i class="conf" style="left:${rnd(0, 100)}%;background:${cols[Math.floor(rnd(0, cols.length))]};--x:${rnd(-80, 80)}px;--r:${rnd(200, 720)}deg;--d:${rnd(1.8, 3.2)}s;--w:${rnd(0, .6)}s"></i>`).join('');
@@ -1063,13 +1078,14 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const el = document.createElement('div'); el.className = 'cel'; el.style.setProperty('--ray', R.c + '44');
     el.innerHTML = `<div class="rays" style="opacity:0;transition:opacity .4s"></div><div class="flash"></div><div class="in">${OPT.has(chestKey) ? `<img class="chest" src="img/${chestKey}.webp" alt="">` : `<div class="chest">${chestEmoji}</div>`}</div>`;
     document.body.appendChild(el);
-    [0, 180, 360, 540, 700].forEach(t => setTimeout(SFX.thump, t));
+    (it.r <= 1 ? [0, 220] : [0, 180, 360, 540, 700]).forEach(t => setTimeout(SFX.thump, t));
     setTimeout(() => {
       el.querySelector('.flash').classList.add('go'); el.querySelector('.rays').style.opacity = '1'; SFX.reveal(it.r);
-      el.querySelector('.in').innerHTML = `${it.r >= 2 ? confetti(it.r === 3 ? 60 : 30, [R.c, '#ffffff', '#ffd76a']) : ''}<div class="loot" style="--rc:${R.c}">${itemIcon(it)}</div>
+      el.querySelector('.in').innerHTML = `${it.r >= 2 ? confetti(it.r === 4 ? 70 : it.r === 3 ? 45 : 20, [R.c, '#ffffff', '#ffd76a']) : ''}<div class="loot" style="--rc:${R.c}">${itemIcon(it)}</div>
         <div class="rar" style="--rc:${R.c}">${R.n}</div><div class="iname">${it.name}</div><div class="tap">Touche pour voir l'objet</div>`;
-      setTimeout(() => el.addEventListener('click', () => { el.remove(); resolveOpen(); }), 500);
-    }, 950);
+      let gone = false; const shut = () => { if (gone) return; gone = true; el.remove(); resolveOpen(); };
+      setTimeout(() => el.addEventListener('click', shut), 500); if (it.r <= 1) setTimeout(shut, 1700);
+    }, it.r <= 1 ? 500 : 950);
     return opened;
   }
   function animateWin() {
@@ -1187,7 +1203,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     tickEnergy(); tickHp(); if (!F) hearts($('hearts'), G.hp, stats().hp);
     $('energy').textContent = `${G.energy}/${EN_MAX}`;
     $('enTimer').textContent = G.energy < EN_MAX ? `+1 ${mmss(nextIn())}` : '';
-    if ($('buyPot')) { $('buyPot').innerHTML = `<i class="coin" aria-label="or"></i> ${potCost()}`; $('buyInn').innerHTML = `<i class="coin" aria-label="or"></i> ${innCost()}`; $('buyInn').disabled = G.hp >= stats().hp; $('buyCamp').disabled = G.hp >= stats().hp || G.energy < 12; }
+    if ($('buyPot')) { $('buyPot').innerHTML = `<i class="coin" aria-label="or"></i> ${potCost()}`; $('buyEn').innerHTML = `<i class="coin" aria-label="or"></i> ${enPrice()}`; $('buyInn').innerHTML = `<i class="coin" aria-label="or"></i> ${innCost()}`; $('buyInn').disabled = G.hp >= stats().hp; $('buyCamp').disabled = G.hp >= stats().hp || G.energy < 12; }
   }
   function render() {
     const s = stats(); G.hp = Math.min(G.hp, s.hp);
@@ -1296,7 +1312,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (mode != null) selMode = mode;
     if (!modeOpen(w, selMode)) selMode = '';
     tickEnergy();
-    const W = WORLDS[w], [foes, base] = W.levels[i], MD = MODES.find(m => m.id === selMode), cost = Math.round(base * MD.cost);
+    const W = WORLDS[w], [foes, base] = W.levels[i], MD = MODES.find(m => m.id === selMode), cost = Math.round(base * MD.cost * (i === 4 ? 1.5 : 1));
     const s = G.stars[lkey(w, i, selMode)] || 0, can = G.test || G.energy >= cost;
     modal(`Niveau ${w + 1}-${i + 1}`, W.rib, `
       <div class="note">${W.name}${i === 4 ? ' · <b style="color:var(--rib-r)">Boss</b>' : ''}</div>
@@ -1314,8 +1330,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
 
   function setPiece(w, k) {
-    const pc = SET_PIECES[k], tier = w + 1, r = pc.trophy ? 3 : 2;
-    const v = (2 + tier * 4 + (WORLDS[w].lvl + 2) * 1.4) * [1, 1.5, 2.2, 3.2][r];
+    const pc = SET_PIECES[k], tier = w + 1, r = pc.trophy ? 4 : 3;
+    const v = (2 + tier * 4 + (WORLDS[w].lvl + 2) * 1.4) * RMULT[r] * TBOOST(tier) * kAt(WORLDS[w].lvl + 2);
     const base = { casque: { def: v * 0.5, hp: v * 1.6 }, armure: { def: v * 0.8, hp: v * 2.2 }, bottes: { def: v * 0.4, hp: v, atk: v * 0.15 }, amulette: { mag: v * 0.8, atk: v * 0.4, hp: v * 0.8 } }[pc.slot];
     for (const s in base) base[s] = Math.max(1, Math.round(base[s]));
     return { slot: pc.slot, name: `${pc.name} ${SETS[w]}`, icon: pc.icon, img: `a${w}${pc.slot}`, r, up: 0, base, set: w };
@@ -1360,6 +1376,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     while (cells.length < 15) cells.push('<div class="slot cell empty" data-ghost=""></div>');
     $('bagGrid').innerHTML = cells.join('');
     $('bagNote').textContent = `${G.inv.length} objet${G.inv.length > 1 ? 's' : ''} · touche un objet pour le voir. « É » = équipé.`;
+    $('pityNote').textContent = `🎲 Objet Épique garanti dans ${Math.max(1, PITY - (G.pity || 0))} coffre${PITY - (G.pity || 0) > 1 ? 's' : ''} de combat.`;
+    const junk = G.inv.filter(x => x.r <= 1 && !Object.values(G.eq).includes(x.id) && x.set == null); $('sellJunk').hidden = !junk.length;
+    $('sellJunk').innerHTML = `🧹 Vendre gris + verts (${junk.length}) · ${junk.reduce((a, x) => a + sellPrice(x), 0)} <i class="coin" aria-label="or"></i>`;
     const it = itemById(selItem); $('tipWrap').innerHTML = it ? tipHtml(it, true) : '';
   }
   function statLines(it, compare) {
@@ -1379,10 +1398,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     siphon: { n: 'Siphon arcanique', d: 'chaque coup te rend 3 de mana' },
     vamp:   { n: 'Vampirisme', d: 'tu récupères 8 % des dégâts infligés' },
     epines: { n: 'Épines', d: 'renvoie 20 % des dégâts reçus' },
-    crit:   { n: 'Clairvoyance', d: '+8 % de chances de coup critique' },
+    crit:   { n: 'Clairvoyance', d: 'zone de critique élargie de 2 (🎲)' },
     celer:  { n: 'Célérité', d: '+5 d\u2019endurance par tour' },
   };
-  const legOf = it => it && it.r === 3 && it.set == null ? (it.slot === 'arme' ? { guerrier: 'ardent', archer: 'givre', mage: 'siphon' }[it.cls] : { amulette: 'vamp', armure: 'epines', casque: 'crit', bottes: 'celer' }[it.slot]) : null;
+  const legOf = it => it && it.r === 4 && it.set == null ? (it.slot === 'arme' ? { guerrier: 'ardent', archer: 'givre', mage: 'siphon' }[it.cls] : { amulette: 'vamp', armure: 'epines', casque: 'crit', bottes: 'celer' }[it.slot]) : null;
   const hasLeg = k => Object.values(G.eq).some(id => legOf(itemById(id)) === k && (!itemById(id).cls || itemById(id).cls === (G.cls || 'guerrier')));
   const score = it => { const s = itemStats(it); return (s.atk || 0) * 2 + (s.def || 0) * 2 + (s.hp || 0) * 0.5 + (s.mag || 0) * (CL().wstat === 'mag' ? 2 : 0.8) + (legOf(it) ? 25 : 0); };
   function tipHtml(it, withActs) {
@@ -1391,6 +1410,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <div class="top"><h3 class="r${it.r}t">${it.name}${it.up ? ' +' + it.up : ''}</h3><span class="rar r${it.r}t">${RAR[it.r]}</span></div>
       <div class="kind">${SLOTS.find(s => s.id === it.slot).name}${it.cls ? ' · ' + CLASSES[it.cls].cls : ''}${it.set != null ? ' · Panoplie ' + SETS[it.set] : ''}${eqd ? ' · équipé' : ''}</div>
       <div class="line"><div class="big">${itemIcon(it)}</div><div class="sts">${statLines(it, cmp)}</div></div>
+      ${it.slot === 'arme' ? (D => `<div class="dice">🎲 ${D.n} · dégâts ±${Math.round(D.sp * 100)} % · critique sur ${D.c}${D.c < 20 ? '–20' : ''} (×${String(D.x).replace('.', ',')})</div>`)(diceOf(it)) : ''}
       ${legOf(it) ? `<div class="legfx">✦ ${LEG[legOf(it)].n} : ${LEG[legOf(it)].d}</div>` : ''}
       <div style="font-size:13px">${DESC[it.slot]}${cmp ? ` Comparé à ${cur.name}.` : ''}</div>
       ${withActs ? `<div class="acts">
@@ -1440,7 +1460,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
   function startLevel(w, i) {
     tickEnergy();
-    const lv = WORLDS[w].levels[i], MD = MODES.find(m => m.id === (modeOpen(w, selMode) ? selMode : '')), cost = Math.round(lv[1] * MD.cost);
+    const lv = WORLDS[w].levels[i], MD = MODES.find(m => m.id === (modeOpen(w, selMode) ? selMode : '')), cost = Math.round(lv[1] * MD.cost * (i === 4 ? 1.5 : 1));
     if (G.test) G.energy = Math.max(G.energy, cost);
     if (!isOpen(w, i) || G.energy < cost) return;
     spendEnergy(cost); tickHp(); save(); loadBg(bgKey(w, i));
@@ -1453,7 +1473,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const k = F.rooms[F.room], f = M[k];
     const L = (DIFF.base + F.w * DIFF.world + F.i * DIFF.lvl) * (1 + Math.min(0.2, Math.max(0, G.lvl - recLvl(F.w, F.i) - 1) * 0.02)) * F.mode.mult * (f.boss ? DIFF.boss : 1);
     const A = f.boss ? 1 : DIFF.mobAtk;
-    F.foe = { ...f, id: k, hpMax: Math.round(f.hp * L), hp: Math.round(f.hp * L), atk: f.atk * (0.5 + L * 0.5) * A, charging: false, howl: false, anim: { lunge: 0, hit: 0, dead: 0 } };
+    const kf = kAt(Math.max(recLvl(F.w, F.i), G.lvl));
+    F.foe = { ...f, id: k, hpMax: Math.round(f.hp * L * kf), hp: Math.round(f.hp * L * kf), atk: f.atk * (0.5 + L * 0.5) * A * kf, def: f.def * kf, charging: false, howl: false, anim: { lunge: 0, hit: 0, dead: 0 } };
     F.hero = { lunge: 0, hit: 0, shield: 0, heal: 0, cast: null, roll: 0, block: 0 }; F.barrier = 0;
     F.turn = 0; F.defending = false; F.busy = false; F.foeSt = {};
     $('foeName').textContent = f.name; setMusic(f.boss ? 'boss' : [0, 3, 6, 7].includes(F.w) ? 'dark' : 'fight'); if (f.boss) bossIntro(k);
@@ -1512,7 +1533,19 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     for (let i = 0; i < n; i++) { const a = rnd(0, Math.PI * 2), v = rnd(1.5, 4); fx.push({ type: 'shard', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, rot: rnd(0, 6), vr: rnd(-0.3, 0.3), s: rnd(4, 9), t0, dur: rnd(500, 800), col: cols[i % cols.length] }); } }
   function puffs(x, y, cols, n, size = 1) { if (reduce) n = Math.ceil(n / 2); const t0 = performance.now();
     for (let i = 0; i < n; i++) { const a = rnd(0, Math.PI * 2), v = rnd(0.8, 2.2) * size; fx.push({ type: 'pt', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.8, r: rnd(8, 14) * size, grow: 0.35 * size, drag: 0.9, grav: -0.02, glow: true, t0, dur: rnd(380, 560), col: cols[i % cols.length] }); } }
-  function dmgCalc(atk, def, mult = 1) { let d = atk * rnd(0.85, 1.15) * mult - def * 0.6; const crit = Math.random() < 0.12 + (F && F.actor === 'hero' && hasLeg('crit') ? 0.08 : 0); if (crit) d *= 1.6; return { d: Math.max(1, Math.round(d)), crit }; }
+  // 2.2 dice: every blow rolls a d20. 1 = graze, just under the crit range = heavy blow, crit range = critical.
+  // The weapon decides the spread and the crit range (rarer weapons crit more often).
+  const WDICE = [{ n: 'Équilibrée', sp: 0.15, c: 20, x: 2 }, { n: 'Brutale', sp: 0.3, c: 19, x: 2 }, { n: 'Robuste', sp: 0.1, c: 20, x: 1.8 }];
+  function diceOf(it) { const b = WDICE[it && it.k != null ? it.k : 0] || WDICE[0], r = it ? it.r : 0; return { ...b, c: b.c - (r >= 4 ? 2 : r >= 3 ? 1 : 0) }; }
+  function dmgCalc(atk, def, mult = 1) {
+    const hero = F && F.actor === 'hero', die = 1 + Math.floor(Math.random() * 20);
+    const D = hero ? diceOf(itemById(G.eq.arme)) : { sp: 0.15, c: 20, x: 1.6 }, cMin = D.c - (hero && hasLeg('crit') ? 2 : 0);
+    let d = atk * (1 + (Math.random() * 2 - 1) * D.sp) * mult - def * 0.6;
+    const crit = die >= cMin, heavy = !crit && die >= cMin - 2, graze = die === 1 && !crit;
+    if (crit) d *= D.x; else if (heavy) d *= 1.35; else if (graze) d *= hero ? 0.5 : 0;
+    if (F) F.die = { v: die, tag: crit ? 'crit' : heavy ? 'heavy' : graze ? 'graze' : '' };
+    return { d: graze && !hero ? 0 : Math.max(1, Math.round(d)), crit, heavy, graze };
+  }
   const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 120) : ms));
   function tick(o, key, ms) { o[key] = performance.now(); return wait(ms); }
   const ZOOM = 0.76; // smaller characters, more of the scene visible
@@ -1605,7 +1638,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       if (f.hp <= 0 && f.id === 'bossLich' && !f.revived) { f.revived = true; f.hp = Math.round(f.hpMax * 0.3); F.pendingRevive = true; }
       if (PHASES[f.id] && !f.ph && f.hp > 0 && f.hp <= f.hpMax * 0.5) F.pendingPhase = true;
       if (f.id === 'bossVamp' && f.ph && !f.ph.rage && f.hp > 0 && f.hp <= f.hpMax * 0.25) { f.ph.rage = true; F.pendingRage = true; } } if (crit) track('crit'); F.foe.anim.kb = crit ? 26 : big ? 18 : 12; (crit ? SFX.crit : SFX.hit)();
-    floatTxt(`-${d}`, ex + rnd(-14, 14), ey - fh - rnd(0, 16), color || (crit ? '#ffd76a' : '#fff'), crit || big, crit);
+    floatTxt(`-${d}`, ex + rnd(-14, 14), ey - fh - rnd(0, 16), color || (crit ? '#ffd76a' : '#fff'), crit || big || (F.die && F.die.tag === 'heavy'), crit);
+    if (F.die) { const t = F.die.tag; fx.push({ type: 'txt', sm: true, text: `🎲 ${F.die.v}${t === 'heavy' ? ' · Coup puissant' : t === 'graze' ? ' · Éraflure' : ''}`, x: ex + 46, y: ey - fh + 14, color: t === 'crit' ? '#ffe58a' : t === 'heavy' ? '#ffb347' : t === 'graze' ? '#c8d2da' : '#f6e7c4', t0: performance.now(), dur: 1000 }); F.die = null; }
     if (crit) { const fy = ey - fh * 0.5; fx.push({ type: 'flash', x: ex, y: fy, t0: performance.now(), dur: 220, col: 'rgba(255,230,140,.9)', r: 80 }); burst(ex, fy, ['#fff1a8', '#ffd76a', '#ffffff'], 12, 1.4); if (!reduce) F.shake = { t0: performance.now(), amp: 6 }; }
   }
   async function act(kind) {
@@ -1744,7 +1778,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       }
       if (r.d > 0 && hasLeg('epines')) { const t = Math.max(1, Math.round(r.d * 0.2)); f.hp = Math.max(1, f.hp - t); floatTxt(`-${t} 🌵`, ex, ey - H * f.size * ZOOM, '#e8d9b0'); }
       G.hp -= r.d; total += r.d; if (r.d > 0) { F.hero.hit = performance.now(); if (!F.defending) SFX.hurt(); }
-      floatTxt(r.d === 0 ? (dodged ? 'Esquive !' : 'Absorbé !') : `-${r.d}`, hx + i * 20, hy - H * 0.5 - i * 14, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1 || r.d === 0);
+      floatTxt(r.d === 0 ? (r.graze ? 'Raté !' : dodged ? 'Esquive !' : 'Absorbé !') : `-${r.d}${r.crit ? ' !' : ''}`, hx + i * 20, hy - H * 0.5 - i * 14, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1 || r.d === 0);
       if (f.trait === 'drain') f.hp = Math.min(f.hpMax, f.hp + Math.round(r.d * (f.ph && f.id === 'bossVamp' ? 1 : 0.5)));
       if (f.trait === 'chill' && !F.defending) F.mp = Math.max(0, F.mp - 5);
     }
@@ -1762,11 +1796,19 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     await wait(300);
   }
 
-  function rollItem(tier, boss) {
-    const t = tier - 1, roll = Math.random(), ch = boss ? [0.15 - t * 0.05, 0.55 - t * 0.1, 0.85 - t * 0.1] : [0.6 - t * 0.12, 0.9 - t * 0.08, 0.985 - t * 0.02];
-    const r = roll < ch[0] ? 0 : roll < ch[1] ? 1 : roll < ch[2] ? 2 : 3;
+  // Rarity odds: green often, blue sometimes, epic rare, legendary very rare. Bosses and harder modes roll better.
+  const DROPW = { mob: [52, 34, 11, 2.6, 0.4], boss: [8, 37, 35, 16, 4] };
+  const RMULT = [1, 1.35, 1.75, 2.3, 3.0];
+  const TBOOST = t => 1 + 0.05 * (t - 1); // higher worlds give stronger base loot
+  function rollRarity(boss, mi = 0) {
+    const w = DROPW[boss ? 'boss' : 'mob'].map((x, r) => x * (r >= 2 ? 1 + 0.6 * mi : 1)), tot = w.reduce((a, b) => a + b, 0);
+    let x = Math.random() * tot, r = 0; while (r < 4 && x >= w[r]) { x -= w[r]; r++; } return r;
+  }
+  const PITY = 35; // a guaranteed epic after this many chests without one
+  function rollItem(tier, boss, forceR, mi) {
+    const r = forceR != null ? forceR : rollRarity(boss, mi || 0);
     const sl = SLOTS[Math.floor(Math.random() * SLOTS.length)].id;
-    const v = (2 + tier * 4 + G.lvl * 1.4) * [1, 1.5, 2.2, 3.2][r];
+    const v = (2 + tier * 4 + G.lvl * 1.4) * RMULT[r] * TBOOST(tier) * kAt(G.lvl);
     if (sl === 'arme') return makeWeapon(G.cls || 'guerrier', Math.floor(Math.random() * 3), r, v);
     const [kind, icon] = KINDS[sl][Math.floor(Math.random() * KINDS[sl].length)];
     const base = { casque: { def: v * 0.5, hp: v * 1.6 }, armure: { def: v * 0.8, hp: v * 2.2 }, bottes: { def: v * 0.4, hp: v }, amulette: { mag: v, hp: v * 0.8 } }[sl];
@@ -1780,7 +1822,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
                                    : [{ atk: v }, { atk: v * 1.25, def: -v * 0.1 }, { atk: v * 0.85, def: v * 0.35 }][k];
     for (const s in base) base[s] = Math.round(base[s]) || (base[s] > 0 ? 1 : 0);
     for (const s in base) if (!base[s]) delete base[s];
-    return { id: G.nextId++, slot: 'arme', cls, name: starter ? `${kind} d\u2019apprenti` : `${kind} ${ADJ[r]}`, icon, img, r, up: 0, base };
+    return { id: G.nextId++, slot: 'arme', cls, k, name: starter ? `${kind} d\u2019apprenti` : `${kind} ${ADJ[r]}`, icon, img, r, up: 0, base };
   }
   function gainXp(xp) {
     G.xp += xp; let up = false;
@@ -1796,11 +1838,17 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     await wait(700);
     const last = F.room === F.rooms.length - 1;
     const xp = Math.round(f.xp * (1 + F.i * 0.1) * F.mode.rew * rnd(0.9, 1.15)), gold = Math.round(f.gold * F.mode.rew * rnd(0.8, 1.3));
-    const item = (f.boss || (last && Math.random() < 0.6) || Math.random() < 0.2) ? rollItem(F.tier, f.boss) : null;
+    let item = null;
+    if (f.boss || Math.random() < (last ? 0.5 : 0.22)) {
+      G.pity = (G.pity || 0) + 1; item = rollItem(F.tier, f.boss, G.pity >= PITY ? 3 : null, modeIdx(F.mode.id));
+      if (item.r >= 3) G.pity = 0;
+      const { H, ex, ey } = pos(); fx.push({ type: 'dropchest', key: chestOf(item.r), r: item.r, x: ex, y: ey, t0: performance.now(), dur: 900 }); SFX.thump();
+      await wait(800); await chestFx(item, chestOf(item.r), item.r >= 3 ? '👑' : '📦');
+    }
     const mat = MATS[F.w], nm = Math.round((1 + Math.floor(Math.random() * 2) + (f.boss ? 3 : 0)) * F.mode.rew);
     G.mats[mat.id] = (G.mats[mat.id] || 0) + nm;
     const tro = f.boss ? TROPHIES[F.w] : null; if (tro) G.mats[tro.id] = (G.mats[tro.id] || 0) + (modeIdx(F.mode.id) >= 2 ? 2 : 1);
-    const pot = !item && Math.random() < 0.4;
+    const pot = !item && Math.random() < 0.35;
     const back = F.stolen; F.stolen = 0;
     G.gold += gold + back; if (pot) G.potions++;
     if (item) G.inv.push(item);
@@ -2120,7 +2168,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     fx = fx.filter(p => {
       const k = (now - p.t0) / (p.dur || { txt: 1100, ball: 420, arrow: 320, orb: 320, ice: 380, slash: 320, whirl: 700, rings: 800, rainArrow: 200, cloud: 1000, snow: 1400, runes: 1000 }[p.type] || 700);
       if (k >= 1) return false;
-      if (p.type === 'txt') { const pop = k < 0.12 ? 0.5 + (k / 0.12) * 0.8 : k < 0.25 ? 1.3 - (k - 0.12) / 0.13 * 0.3 : 1, sz = (p.crit ? 36 : p.big ? 30 : 22) * pop;
+      if (p.type === 'txt') { const pop = k < 0.12 ? 0.5 + (k / 0.12) * 0.8 : k < 0.25 ? 1.3 - (k - 0.12) / 0.13 * 0.3 : 1, sz = (p.sm ? 15 : p.crit ? 36 : p.big ? 30 : 22) * pop;
         const y = p.y - (1 - Math.pow(1 - k, 3)) * 46, x = p.x + (p.crit && k < 0.3 ? Math.sin(now / 25) * 3 : 0);
         c.save(); c.textAlign = 'center'; c.lineJoin = 'round'; c.globalAlpha = 1 - Math.max(0, k - 0.65) / 0.35;
         if (p.crit) { c.font = `400 ${Math.round(13 * pop)}px "Lilita One", system-ui, sans-serif`; c.lineWidth = 4; c.strokeStyle = 'rgba(90,30,0,.9)'; c.strokeText('CRITIQUE !', x, y - sz * 0.85); c.fillStyle = '#ffe58a'; c.fillText('CRITIQUE !', x, y - sz * 0.85); }
@@ -2174,6 +2222,12 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       else if (p.type === 'shard') { const dt = Math.min(3, (now - (p.lt || p.t0)) / 16.67); p.lt = now; p.vy += 0.12 * dt; p.x += p.vx * dt; p.y += p.vy * dt; p.rot += p.vr * dt;
         c.save(); c.translate(p.x, p.y); c.rotate(p.rot); c.globalAlpha = 1 - k; c.fillStyle = p.col; c.strokeStyle = 'rgba(255,255,255,.9)'; c.lineWidth = 1;
         c.beginPath(); c.moveTo(0, -p.s); c.lineTo(p.s * 0.45, p.s * 0.4); c.lineTo(-p.s * 0.45, p.s * 0.4); c.closePath(); c.fill(); c.stroke(); c.restore(); }
+      else if (p.type === 'dropchest') { // the defeated enemy drops a chest that bounces on the ground
+        const col = RARX[p.r].c, fall = Math.min(1, k / 0.45), y = p.y - 120 * (1 - fall * fall) - (k > 0.45 && k < 0.7 ? Math.sin((k - 0.45) / 0.25 * Math.PI) * 18 : 0), sz = 74;
+        c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(p.x, p.y - sz * 0.4, 4, p.x, p.y - sz * 0.4, sz * (p.r >= 3 ? 1.5 : 1)); g.addColorStop(0, col + 'aa'); g.addColorStop(1, col + '00');
+        c.fillStyle = g; c.fillRect(p.x - sz * 2, p.y - sz * 2, sz * 4, sz * 3); c.restore();
+        if (IMG[p.key] && IMG[p.key].complete && IMG[p.key].naturalWidth) c.drawImage(IMG[p.key], p.x - sz / 2, y - sz, sz, sz);
+        else { c.save(); c.font = `${Math.round(sz * 0.8)}px system-ui`; c.textAlign = 'center'; c.fillText(p.r >= 3 ? '👑' : '📦', p.x, y - 6); c.restore(); } }
       else if (p.type === 'flash') { c.save(); c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(p.x, p.y, 2, p.x, p.y, p.r * (0.6 + k * 0.6));
         g.addColorStop(0, `rgba(255,255,255,${0.9 * (1 - k)})`); g.addColorStop(0.4, p.col); g.addColorStop(1, 'rgba(0,0,0,0)'); c.globalAlpha = 1 - k; c.fillStyle = g; c.beginPath(); c.arc(p.x, p.y, p.r * 1.2, 0, 7); c.fill(); c.restore(); }
       else if (p.type === 'ring') { c.save(); c.globalAlpha = (1 - k) * 0.8; c.strokeStyle = p.col; c.lineWidth = 4 * (1 - k) + 1; c.beginPath(); c.ellipse(p.x, p.y, p.r * k, p.r * k * 0.55, 0, 0, 7); c.stroke(); c.restore(); }
@@ -2220,29 +2274,31 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const buy = (cost, fn, msg) => { if (G.gold < cost) { toast('Pas assez d’or'); return; } G.gold -= cost; fn(); save(); render(); toast(msg); SFX.coin(); };
   function potCost() { return 20 + 2 * G.lvl; }
   function innCost() { return 15 + 6 * G.lvl; }
+  $('sellJunk').addEventListener('click', () => { const junk = G.inv.filter(x => x.r <= 1 && !Object.values(G.eq).includes(x.id) && x.set == null); if (!junk.length) return;
+    const g = junk.reduce((a, x) => a + sellPrice(x), 0); G.gold += g; G.inv = G.inv.filter(x => !junk.includes(x)); selItem = null; save(); render(); SFX.coin(); toast(`${junk.length} objets vendus : +${g} <i class="coin" aria-label="or"></i>`); });
   $('buyPot').addEventListener('click', () => buy(potCost(), () => G.potions++, 'Potion achetée'));
   $('buyCamp').addEventListener('click', () => { tickEnergy(); const m = stats().hp; if (G.hp >= m) { toast('Tu es déjà en pleine forme'); return; } if (G.energy < 12) { toast('Pas assez d\u2019énergie'); return; }
     spendEnergy(12); G.hp = Math.min(m, G.hp + Math.round(m * 0.35)); save(); render(); SFX.heal(); toast('Tu te reposes au camp ❤️'); });
   $('buyInn').addEventListener('click', () => { if (G.hp >= stats().hp) { toast('Tu es déjà en pleine forme'); return; } buy(innCost(), () => { G.hp = stats().hp; G.hpAt = Date.now(); }, 'Tu te sens reposé ❤️'); });
-  $('buyEn').addEventListener('click', () => buy(60, () => { tickEnergy(); G.energy += 20; }, '+20 ⚡'));
+  function enPrice() { const d = dayKey(new Date()); if (!G.enBuy || G.enBuy.d !== d) G.enBuy = { d, n: 0 }; return 60 + 40 * G.enBuy.n; }
+  $('buyEn').addEventListener('click', () => { const p = enPrice(); buy(p, () => { tickEnergy(); G.energy += 20; G.enBuy.n++; }, '+20 ⚡'); });
   $('buyBox').addEventListener('click', () => {
     if (G.gold < 120) { toast('Pas assez d’or'); return; }
     G.gold -= 120; const tier = Math.max(1, ...Object.keys(G.stars).map(k => +k[0] + 1)); const it = rollItem(tier, false); G.inv.push(it); save(); render(); SFX.coin();
-    chestFx(it, 'uiChest1', '📦').then(() => modal('Coffre ouvert', 'p', `${tipHtml(it, false)}
+    chestFx(it, chestOf(it.r), '📦').then(() => modal('Coffre ouvert', 'p', `${tipHtml(it, false)}
       <button class="btn green" type="button" data-mequip="${it.id}"><i>✅</i> Équiper</button><button class="flee" type="button" data-close="1">Garder dans le sac</button>`));
   });
   const topTier = () => Math.max(1, ...WORLDS.map((W, w) => (isOpen(w, 0) ? w + 1 : 1)));
   function openBox(cost, minR, title, icon) {
     if (G.gold < cost) { toast('Pas assez d\u2019or'); return; }
-    G.gold -= cost; let it = rollItem(topTier(), true); let guard = 0;
-    while (it.r < minR && guard++ < 50) { G.nextId--; it = rollItem(topTier(), true); }
-    if (it.r < minR) it.r = minR;
+    G.gold -= cost; let r = rollRarity(true, 0); if (r < minR) r = minR; if (minR >= 3 && Math.random() < 0.25) r = 4; if (minR === 2 && r < 3 && Math.random() < 0.15) r = 3;
+    const it = rollItem(topTier(), true, r); if (it.r >= 3) G.pity = 0;
     G.inv.push(it); save(); render(); SFX.coin();
-    chestFx(it, minR >= 2 ? 'uiChest3' : 'uiChest2', icon).then(() => modal(title, 'p', `${tipHtml(it, false)}
+    chestFx(it, chestOf(it.r), icon).then(() => modal(title, 'p', `${tipHtml(it, false)}
       <button class="btn green" type="button" data-mequip="${it.id}"><i>✅</i> Équiper</button><button class="flee" type="button" data-close="1">Garder dans le sac</button>`));
   }
-  $('buyRare').addEventListener('click', () => openBox(350, 1, 'Coffre rare', '🎁'));
-  $('buyLeg').addEventListener('click', () => openBox(1200, 2, 'Coffre légendaire', '👑'));
+  $('buyRare').addEventListener('click', () => openBox(350, 2, 'Coffre rare', '🎁'));
+  $('buyLeg').addEventListener('click', () => openBox(1200, 3, 'Coffre épique', '👑'));
   function renderTest() {
     $('testTxt').textContent = G.test ? 'Activé : tous les mondes, tous les niveaux et les modes Héroïque et Légendaire sont ouverts. L\u2019énergie se recharge à chaque combat.' : 'Ouvre tous les niveaux et les modes de difficulté, recharge l\u2019énergie et passe ton héros au niveau 24 et donne de l\u2019or et des matériaux pour essayer la Forge. À retirer avant la sortie.';
     $('testBtn').textContent = G.test ? '🔒 Désactiver le mode test' : '🔓 Activer le mode test';
@@ -2310,7 +2366,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 2.0';
+  const VERSION = 'Version 2.2';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [

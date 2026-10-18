@@ -24,7 +24,7 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
   F=fresh('archer'); let dodges=0, N=20000; const base=G.hp;
   for(let i=0;i<N;i++){ G.hp=api.stats().hp; F.defending=true; const b=G.hp; await api.foeTurn(); if(b===G.hp) dodges++; }
   const p=dodges/N; ok(Math.abs(p-0.5)<0.02, `archer dodge rate ${p.toFixed(3)} over ${N}`); console.log('archer dodge rate', p.toFixed(4), 'n=',N);
-  G.hp=api.stats().hp; Math.random=()=>0.9; F.defending=true; h=G.hp; await api.foeTurn(); const rawA=Math.max(1,Math.round(F.foe.atk*(0.85+0.3*0.9)-api.stats().def*0.6)); ok(h-G.hp===Math.max(1,Math.round(rawA*0.7)), `archer failed dodge -30% (lost ${h-G.hp}, raw ${rawA})`);
+  G.hp=api.stats().hp; Math.random=()=>0.9; F.defending=true; h=G.hp; await api.foeTurn(); const rawA=Math.max(1,Math.round((F.foe.atk*1.12-api.stats().def*0.6)*1.35)); ok(h-G.hp===Math.max(1,Math.round(rawA*0.7)), `archer failed dodge -30% (lost ${h-G.hp}, raw ${rawA})`);
   G.hp=api.stats().hp; Math.random=()=>0.3; F.defending=true; h=G.hp; await api.foeTurn(); ok(h===G.hp, 'archer successful dodge = 0'); Math.random=R;
   // E. mage barrier
   F=fresh("mage"); Math.random=()=>0.5; G.hp=api.stats().hp; const rm=raw(F);
@@ -37,5 +37,16 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
   await api.act('fire'); const nums=api.fx.slice(fx0).filter(p=>p.type==='txt' && /^-\d/.test(p.text) && p.color!=='#ff6a5a'); ok(nums.length===1, `fireball damage numbers: ${nums.length}`);
   const dealt=hpb-F.foe.hp; ok(String(dealt)===nums[0].text.slice(1), `hp loss ${dealt} matches number ${nums[0]&&nums[0].text}`);
   api.endRun(false); ok(api.fx.length===0, `fx cleared after battle (${api.fx.length} left)`);
+  // 2.2 loot & dice
+  { const R2=Math.random; Math.random=R; const c=[0,0,0,0,0], b=[0,0,0,0,0]; for(let i=0;i<50000;i++){ c[api.rollRarity(false,0)]++; b[api.rollRarity(true,0)]++; }
+    console.log('mob rarity %', c.map(x=>(x/500).toFixed(1)).join(' / '), ' boss %', b.map(x=>(x/500).toFixed(1)).join(' / '));
+    ok(c[1]>c[2] && c[2]>c[3] && c[3]>c[4] && c[4]>0, 'mob rarity: green > blue > epic > legendary');
+    ok(b[3]/50000 > 4*c[3]/50000, 'boss epic odds much better');
+    const h=[0,0,0,0,0]; for(let i=0;i<20000;i++) h[api.rollRarity(false,3)]++; ok(h[3]>c[3]*0.4*1.5, 'nightmare improves odds');
+    const it=api.rollItem(3,false,4); ok(it.r===4 && it.name, 'forced legendary roll');
+    const w=api.makeWeapon('guerrier',1,4,10); const D=api.diceOf(w); ok(D.c===17 && D.sp===0.3, `brutal legendary crit range 17-20 (got ${D.c})`);
+    ok(api.kAt(1)===1 && api.kAt(24)<0.3 && api.kAt(24)>0.15, `compression k(24)=${api.kAt(24).toFixed(3)}`);
+    let prev=0, mono=true; for(let L=1;L<=40;L++){ G.lvl=L; G.eq={}; const s=api.stats(); if(s.hp+s.atk<prev) mono=false; prev=s.hp+s.atk; } ok(mono, 'naked hero stats grow every level');
+    Math.random=R2; }
   console.log(`unit tests: ${pass} passed, ${fail} failed`);
 })();
