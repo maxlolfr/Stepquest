@@ -9,7 +9,7 @@ Podomètre motivant pour iOS et Android (Flutter). Nom de travail.
 | Décisions et architecture | `docs/DECISIONS.md`, `docs/ARCHITECTURE.md` |
 | Cœur métier (Dart pur) | Écrit : dates locales, déduplication téléphone/montre, agrégation par jour, objectifs historisés, progression, historique 7/30/90 j, séries avec journées de grâce, distance/calories |
 | Source de données de démo | Écrite, clairement marquée « démo » |
-| Tests unitaires | Écrits (7 fichiers). **Pas encore exécutés** : l'environnement de développement n'avait pas accès à Flutter ni à pub.dev |
+| Tests unitaires | 7 fichiers. **Exécutés sur GitHub Actions le 2026-10-18 : analyse statique et tests réussis** (run 39103236034) |
 | Écrans | Coquille vide. Arrive à l'étape 2 (prototype visuel) |
 | HealthKit / Health Connect | Interface définie, implémentation à l'étape 3 |
 
@@ -47,7 +47,7 @@ Merci de renvoyer la sortie complète de `flutter analyze` et `flutter test`. Ta
 
 ## Limites connues
 
-- Tests non exécutés à ce stade (voir ci-dessus).
+- Les tests s'exécutent automatiquement sur GitHub à chaque envoi de code (`.github/workflows/ci.yml`).
 - Riverpod, Drift et le plugin santé ne sont pas encore ajoutés : leurs versions doivent être vérifiées sur pub.dev.
 - La compilation iOS nécessite un Mac avec Xcode.
 - Calories et distance sont des estimations, pas des mesures.
