@@ -300,6 +300,9 @@ button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
 .pill i img { width: 20px; height: 20px; vertical-align: middle; }
 .vol { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 10px; font-weight: 800; text-align: left; }
 .vol input { width: 100%; accent-color: var(--gold); }
+i.coin { display: inline-block; width: 1em; height: 1em; vertical-align: -0.14em; border-radius: 50%; font-style: normal; flex: none;
+  background: radial-gradient(circle at 35% 30%, #fff6c2 0 12%, #ffd84a 30%, #f0a91c 62%, #b8700c 100%); box-shadow: inset 0 0 0 0.09em #a8620a, inset 0 0 0 0.17em #ffe680, 0 0.06em 0 rgba(90,45,0,.5); }
+.pill > i > i.coin { width: 20px; height: 20px; }
 .modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .mode { font: inherit; font-weight: 800; font-size: 13px; border-radius: 10px; padding: 7px 4px; border: 2px solid #d6b07a; background: rgba(255,255,255,.45); color: var(--ink); cursor: pointer; }
 .mode.on { border-color: var(--gold); background: #fff3d4; box-shadow: 0 0 0 2px rgba(242,182,50,.5); }
@@ -471,7 +474,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     </div>
   </header>
   <div class="money">
-    <div class="pill" title="Or"><i>🪙</i><span id="gold">0</span></div>
+    <div class="pill" title="Or"><i><i class="coin" aria-label="or"></i></i><span id="gold">0</span></div>
     <div class="pill" title="Énergie : +1 toutes les 2 minutes"><i>⚡</i><span id="energy">0</span><small id="enTimer"></small></div>
     <div class="pill" title="Potions"><i>🧪</i><span id="potPill">0</span></div>
     <button class="pill snd" type="button" id="sndBtn" aria-label="Son"><i>🔊</i></button>
@@ -539,37 +542,37 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <div class="shoprow">
         <div class="slot" aria-hidden="true">🛏️</div>
         <div><b>Auberge</b><div class="note" id="innTxt">Une nuit de repos : toute ta vie revient.</div></div>
-        <button class="btn small green" id="buyInn" type="button" style="width:auto">🪙 30</button>
+        <button class="btn small green" id="buyInn" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 30</button>
       </div>
       <div class="shoprow">
         <div class="slot" data-ico="uiPotion" aria-hidden="true">🧪</div>
         <div><b>Potion de soin</b><div class="note">Rend 45 % de ta vie et guérit poison et brûlure.</div></div>
-        <button class="btn small green" id="buyPot" type="button" style="width:auto">🪙 15</button>
+        <button class="btn small green" id="buyPot" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 15</button>
       </div>
       <div class="shoprow">
         <div class="slot" data-ico="uiEnergy" aria-hidden="true">⚡</div>
         <div><b>Recharge d'énergie</b><div class="note">+20 ⚡ tout de suite, même au-delà du maximum.</div></div>
-        <button class="btn small green" id="buyEn" type="button" style="width:auto">🪙 60</button>
+        <button class="btn small green" id="buyEn" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 60</button>
       </div>
       <div class="shoprow">
         <div class="slot" data-ico="uiChest1" aria-hidden="true">🎒</div>
         <div><b>Coffre d'équipement</b><div class="note">Un objet au hasard, adapté à ta progression.</div></div>
-        <button class="btn small green" id="buyBox" type="button" style="width:auto">🪙 120</button>
+        <button class="btn small green" id="buyBox" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 120</button>
       </div>
       <div class="shoprow">
         <div class="slot r1" data-ico="uiChest2" aria-hidden="true">🎁</div>
         <div><b>Coffre rare</b><div class="note">Un objet Rare ou mieux. 15 % de chance d'Épique.</div></div>
-        <button class="btn small green" id="buyRare" type="button" style="width:auto">🪙 350</button>
+        <button class="btn small green" id="buyRare" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 350</button>
       </div>
       <div class="shoprow">
         <div class="slot r3" data-ico="uiChest3" aria-hidden="true">👑</div>
         <div><b>Coffre légendaire</b><div class="note">Un objet Épique ou mieux. 25 % de chance de Légendaire.</div></div>
-        <button class="btn small green" id="buyLeg" type="button" style="width:auto">🪙 1 200</button>
+        <button class="btn small green" id="buyLeg" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 1 200</button>
       </div>
       <div class="shoprow">
         <div class="slot" data-ico="uiMats" aria-hidden="true">📦</div>
         <div><b>Sac de matériaux</b><div class="note">5 matériaux du monde le plus avancé que tu as atteint, pour la Forge.</div></div>
-        <button class="btn small green" id="buyMats" type="button" style="width:auto">🪙 150</button>
+        <button class="btn small green" id="buyMats" type="button" style="width:auto"><i class="coin" aria-label="or"></i> 150</button>
       </div>
     </div>
     <div class="panel" style="margin-top:26px">
@@ -695,8 +698,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const bgm = document.getElementById('bgm');
   if (bgm) bgm.volume = VOL.music;
   // Playlists by situation: calm on the map, two alternating battle themes, two boss themes.
-  const PL = { map: ['map1', 'map2'], fight: ['fight1', 'fight2'], boss: ['boss1', 'boss2'] };
-  const plIdx = { map: 0, fight: 0, boss: 0 };
+  const PL = { map: ['map1', 'map2'], fight: ['fight1', 'dark1'], dark: ['dark1', 'fight1'], boss: ['boss1'] };
+  const plIdx = { map: 0, fight: 0, dark: 0, boss: 0 };
   let musMode = 'map';
   function playMusic() { if (soundOn && bgm && bgm.paused) bgm.play().catch(() => {}); }
   function trackSrc(mode) { const l = PL[mode]; return `audio/${l[plIdx[mode] % l.length]}.mp3`; }
@@ -908,7 +911,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       }
     } catch (e) {}
   }
-  G.mats = G.mats || {};
+  G.mats = G.mats || {}; if (!Number.isFinite(G.xp)) G.xp = 0; if (!Number.isFinite(G.gold)) G.gold = 0;
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(G)); } catch (e) {} };
   const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
@@ -1025,7 +1028,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
 
   // ---------- UI helpers ----------
-  function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200); }
+  function toast(t) { const el = $('toast'); el.innerHTML = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200); }
   const HEART = 'M8 14 C2 9 0 6.5 0 4.2 C0 1.8 1.9 0 4.1 0 C5.6 0 7 .9 8 2.3 C9 .9 10.4 0 11.9 0 C14.1 0 16 1.8 16 4.2 C16 6.5 14 9 8 14Z';
   function hearts(el, hp, max) {
     const n = 8, per = max / n; let html = '';
@@ -1045,7 +1048,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     tickEnergy(); tickHp(); if (!F) hearts($('hearts'), G.hp, stats().hp);
     $('energy').textContent = `${G.energy}/${EN_MAX}`;
     $('enTimer').textContent = G.energy < EN_MAX ? `+1 ${mmss(nextIn())}` : '';
-    if ($('buyPot')) { $('buyPot').textContent = `🪙 ${potCost()}`; $('buyInn').textContent = `🪙 ${innCost()}`; $('buyInn').disabled = G.hp >= stats().hp; $('buyCamp').disabled = G.hp >= stats().hp || G.energy < 12; }
+    if ($('buyPot')) { $('buyPot').innerHTML = `<i class="coin" aria-label="or"></i> ${potCost()}`; $('buyInn').innerHTML = `<i class="coin" aria-label="or"></i> ${innCost()}`; $('buyInn').disabled = G.hp >= stats().hp; $('buyCamp').disabled = G.hp >= stats().hp || G.energy < 12; }
   }
   function render() {
     const s = stats(); G.hp = Math.min(G.hp, s.hp);
@@ -1092,7 +1095,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const yesterday = dayKey(new Date(Date.now() - 864e5));
     const streak = got ? G.daily.streak : (G.daily.last === yesterday ? G.daily.streak : 0);
     const pos = got ? (streak - 1) % 7 : streak % 7;
-    const icons = ['🪙', '🧪', '🪙', '⚡', '🪙', '🧪', '🎁'];
+    const icons = ['<i class="coin" aria-label="or"></i>', '🧪', '<i class="coin" aria-label="or"></i>', '⚡', '<i class="coin" aria-label="or"></i>', '🧪', '🎁'];
     $('dailyRow').innerHTML = icons.map((ic, k) => `<div class="${k < pos || (got && k === pos) ? 'got' : ''} ${k === pos ? 'today' : ''}"><i>${ic}</i><span>J${k + 1}</span></div>`).join('');
     $('dailyBtn').disabled = got;
     $('dailyBtn').innerHTML = got ? '<i>✅</i> Déjà ouvert aujourd’hui' : '<i>🎁</i> Ouvrir le coffre';
@@ -1106,7 +1109,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (d === 1 || d === 5) { G.potions += 2; rew.push('🧪 +2'); }
     else if (d === 3) { G.energy += 20; rew.push('⚡ +20'); }
     else if (d === 6) { const it = rollItem(Math.max(1, ...Object.keys(G.stars).map(k => +k[0] + 1)), true); it.r = Math.max(1, it.r); G.inv.push(it); rew.push(`${it.icon} ${it.name}`); }
-    else { const g = 30 + 15 * G.lvl; G.gold += g; rew.push(`🪙 +${g}`); }
+    else { const g = 30 + 15 * G.lvl; G.gold += g; rew.push(`<i class="coin" aria-label="or"></i> +${g}`); }
     save(); render(); SFX.win();
     modal('Coffre du jour', 'b', `<div style="font-family:var(--emoji); font-size:52px">🎁</div>
       <div class="rew">${rew.map(r => `<div class="pill">${r}</div>`).join('')}</div>
@@ -1193,7 +1196,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
           const st = itemStats(it), sts = Object.entries(st).map(([k2, v]) => `${{ atk: '⚔️', def: '🛡️', hp: '❤️', mag: '✨' }[k2]}+${v}`).join(' ');
           return `<div class="setrow"><div class="slot r${it.r}">${itemIcon(it)}</div>
             <div style="min-width:0"><b class="r${it.r}t" style="color:inherit">${it.name}${owned ? ' ✓' : ''}</b><div class="recipe">${sts}</div>
-              <div class="recipe"><span class="${hasM ? '' : 'no'}">${mat.icon} ${pc.mats}</span>${pc.trophy ? ` · <span class="${hasT ? '' : 'no'}">${tro.icon} 1</span>` : ''} · <span class="${hasG ? '' : 'no'}">🪙 ${fmt(pc.gold * (w + 1))}</span></div></div>
+              <div class="recipe"><span class="${hasM ? '' : 'no'}">${mat.icon} ${pc.mats}</span>${pc.trophy ? ` · <span class="${hasT ? '' : 'no'}">${tro.icon} 1</span>` : ''} · <span class="${hasG ? '' : 'no'}"><i class="coin" aria-label="or"></i> ${fmt(pc.gold * (w + 1))}</span></div></div>
             <button class="btn small ${hasM && hasT && hasG ? 'green' : ''}" type="button" data-craft="${w}-${k}" ${hasM && hasT && hasG ? '' : 'disabled'} style="width:auto">Forger</button></div>`;
         }).join('');
         return `<div class="panel"><div class="ribbon ${W.rib}">${icoHtml('wm' + w, W.icon)} Panoplie ${SETS[w]}</div>
@@ -1238,11 +1241,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <div class="line"><div class="big">${itemIcon(it)}</div><div class="sts">${statLines(it, cmp)}</div></div>
       <div style="font-size:13px">${DESC[it.slot]}${cmp ? ` Comparé à ${cur.name}.` : ''}</div>
       ${withActs ? `<div class="acts">
-        ${eqd ? `<button class="btn small" type="button" data-up="${it.id}" ${G.gold < upCost(it) ? 'disabled' : ''}>Forger 🪙 ${upCost(it)}</button>
+        ${eqd ? `<button class="btn small" type="button" data-up="${it.id}" ${G.gold < upCost(it) ? 'disabled' : ''}>Forger <i class="coin" aria-label="or"></i> ${upCost(it)}</button>
                  <button class="btn small green" type="button" data-unequip="${it.id}">Retirer</button>`
               : (it.cls && it.cls !== (G.cls || 'guerrier')) ? `<div class="cls-lock" style="align-self:center">Réservé : ${CLASSES[it.cls].cls}</div>`
               : `<button class="btn small green" type="button" data-equip="${it.id}">Équiper</button>
-                 <button class="btn small" type="button" data-sell="${it.id}">Vendre 🪙 ${sellPrice(it)}</button>`}
+                 <button class="btn small" type="button" data-sell="${it.id}">Vendre <i class="coin" aria-label="or"></i> ${sellPrice(it)}</button>`}
       </div>` : ''}
     </div>`;
   }
@@ -1299,12 +1302,12 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     F.foe = { ...f, id: k, hpMax: Math.round(f.hp * L), hp: Math.round(f.hp * L), atk: f.atk * (0.5 + L * 0.5) * A, charging: false, howl: false, anim: { lunge: 0, hit: 0, dead: 0 } };
     F.hero = { lunge: 0, hit: 0, shield: 0, heal: 0, cast: null, roll: 0, block: 0 }; F.barrier = 0;
     F.turn = 0; F.defending = false; F.busy = false; F.foeSt = {};
-    $('foeName').textContent = f.name; setMusic(f.boss ? 'boss' : 'fight'); if (f.boss) bossIntro(k);
+    $('foeName').textContent = f.name; setMusic(f.boss ? 'boss' : [0, 3, 6, 7].includes(F.w) ? 'dark' : 'fight'); if (f.boss) bossIntro(k);
     $('roomTxt').textContent = `${F.mode.medal}${F.w + 1}-${F.i + 1} · ${F.room + 1}/${F.rooms.length}`;
     say(f.boss ? `${f.name} se dresse devant toi !` : `${f.name} surgit ! ${f.tip || ''}`);
     $('intent').hidden = true; updFight();
   }
-  function say(t) { $('log').textContent = t; }
+  function say(t) { $('log').innerHTML = t; }
   function updFight() {
     const s = stats();
     bar('foeHp', 'foeHpTxt', F.foe.hp, F.foe.hpMax); bar('meHp', 'meHpTxt', G.hp, s.hp); bar('meMp', 'meMpTxt', F.mp, s.mp); bar('meSt', 'meStTxt', F.st, ST_MAX); $('staBar').classList.toggle('low', F.st < 20);
@@ -1496,7 +1499,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (bz && !F.defending) { F.status.burn = { dmg: bz, turns: 3 }; after += ' Tu brûles !'; }
     if (extra && extra.chill && !F.defending) { F.mp = 0; after += ' Ton mana est gelé !'; }
     else if (f.trait === 'chill' && !F.defending) after += ' Ton mana gèle (-5 💧).';
-    if (f.trait === 'steal' && G.gold > 0 && Math.random() < 0.5) { const g = Math.min(G.gold, 6 + Math.floor(Math.random() * 6)); G.gold -= g; F.stolen += g; after += ` Il te vole ${g} 🪙 !`; }
+    if (f.trait === 'steal' && G.gold > 0 && Math.random() < 0.5) { const g = Math.min(G.gold, 6 + Math.floor(Math.random() * 6)); G.gold -= g; F.stolen += g; after += ` Il te vole ${g} <i class="coin" aria-label="or"></i> !`; }
     say((F.defending ? (total === 0 ? `${line}, mais tu évites tout !` : `${line}, mais tu pares : ${total} dégâts.`) : `${line} : ${total} dégâts${hits > 1 ? ' en 2 coups' : ''}.`) + after);
     updFight(); render();
     await wait(300);
@@ -1555,7 +1558,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       const nl = nextLevel(), unlockedWorld = first && !F.mode.id && F.i === 4 && WORLDS[F.w + 1];
       const unlockedMode = first && F.i === 4 && modeIdx(F.mode.id) < MODES.length - 1 ? MODES[modeIdx(F.mode.id) + 1] : null;
       extra = `${starsHtml(stars, 'bigstars')}
-        ${bonus ? `<div class="msg">Première victoire : +${bonus} 🪙</div>` : (stars > prev ? '<div class="msg">Nouveau record d’étoiles !</div>' : '')}
+        ${bonus ? `<div class="msg">Première victoire : +${bonus} <i class="coin" aria-label="or"></i></div>` : (stars > prev ? '<div class="msg">Nouveau record d’étoiles !</div>' : '')}
         ${unlockedWorld ? `<div class="msg">Nouveau monde débloqué : ${WORLDS[F.w + 1].icon} ${WORLDS[F.w + 1].name} !</div>` : ''}
         ${unlockedMode ? `<div class="msg">Mode ${unlockedMode.medal} ${unlockedMode.name} débloqué pour ${WORLDS[F.w].name} !</div>` : ''}
         ${nl ? `<button class="btn" type="button" data-level="${nl[0]}-${nl[1]}"><i>➡️</i> Niveau suivant · ${nl[0] + 1}-${nl[1] + 1}</button>` : ''}`;
@@ -1567,7 +1570,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     modal(last ? `Niveau ${F.w + 1}-${F.i + 1} réussi !` : 'Victoire !', last ? 'r' : '', `
       ${last ? '' : `<div style="font-family:var(--emoji); font-size:46px">✨</div>`}
       ${extra}
-      <div class="rew"><div class="pill"><i>⭐</i>+${xp} XP</div><div class="pill"><i>🪙</i>+${gold}${back ? ` (+${back} repris)` : ''}</div>${pot ? '<div class="pill"><i>🧪</i>+1</div>' : ''}<div class="pill"><i>${icoHtml('m_' + mat.id, mat.icon)}</i>+${nm}</div>${tro ? `<div class="pill"><i>${tro.icon}</i>+${modeIdx(F.mode.id) >= 2 ? 2 : 1}</div>` : ''}</div>
+      <div class="rew"><div class="pill"><i>⭐</i>+${xp} XP</div><div class="pill"><i><i class="coin" aria-label="or"></i></i>+${gold}${back ? ` (+${back} repris)` : ''}</div>${pot ? '<div class="pill"><i>🧪</i>+1</div>' : ''}<div class="pill"><i>${icoHtml('m_' + mat.id, mat.icon)}</i>+${nm}</div>${tro ? `<div class="pill"><i>${tro.icon}</i>+${modeIdx(F.mode.id) >= 2 ? 2 : 1}</div>` : ''}</div>
       ${lv ? `<div class="msg">Niveau ${G.lvl} atteint ! Tes statistiques augmentent.</div>` : ''}
       ${item ? `<div class="note">Butin trouvé :</div>${tipHtml(item, false)}` : ''}
       ${last ? '' : `<div class="note">Vie actuelle : ${fmt(G.hp)}/${fmt(stats().hp)}${F.status.poison || F.status.burn ? ' · encore sous l’effet d’un mal' : ''}</div>`}
@@ -1582,7 +1585,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     say('Tu t’effondres…'); SFX.lose(); setMusic('map'); await wait(700);
     G.hp = Math.max(1, Math.round(stats().hp * 0.15)); G.hpAt = Date.now(); save(); render();
     modal('Défaite', 'r', `<div style="font-family:var(--emoji); font-size:46px">💫</div>
-      <div class="note">Tu as été ramené au camp, très affaibli (15 % de vie). Tu gardes ce que tu as gagné : ${F.loot.xp} XP et ${F.loot.gold} 🪙.</div>
+      <div class="note">Tu as été ramené au camp, très affaibli (15 % de vie). Tu gardes ce que tu as gagné : ${F.loot.xp} XP et ${F.loot.gold} <i class="coin" aria-label="or"></i>.</div>
       <div class="note">Conseil : équipe ton meilleur butin, forge ton arme, et pare quand l'ennemi prépare une attaque spéciale.</div>
       <button class="btn" type="button" data-home="1"><i>🗺️</i> Retour à la carte</button>`);
   }
@@ -1861,7 +1864,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (d.slot) { show('bag'); toast('Trouve des objets dans les niveaux pour remplir cet emplacement'); return; }
     if (d.equip) { equip(+d.equip); return; }
     if (d.unequip) { const it = itemById(+d.unequip); delete G.eq[it.slot]; save(); render(); toast(`${it.name} retiré`); return; }
-    if (d.sell) { const it = itemById(+d.sell); G.gold += sellPrice(it); G.inv = G.inv.filter(x => x !== it); selItem = null; save(); render(); toast(`Vendu pour ${sellPrice(it)} 🪙`); return; }
+    if (d.sell) { const it = itemById(+d.sell); G.gold += sellPrice(it); G.inv = G.inv.filter(x => x !== it); selItem = null; save(); render(); toast(`Vendu pour ${sellPrice(it)} <i class="coin" aria-label="or"></i>`); return; }
     if (d.up) { const it = itemById(+d.up), cost = upCost(it); if (G.gold < cost) return; G.gold -= cost; it.up++; save(); render(); toast(`${it.name} forgé +${it.up} !`); return; }
   });
   const buy = (cost, fn, msg) => { if (G.gold < cost) { toast('Pas assez d’or'); return; } G.gold -= cost; fn(); save(); render(); toast(msg); SFX.coin(); };
@@ -1957,7 +1960,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Bêta 1.4';
+  const VERSION = 'Bêta 1.5';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
