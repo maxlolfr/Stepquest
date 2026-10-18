@@ -65,6 +65,10 @@ jobs:
           flutter pub get
           flutter build web --release --base-href /${{ github.event.repository.name }}/
 
+      # Installable offline prototype of the island concept, served at /ile/.
+      - name: Add island prototype
+        run: cp -r prototype/ile build/web/ile
+
       - uses: actions/upload-pages-artifact@v3
         with:
           path: build/web
