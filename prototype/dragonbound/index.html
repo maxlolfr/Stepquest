@@ -365,6 +365,66 @@ button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
 .tabs button[aria-selected="true"] { transform: translateY(-4px); }
 .tabs button[aria-selected="true"] i { box-shadow: 0 3px 0 #2a190c, 0 0 14px rgba(255,215,106,.75); }
 .ver { text-align: center; font-family: var(--font-display); font-size: 13px; letter-spacing: .5px; color: rgba(246,231,196,.7); margin-top: 10px; }
+/* World map */
+.wmap { position: relative; border-radius: 18px; overflow: hidden; border: 4px solid #6e4628; box-shadow: 0 6px 0 #3b2414, 0 10px 20px rgba(0,0,0,.35); }
+.wmap .wbg { display: block; width: 100%; height: auto; }
+.pin { position: absolute; transform: translate(-50%, -50%); background: none; border: 0; padding: 0; cursor: pointer; display: grid; place-items: center; }
+.pin { z-index: 1; } .pin.cur { z-index: 3; }
+.pin .med { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-family: var(--emoji); font-size: 22px; overflow: hidden;
+  background: radial-gradient(circle at 50% 35%, #ffe08a, #c4851e); border: 3px solid #5a2e0e; box-shadow: 0 3px 0 #3b2414, 0 0 0 3px rgba(255,243,212,.7); }
+.pin .med img { width: 112%; height: 112%; object-fit: cover; }
+.pin.lock .med { filter: grayscale(1) brightness(.7); }
+.pin.done .med { box-shadow: 0 3px 0 #3b2414, 0 0 0 3px #7cc45a; }
+.pin.cur .med { animation: glow 1.6s ease-in-out infinite; box-shadow: 0 3px 0 #3b2414, 0 0 0 4px #ffd76a, 0 0 18px #ffd76a; }
+.pin .lab { position: absolute; top: 40px; z-index: 2; white-space: nowrap; font-family: var(--font-display); font-size: 12px; color: #fff3d4; background: rgba(42,25,12,.82); padding: 1px 8px; border-radius: 99px; border: 1px solid rgba(255,215,106,.5); }
+.pin .boss { position: absolute; top: -10px; width: 46px; height: 46px; pointer-events: none; }
+.pin .boss.r { left: 48px; } .pin .boss.l { right: 48px; }
+.pin .boss img, .pin .boss .fe { width: 100%; height: 100%; object-fit: contain; font-size: 34px; display: grid; place-items: center; font-family: var(--emoji); filter: drop-shadow(0 3px 3px rgba(0,0,0,.6)); }
+.pin.lock .boss img, .pin.lock .boss .fe { filter: brightness(0) drop-shadow(0 0 6px rgba(160,60,255,.8)); opacity: .85; }
+.pin .boss.beaten { opacity: .35; filter: grayscale(1); }
+.pin .me { position: absolute; top: -24px; z-index: 3; width: 38px; height: 38px; border-radius: 50%; overflow: hidden; border: 3px solid #fff; background: #f6e7c4; box-shadow: 0 3px 6px rgba(0,0,0,.5); display: grid; place-items: center; font-size: 22px; animation: bob 1.4s ease-in-out infinite; }
+.pin .me img { width: 100%; height: 100%; object-fit: cover; }
+@keyframes bob { 50% { transform: translateY(-5px); } }
+/* Boss intro */
+.bossin .bimg { width: 220px; height: 220px; object-fit: contain; filter: drop-shadow(0 0 22px rgba(255,60,40,.8)); animation: bossIn .9s cubic-bezier(.2,1.4,.4,1) both; }
+@keyframes bossIn { 0% { transform: scale(.3) translateY(40px); opacity: 0; filter: brightness(0); } 60% { filter: brightness(0) drop-shadow(0 0 22px rgba(255,60,40,.8)); } 100% { transform: none; opacity: 1; } }
+.bossin h2 { color: #ff8a6a; text-shadow: 0 3px 0 #6a120a, 0 6px 0 #2a0604, 0 0 24px rgba(255,60,40,.7); font-size: 38px; }
+.bossin .vs { font-family: var(--font-display); font-size: 16px; letter-spacing: 4px; color: #ffd76a; animation: rise .4s both; }
+/* Celebrations: level up, chests, trophies */
+.cel { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; overflow: hidden; cursor: pointer;
+  background: radial-gradient(circle at 50% 45%, rgba(60,30,0,.78), rgba(0,0,0,.93)); animation: celIn .25s ease-out; }
+@keyframes celIn { from { opacity: 0; } }
+.cel .rays { position: absolute; left: 50%; top: 44%; width: 170vmax; height: 170vmax; transform: translate(-50%, -50%);
+  background: repeating-conic-gradient(from 0deg, var(--ray, rgba(255,215,106,.26)) 0 9deg, transparent 9deg 18deg);
+  -webkit-mask: radial-gradient(circle, #000 0 12%, transparent 45%); mask: radial-gradient(circle, #000 0 12%, transparent 45%); animation: spin 16s linear infinite; }
+@keyframes spin { to { transform: translate(-50%, -50%) rotate(360deg); } }
+.cel .in { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 0 24px; text-align: center; }
+.cel h2 { margin: 0; font-family: var(--font-display); font-weight: 400; font-size: 46px; line-height: 1; letter-spacing: 1px; color: #ffe08a;
+  text-shadow: 0 3px 0 #a0520e, 0 6px 0 #5a2a06, 0 0 24px rgba(255,200,80,.7); animation: pop .6s cubic-bezier(.2,1.6,.4,1) both .1s; }
+.cel .sub { font-family: var(--font-display); font-size: 20px; color: #fff3d4; text-shadow: 0 2px 0 rgba(0,0,0,.6); animation: rise .5s both .45s; }
+.cel .gains { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; animation: rise .5s both .7s; }
+.cel .gains span { font-family: var(--font-display); font-size: 19px; color: #fff; background: rgba(255,255,255,.12); border: 2px solid rgba(255,215,106,.6); border-radius: 99px; padding: 4px 12px; }
+.cel .tap { margin-top: 14px; font-size: 13px; font-weight: 800; color: rgba(255,243,212,.6); animation: rise .5s both 1.2s; }
+.cel .hero { width: 150px; height: 170px; object-fit: contain; filter: drop-shadow(0 0 18px rgba(255,215,106,.9)); animation: heroUp 1.2s ease-out both; }
+@keyframes heroUp { 0% { transform: translateY(30px) scale(.8); opacity: 0; } 60% { transform: translateY(-8px) scale(1.05); opacity: 1; } 100% { transform: none; } }
+@keyframes pop { 0% { transform: scale(0); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@keyframes rise { from { transform: translateY(16px); opacity: 0; } }
+.cel .conf { position: absolute; top: -20px; width: 9px; height: 14px; border-radius: 2px; z-index: 1; animation: fall var(--d) linear var(--w) both; }
+@keyframes fall { 0% { transform: translate(0, -10vh) rotate(0); } 100% { transform: translate(var(--x), 110vh) rotate(var(--r)); } }
+.cel .chest { width: 170px; height: 170px; object-fit: contain; font-size: 120px; font-family: var(--emoji); display: grid; place-items: center; animation: shake .9s ease-in-out both; filter: drop-shadow(0 8px 12px rgba(0,0,0,.6)); }
+@keyframes shake { 0%,100% { transform: rotate(0) scale(1); } 15% { transform: rotate(-8deg) scale(1.03); } 30% { transform: rotate(8deg) scale(1.05); } 45% { transform: rotate(-10deg) scale(1.07); } 60% { transform: rotate(10deg) scale(1.09); } 75% { transform: rotate(-6deg) scale(1.12); } 90% { transform: rotate(4deg) scale(1.15); } }
+.cel .flash { position: absolute; inset: 0; z-index: 3; background: #fff; opacity: 0; pointer-events: none; }
+.cel .flash.go { animation: flash .6s ease-out; }
+@keyframes flash { 0% { opacity: .95; } 100% { opacity: 0; } }
+.cel .loot { width: 130px; height: 130px; border-radius: 26px; display: grid; place-items: center; font-family: var(--emoji); font-size: 72px; animation: pop .7s cubic-bezier(.2,1.6,.4,1) both;
+  background: radial-gradient(circle at 50% 40%, rgba(255,255,255,.35), rgba(255,255,255,.05)); border: 4px solid var(--rc, #c8d2da); box-shadow: 0 0 30px var(--rc, #c8d2da), inset 0 0 20px rgba(255,255,255,.2); }
+.cel .loot img { width: 84%; height: 84%; object-fit: contain; }
+.cel .rar { font-family: var(--font-display); font-size: 18px; letter-spacing: 2px; color: var(--rc); text-shadow: 0 2px 0 rgba(0,0,0,.7); animation: rise .4s both .3s; }
+.cel .iname { font-family: var(--font-display); font-size: 28px; color: #fff; text-shadow: 0 3px 0 rgba(0,0,0,.6); animation: rise .4s both .4s; }
+.bigstars span { display: inline-block; }
+.bigstars.anim span { animation: starIn .5s cubic-bezier(.2,1.8,.4,1) both; }
+.bigstars.anim span:nth-child(2) { animation-delay: .45s; } .bigstars.anim span:nth-child(3) { animation-delay: .9s; }
+@keyframes starIn { 0% { transform: scale(0) rotate(-90deg); } 100% { transform: scale(1) rotate(0); } }
 /* Intro story */
 .intro { position: fixed; inset: 0; z-index: 50; background: #0b0710; overflow: hidden; display: grid; cursor: pointer; }
 .intro .pic { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transform: scale(1.12); transition: opacity 1s ease, transform 7s ease-out; }
@@ -614,6 +674,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     coin: () => { tone(988, 0.07, 'square', 0.05); tone(1318, 0.14, 'square', 0.05, 0, 0.07); },
     level: () => [392, 523, 659, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.06, 0, i * 0.08)),
     click: () => tone(660, 0.04, 'square', 0.03),
+    star: n => { tone(880 + n * 220, 0.18, 'triangle', 0.07); tone(1760 + n * 440, 0.12, 'sine', 0.03, 0, 0.04); },
+    fanfare: () => { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.2, 'square', 0.045, 0, i * 0.11)); [1046, 1318, 1568].forEach(f => tone(f, 0.7, 'triangle', 0.05, 0, 0.5)); noise(0.5, 0.12, 6000, 0.5); },
+    thump: () => { tone(90, 0.12, 'sine', 0.12, -30); noise(0.06, 0.15, 400); },
+    reveal: r => { [784, 988, 1175, 1568, 1976].slice(0, 2 + r).forEach((f, i) => tone(f, 0.25, 'triangle', 0.05, 0, i * 0.07)); noise(0.4, 0.1 + r * 0.04, 7000); },
   };
   const bgm = document.getElementById('bgm');
   if (bgm) bgm.volume = VOL.music;
@@ -803,7 +867,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
    'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome',
    ...[0, 1, 2, 3, 4, 5].flatMap(n => ['casque', 'armure', 'bottes', 'amulette'].map(sl => `a${n}${sl}`)),
    ...['bone', 'sap', 'ember', 'ooze', 'frost', 'shard', 't0', 't1', 't2', 't3', 't4', 't5'].map(m => 'm_' + m),
-   ...[0, 1, 2, 3, 4, 5, 6, 7].map(n => 'wm' + n), 'uiChest1', 'uiChest2', 'uiChest3', 'uiPotion', 'uiEnergy', 'uiGold', 'uiMats', 'logo', 'intro1', 'intro2', 'intro3', 'intro4', 'intro5', 'intro6'].forEach(k => {
+   ...[0, 1, 2, 3, 4, 5, 6, 7].map(n => 'wm' + n), 'uiChest1', 'uiChest2', 'uiChest3', 'uiPotion', 'uiEnergy', 'uiGold', 'uiMats', 'logo', 'worldmap', 'intro1', 'intro2', 'intro3', 'intro4', 'intro5', 'intro6'].forEach(k => {
     const im = new Image(); im.onload = () => { OPT.add(k); IMG[k] = im; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
       const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; document.querySelectorAll(`[data-ico="${k}"]`).forEach(e => { e.innerHTML = `<img src="img/${k}.webp" alt="">`; }); if (typeof render === 'function' && G) render(); };
     im.onerror = () => {}; im.src = `img/${k}.webp`;
@@ -889,6 +953,63 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     return null;
   }
   const starsHtml = (n, cls = 'stars') => `<div class="${cls}">${[0, 1, 2].map(k => `<span class="${k < n ? '' : 'off'}">⭐</span>`).join('')}</div>`;
+
+  // ---------- Celebrations ----------
+  const RARX = [{ n: 'COMMUN', c: '#c8d2da' }, { n: 'RARE', c: '#5fb0ff' }, { n: 'ÉPIQUE', c: '#c47bff' }, { n: 'LÉGENDAIRE', c: '#ffc23a' }];
+  function confetti(n, cols) {
+    if (reduce) return '';
+    return Array.from({ length: n }, () => `<i class="conf" style="left:${rnd(0, 100)}%;background:${cols[Math.floor(rnd(0, cols.length))]};--x:${rnd(-80, 80)}px;--r:${rnd(200, 720)}deg;--d:${rnd(1.8, 3.2)}s;--w:${rnd(0, .6)}s"></i>`).join('');
+  }
+  // Shows a full-screen celebration; resolves when the player taps (or after a while).
+  function celebrate(html, ray, auto = 4500) {
+    return new Promise(res => {
+      const el = document.createElement('div'); el.className = 'cel'; if (ray) el.style.setProperty('--ray', ray);
+      el.innerHTML = `<div class="rays"></div>${html}`; document.body.appendChild(el);
+      let done = false; const close = () => { if (done) return; done = true; el.style.transition = 'opacity .25s'; el.style.opacity = '0'; setTimeout(() => { el.remove(); res(); }, 250); };
+      setTimeout(() => el.addEventListener('click', close), 400); if (auto) setTimeout(close, auto);
+    });
+  }
+  const TAUNT = { bossBone: 'Tes os rejoindront mon trône !', bossWitch: 'La forêt t\u2019avalera tout entier…', bossDragon: 'Qui ose réveiller le Dragon Écarlate ?',
+    bossHag: 'Mon chaudron a besoin d\u2019un nouvel ingrédient…', bossQueen: 'Ton cœur gèlera avant la fin du combat.', bossVoid: 'Le Néant n\u2019a pas de fin.',
+    bossLich: 'La mort n\u2019est qu\u2019un commencement.', bossVamp: 'Ton sang sera mon festin !' };
+  function bossIntro(k) {
+    const f = M[k]; SFX.thump(); setTimeout(SFX.thump, 220); setTimeout(() => tone(110, 0.9, 'sawtooth', 0.06, -40), 300);
+    const img = ready(k) ? `<img class="bimg" src="img/${k}.webp" alt="">` : `<div class="bimg" style="font-size:150px;font-family:var(--emoji);display:grid;place-items:center">${f.emoji}</div>`;
+    return celebrate(`<div class="in bossin"><div class="vs">⚔️ BOSS ⚔️</div>${img}<h2>${f.name}</h2><div class="sub">« ${TAUNT[k] || 'Prépare-toi à souffrir !'} »</div><div class="tap">Touche pour combattre</div></div>`, 'rgba(255,60,40,.22)', 3500);
+  }
+  function levelUpFx(lvl, s0, s1) {
+    SFX.fanfare();
+    const C = CL(), img = OPT.has(C.sprite) || C.sprite === 'hero' ? `<img class="hero" src="img/${C.sprite}.webp" alt="">` : '';
+    const g = [['❤️', s1.hp - s0.hp], ['⚔️', s1.atk - s0.atk], ['🛡️', s1.def - s0.def], ['✨', s1.mag - s0.mag]].filter(x => x[1] > 0);
+    return celebrate(`${confetti(46, ['#ffd76a', '#ff8a3c', '#7cc45a', '#5fb0ff', '#ff6a8a'])}<div class="in">${img}<h2>NIVEAU ${lvl} !</h2>
+      <div class="sub">Tu deviens plus fort</div><div class="gains">${g.map(([i, v]) => `<span>${i} +${v}</span>`).join('')}</div><div class="tap">Touche pour continuer</div></div>`);
+  }
+  function trophyFx(tro, boss) {
+    SFX.fanfare();
+    return celebrate(`${confetti(36, ['#ffd76a', '#ffffff', '#ffb347'])}<div class="in"><div class="loot" style="--rc:#ffc23a">${icoHtml('m_' + tro.id, tro.icon)}</div>
+      <div class="rar" style="--rc:#ffc23a">TROPHÉE DE BOSS</div><div class="iname">${tro.name}</div><div class="sub">${boss} est tombé !</div><div class="tap">Touche pour continuer</div></div>`);
+  }
+  // Chest opening: the chest shakes, bursts open in a flash, the item pops out in its rarity colour.
+  async function chestFx(it, chestKey, chestEmoji) {
+    const R = RARX[it.r] || RARX[0];
+    let resolveOpen; const opened = new Promise(r => (resolveOpen = r));
+    const el = document.createElement('div'); el.className = 'cel'; el.style.setProperty('--ray', R.c + '44');
+    el.innerHTML = `<div class="rays" style="opacity:0;transition:opacity .4s"></div><div class="flash"></div><div class="in">${OPT.has(chestKey) ? `<img class="chest" src="img/${chestKey}.webp" alt="">` : `<div class="chest">${chestEmoji}</div>`}</div>`;
+    document.body.appendChild(el);
+    [0, 180, 360, 540, 700].forEach(t => setTimeout(SFX.thump, t));
+    setTimeout(() => {
+      el.querySelector('.flash').classList.add('go'); el.querySelector('.rays').style.opacity = '1'; SFX.reveal(it.r);
+      el.querySelector('.in').innerHTML = `${it.r >= 2 ? confetti(it.r === 3 ? 60 : 30, [R.c, '#ffffff', '#ffd76a']) : ''}<div class="loot" style="--rc:${R.c}">${itemIcon(it)}</div>
+        <div class="rar" style="--rc:${R.c}">${R.n}</div><div class="iname">${it.name}</div><div class="tap">Touche pour voir l'objet</div>`;
+      setTimeout(() => el.addEventListener('click', () => { el.remove(); resolveOpen(); }), 500);
+    }, 950);
+    return opened;
+  }
+  function animateWin() {
+    const st = document.querySelector('#mBody .bigstars'); if (!st) return;
+    const on = st.querySelectorAll('span:not(.off)').length; st.classList.add('anim');
+    for (let k = 0; k < on; k++) setTimeout(() => SFX.star(k), 120 + k * 450);
+  }
 
   // ---------- UI helpers ----------
   function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200); }
@@ -980,8 +1101,26 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <button class="btn" type="button" data-close="1">Super !</button>`);
   }
 
+  // Path positions of the 8 kingdoms on the painted world map (percent of width / height).
+  const MAP_POS = [[45, 88], [50, 72], [47, 55], [55, 41], [50, 30], [50, 21], [43, 13], [52, 5]];
+  function worldMapHtml() {
+    const nl = nextLevel(), cur = nl ? nl[0] : WORLDS.length - 1;
+    const C = CL(), face = C.face === 'hero-face' || OPT.has(C.face) ? `<img src="img/${C.face}.webp" alt="">` : C.emoji;
+    const pins = WORLDS.map((W, w) => {
+      const [x, y] = MAP_POS[w] || [50, 50], open = isOpen(w, 0), done = G.stars[lkey(w, 4)] > 0;
+      const st = [0, 1, 2, 3, 4].reduce((a, i) => a + (G.stars[lkey(w, i)] || 0), 0);
+      const bossK = W.levels[4][0][W.levels[4][0].length - 1], side = w % 2 ? 'l' : 'r';
+      return `<button class="pin ${open ? '' : 'lock'} ${done ? 'done' : ''} ${w === cur ? 'cur' : ''}" type="button" data-goworld="${w}" style="left:${x}%;top:${y}%" aria-label="${W.name}">
+        <span class="med">${open ? icoHtml('wm' + w, W.icon) : '🔒'}</span>
+        <span class="lab">${w + 1}. ${W.name.replace(/^(Les |La |Le |L’)/, '')}${open ? ` · ⭐${st}` : ''}</span>
+        <span class="boss ${side} ${done ? 'beaten' : ''}">${thumb(bossK)}</span>
+        ${w === cur ? `<span class="me" style="${side === 'l' ? 'left:28px' : 'right:28px'}">${face}</span>` : ''}</button>`;
+    }).join('');
+    return `<div class="wmap"><img class="wbg" src="img/worldmap.webp" alt="Carte des huit royaumes">${pins}</div>
+      <div class="note" style="text-align:center; color:#f6e7c4; margin:-6px 0 4px">Touche un royaume pour voir ses niveaux</div>`;
+  }
   function renderAdventure() {
-    $('v-adv').innerHTML = WORLDS.map((W, w) => {
+    $('v-adv').innerHTML = worldMapHtml() + WORLDS.map((W, w) => {
       const open = isOpen(w, 0), st = [0, 1, 2, 3, 4].reduce((a, i) => a + (G.stars[lkey(w, i)] || 0), 0);
       const nodes = W.levels.map((lv, i) => {
         const s = G.stars[lkey(w, i)] || 0, o = isOpen(w, i), boss = i === 4, nl = nextLevel();
@@ -991,7 +1130,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         return `<button class="node ${o ? '' : 'lock'} ${s ? 'done' : ''} ${boss ? 'boss' : ''} ${isNext ? 'next' : ''}" type="button" data-level="${w}-${i}" aria-label="Niveau ${w + 1}-${i + 1}">
           <span class="disc">${inner}</span><b>${w + 1}-${i + 1}</b>${o ? starsHtml(s) : '<div class="stars"></div>'}<div class="medals">${medals}</div></button>`;
       }).join('');
-      return `<div class="panel world ${open ? '' : 'locked'}"><div class="ribbon ${W.rib}">${icoHtml('wm' + w, W.icon)} ${W.name}</div>
+      return `<div class="panel world ${open ? '' : 'locked'}" id="world-${w}"><div class="ribbon ${W.rib}">${icoHtml('wm' + w, W.icon)} ${W.name}</div>
         <div class="wdesc">${open ? `${W.desc} · ⭐ ${st}/15${modeOpen(w, 'h') ? ' · 🔥 Héroïque débloqué' : ''}${modeOpen(w, 'l') ? ' · 💀 Légendaire' : ''}` : `🔒 Termine le boss du monde ${w} pour débloquer`}</div>
         <div class="path">${nodes}</div></div>`;
     }).join('') + `<div class="note" style="text-align:center; color:#f6e7c4">D'autres mondes arrivent bientôt…</div>`;
@@ -1138,7 +1277,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     F.foe = { ...f, id: k, hpMax: Math.round(f.hp * L), hp: Math.round(f.hp * L), atk: f.atk * (0.5 + L * 0.5) * A, charging: false, howl: false, anim: { lunge: 0, hit: 0, dead: 0 } };
     F.hero = { lunge: 0, hit: 0, shield: 0, heal: 0 };
     F.turn = 0; F.defending = false; F.busy = false; F.foeSt = {};
-    $('foeName').textContent = f.name; setMusic(f.boss ? 'boss' : 'fight');
+    $('foeName').textContent = f.name; setMusic(f.boss ? 'boss' : 'fight'); if (f.boss) bossIntro(k);
     $('roomTxt').textContent = `${F.mode.medal}${F.w + 1}-${F.i + 1} · ${F.room + 1}/${F.rooms.length}`;
     say(f.boss ? `${f.name} se dresse devant toi !` : `${f.name} surgit ! ${f.tip || ''}`);
     $('intent').hidden = true; updFight();
@@ -1341,7 +1480,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const back = F.stolen; F.stolen = 0;
     G.gold += gold + back; if (pot) G.potions++;
     if (item) G.inv.push(item);
-    const ratio = G.hp / stats().hp;
+    const ratio = G.hp / stats().hp, s0 = stats(), lv0 = G.lvl;
     const lv = gainXp(xp);
     let extra = '';
     if (last) {
@@ -1359,11 +1498,13 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     }
     F.loot.xp += xp; F.loot.gold += gold;
     save(); render();
+    if (tro && last) await trophyFx(tro, f.name);
+    if (lv) await levelUpFx(G.lvl, s0, stats());
     modal(last ? `Niveau ${F.w + 1}-${F.i + 1} réussi !` : 'Victoire !', last ? 'r' : '', `
       ${last ? '' : `<div style="font-family:var(--emoji); font-size:46px">✨</div>`}
       ${extra}
       <div class="rew"><div class="pill"><i>⭐</i>+${xp} XP</div><div class="pill"><i>🪙</i>+${gold}${back ? ` (+${back} repris)` : ''}</div>${pot ? '<div class="pill"><i>🧪</i>+1</div>' : ''}<div class="pill"><i>${icoHtml('m_' + mat.id, mat.icon)}</i>+${nm}</div>${tro ? `<div class="pill"><i>${tro.icon}</i>+${modeIdx(F.mode.id) >= 2 ? 2 : 1}</div>` : ''}</div>
-      ${lv ? `<div class="msg">Niveau ${G.lvl} atteint ! Tes statistiques augmentent et ta vie est restaurée.</div>` : ''}
+      ${lv ? `<div class="msg">Niveau ${G.lvl} atteint ! Tes statistiques augmentent.</div>` : ''}
       ${item ? `<div class="note">Butin trouvé :</div>${tipHtml(item, false)}` : ''}
       ${last ? '' : `<div class="note">Vie actuelle : ${fmt(G.hp)}/${fmt(stats().hp)}${F.status.poison || F.status.burn ? ' · encore sous l’effet d’un mal' : ''}</div>`}
       <div style="display:grid; gap:8px">
@@ -1371,6 +1512,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         ${last ? `<button class="btn ${extra.includes('data-level') ? 'blue' : ''}" type="button" data-home="1"><i>🗺️</i> Retour à la carte</button>`
                : `<button class="btn" type="button" data-next="1"><i>⚔️</i> Combat suivant</button>`}
       </div>`);
+    animateWin();
   }
   async function lose() {
     say('Tu t’effondres…'); SFX.lose(); setMusic('map'); await wait(700);
@@ -1593,6 +1735,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (d.hero) { const first = !G.cls; setHero(d.hero); closeModal(); toast(`${CLASSES[d.hero].name} rejoint l’aventure !`); if (first) levelSheet(0, 0); return; }
     if (d.level) { closeModal(); if (F) endRun(false); const [w, i] = d.level.split('-').map(Number); levelSheet(w, i); return; }
     if (d.mode != null && d.mode !== undefined && b.classList.contains('mode')) { const [w, i, m] = d.mode.split('-'); levelSheet(+w, +i, m || ''); return; }
+    if (d.goworld != null) { const t = $('world-' + d.goworld); if (t) t.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); return; }
     if (d.craft) { const [w, k] = d.craft.split('-').map(Number); craft(w, k); return; }
     if (d.start) { closeModal(); const [w, i] = d.start.split('-').map(Number); startLevel(w, i); return; }
     if (d.tab) { closeModal(); show(d.tab); return; }
@@ -1617,9 +1760,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   $('buyEn').addEventListener('click', () => buy(60, () => { tickEnergy(); G.energy += 20; }, '+20 ⚡'));
   $('buyBox').addEventListener('click', () => {
     if (G.gold < 120) { toast('Pas assez d’or'); return; }
-    G.gold -= 120; const tier = Math.max(1, ...Object.keys(G.stars).map(k => +k[0] + 1)); const it = rollItem(tier, false); G.inv.push(it); save(); render();
-    modal('Coffre ouvert', 'p', `<div style="font-family:var(--emoji); font-size:46px">🎒</div>${tipHtml(it, false)}
-      <button class="btn green" type="button" data-mequip="${it.id}"><i>✅</i> Équiper</button><button class="flee" type="button" data-close="1">Garder dans le sac</button>`);
+    G.gold -= 120; const tier = Math.max(1, ...Object.keys(G.stars).map(k => +k[0] + 1)); const it = rollItem(tier, false); G.inv.push(it); save(); render(); SFX.coin();
+    chestFx(it, 'uiChest1', '📦').then(() => modal('Coffre ouvert', 'p', `${tipHtml(it, false)}
+      <button class="btn green" type="button" data-mequip="${it.id}"><i>✅</i> Équiper</button><button class="flee" type="button" data-close="1">Garder dans le sac</button>`));
   });
   const topTier = () => Math.max(1, ...WORLDS.map((W, w) => (isOpen(w, 0) ? w + 1 : 1)));
   function openBox(cost, minR, title, icon) {
@@ -1627,9 +1770,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     G.gold -= cost; let it = rollItem(topTier(), true); let guard = 0;
     while (it.r < minR && guard++ < 50) { G.nextId--; it = rollItem(topTier(), true); }
     if (it.r < minR) it.r = minR;
-    G.inv.push(it); save(); render(); SFX.coin(); SFX.win();
-    modal(title, 'p', `<div style="font-family:var(--emoji); font-size:46px">${icon}</div>${tipHtml(it, false)}
-      <button class="btn green" type="button" data-mequip="${it.id}"><i>✅</i> Équiper</button><button class="flee" type="button" data-close="1">Garder dans le sac</button>`);
+    G.inv.push(it); save(); render(); SFX.coin();
+    chestFx(it, minR >= 2 ? 'uiChest3' : 'uiChest2', icon).then(() => modal(title, 'p', `${tipHtml(it, false)}
+      <button class="btn green" type="button" data-mequip="${it.id}"><i>✅</i> Équiper</button><button class="flee" type="button" data-close="1">Garder dans le sac</button>`));
   }
   $('buyRare').addEventListener('click', () => openBox(350, 1, 'Coffre rare', '🎁'));
   $('buyLeg').addEventListener('click', () => openBox(1200, 2, 'Coffre légendaire', '👑'));
@@ -1700,7 +1843,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Bêta 1.1';
+  const VERSION = 'Bêta 1.2';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
