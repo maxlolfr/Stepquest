@@ -1702,6 +1702,45 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     return null;
   }
   function loadBg(k) { if (!k || IMG[k]) return; const im = new Image(); im.decoding = 'async'; im.src = `img/${k}.webp`; IMG[k] = im; }
+  // Living levels: per-world ambient life drawn over the painted background, computed from time (no allocations).
+  function ambient(c, W, H, t, w) {
+    if (reduce) return;
+    const hash = i => { const x = Math.sin(i * 127.1 + w * 311.7) * 43758.5; return x - Math.floor(x); };
+    c.save(); c.globalCompositeOperation = 'lighter';
+    const dot = (x, y, r, col) => { c.fillStyle = col; c.beginPath(); c.arc(x, y, r, 0, 7); c.fill(); };
+    const glow = (x, y, r, col) => { const g = c.createRadialGradient(x, y, 0, x, y, r); g.addColorStop(0, col); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.fillRect(x - r, y - r, r * 2, r * 2); };
+    if (w === 1) for (let i = 0; i < 14; i++) { // forest fireflies
+      const a = t / (2200 + hash(i) * 1800) + i * 3, x = (hash(i + 9) * W + Math.sin(a) * 30 + W) % W, y = H * (0.25 + hash(i + 3) * 0.55) + Math.cos(a * 1.3) * 18, f = 0.5 + 0.5 * Math.sin(t / 300 + i * 2);
+      glow(x, y, 9, `rgba(220,255,120,${0.35 * f})`); dot(x, y, 1.6, `rgba(250,255,190,${0.9 * f})`); }
+    else if (w === 2 || w === 7) for (let i = 0; i < 18; i++) { // rising embers (mines) / red sparks (castle)
+      const sp = 0.03 + hash(i) * 0.04, k = ((t * sp / H) + hash(i + 5)) % 1, x = hash(i + 2) * W + Math.sin(t / 700 + i) * 14, y = H * (1.05 - k * 1.1);
+      const col = w === 2 ? `rgba(255,${140 + (i % 3) * 30},60,${(1 - k) * 0.9})` : `rgba(255,70,70,${(1 - k) * 0.7})`; glow(x, y, 6, col); dot(x, y, 1.4, col); }
+    else if (w === 4) { c.globalCompositeOperation = 'source-over'; for (let i = 0; i < 40; i++) { // snow
+      const sp = 0.025 + hash(i) * 0.03, k = ((t * sp / H) + hash(i + 7)) % 1, x = (hash(i + 1) * W + Math.sin(t / 900 + i) * 20 + k * 30) % W, y = k * H * 1.05 - 6;
+      dot(x, y, 1 + hash(i + 4) * 1.8, `rgba(255,255,255,${0.55 + hash(i) * 0.4})`); } }
+    else if (w === 5) for (let i = 0; i < 16; i++) { // void sparkles
+      const k = ((t / (3500 + hash(i) * 2500)) + hash(i + 8)) % 1, x = hash(i + 3) * W, y = H * (0.15 + hash(i + 6) * 0.65) - k * 30, f = Math.sin(k * Math.PI);
+      glow(x, y, 8, `rgba(190,110,255,${0.4 * f})`); dot(x, y, 1.4, `rgba(235,210,255,${f})`); }
+    else if (w === 0 || w === 3 || w === 6) { // dust motes (crypt) / wisps (swamp, necropolis)
+      const col = w === 0 ? [200, 220, 255] : w === 3 ? [190, 140, 255] : [140, 255, 170];
+      for (let i = 0; i < (w === 0 ? 22 : 10); i++) { const a = t / (5000 + hash(i) * 3000) + i * 5, x = (hash(i + 2) * W + Math.sin(a) * 40 + W) % W, y = H * (0.15 + hash(i + 1) * 0.6) + Math.cos(a * 0.7) * 25, f = 0.4 + 0.6 * Math.abs(Math.sin(t / 900 + i));
+        if (w === 0) dot(x, y, 1.1, `rgba(${col},${0.35 * f})`); else { glow(x, y, 12, `rgba(${col},${0.3 * f})`); dot(x, y, 2, `rgba(${col},${0.8 * f})`); } }
+      if (w !== 0) { c.globalCompositeOperation = 'source-over'; for (let j = 0; j < 3; j++) { const y = H * (0.72 + j * 0.09), off = Math.sin(t / 3000 + j * 2) * 40;
+        const g = c.createLinearGradient(0, y - 22, 0, y + 22); g.addColorStop(0, 'rgba(200,210,220,0)'); g.addColorStop(0.5, `rgba(200,${w === 6 ? 230 : 200},220,0.12)`); g.addColorStop(1, 'rgba(200,210,220,0)'); c.fillStyle = g; c.fillRect(-60 + off, y - 22, W + 120, 44); } } }
+    c.restore();
+    // gentle light breathing over the whole scene (torches, moonlight)
+    const fl = 0.04 + 0.03 * Math.sin(t / 420) + 0.02 * Math.sin(t / 133);
+    c.fillStyle = `rgba(${w === 4 ? '200,230,255' : w === 5 || w === 3 ? '160,100,255' : w === 6 ? '120,255,160' : '255,170,80'},${fl})`; c.fillRect(0, 0, W, H);
+  }
+  // Floating health bar above a fighter; the shown value glides toward the real one.
+  function hpBar(c, x, y, v, max, col, key) {
+    const k = F.disp || (F.disp = {}); const tgt = Math.max(0, v / max); if (k[key] == null || tgt > k[key]) k[key] = tgt; else k[key] += (tgt - k[key]) * 0.08;
+    const w = 74, h = 9, x0 = x - w / 2;
+    c.save(); c.fillStyle = 'rgba(20,10,5,.75)'; c.beginPath(); c.roundRect ? c.roundRect(x0 - 2, y - 2, w + 4, h + 4, 6) : c.rect(x0 - 2, y - 2, w + 4, h + 4); c.fill();
+    c.fillStyle = 'rgba(255,240,200,.85)'; c.fillRect(x0, y, w * k[key], h);
+    c.fillStyle = col; c.fillRect(x0, y, w * tgt, h);
+    c.fillStyle = 'rgba(255,255,255,.35)'; c.fillRect(x0, y, w * tgt, h * 0.4); c.restore();
+  }
   function drawScene(t) {
     if ($('fight').hidden || !F) return;
     const r = scv.getBoundingClientRect(); if (!r.width) return;
@@ -1716,6 +1755,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       c.drawImage(im, (W - dw) / 2, H - dh, dw, dh);
       const g = c.createLinearGradient(0, H * 0.55, 0, H); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.35)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
     } else drawBg(c, W, H, t, WORLDS[F.w].theme);
+    ambient(c, W, H, t, F.w);
     const now = performance.now();
     const pulse = (t0, dur) => { const k = (now - t0) / dur; return k >= 0 && k < 1 ? Math.sin(k * Math.PI) : 0; };
     const { hx, hy, ex, ey } = pos();
@@ -1775,6 +1815,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (F.foeSt && F.foeSt.poison && !reduce) for (let j = 0; j < 3; j++) { const k = ((t / 900) + j / 3) % 1; c.fillStyle = `rgba(143,224,122,${.7 * (1 - k)})`; c.beginPath(); c.arc(ex - 20 + j * 20, ey - size * 0.3 - k * size * 0.6 - fly, 4, 0, 7); c.fill(); }
     if (F.buff) { const g = c.createRadialGradient(hx, hy - H * 0.3, 4, hx, hy - H * 0.3, H * 0.4); g.addColorStop(0, 'rgba(255,110,80,.25)'); g.addColorStop(1, 'rgba(255,110,80,0)'); c.fillStyle = g; c.fillRect(hx - H * 0.4, hy - H * 0.56, H * 0.8, H * 0.8); }
     c.restore(); c.globalAlpha = 1;
+    if (!dead) hpBar(c, ex, ey - size - fly - 16, f.hp, f.hpMax, f.boss ? '#ff5a3c' : '#e8453c', 'foe');
+    hpBar(c, hx, hy - hH - 14, G.hp, stats().hp, '#5fd35a', 'me');
     // fx
     fx = fx.filter(p => {
       const k = (now - p.t0) / (p.dur || { txt: 1100, ball: 420, arrow: 320, orb: 320, ice: 380, slash: 320, whirl: 700, rings: 800, rainArrow: 200, cloud: 1000, snow: 1400, runes: 1000 }[p.type] || 700);
@@ -1960,7 +2002,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Bêta 1.5';
+  const VERSION = 'Bêta 1.6';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
