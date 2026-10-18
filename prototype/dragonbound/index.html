@@ -409,6 +409,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   <!-- BOUTIQUE -->
   <section class="view" id="v-shop" hidden>
+    <div class="panel" style="border-style:dashed; margin-bottom:26px">
+      <div class="ribbon r">Mode test</div>
+      <div class="note" id="testTxt" style="margin-bottom:8px"></div>
+      <button class="btn small" id="testBtn" type="button"></button>
+    </div>
     <div class="panel">
       <div class="ribbon p">Boutique</div>
       <div class="shoprow">
@@ -686,7 +691,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const OPT = new Set(); // optional images that loaded (batch 2)
   ['archer', 'mage', 'archer-face', 'mage-face', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
    'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome',
-   'a0casque', 'a0armure', 'a0bottes', 'a0amulette'].forEach(k => {
+   ...[0, 1, 2].flatMap(n => ['casque', 'armure', 'bottes', 'amulette'].map(sl => `a${n}${sl}`))].forEach(k => {
     const im = new Image(); im.onload = () => { OPT.add(k); IMG[k] = im; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
       const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; if (typeof render === 'function' && G) render(); };
     im.onerror = () => {}; im.src = `img/${k}.webp`;
@@ -754,9 +759,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Levels ----------
   const lkey = (w, i, m = '') => `${w}-${i}${m}`;
-  const modeOpen = (w, m) => m === '' || (m === 'h' ? G.stars[lkey(w, 4)] > 0 : G.stars[lkey(w, 4, 'h')] > 0);
+  const modeOpen = (w, m) => G.test || m === '' || (m === 'h' ? G.stars[lkey(w, 4)] > 0 : G.stars[lkey(w, 4, 'h')] > 0);
   let selMode = '';
-  const isOpen = (w, i) => (w === 0 && i === 0) || (i > 0 ? G.stars[lkey(w, i - 1)] > 0 : G.stars[lkey(w - 1, 4)] > 0);
+  const isOpen = (w, i) => G.test || (w === 0 && i === 0) || (i > 0 ? G.stars[lkey(w, i - 1)] > 0 : G.stars[lkey(w - 1, 4)] > 0);
   const recLvl = (w, i) => WORLDS[w].lvl + Math.floor(i * 0.6);
   function nextLevel() {
     for (let w = 0; w < WORLDS.length; w++) for (let i = 0; i < 5; i++) if (isOpen(w, i) && !G.stars[lkey(w, i)]) return [w, i];
@@ -876,7 +881,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (!modeOpen(w, selMode)) selMode = '';
     tickEnergy();
     const W = WORLDS[w], [foes, base] = W.levels[i], MD = MODES.find(m => m.id === selMode), cost = Math.round(base * MD.cost);
-    const s = G.stars[lkey(w, i, selMode)] || 0, can = G.energy >= cost;
+    const s = G.stars[lkey(w, i, selMode)] || 0, can = G.test || G.energy >= cost;
     modal(`Niveau ${w + 1}-${i + 1}`, W.rib, `
       <div class="note">${W.name}${i === 4 ? ' · <b style="color:var(--rib-r)">Boss</b>' : ''}</div>
       <div class="modes">${MODES.map(m => { const o = modeOpen(w, m.id);
@@ -995,6 +1000,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function startLevel(w, i) {
     tickEnergy();
     const lv = WORLDS[w].levels[i], MD = MODES.find(m => m.id === (modeOpen(w, selMode) ? selMode : '')), cost = Math.round(lv[1] * MD.cost);
+    if (G.test) G.energy = Math.max(G.energy, cost);
     if (!isOpen(w, i) || G.energy < cost) return;
     spendEnergy(cost); G.hp = stats().hp; save();
     F = { w, i, mode: MD, tier: w + 1 + (MD.id === 'h' ? 1 : MD.id === 'l' ? 2 : 0), mats: 0, trophy: 0, rooms: lv[0], room: 0, mp: stats().mp, turn: 0, busy: false, defending: false, status: {}, buff: null, stolen: 0, loot: { xp: 0, gold: 0, items: [], pots: 0 } };
@@ -1459,6 +1465,16 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
   $('buyRare').addEventListener('click', () => openBox(350, 1, 'Coffre rare', '🎁'));
   $('buyLeg').addEventListener('click', () => openBox(1200, 2, 'Coffre légendaire', '👑'));
+  function renderTest() {
+    $('testTxt').textContent = G.test ? 'Activé : tous les mondes, tous les niveaux et les modes Héroïque et Légendaire sont ouverts. L\u2019énergie se recharge à chaque combat.' : 'Ouvre tous les niveaux et les modes de difficulté, recharge l\u2019énergie et passe ton héros au niveau 18 et donne de l\u2019or et des matériaux pour essayer la Forge. À retirer avant la sortie.';
+    $('testBtn').textContent = G.test ? '🔒 Désactiver le mode test' : '🔓 Activer le mode test';
+  }
+  $('testBtn').addEventListener('click', () => {
+    G.test = !G.test;
+    if (G.test) { G.energy = EN_MAX; G.gold += 5000; G.lvl = Math.max(G.lvl, 18); G.xp = 0; G.hp = stats().hp; G.potions += 10; [...MATS, ...TROPHIES].forEach(m => { G.mats[m.id] = (G.mats[m.id] || 0) + 40; }); }
+    save(); render(); renderTest(); toast(G.test ? 'Mode test activé' : 'Mode test désactivé');
+  });
+  renderTest();
   $('buyMats').addEventListener('click', () => { const w = topTier() - 1, m = MATS[w]; buy(150, () => { G.mats[m.id] = (G.mats[m.id] || 0) + 5; }, `+5 ${m.icon} ${m.name}`); });
   $('dailyBtn').addEventListener('click', openDaily);
   $('sndBtn').addEventListener('click', () => setSound(!soundOn));
