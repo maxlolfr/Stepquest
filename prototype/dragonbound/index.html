@@ -420,6 +420,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     <div class="panel">
       <div class="ribbon p">Boutique</div>
       <div class="shoprow">
+        <div class="slot" aria-hidden="true">🛏️</div>
+        <div><b>Auberge</b><div class="note" id="innTxt">Une nuit de repos : toute ta vie revient.</div></div>
+        <button class="btn small green" id="buyInn" type="button" style="width:auto">🪙 30</button>
+      </div>
+      <div class="shoprow">
         <div class="slot" data-ico="uiPotion" aria-hidden="true">🧪</div>
         <div><b>Potion de soin</b><div class="note">Rend 45 % de ta vie et guérit poison et brûlure.</div></div>
         <button class="btn small green" id="buyPot" type="button" style="width:auto">🪙 15</button>
@@ -681,7 +686,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     { slot: 'casque', name: 'Heaume', icon: '🪖', mats: 8, gold: 60 }, { slot: 'armure', name: 'Cuirasse', icon: '🥋', mats: 12, gold: 90 },
     { slot: 'bottes', name: 'Bottes', icon: '🥾', mats: 6, gold: 45 }, { slot: 'amulette', name: 'Amulette', icon: '📿', mats: 6, gold: 120, trophy: true },
   ];
-  const DIFF = { base: 1.45, world: 0.22, lvl: 0.18, boss: 0.85, mobAtk: 1.25 };
+  const DIFF = { base: 1.6, world: 0.22, lvl: 0.18, boss: 0.85, mobAtk: 1.25 };
   const MODES = [
     { id: '', name: 'Normal', mult: 1, rew: 1, cost: 1, medal: '' },
     { id: 'h', name: 'Héroïque', mult: 1.7, rew: 1.8, cost: 1.5, medal: '🔥' },
@@ -706,8 +711,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   };
   const SPELLS = {
     fire:  { name: 'Boule de feu', icon: '🔥', cls: 'fire', cost: 8, img: null, tip: 'Gros dégâts magiques.' },
-    frost: { name: 'Givre', icon: '❄️', cls: 'frost', cost: 7, img: 'spFrost', tip: 'Dégâts et peut geler l’ennemi un tour.' },
-    heal:  { name: 'Soin', icon: '💚', cls: 'heal', cost: 9, img: 'spHeal', tip: 'Rend 35 % de vie et guérit les maux.' },
+    frost: { name: 'Givre', icon: '❄️', cls: 'frost', cost: 7, img: 'spFrost', tip: 'Dégâts et peut geler l’ennemi un tour (pas deux fois de suite).' },
+    heal:  { name: 'Soin', icon: '💚', cls: 'heal', cost: 9, img: 'spHeal', tip: 'Rend 25 % de vie et guérit les maux.' },
     whirl: { name: 'Tourbillon', icon: '🌀', cls: 'sp', cost: 8, img: 'spWhirl', tip: 'Un coup dévastateur.' },
     roar:  { name: 'Cri de guerre', icon: '📣', cls: 'roar', cost: 6, img: 'spRoar', tip: '+40 % de force pendant 3 tours.' },
     rain:  { name: 'Pluie', icon: '🎯', cls: 'sp', cost: 8, img: 'spRain', tip: '3 flèches d’affilée.' },
@@ -751,6 +756,14 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 
   // ---------- Energy over time ----------
+  const HP_FULL_MIN = 25;
+  function tickHp() {
+    const now = Date.now(), max = stats().hp;
+    if (!G.hpAt || F || G.hp >= max) { G.hpAt = now; return; }
+    const gain = (now - G.hpAt) / 60000 / HP_FULL_MIN * max;
+    if (gain >= 1) { const g = Math.floor(gain); G.hp = Math.min(max, G.hp + g); G.hpAt += g / max * HP_FULL_MIN * 60000; save(); }
+  }
+  const hpFullIn = () => { const max = stats().hp; return Math.max(0, (max - G.hp) / max * HP_FULL_MIN * 60); };
   function tickEnergy() {
     const now = Date.now();
     if (G.energy >= EN_MAX) { G.enAt = now; return; }
@@ -815,9 +828,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // ---------- Render ----------
   let view = 'hero', selItem = null;
   function renderEnergy() {
-    tickEnergy();
+    tickEnergy(); tickHp(); if (!F) hearts($('hearts'), G.hp, stats().hp);
     $('energy').textContent = `${G.energy}/${EN_MAX}`;
     $('enTimer').textContent = G.energy < EN_MAX ? `+1 ${mmss(nextIn())}` : '';
+    if ($('buyPot')) { $('buyPot').textContent = `🪙 ${potCost()}`; $('buyInn').textContent = `🪙 ${innCost()}`; $('buyInn').disabled = G.hp >= stats().hp; }
   }
   function render() {
     const s = stats(); G.hp = Math.min(G.hp, s.hp);
@@ -917,6 +931,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       ${starsHtml(s, 'bigstars')}
       <div class="foe-list">${foes.map(k => `<div class="foe-row">${thumb(k)}<div><b>${M[k].name}${M[k].boss ? ' <span class="tag">Boss</span>' : ''}</b><span>${M[k].tip || 'Un adversaire redoutable avec une attaque spéciale.'}</span></div></div>`).join('')}</div>
       <div class="note">Conseillé : niveau ${recLvl(w, i) + modeIdx(selMode) * 4} · toi : niveau ${G.lvl} · butin : ${MATS[w].icon} ${MATS[w].name}${i === 4 ? ` et ${TROPHIES[w].icon} ${TROPHIES[w].name}` : ''}</div>
+      <div class="note">❤️ Ta vie : <b>${G.hp} / ${stats().hp}</b>${G.hp < stats().hp ? ` · pleine dans ${mmss(hpFullIn())}` : ''}. Ta vie ne remonte pas entre les combats : soigne-toi avec les potions, l\u2019auberge ou en attendant.</div>
+      ${G.hp < stats().hp * 0.4 ? `<div class="msg" style="color:var(--rib-r)">Tu es gravement blessé ! <button class="flee" type="button" data-tab="shop" style="color:var(--rib-b)">Aller à l\u2019auberge</button></div>` : ''}
       <div class="note">⭐ finir · ⭐⭐ avec plus de 35 % de vie · ⭐⭐⭐ avec plus de 70 %</div>
       <button class="btn" type="button" data-start="${w}-${i}" ${can ? '' : 'disabled'}><i>⚔️</i> Combattre · ${cost} ⚡</button>
       ${can ? '' : `<div class="note">Énergie suffisante dans ${mmss(waitFor(cost))}. <button class="flee" type="button" data-tab="shop" style="color:var(--rib-b)">Recharger à la boutique</button></div>`}
@@ -1030,7 +1046,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const lv = WORLDS[w].levels[i], MD = MODES.find(m => m.id === (modeOpen(w, selMode) ? selMode : '')), cost = Math.round(lv[1] * MD.cost);
     if (G.test) G.energy = Math.max(G.energy, cost);
     if (!isOpen(w, i) || G.energy < cost) return;
-    spendEnergy(cost); G.hp = stats().hp; save(); loadBg(bgKey(w, i));
+    spendEnergy(cost); tickHp(); save(); loadBg(bgKey(w, i));
     F = { w, i, mode: MD, tier: w + 1 + modeIdx(MD.id), mats: 0, trophy: 0, bg: bgKey(w, i), rooms: lv[0], room: 0, mp: stats().mp, turn: 0, busy: false, defending: false, status: {}, buff: null, stolen: 0, loot: { xp: 0, gold: 0, items: [], pots: 0 } };
     $('fight').hidden = false; document.body.style.overflow = 'hidden'; buildSkills(); render();
     nextFoe();
@@ -1100,11 +1116,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       SFX.ice(); fx.push({ type: 'ice', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(380);
       const r = dmgCalc(s.mag * 1.25, F.foe.def * 0.4); hitFoe(r.d, r.crit, true, '#bfe8ff');
       burst(ex, fy, ['#ffffff', '#bfe8ff', '#7ab8ff'], 22);
-      const frz = !F.foe.boss ? Math.random() < 0.6 : Math.random() < 0.3;
+      const frz = !F.foeSt.thawed && (!F.foe.boss ? Math.random() < 0.45 : Math.random() < 0.2);
       if (frz) { F.foeSt.frozen = true; fx.push({ type: 'snow', x: ex, y: fy, t0: now(), dur: 1400 }); }
       say(`Éclair de givre : ${r.d} dégâts${frz ? ' et l’ennemi est gelé !' : '.'}`);
     } else if (kind === 'heal') {
-      const heal = Math.round(s.hp * 0.35); G.hp = Math.min(s.hp, G.hp + heal); F.status = {}; F.hero.heal = now();
+      const heal = Math.round(s.hp * 0.25); G.hp = Math.min(s.hp, G.hp + heal); F.status = {}; F.hero.heal = now();
       SFX.heal(); fx.push({ type: 'runes', x: hx, y: hy, t0: now() }); floatTxt(`+${heal} ❤️`, hx, hy - H * 0.52, '#8fe07a', true);
       say(`Soin arcanique : +${heal} PV, tu es guéri de tes maux.`); await wait(600);
     } else if (kind === 'whirl') {
@@ -1154,7 +1170,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (F.foeSt.poison) { const p = F.foeSt.poison; f.hp -= p.dmg; f.anim.hit = performance.now(); floatTxt(`-${p.dmg} ☠️`, ex, ey - H * f.size * ZOOM, '#b6f27a');
       if (--p.turns <= 0) delete F.foeSt.poison; updFight();
       if (f.hp <= 0) { F.foeKilledByDot = true; return; } await wait(300); }
-    if (F.foeSt.frozen) { delete F.foeSt.frozen; say(`${f.name} est gelé et ne peut pas agir !`); updFight(); return wait(500); }
+    if (!F.foeSt.frozen) delete F.foeSt.thawed;
+    if (F.foeSt.frozen) { delete F.foeSt.frozen; F.foeSt.thawed = true; say(`${f.name} est gelé et ne peut pas agir !`); updFight(); return wait(500); }
     if (f.trait === 'regen' && f.hp < f.hpMax) { const h = Math.round(f.hpMax * 0.06); f.hp = Math.min(f.hpMax, f.hp + h); floatTxt(`+${h}`, ex, ey - H * f.size * ZOOM, '#8fe07a'); }
     if (f.trait === 'slow' && F.turn % 2 === 0) { say(`${f.name} reprend son souffle.`); updFight(); return wait(450); }
     let mult = 1, line = `${f.name} attaque`, extra = null;
@@ -1213,7 +1230,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function gainXp(xp) {
     G.xp += xp; let up = false;
     while (G.xp >= xpNeed()) { G.xp -= xpNeed(); G.lvl++; up = true; }
-    if (up) { G.hp = stats().hp; if (F) F.mp = stats().mp; setTimeout(SFX.level, 500); }
+    if (up) { const m = stats().hp; G.hp = Math.min(m, G.hp + Math.round(m * 0.3)); if (F) F.mp = stats().mp; setTimeout(SFX.level, 500); }
     return up;
   }
 
@@ -1263,13 +1280,13 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
   async function lose() {
     say('Tu t’effondres…'); SFX.lose(); await wait(700);
-    G.hp = stats().hp; save(); render();
+    G.hp = Math.max(1, Math.round(stats().hp * 0.15)); G.hpAt = Date.now(); save(); render();
     modal('Défaite', 'r', `<div style="font-family:var(--emoji); font-size:46px">💫</div>
-      <div class="note">Tu as été ramené au camp. Tu gardes ce que tu as gagné : ${F.loot.xp} XP et ${F.loot.gold} 🪙.</div>
+      <div class="note">Tu as été ramené au camp, très affaibli (15 % de vie). Tu gardes ce que tu as gagné : ${F.loot.xp} XP et ${F.loot.gold} 🪙.</div>
       <div class="note">Conseil : équipe ton meilleur butin, forge ton arme, et pare quand l'ennemi prépare une attaque spéciale.</div>
       <button class="btn" type="button" data-home="1"><i>🗺️</i> Retour à la carte</button>`);
   }
-  function endRun(toMap) { F = null; $('fight').hidden = true; document.body.style.overflow = ''; G.hp = stats().hp; save(); render(); if (toMap) show('adv'); }
+  function endRun(toMap) { F = null; $('fight').hidden = true; document.body.style.overflow = ''; G.hp = Math.max(1, G.hp); G.hpAt = Date.now(); save(); render(); if (toMap) show('adv'); }
 
   function modal(title, rib, body) { $('mRib').textContent = title; $('mRib').className = 'ribbon ' + rib; $('mBody').innerHTML = body; $('mBody').style.display = 'grid'; $('mBody').style.gap = '10px'; $('modal').hidden = false; }
   const closeModal = () => { $('modal').hidden = true; };
@@ -1374,7 +1391,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(W / 2 + i * 30, gy); c.lineTo(W / 2 + i * 90, H); c.stroke(); }
     torch(c, W * 0.12, H * 0.2, t, 0); torch(c, W * 0.88, H * 0.2, t, 1);
   }
-  const BG_HAVE = new Set(['bg0_0', 'bg0_1', 'bg0_4', 'bg1_0', 'bg1_1', 'bg1_2', 'bg1_3', 'bg1_4', 'bg2_0', 'bg2_1', 'bg2_2', 'bg2_3', 'bg2_4', 'bg3_0', 'bg3_1', 'bg3_2', 'bg3_3', 'bg3_4', 'bg4_0', 'bg4_1', 'bg4_2', 'bg4_3', 'bg4_4', 'bg5_0', 'bg5_1', 'bg5_2', 'bg5_3', 'bg5_4', 'bg6_0', 'bg6_1', 'bg6_2', 'bg6_3', 'bg6_4', 'bg7_0', 'bg7_1', 'bg7_2', 'bg7_3', 'bg7_4']);
+  const BG_HAVE = new Set(['bg0_0', 'bg0_1', 'bg0_2', 'bg0_3', 'bg0_4', 'bg1_0', 'bg1_1', 'bg1_2', 'bg1_3', 'bg1_4', 'bg2_0', 'bg2_1', 'bg2_2', 'bg2_3', 'bg2_4', 'bg3_0', 'bg3_1', 'bg3_2', 'bg3_3', 'bg3_4', 'bg4_0', 'bg4_1', 'bg4_2', 'bg4_3', 'bg4_4', 'bg5_0', 'bg5_1', 'bg5_2', 'bg5_3', 'bg5_4', 'bg6_0', 'bg6_1', 'bg6_2', 'bg6_3', 'bg6_4', 'bg7_0', 'bg7_1', 'bg7_2', 'bg7_3', 'bg7_4']);
   // Painted background for a level: its own, else another one from the same world, else the drawn one.
   function bgKey(w, i) {
     if (BG_HAVE.has(`bg${w}_${i}`)) return `bg${w}_${i}`;
@@ -1487,7 +1504,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (d.up) { const it = itemById(+d.up), cost = upCost(it); if (G.gold < cost) return; G.gold -= cost; it.up++; save(); render(); toast(`${it.name} forgé +${it.up} !`); return; }
   });
   const buy = (cost, fn, msg) => { if (G.gold < cost) { toast('Pas assez d’or'); return; } G.gold -= cost; fn(); save(); render(); toast(msg); SFX.coin(); };
-  $('buyPot').addEventListener('click', () => buy(15, () => G.potions++, 'Potion achetée'));
+  function potCost() { return 20 + 2 * G.lvl; }
+  function innCost() { return 15 + 6 * G.lvl; }
+  $('buyPot').addEventListener('click', () => buy(potCost(), () => G.potions++, 'Potion achetée'));
+  $('buyInn').addEventListener('click', () => { if (G.hp >= stats().hp) { toast('Tu es déjà en pleine forme'); return; } buy(innCost(), () => { G.hp = stats().hp; G.hpAt = Date.now(); }, 'Tu te sens reposé ❤️'); });
   $('buyEn').addEventListener('click', () => buy(60, () => { tickEnergy(); G.energy += 20; }, '+20 ⚡'));
   $('buyBox').addEventListener('click', () => {
     if (G.gold < 120) { toast('Pas assez d’or'); return; }
