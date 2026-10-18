@@ -685,7 +685,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   };
   const OPT = new Set(); // optional images that loaded (batch 2)
   ['archer', 'mage', 'archer-face', 'mage-face', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
-   'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome'].forEach(k => {
+   'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome',
+   'a0casque', 'a0armure', 'a0bottes', 'a0amulette'].forEach(k => {
     const im = new Image(); im.onload = () => { OPT.add(k); IMG[k] = im; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
       const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; if (typeof render === 'function' && G) render(); };
     im.onerror = () => {}; im.src = `img/${k}.webp`;
