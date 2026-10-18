@@ -293,6 +293,8 @@ button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
 [data-ico] img, .slot > img { width: 88%; height: 88%; object-fit: contain; }
 .ribbon img { width: 30px; height: 30px; vertical-align: middle; margin: -8px 4px -6px -4px; }
 .pill i img { width: 20px; height: 20px; vertical-align: middle; }
+.vol { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 10px; font-weight: 800; text-align: left; }
+.vol input { width: 100%; accent-color: var(--gold); }
 .modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .mode { font: inherit; font-weight: 800; font-size: 13px; border-radius: 10px; padding: 7px 4px; border: 2px solid #d6b07a; background: rgba(255,255,255,.45); color: var(--ink); cursor: pointer; }
 .mode.on { border-color: var(--gold); background: #fff3d4; box-shadow: 0 0 0 2px rgba(242,182,50,.5); }
@@ -420,6 +422,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     <div class="panel">
       <div class="ribbon p">Boutique</div>
       <div class="shoprow">
+        <div class="slot" aria-hidden="true">🏕️</div>
+        <div><b>Camp</b><div class="note">Te reposer dehors : +35 % de vie, sans or, mais coûte de l'énergie.</div></div>
+        <button class="btn small" id="buyCamp" type="button" style="width:auto">⚡ 12</button>
+      </div>
+      <div class="shoprow">
         <div class="slot" aria-hidden="true">🛏️</div>
         <div><b>Auberge</b><div class="note" id="innTxt">Une nuit de repos : toute ta vie revient.</div></div>
         <button class="btn small green" id="buyInn" type="button" style="width:auto">🪙 30</button>
@@ -514,21 +521,33 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // ---------- Sound: music + synthesized effects ----------
   let soundOn = true;
   try { soundOn = localStorage.getItem('dragonbound.sound') !== 'off'; } catch (e) {}
-  let AC = null;
-  function ac() { if (!AC) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; AC = new A(); } if (AC.state === 'suspended') AC.resume(); return AC; }
+  let AC = null, SFXG = null, MUSG = null;
+  const VOL = { music: 0.35, sfx: 0.8 };
+  try { Object.assign(VOL, JSON.parse(localStorage.getItem('dragonbound.vol')) || {}); } catch (e) {}
+  function ac() {
+    if (!AC) {
+      const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; AC = new A();
+      const comp = AC.createDynamicsCompressor(); comp.connect(AC.destination);
+      SFXG = AC.createGain(); SFXG.gain.value = VOL.sfx * 2.6; SFXG.connect(comp);
+      MUSG = AC.createGain(); MUSG.gain.value = VOL.music;
+      try { const bg = document.getElementById('bgm'); if (bg) { AC.createMediaElementSource(bg).connect(MUSG); MUSG.connect(AC.destination); bg.volume = 1; } } catch (e) {}
+    }
+    if (AC.state === 'suspended') AC.resume(); return AC;
+  }
+  function applyVol() { if (SFXG) SFXG.gain.value = VOL.sfx * 2.6; if (MUSG) MUSG.gain.value = VOL.music; try { localStorage.setItem('dragonbound.vol', JSON.stringify(VOL)); } catch (e) {} }
   function tone(freq, dur, type = 'square', vol = 0.06, slide = 0, delay = 0) {
     if (!soundOn) return; const a = ac(); if (!a) return; const t = a.currentTime + delay;
     const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(freq, t);
     if (slide) o.frequency.linearRampToValueAtTime(Math.max(30, freq + slide), t + dur);
     g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+    o.connect(g).connect(SFXG || a.destination); o.start(t); o.stop(t + dur + 0.02);
   }
   function noise(dur, vol = 0.2, freq = 1500, delay = 0) {
     if (!soundOn) return; const a = ac(); if (!a) return; const t = a.currentTime + delay;
     const len = Math.floor(a.sampleRate * dur), b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
     for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
     const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(); src.buffer = b; f.type = 'bandpass'; f.frequency.value = freq; g.gain.value = vol;
-    src.connect(f).connect(g).connect(a.destination); src.start(t);
+    src.connect(f).connect(g).connect(SFXG || a.destination); src.start(t);
   }
   const SFX = {
     hit: () => { noise(0.09, 0.35, 1600); tone(150, 0.09, 'square', 0.05, -70); },
@@ -550,7 +569,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     click: () => tone(660, 0.04, 'square', 0.03),
   };
   const bgm = document.getElementById('bgm');
-  if (bgm) bgm.volume = 0.45;
+  if (bgm) bgm.volume = VOL.music;
   function playMusic() { if (soundOn && bgm && bgm.paused) bgm.play().catch(() => {}); }
   function setSound(on) {
     soundOn = on; try { localStorage.setItem('dragonbound.sound', on ? 'on' : 'off'); } catch (e) {}
@@ -761,7 +780,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const now = Date.now(), max = stats().hp;
     if (!G.hpAt || F || G.hp >= max) { G.hpAt = now; return; }
     const gain = (now - G.hpAt) / 60000 / HP_FULL_MIN * max;
-    if (gain >= 1) { const g = Math.floor(gain); G.hp = Math.min(max, G.hp + g); G.hpAt += g / max * HP_FULL_MIN * 60000; save(); }
+    // no passive regeneration: potions, inn or camp only
   }
   const hpFullIn = () => { const max = stats().hp; return Math.max(0, (max - G.hp) / max * HP_FULL_MIN * 60); };
   function tickEnergy() {
@@ -831,7 +850,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     tickEnergy(); tickHp(); if (!F) hearts($('hearts'), G.hp, stats().hp);
     $('energy').textContent = `${G.energy}/${EN_MAX}`;
     $('enTimer').textContent = G.energy < EN_MAX ? `+1 ${mmss(nextIn())}` : '';
-    if ($('buyPot')) { $('buyPot').textContent = `🪙 ${potCost()}`; $('buyInn').textContent = `🪙 ${innCost()}`; $('buyInn').disabled = G.hp >= stats().hp; }
+    if ($('buyPot')) { $('buyPot').textContent = `🪙 ${potCost()}`; $('buyInn').textContent = `🪙 ${innCost()}`; $('buyInn').disabled = G.hp >= stats().hp; $('buyCamp').disabled = G.hp >= stats().hp || G.energy < 12; }
   }
   function render() {
     const s = stats(); G.hp = Math.min(G.hp, s.hp);
@@ -931,7 +950,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       ${starsHtml(s, 'bigstars')}
       <div class="foe-list">${foes.map(k => `<div class="foe-row">${thumb(k)}<div><b>${M[k].name}${M[k].boss ? ' <span class="tag">Boss</span>' : ''}</b><span>${M[k].tip || 'Un adversaire redoutable avec une attaque spéciale.'}</span></div></div>`).join('')}</div>
       <div class="note">Conseillé : niveau ${recLvl(w, i) + modeIdx(selMode) * 4} · toi : niveau ${G.lvl} · butin : ${MATS[w].icon} ${MATS[w].name}${i === 4 ? ` et ${TROPHIES[w].icon} ${TROPHIES[w].name}` : ''}</div>
-      <div class="note">❤️ Ta vie : <b>${G.hp} / ${stats().hp}</b>${G.hp < stats().hp ? ` · pleine dans ${mmss(hpFullIn())}` : ''}. Ta vie ne remonte pas entre les combats : soigne-toi avec les potions, l\u2019auberge ou en attendant.</div>
+      <div class="note">❤️ Ta vie : <b>${G.hp} / ${stats().hp}</b>. Ta vie ne remonte jamais toute seule : soigne-toi avec les potions, l\u2019auberge ou le camp.</div>
       ${G.hp < stats().hp * 0.4 ? `<div class="msg" style="color:var(--rib-r)">Tu es gravement blessé ! <button class="flee" type="button" data-tab="shop" style="color:var(--rib-b)">Aller à l\u2019auberge</button></div>` : ''}
       <div class="note">⭐ finir · ⭐⭐ avec plus de 35 % de vie · ⭐⭐⭐ avec plus de 70 %</div>
       <button class="btn" type="button" data-start="${w}-${i}" ${can ? '' : 'disabled'}><i>⚔️</i> Combattre · ${cost} ⚡</button>
@@ -1244,7 +1263,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function gainXp(xp) {
     G.xp += xp; let up = false;
     while (G.xp >= xpNeed()) { G.xp -= xpNeed(); G.lvl++; up = true; }
-    if (up) { const m = stats().hp; G.hp = Math.min(m, G.hp + Math.round(m * 0.3)); if (F) F.mp = stats().mp; setTimeout(SFX.level, 500); }
+    if (up) { if (F) F.mp = stats().mp; setTimeout(SFX.level, 500); }
     return up;
   }
 
@@ -1531,6 +1550,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function potCost() { return 20 + 2 * G.lvl; }
   function innCost() { return 15 + 6 * G.lvl; }
   $('buyPot').addEventListener('click', () => buy(potCost(), () => G.potions++, 'Potion achetée'));
+  $('buyCamp').addEventListener('click', () => { tickEnergy(); const m = stats().hp; if (G.hp >= m) { toast('Tu es déjà en pleine forme'); return; } if (G.energy < 12) { toast('Pas assez d\u2019énergie'); return; }
+    spendEnergy(12); G.hp = Math.min(m, G.hp + Math.round(m * 0.35)); save(); render(); SFX.heal(); toast('Tu te reposes au camp ❤️'); });
   $('buyInn').addEventListener('click', () => { if (G.hp >= stats().hp) { toast('Tu es déjà en pleine forme'); return; } buy(innCost(), () => { G.hp = stats().hp; G.hpAt = Date.now(); }, 'Tu te sens reposé ❤️'); });
   $('buyEn').addEventListener('click', () => buy(60, () => { tickEnergy(); G.energy += 20; }, '+20 ⚡'));
   $('buyBox').addEventListener('click', () => {
@@ -1563,7 +1584,17 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   renderTest();
   $('buyMats').addEventListener('click', () => { const w = topTier() - 1, m = MATS[w]; buy(150, () => { G.mats[m.id] = (G.mats[m.id] || 0) + 5; }, `+5 ${m.icon} ${m.name}`); });
   $('dailyBtn').addEventListener('click', openDaily);
-  $('sndBtn').addEventListener('click', () => setSound(!soundOn));
+  $('sndBtn').addEventListener('click', () => {
+    modal('Son', 'b', `
+      <label class="vol"><span>🎵 Musique</span><input type="range" min="0" max="100" value="${Math.round(VOL.music * 100)}" id="volMus" aria-label="Volume de la musique"></label>
+      <label class="vol"><span>💥 Bruitages</span><input type="range" min="0" max="100" value="${Math.round(VOL.sfx * 100)}" id="volSfx" aria-label="Volume des bruitages"></label>
+      <button class="btn ${soundOn ? '' : 'green'}" type="button" id="muteAll">${soundOn ? '🔇 Tout couper' : '🔊 Remettre le son'}</button>
+      <button class="flee" type="button" data-close="1">Fermer</button>`);
+    $('volMus').addEventListener('input', e => { VOL.music = e.target.value / 100; ac(); if (bgm && !MUSG) bgm.volume = VOL.music; applyVol(); });
+    $('volSfx').addEventListener('input', e => { VOL.sfx = e.target.value / 100; ac(); applyVol(); });
+    $('volSfx').addEventListener('change', () => SFX.hit());
+    $('muteAll').addEventListener('click', () => { setSound(!soundOn); closeModal(); });
+  });
   $('sndBtn2').addEventListener('click', () => setSound(!soundOn));
   setSound(soundOn);
   $('resetBtn').addEventListener('click', () => { $('resetAsk').hidden = false; });
