@@ -1,6 +1,6 @@
 // Offline support: the app shell is cached on first visit, fonts as they load.
-const CACHE = 'dragonbound-v5';
-const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'img/hero.webp', 'img/hero-face.webp', 'img/slime.webp', 'img/rat.webp', 'img/bat.webp', 'img/skel.webp', 'img/bossBone.webp', 'img/wolf.webp', 'img/spider.webp', 'img/shroom.webp', 'img/goblin.webp', 'img/bossWitch.webp', 'img/snake.webp', 'img/imp.webp', 'img/scorp.webp', 'img/golem.webp', 'img/bossDragon.webp', 'img/archer.webp', 'img/mage.webp', 'img/archer-face.webp', 'img/mage-face.webp', 'img/spRain.webp', 'img/spFrost.webp', 'img/spWhirl.webp', 'img/spRoar.webp', 'img/spVenom.webp', 'img/spHeal.webp', 'audio/theme.m4a'];
+const CACHE = 'dragonbound-v6';
+const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'img/hero.webp', 'img/hero-face.webp', 'img/slime.webp', 'img/rat.webp', 'img/bat.webp', 'img/skel.webp', 'img/bossBone.webp', 'img/wolf.webp', 'img/spider.webp', 'img/shroom.webp', 'img/goblin.webp', 'img/bossWitch.webp', 'img/snake.webp', 'img/imp.webp', 'img/scorp.webp', 'img/golem.webp', 'img/bossDragon.webp', 'img/archer.webp', 'img/mage.webp', 'img/archer-face.webp', 'img/mage-face.webp', 'img/spRain.webp', 'img/spFrost.webp', 'img/spWhirl.webp', 'img/spRoar.webp', 'img/spVenom.webp', 'img/spHeal.webp', 'audio/theme.mp3'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).then(() => self.skipWaiting()));
