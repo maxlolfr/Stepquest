@@ -290,7 +290,10 @@ button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
 .shoprow + .shoprow { margin-top: 10px; padding-top: 10px; border-top: 2px dashed #d6b07a; }
 .tag { display: inline-block; font-size: 11px; font-weight: 800; color: #fff; background: var(--rib-r); border-radius: 99px; padding: 1px 7px; margin-left: 4px; }
 .herobox canvas { height: 210px; }
-.modes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+[data-ico] img, .slot > img { width: 88%; height: 88%; object-fit: contain; }
+.ribbon img { width: 30px; height: 30px; vertical-align: middle; margin: -8px 4px -6px -4px; }
+.pill i img { width: 20px; height: 20px; vertical-align: middle; }
+.modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .mode { font: inherit; font-weight: 800; font-size: 13px; border-radius: 10px; padding: 7px 4px; border: 2px solid #d6b07a; background: rgba(255,255,255,.45); color: var(--ink); cursor: pointer; }
 .mode.on { border-color: var(--gold); background: #fff3d4; box-shadow: 0 0 0 2px rgba(242,182,50,.5); }
 .mode[disabled] { opacity: .45; cursor: not-allowed; }
@@ -417,32 +420,32 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     <div class="panel">
       <div class="ribbon p">Boutique</div>
       <div class="shoprow">
-        <div class="slot" aria-hidden="true">🧪</div>
+        <div class="slot" data-ico="uiPotion" aria-hidden="true">🧪</div>
         <div><b>Potion de soin</b><div class="note">Rend 45 % de ta vie et guérit poison et brûlure.</div></div>
         <button class="btn small green" id="buyPot" type="button" style="width:auto">🪙 15</button>
       </div>
       <div class="shoprow">
-        <div class="slot" aria-hidden="true">⚡</div>
+        <div class="slot" data-ico="uiEnergy" aria-hidden="true">⚡</div>
         <div><b>Recharge d'énergie</b><div class="note">+20 ⚡ tout de suite, même au-delà du maximum.</div></div>
         <button class="btn small green" id="buyEn" type="button" style="width:auto">🪙 60</button>
       </div>
       <div class="shoprow">
-        <div class="slot" aria-hidden="true">🎒</div>
+        <div class="slot" data-ico="uiChest1" aria-hidden="true">🎒</div>
         <div><b>Coffre d'équipement</b><div class="note">Un objet au hasard, adapté à ta progression.</div></div>
         <button class="btn small green" id="buyBox" type="button" style="width:auto">🪙 120</button>
       </div>
       <div class="shoprow">
-        <div class="slot r1" aria-hidden="true">🎁</div>
+        <div class="slot r1" data-ico="uiChest2" aria-hidden="true">🎁</div>
         <div><b>Coffre rare</b><div class="note">Un objet Rare ou mieux. 15 % de chance d'Épique.</div></div>
         <button class="btn small green" id="buyRare" type="button" style="width:auto">🪙 350</button>
       </div>
       <div class="shoprow">
-        <div class="slot r3" aria-hidden="true">👑</div>
+        <div class="slot r3" data-ico="uiChest3" aria-hidden="true">👑</div>
         <div><b>Coffre légendaire</b><div class="note">Un objet Épique ou mieux. 25 % de chance de Légendaire.</div></div>
         <button class="btn small green" id="buyLeg" type="button" style="width:auto">🪙 1 200</button>
       </div>
       <div class="shoprow">
-        <div class="slot" aria-hidden="true">📦</div>
+        <div class="slot" data-ico="uiMats" aria-hidden="true">📦</div>
         <div><b>Sac de matériaux</b><div class="note">5 matériaux du monde le plus avancé que tu as atteint, pour la Forge.</div></div>
         <button class="btn small green" id="buyMats" type="button" style="width:auto">🪙 150</button>
       </div>
@@ -629,6 +632,20 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     demon:  { name: 'Démon ailé', emoji: '👹', hp: 318, atk: 82, def: 24, xp: 310, gold: 90, trait: 'drain', tip: 'Il se soigne en te frappant.', size: .56 },
     bossVoid: { name: 'Seigneur du Néant', emoji: '👿', boss: true, hp: 1118, atk: 95, def: 30, xp: 2200, gold: 1000, trait: 'drain', size: .70,
       special: { every: 3, mult: 2.5, warn: 'Le Seigneur ouvre une faille…', hit: 'Déchirure du Néant !', burn: 12, poison: 8 } },
+    // World 7 · Nécropole
+    ghoul:   { name: 'Goule', emoji: '🧟‍♂️', hp: 390, atk: 86, def: 33, xp: 360, gold: 100, trait: 'regen', tip: 'Elle se recompose à chaque tour.', size: .54 },
+    banshee: { name: 'Banshee', emoji: '👻', hp: 330, atk: 92, def: 30, xp: 370, gold: 102, trait: 'evade', tip: 'Insaisissable : esquive un coup sur quatre.', size: .56, fly: true },
+    necro:   { name: 'Nécromancien', emoji: '🧙‍♂️', hp: 350, atk: 96, def: 30, xp: 380, gold: 106, trait: 'burn', tip: 'Ses flammes vertes brûlent 3 tours.', size: .56 },
+    lich:    { name: 'Liche', emoji: '💀', hp: 370, atk: 98, def: 32, xp: 390, gold: 110, trait: 'chill', tip: 'Son toucher glacé vide ton mana.', size: .58 },
+    bossLich: { name: 'Roi-Liche', emoji: '☠️', boss: true, hp: 1350, atk: 106, def: 36, xp: 3000, gold: 1400, trait: 'chill', size: .72,
+      special: { every: 3, mult: 2.5, warn: 'Le Roi-Liche lève son épée runique…', hit: 'Lame de givre !', chill: true } },
+    // World 8 · Château des Vampires
+    vbat:     { name: 'Chauve-souris vampire', emoji: '🦇', hp: 380, atk: 102, def: 34, xp: 420, gold: 115, trait: 'drain', tip: 'Elle se soigne en te mordant.', size: .48, fly: true },
+    werewolf: { name: 'Loup-garou', emoji: '🐺', hp: 480, atk: 112, def: 38, xp: 440, gold: 120, trait: 'howl', tip: 'Il hurle, puis frappe très fort.', size: .60 },
+    armor:    { name: 'Armure hantée', emoji: '🛡️', hp: 460, atk: 98, def: 48, xp: 430, gold: 118, trait: 'double', tip: 'Sa hallebarde frappe deux fois.', size: .58 },
+    vampire:  { name: 'Vampire', emoji: '🧛‍♀️', hp: 430, atk: 110, def: 38, xp: 450, gold: 125, trait: 'drain', tip: 'Elle se soigne en te mordant.', size: .58 },
+    bossVamp: { name: 'Comte Vampire', emoji: '🧛', boss: true, hp: 1600, atk: 120, def: 40, xp: 4000, gold: 1900, trait: 'drain', size: .74,
+      special: { every: 3, mult: 2.6, warn: 'Le Comte se change en nuée de chauves-souris…', hit: 'Morsure écarlate !', poison: 14 } },
   };
   const WORLDS = [
     { name: 'La Crypte oubliée', icon: '🏰', theme: 'crypt', lvl: 1, rib: 'p', desc: 'Des os qui craquent dans le noir…',
@@ -643,25 +660,33 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       levels: [[['harpy'], 14], [['bear', 'harpy'], 14], [['spirit', 'bear'], 15], [['yeti', 'spirit'], 15], [['yeti', 'bossQueen'], 17]] },
     { name: 'La Citadelle du Néant', icon: '🏯', theme: 'void', lvl: 16, rib: 'r', desc: 'Là où la lumière s\u2019éteint…',
       levels: [[['knight'], 16], [['garg', 'knight'], 16], [['warlock', 'garg'], 17], [['demon', 'warlock'], 17], [['demon', 'bossVoid'], 20]] },
+    { name: 'La Nécropole', icon: '⚰️', theme: 'swamp', lvl: 19, rib: 'p', desc: 'Les morts ne dorment plus…',
+      levels: [[['ghoul'], 18], [['banshee', 'ghoul'], 18], [['necro', 'banshee'], 19], [['lich', 'necro'], 19], [['lich', 'bossLich'], 22]] },
+    { name: 'Le Château des Vampires', icon: '🏰', theme: 'void', lvl: 22, rib: 'r', desc: 'Sous la lune de sang…',
+      levels: [[['vbat'], 20], [['werewolf', 'vbat'], 20], [['armor', 'werewolf'], 21], [['vampire', 'armor'], 21], [['vampire', 'bossVamp'], 24]] },
   ];
   // Crafting materials: one per world, plus a trophy dropped by each boss.
   const MATS = [
     { id: 'bone', name: 'Os ancien', icon: '🦴' }, { id: 'sap', name: 'Sève sylvestre', icon: '🌿' }, { id: 'ember', name: 'Braise vive', icon: '🔥' },
     { id: 'ooze', name: 'Vase spectrale', icon: '🫧' }, { id: 'frost', name: 'Cristal de givre', icon: '❄️' }, { id: 'shard', name: 'Éclat du Néant', icon: '🌑' },
+    { id: 'soul', name: 'Poussière d\u2019âme', icon: '👻' }, { id: 'blood', name: 'Sang ancien', icon: '🩸' },
   ];
   const TROPHIES = [
     { id: 't0', name: 'Couronne d\u2019os', icon: '👑' }, { id: 't1', name: 'Larme de Sylvaine', icon: '💧' }, { id: 't2', name: 'Écaille de dragon', icon: '🔶' },
     { id: 't3', name: 'Cœur des marais', icon: '💚' }, { id: 't4', name: 'Diadème de glace', icon: '💎' }, { id: 't5', name: 'Œil du Néant', icon: '👁️' },
+    { id: 't6', name: 'Phylactère', icon: '🔮' }, { id: 't7', name: 'Croc du Comte', icon: '🦷' },
   ];
-  const SETS = ['d\u2019Os', 'Sylvestre', 'de Braise', 'des Marais', 'de Givre', 'du Néant'];
+  const SETS = ['d\u2019Os', 'Sylvestre', 'de Braise', 'des Marais', 'de Givre', 'du Néant', 'Spectrale', 'Écarlate'];
   const SET_PIECES = [
     { slot: 'casque', name: 'Heaume', icon: '🪖', mats: 8, gold: 60 }, { slot: 'armure', name: 'Cuirasse', icon: '🥋', mats: 12, gold: 90 },
     { slot: 'bottes', name: 'Bottes', icon: '🥾', mats: 6, gold: 45 }, { slot: 'amulette', name: 'Amulette', icon: '📿', mats: 6, gold: 120, trophy: true },
   ];
+  const DIFF = { base: 1.45, world: 0.22, lvl: 0.18, boss: 0.85, mobAtk: 1.25 };
   const MODES = [
     { id: '', name: 'Normal', mult: 1, rew: 1, cost: 1, medal: '' },
     { id: 'h', name: 'Héroïque', mult: 1.7, rew: 1.8, cost: 1.5, medal: '🔥' },
     { id: 'l', name: 'Légendaire', mult: 2.6, rew: 3, cost: 2, medal: '💀' },
+    { id: 'c', name: 'Cauchemar', mult: 3.8, rew: 5, cost: 2.5, medal: '👹' },
   ];
   ['hero', ...Object.keys(M).filter(k => !M[k].noImg)].forEach(loadSprite);
   const EN_MAX = 50, EN_SEC = 120;
@@ -691,9 +716,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const OPT = new Set(); // optional images that loaded (batch 2)
   ['archer', 'mage', 'archer-face', 'mage-face', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
    'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome',
-   ...[0, 1, 2].flatMap(n => ['casque', 'armure', 'bottes', 'amulette'].map(sl => `a${n}${sl}`))].forEach(k => {
+   ...[0, 1, 2, 3, 4, 5].flatMap(n => ['casque', 'armure', 'bottes', 'amulette'].map(sl => `a${n}${sl}`)),
+   ...['bone', 'sap', 'ember', 'ooze', 'frost', 'shard', 't0', 't1', 't2', 't3', 't4', 't5'].map(m => 'm_' + m),
+   ...[0, 1, 2, 3, 4, 5, 6, 7].map(n => 'wm' + n), 'uiChest1', 'uiChest2', 'uiChest3', 'uiPotion', 'uiEnergy', 'uiGold', 'uiMats', 'logo'].forEach(k => {
     const im = new Image(); im.onload = () => { OPT.add(k); IMG[k] = im; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
-      const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; if (typeof render === 'function' && G) render(); };
+      const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; document.querySelectorAll(`[data-ico="${k}"]`).forEach(e => { e.innerHTML = `<img src="img/${k}.webp" alt="">`; }); if (typeof render === 'function' && G) render(); };
     im.onerror = () => {}; im.src = `img/${k}.webp`;
   });
   const CL = () => CLASSES[G.cls || 'guerrier'];
@@ -754,12 +781,13 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     let best = { n: 0, set: null }; for (const k in c) if (c[k] > best.n) best = { n: c[k], set: +k };
     return best;
   }
-  const xpNeed = () => 70 + 75 * (G.lvl - 1);
+  const xpNeed = () => 80 + 95 * (G.lvl - 1);
   if (G.hp == null) G.hp = stats().hp;
 
   // ---------- Levels ----------
   const lkey = (w, i, m = '') => `${w}-${i}${m}`;
-  const modeOpen = (w, m) => G.test || m === '' || (m === 'h' ? G.stars[lkey(w, 4)] > 0 : G.stars[lkey(w, 4, 'h')] > 0);
+  const modeIdx = m => MODES.findIndex(x => x.id === m);
+  const modeOpen = (w, m) => { const k = modeIdx(m); return G.test || k <= 0 || G.stars[lkey(w, 4, MODES[k - 1].id)] > 0; };
   let selMode = '';
   const isOpen = (w, i) => G.test || (w === 0 && i === 0) || (i > 0 ? G.stars[lkey(w, i - 1)] > 0 : G.stars[lkey(w - 1, 4)] > 0);
   const recLvl = (w, i) => WORLDS[w].lvl + Math.floor(i * 0.6);
@@ -812,7 +840,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
                 : `<button class="slot empty" type="button" data-ghost="${sl.ghost}" data-slot="${sl.id}" aria-label="${sl.name} : vide"></button>`;
     };
     $('slotsL').innerHTML = SLOTS.slice(0, 3).map(slotHtml).join('');
-    $('slotsR').innerHTML = SLOTS.slice(3).map(slotHtml).join('') + `<button class="slot" type="button" data-tab="shop" aria-label="Potions">🧪<span class="up">${G.potions}</span></button>`;
+    $('slotsR').innerHTML = SLOTS.slice(3).map(slotHtml).join('') + `<button class="slot" type="button" data-tab="shop" aria-label="Potions">${icoHtml('uiPotion', '🧪')}<span class="up">${G.potions}</span></button>`;
     const sb = setBonus();
     $('stats').innerHTML = [['❤️', s.hp, 'Vie'], ['⚔️', s.atk, 'Force'], ['🛡️', s.def, 'Défense'], ['✨', s.mag, 'Magie']]
       .map(([i, v, l]) => `<div class="st"><i>${i}</i><b>${fmt(v)}</b><span>${l}</span></div>`).join('')
@@ -869,7 +897,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         return `<button class="node ${o ? '' : 'lock'} ${s ? 'done' : ''} ${boss ? 'boss' : ''} ${isNext ? 'next' : ''}" type="button" data-level="${w}-${i}" aria-label="Niveau ${w + 1}-${i + 1}">
           <span class="disc">${inner}</span><b>${w + 1}-${i + 1}</b>${o ? starsHtml(s) : '<div class="stars"></div>'}<div class="medals">${medals}</div></button>`;
       }).join('');
-      return `<div class="panel world ${open ? '' : 'locked'}"><div class="ribbon ${W.rib}">${W.icon} ${W.name}</div>
+      return `<div class="panel world ${open ? '' : 'locked'}"><div class="ribbon ${W.rib}">${icoHtml('wm' + w, W.icon)} ${W.name}</div>
         <div class="wdesc">${open ? `${W.desc} · ⭐ ${st}/15${modeOpen(w, 'h') ? ' · 🔥 Héroïque débloqué' : ''}${modeOpen(w, 'l') ? ' · 💀 Légendaire' : ''}` : `🔒 Termine le boss du monde ${w} pour débloquer`}</div>
         <div class="path">${nodes}</div></div>`;
     }).join('') + `<div class="note" style="text-align:center; color:#f6e7c4">D'autres mondes arrivent bientôt…</div>`;
@@ -885,10 +913,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     modal(`Niveau ${w + 1}-${i + 1}`, W.rib, `
       <div class="note">${W.name}${i === 4 ? ' · <b style="color:var(--rib-r)">Boss</b>' : ''}</div>
       <div class="modes">${MODES.map(m => { const o = modeOpen(w, m.id);
-        return `<button class="mode ${m.id === selMode ? 'on' : ''}" type="button" data-mode="${w}-${i}-${m.id}" ${o ? '' : 'disabled'}>${m.medal} ${m.name}<small>${o ? (m.id ? `ennemis ×${m.mult} · butin ×${m.rew}` : 'difficulté de base') : (m.id === 'h' ? 'bats le boss du monde' : 'bats le boss en Héroïque')}</small></button>`; }).join('')}</div>
+        return `<button class="mode ${m.id === selMode ? 'on' : ''}" type="button" data-mode="${w}-${i}-${m.id}" ${o ? '' : 'disabled'}>${m.medal} ${m.name}<small>${o ? (m.id ? `ennemis ×${m.mult} · butin ×${m.rew}` : 'difficulté de base') : (m.id === 'h' ? 'bats le boss du monde' : `bats le boss en ${MODES[modeIdx(m.id) - 1].name}`)}</small></button>`; }).join('')}</div>
       ${starsHtml(s, 'bigstars')}
       <div class="foe-list">${foes.map(k => `<div class="foe-row">${thumb(k)}<div><b>${M[k].name}${M[k].boss ? ' <span class="tag">Boss</span>' : ''}</b><span>${M[k].tip || 'Un adversaire redoutable avec une attaque spéciale.'}</span></div></div>`).join('')}</div>
-      <div class="note">Conseillé : niveau ${recLvl(w, i) + (selMode === 'h' ? 4 : selMode === 'l' ? 8 : 0)} · toi : niveau ${G.lvl} · butin : ${MATS[w].icon} ${MATS[w].name}${i === 4 ? ` et ${TROPHIES[w].icon} ${TROPHIES[w].name}` : ''}</div>
+      <div class="note">Conseillé : niveau ${recLvl(w, i) + modeIdx(selMode) * 4} · toi : niveau ${G.lvl} · butin : ${MATS[w].icon} ${MATS[w].name}${i === 4 ? ` et ${TROPHIES[w].icon} ${TROPHIES[w].name}` : ''}</div>
       <div class="note">⭐ finir · ⭐⭐ avec plus de 35 % de vie · ⭐⭐⭐ avec plus de 70 %</div>
       <button class="btn" type="button" data-start="${w}-${i}" ${can ? '' : 'disabled'}><i>⚔️</i> Combattre · ${cost} ⚡</button>
       ${can ? '' : `<div class="note">Énergie suffisante dans ${mmss(waitFor(cost))}. <button class="flee" type="button" data-tab="shop" style="color:var(--rib-b)">Recharger à la boutique</button></div>`}
@@ -920,7 +948,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
               <div class="recipe"><span class="${hasM ? '' : 'no'}">${mat.icon} ${pc.mats}</span>${pc.trophy ? ` · <span class="${hasT ? '' : 'no'}">${tro.icon} 1</span>` : ''} · <span class="${hasG ? '' : 'no'}">🪙 ${fmt(pc.gold * (w + 1))}</span></div></div>
             <button class="btn small ${hasM && hasT && hasG ? 'green' : ''}" type="button" data-craft="${w}-${k}" ${hasM && hasT && hasG ? '' : 'disabled'} style="width:auto">Forger</button></div>`;
         }).join('');
-        return `<div class="panel"><div class="ribbon ${W.rib}">${W.icon} Panoplie ${SETS[w]}</div>
+        return `<div class="panel"><div class="ribbon ${W.rib}">${icoHtml('wm' + w, W.icon)} Panoplie ${SETS[w]}</div>
           <div class="setbonus">2 pièces : +10 % vie · 4 pièces : +12 % force, défense et magie</div>${rows}</div>`;
       }).join('');
   }
@@ -938,7 +966,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       const eq = G.eq[it.slot] === it.id;
       cells.push(`<button class="slot cell r${it.r} ${selItem === it.id ? 'sel' : ''}" type="button" data-item="${it.id}" aria-label="${it.name}">${itemIcon(it)}${eq ? '<span class="cnt">É</span>' : (it.up ? `<span class="cnt">+${it.up}</span>` : '')}</button>`);
     });
-    cells.push(`<button class="slot cell" type="button" data-tab="shop" aria-label="Potions">🧪<span class="cnt">${G.potions}</span></button>`);
+    cells.push(`<button class="slot cell" type="button" data-tab="shop" aria-label="Potions">${icoHtml('uiPotion', '🧪')}<span class="cnt">${G.potions}</span></button>`);
     while (cells.length < 15) cells.push('<div class="slot cell empty" data-ghost=""></div>');
     $('bagGrid').innerHTML = cells.join('');
     $('bagNote').textContent = `${G.inv.length} objet${G.inv.length > 1 ? 's' : ''} · touche un objet pour le voir. « É » = équipé.`;
@@ -1002,15 +1030,16 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const lv = WORLDS[w].levels[i], MD = MODES.find(m => m.id === (modeOpen(w, selMode) ? selMode : '')), cost = Math.round(lv[1] * MD.cost);
     if (G.test) G.energy = Math.max(G.energy, cost);
     if (!isOpen(w, i) || G.energy < cost) return;
-    spendEnergy(cost); G.hp = stats().hp; save();
-    F = { w, i, mode: MD, tier: w + 1 + (MD.id === 'h' ? 1 : MD.id === 'l' ? 2 : 0), mats: 0, trophy: 0, rooms: lv[0], room: 0, mp: stats().mp, turn: 0, busy: false, defending: false, status: {}, buff: null, stolen: 0, loot: { xp: 0, gold: 0, items: [], pots: 0 } };
+    spendEnergy(cost); G.hp = stats().hp; save(); loadBg(bgKey(w, i));
+    F = { w, i, mode: MD, tier: w + 1 + modeIdx(MD.id), mats: 0, trophy: 0, bg: bgKey(w, i), rooms: lv[0], room: 0, mp: stats().mp, turn: 0, busy: false, defending: false, status: {}, buff: null, stolen: 0, loot: { xp: 0, gold: 0, items: [], pots: 0 } };
     $('fight').hidden = false; document.body.style.overflow = 'hidden'; buildSkills(); render();
     nextFoe();
   }
   function nextFoe() {
     const k = F.rooms[F.room], f = M[k];
-    const L = (1.15 + F.w * 0.22 + F.i * 0.15) * (1 + Math.max(0, G.lvl - recLvl(F.w, F.i) - 1) * 0.06) * F.mode.mult;
-    F.foe = { ...f, id: k, hpMax: Math.round(f.hp * L), hp: Math.round(f.hp * L), atk: f.atk * (0.5 + L * 0.5), charging: false, howl: false, anim: { lunge: 0, hit: 0, dead: 0 } };
+    const L = (DIFF.base + F.w * DIFF.world + F.i * DIFF.lvl) * (1 + Math.min(0.2, Math.max(0, G.lvl - recLvl(F.w, F.i) - 1) * 0.02)) * F.mode.mult * (f.boss ? DIFF.boss : 1);
+    const A = f.boss ? 1 : DIFF.mobAtk;
+    F.foe = { ...f, id: k, hpMax: Math.round(f.hp * L), hp: Math.round(f.hp * L), atk: f.atk * (0.5 + L * 0.5) * A, charging: false, howl: false, anim: { lunge: 0, hit: 0, dead: 0 } };
     F.hero = { lunge: 0, hit: 0, shield: 0, heal: 0 };
     F.turn = 0; F.defending = false; F.busy = false; F.foeSt = {};
     $('foeName').textContent = f.name;
@@ -1196,7 +1225,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const item = (f.boss || (last && Math.random() < 0.6) || Math.random() < 0.2) ? rollItem(F.tier, f.boss) : null;
     const mat = MATS[F.w], nm = Math.round((1 + Math.floor(Math.random() * 2) + (f.boss ? 3 : 0)) * F.mode.rew);
     G.mats[mat.id] = (G.mats[mat.id] || 0) + nm;
-    const tro = f.boss ? TROPHIES[F.w] : null; if (tro) G.mats[tro.id] = (G.mats[tro.id] || 0) + (F.mode.id === 'l' ? 2 : 1);
+    const tro = f.boss ? TROPHIES[F.w] : null; if (tro) G.mats[tro.id] = (G.mats[tro.id] || 0) + (modeIdx(F.mode.id) >= 2 ? 2 : 1);
     const pot = !item && Math.random() < 0.4;
     const back = F.stolen; F.stolen = 0;
     G.gold += gold + back; if (pot) G.potions++;
@@ -1210,7 +1239,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       if (stars > prev) G.stars[k] = stars;
       G.gold += bonus;
       const nl = nextLevel(), unlockedWorld = first && !F.mode.id && F.i === 4 && WORLDS[F.w + 1];
-      const unlockedMode = first && F.i === 4 && F.mode.id !== 'l' ? MODES[MODES.indexOf(F.mode) + 1] : null;
+      const unlockedMode = first && F.i === 4 && modeIdx(F.mode.id) < MODES.length - 1 ? MODES[modeIdx(F.mode.id) + 1] : null;
       extra = `${starsHtml(stars, 'bigstars')}
         ${bonus ? `<div class="msg">Première victoire : +${bonus} 🪙</div>` : (stars > prev ? '<div class="msg">Nouveau record d’étoiles !</div>' : '')}
         ${unlockedWorld ? `<div class="msg">Nouveau monde débloqué : ${WORLDS[F.w + 1].icon} ${WORLDS[F.w + 1].name} !</div>` : ''}
@@ -1222,7 +1251,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     modal(last ? `Niveau ${F.w + 1}-${F.i + 1} réussi !` : 'Victoire !', last ? 'r' : '', `
       ${last ? '' : `<div style="font-family:var(--emoji); font-size:46px">✨</div>`}
       ${extra}
-      <div class="rew"><div class="pill"><i>⭐</i>+${xp} XP</div><div class="pill"><i>🪙</i>+${gold}${back ? ` (+${back} repris)` : ''}</div>${pot ? '<div class="pill"><i>🧪</i>+1</div>' : ''}<div class="pill"><i>${mat.icon}</i>+${nm}</div>${tro ? `<div class="pill"><i>${tro.icon}</i>+${F.mode.id === 'l' ? 2 : 1}</div>` : ''}</div>
+      <div class="rew"><div class="pill"><i>⭐</i>+${xp} XP</div><div class="pill"><i>🪙</i>+${gold}${back ? ` (+${back} repris)` : ''}</div>${pot ? '<div class="pill"><i>🧪</i>+1</div>' : ''}<div class="pill"><i>${icoHtml('m_' + mat.id, mat.icon)}</i>+${nm}</div>${tro ? `<div class="pill"><i>${tro.icon}</i>+${modeIdx(F.mode.id) >= 2 ? 2 : 1}</div>` : ''}</div>
       ${lv ? `<div class="msg">Niveau ${G.lvl} atteint ! Tes statistiques augmentent et ta vie est restaurée.</div>` : ''}
       ${item ? `<div class="note">Butin trouvé :</div>${tipHtml(item, false)}` : ''}
       ${last ? '' : `<div class="note">Vie actuelle : ${fmt(G.hp)}/${fmt(stats().hp)}${F.status.poison || F.status.burn ? ' · encore sous l’effet d’un mal' : ''}</div>`}
@@ -1345,6 +1374,14 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(W / 2 + i * 30, gy); c.lineTo(W / 2 + i * 90, H); c.stroke(); }
     torch(c, W * 0.12, H * 0.2, t, 0); torch(c, W * 0.88, H * 0.2, t, 1);
   }
+  const BG_HAVE = new Set(['bg0_0', 'bg0_1', 'bg0_4', 'bg1_0', 'bg1_1', 'bg1_2', 'bg1_3', 'bg1_4', 'bg2_0', 'bg2_1', 'bg2_2', 'bg2_3', 'bg2_4', 'bg3_0', 'bg3_1', 'bg3_2', 'bg3_3', 'bg3_4', 'bg4_0', 'bg4_1', 'bg4_2', 'bg4_3', 'bg4_4', 'bg5_0', 'bg5_1', 'bg5_2', 'bg5_3', 'bg5_4', 'bg6_0', 'bg6_1', 'bg6_2', 'bg6_3', 'bg6_4', 'bg7_0', 'bg7_1', 'bg7_2', 'bg7_3', 'bg7_4']);
+  // Painted background for a level: its own, else another one from the same world, else the drawn one.
+  function bgKey(w, i) {
+    if (BG_HAVE.has(`bg${w}_${i}`)) return `bg${w}_${i}`;
+    for (const j of [i - 1, i + 1, i - 2, i + 2, 0, 1, 4]) if (j >= 0 && j < 4 && BG_HAVE.has(`bg${w}_${j}`)) return `bg${w}_${j}`;
+    return null;
+  }
+  function loadBg(k) { if (!k || IMG[k]) return; const im = new Image(); im.decoding = 'async'; im.src = `img/${k}.webp`; IMG[k] = im; }
   function drawScene(t) {
     if ($('fight').hidden || !F) return;
     const r = scv.getBoundingClientRect(); if (!r.width) return;
@@ -1352,7 +1389,12 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (scv.width !== Math.round(r.width * dpr) || scv.height !== Math.round(r.height * dpr)) { scv.width = Math.round(r.width * dpr); scv.height = Math.round(r.height * dpr); }
     const c = sctx; c.setTransform(dpr, 0, 0, dpr, 0, 0);
     const W = r.width, H = r.height;
-    drawBg(c, W, H, t, WORLDS[F.w].theme);
+    const bk = F.bg;
+    if (bk && ready(bk)) {
+      const im = IMG[bk], sc = Math.max(W / im.naturalWidth, H / im.naturalHeight), dw = im.naturalWidth * sc, dh = im.naturalHeight * sc;
+      c.drawImage(im, (W - dw) / 2, H - dh, dw, dh);
+      const g = c.createLinearGradient(0, H * 0.55, 0, H); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.35)'); c.fillStyle = g; c.fillRect(0, 0, W, H);
+    } else drawBg(c, W, H, t, WORLDS[F.w].theme);
     const now = performance.now();
     const pulse = (t0, dur) => { const k = (now - t0) / dur; return k >= 0 && k < 1 ? Math.sin(k * Math.PI) : 0; };
     const { hx, hy, ex, ey } = pos();
@@ -1466,12 +1508,12 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   $('buyRare').addEventListener('click', () => openBox(350, 1, 'Coffre rare', '🎁'));
   $('buyLeg').addEventListener('click', () => openBox(1200, 2, 'Coffre légendaire', '👑'));
   function renderTest() {
-    $('testTxt').textContent = G.test ? 'Activé : tous les mondes, tous les niveaux et les modes Héroïque et Légendaire sont ouverts. L\u2019énergie se recharge à chaque combat.' : 'Ouvre tous les niveaux et les modes de difficulté, recharge l\u2019énergie et passe ton héros au niveau 18 et donne de l\u2019or et des matériaux pour essayer la Forge. À retirer avant la sortie.';
+    $('testTxt').textContent = G.test ? 'Activé : tous les mondes, tous les niveaux et les modes Héroïque et Légendaire sont ouverts. L\u2019énergie se recharge à chaque combat.' : 'Ouvre tous les niveaux et les modes de difficulté, recharge l\u2019énergie et passe ton héros au niveau 24 et donne de l\u2019or et des matériaux pour essayer la Forge. À retirer avant la sortie.';
     $('testBtn').textContent = G.test ? '🔒 Désactiver le mode test' : '🔓 Activer le mode test';
   }
   $('testBtn').addEventListener('click', () => {
     G.test = !G.test;
-    if (G.test) { G.energy = EN_MAX; G.gold += 5000; G.lvl = Math.max(G.lvl, 18); G.xp = 0; G.hp = stats().hp; G.potions += 10; [...MATS, ...TROPHIES].forEach(m => { G.mats[m.id] = (G.mats[m.id] || 0) + 40; }); }
+    if (G.test) { G.energy = EN_MAX; G.gold += 5000; G.lvl = Math.max(G.lvl, 24); G.xp = 0; G.hp = stats().hp; G.potions += 10; [...MATS, ...TROPHIES].forEach(m => { G.mats[m.id] = (G.mats[m.id] || 0) + 40; }); }
     save(); render(); renderTest(); toast(G.test ? 'Mode test activé' : 'Mode test désactivé');
   });
   renderTest();
@@ -1525,7 +1567,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   render();
   if (!G.welcomed) {
     G.welcomed = true; save();
-    modal('Bienvenue, aventurier', 'b', `<div style="font-family:var(--emoji); font-size:56px">🏰</div>
+    modal('Bienvenue, aventurier', 'b', `<img src="img/logo.webp" alt="StepQuest Dragonbound" style="width:100%; max-width:320px; margin:0 auto; display:block">
       <div style="font-size:15px">Les monstres envahissent la vallée. Choisis ton héros parmi un guerrier, une archère et un mage, traverse les mondes et bats les boss.</div>
       <div class="note">Chaque niveau coûte de l'énergie ⚡. Elle se recharge toute seule : +1 toutes les 2 minutes, jusqu'à ${EN_MAX}. Reviens chaque jour pour ton coffre gratuit !</div>
       <button class="btn" type="button" data-pickhero="1"><i>⚔️</i> Choisir mon héros</button>`);
