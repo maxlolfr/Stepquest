@@ -14,7 +14,7 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
 <style>
 /* Layout: cozy fantasy RPG, one phone column of parchment panels framed in wood, ribbon titles, HUD on top, round tab buttons at the bottom; combat opens full screen. Committed single light look. */
 :root {
@@ -36,7 +36,7 @@
   --rib-b: #2f5fa8;
   --rib-r: #b53a2c;
   --r0: #a7a29a; --r1: #3d8be0; --r2: #9b59d0; --r3: #f08c1a;
-  --font-display: "Pixelify Sans", "Nunito", system-ui, sans-serif;
+  --font-display: "Lilita One", "Nunito", system-ui, sans-serif;
   --font-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
   --emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
 }
@@ -341,6 +341,49 @@ button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
 .minibars i { display: block; height: 6px; border-radius: 99px; background: linear-gradient(90deg, var(--gold), #e09a1e); }
 .portrait .pe { font-family: var(--emoji); font-size: 42px; }
 .cls-lock { color: #ff8a7a; font-size: 12px; font-weight: 800; }
+/* ---- Bêta refresh: storybook title font, glossy game buttons ---- */
+:root { font-synthesis: none; }
+.btn, .tabs button, .ribbon, .pill, .hname, .dtitle, .mode, .bigstars { font-weight: 400 !important; }
+.btn { position: relative; overflow: hidden; font-size: 21px; letter-spacing: .6px; border-radius: 18px; padding: 13px 20px;
+  background: linear-gradient(180deg, #ffc25a 0%, #f39a2c 45%, #d9701a 100%); border: 3px solid #6b300c;
+  box-shadow: inset 0 -5px 0 rgba(120,40,0,.28), inset 0 3px 0 rgba(255,255,255,.45), 0 5px 0 #4f230a, 0 8px 14px rgba(40,15,0,.35);
+  text-shadow: 0 2px 0 #7a3410, 0 0 6px rgba(120,40,0,.35); transition: transform .08s, box-shadow .08s, filter .15s; }
+.btn::before { content: ""; position: absolute; left: 8%; right: 8%; top: 4px; height: 38%; border-radius: 12px 12px 30px 30px;
+  background: linear-gradient(180deg, rgba(255,255,255,.55), rgba(255,255,255,0)); pointer-events: none; }
+.btn:hover:not([disabled]) { filter: brightness(1.06); }
+.btn:active:not([disabled]) { transform: translateY(3px) scale(.985); box-shadow: inset 0 -3px 0 rgba(120,40,0,.28), inset 0 2px 0 rgba(255,255,255,.4), 0 2px 0 #4f230a, 0 3px 6px rgba(40,15,0,.3); }
+.btn.green { background: linear-gradient(180deg, #a6e27a 0%, #6cbf47 45%, #3f8a2c 100%); border-color: #234d17; text-shadow: 0 2px 0 #2a5a1a;
+  box-shadow: inset 0 -5px 0 rgba(0,60,0,.25), inset 0 3px 0 rgba(255,255,255,.45), 0 5px 0 #193a10, 0 8px 14px rgba(0,30,0,.35); }
+.btn.blue { background: linear-gradient(180deg, #8cc4ff 0%, #4f93e6 45%, #2a62b8 100%); border-color: #163566; text-shadow: 0 2px 0 #1d4384;
+  box-shadow: inset 0 -5px 0 rgba(0,20,80,.25), inset 0 3px 0 rgba(255,255,255,.45), 0 5px 0 #10284d, 0 8px 14px rgba(0,10,40,.35); }
+.btn.small { font-size: 16px; padding: 8px 14px; border-radius: 14px; }
+.btn.small::before { top: 3px; }
+.btn[disabled] { filter: grayscale(.85) brightness(.92); opacity: .8; }
+.flee { font-family: var(--font-display); font-weight: 400; font-size: 15px; letter-spacing: .3px; padding: 8px 14px; border-radius: 99px; }
+.ribbon { font-size: 18px; letter-spacing: .6px; text-shadow: 0 2px 0 rgba(0,0,0,.35); }
+.tabs button { font-size: 14px; letter-spacing: .3px; transition: transform .15s; }
+.tabs button[aria-selected="true"] { transform: translateY(-4px); }
+.tabs button[aria-selected="true"] i { box-shadow: 0 3px 0 #2a190c, 0 0 14px rgba(255,215,106,.75); }
+.ver { text-align: center; font-family: var(--font-display); font-size: 13px; letter-spacing: .5px; color: rgba(246,231,196,.7); margin-top: 10px; }
+/* Intro story */
+.intro { position: fixed; inset: 0; z-index: 50; background: #0b0710; overflow: hidden; display: grid; cursor: pointer; }
+.intro .pic { position: absolute; inset: 0; background-size: cover; background-position: center; opacity: 0; transform: scale(1.12); transition: opacity 1s ease, transform 7s ease-out; }
+.intro .pic.on { opacity: 1; transform: scale(1); }
+.intro::after { content: ""; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,0) 35%, rgba(0,0,0,.15) 55%, rgba(0,0,0,.85) 100%); pointer-events: none; }
+.intro .txt { position: absolute; left: 0; right: 0; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); z-index: 2; padding: 0 28px; text-align: center;
+  font-family: var(--font-display); font-size: 25px; line-height: 1.3; color: #fff3d4; text-shadow: 0 3px 0 rgba(0,0,0,.6), 0 0 18px rgba(0,0,0,.6); opacity: 0; transform: translateY(14px); transition: opacity .8s .3s, transform .8s .3s; }
+.intro .txt.on { opacity: 1; transform: none; }
+.intro .heroes { position: absolute; left: 0; right: 0; bottom: calc(190px + env(safe-area-inset-bottom, 0px)); z-index: 1; display: flex; justify-content: center; align-items: flex-end; gap: 0; opacity: 0; transition: opacity 1s .2s; }
+.intro .heroes.on { opacity: 1; }
+.intro .heroes img { height: 170px; filter: drop-shadow(0 6px 8px rgba(0,0,0,.6)); }
+.intro .logo { position: absolute; left: 50%; top: 22%; width: min(86%, 380px); transform: translate(-50%, 0) scale(.9); z-index: 2; opacity: 0; transition: opacity 1s, transform 1.2s; }
+.intro .logo.on { opacity: 1; transform: translate(-50%, 0) scale(1); }
+.intro .skip { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: 14px; z-index: 3; }
+.intro .tapnote { position: absolute; left: 0; right: 0; bottom: calc(46px + env(safe-area-inset-bottom, 0px)); z-index: 2; text-align: center; color: rgba(255,243,212,.65); font-size: 14px; font-weight: 800; animation: blink 1.6s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .3; } }
+.intro .dots { position: absolute; left: 0; right: 0; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); z-index: 2; display: flex; justify-content: center; gap: 6px; }
+.intro .dots i { width: 7px; height: 7px; border-radius: 50%; background: rgba(255,243,212,.35); }
+.intro .dots i.on { background: #ffd76a; }
 </style>
 
 <style>
@@ -465,6 +508,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     <div class="panel" style="margin-top:26px">
       <div class="ribbon w">Partie</div>
       <div class="note">Ta partie est sauvegardée sur ce téléphone.</div>
+      <button class="flee" id="introBtn" type="button" style="color:var(--rib-b)">🎬 Revoir l'introduction</button>
       <button class="flee" id="resetBtn" type="button" style="color:var(--rib-r); margin-top:6px">Recommencer depuis le début</button>
       <div class="msg" id="resetAsk" hidden>Effacer ta partie ? <button class="flee" id="resetYes" type="button" style="color:var(--rib-r)">Oui, effacer</button> <button class="flee" id="resetNo" type="button">Non</button></div>
     </div>
@@ -505,6 +549,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   </div>
 </div>
 
+<div class="intro" id="intro" hidden></div>
 <div class="modal" id="modal" hidden><div class="panel"><div class="ribbon" id="mRib"></div><div id="mBody"></div></div></div>
 <div class="toast" id="toast"></div>
 
@@ -756,7 +801,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
    'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome',
    ...[0, 1, 2, 3, 4, 5].flatMap(n => ['casque', 'armure', 'bottes', 'amulette'].map(sl => `a${n}${sl}`)),
    ...['bone', 'sap', 'ember', 'ooze', 'frost', 'shard', 't0', 't1', 't2', 't3', 't4', 't5'].map(m => 'm_' + m),
-   ...[0, 1, 2, 3, 4, 5, 6, 7].map(n => 'wm' + n), 'uiChest1', 'uiChest2', 'uiChest3', 'uiPotion', 'uiEnergy', 'uiGold', 'uiMats', 'logo'].forEach(k => {
+   ...[0, 1, 2, 3, 4, 5, 6, 7].map(n => 'wm' + n), 'uiChest1', 'uiChest2', 'uiChest3', 'uiPotion', 'uiEnergy', 'uiGold', 'uiMats', 'logo', 'intro1', 'intro2', 'intro3', 'intro4', 'intro5', 'intro6'].forEach(k => {
     const im = new Image(); im.onload = () => { OPT.add(k); IMG[k] = im; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
       const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; document.querySelectorAll(`[data-ico="${k}"]`).forEach(e => { e.innerHTML = `<img src="img/${k}.webp" alt="">`; }); if (typeof render === 'function' && G) render(); };
     im.onerror = () => {}; im.src = `img/${k}.webp`;
@@ -1487,7 +1532,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     fx = fx.filter(p => {
       const k = (now - p.t0) / (p.dur || { txt: 1100, ball: 420, arrow: 320, orb: 320, ice: 380, slash: 320, whirl: 700, rings: 800, rainArrow: 200, cloud: 1000, snow: 1400, runes: 1000 }[p.type] || 700);
       if (k >= 1) return false;
-      if (p.type === 'txt') { c.font = `700 ${p.big ? 30 : 22}px "Pixelify Sans", system-ui, sans-serif`; c.textAlign = 'center'; c.lineWidth = 4; c.strokeStyle = 'rgba(30,15,5,.8)';
+      if (p.type === 'txt') { c.font = `700 ${p.big ? 30 : 22}px "Lilita One", system-ui, sans-serif`; c.textAlign = 'center'; c.lineWidth = 4; c.strokeStyle = 'rgba(30,15,5,.8)';
         const y = p.y - k * 40; c.globalAlpha = 1 - Math.max(0, k - 0.6) / 0.4; c.strokeText(p.text, p.x, y); c.fillStyle = p.color; c.fillText(p.text, p.x, y); c.globalAlpha = 1; }
       else if (p.type === 'slash') { c.strokeStyle = `rgba(255,255,255,${1 - k})`; c.lineWidth = 5; c.lineCap = 'round';
         c.beginPath(); c.arc(p.x - 10, p.y, 46, -1.2 + k * 0.6, 0.6 + k * 0.6); c.stroke(); c.strokeStyle = `rgba(255,215,106,${(1 - k) * .8})`; c.lineWidth = 2; c.beginPath(); c.arc(p.x - 10, p.y, 40, -1.1 + k * 0.6, 0.5 + k * 0.6); c.stroke(); }
@@ -1518,7 +1563,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
           c.fillRect(p.x + Math.cos(a) * (20 + k * 50), p.y + Math.sin(a) * (14 + k * 30) + k * 20, 3, 3); }
         c.fillStyle = `rgba(160,210,255,${.3 * (1 - k)})`; c.beginPath(); c.arc(p.x, p.y, 60, 0, 7); c.fill(); }
       else if (p.type === 'runes') { for (let j = 0; j < 8; j++) { const a = j / 8 * Math.PI * 2 + k * 3, rr = 40 + k * 10;
-          c.fillStyle = `rgba(143,224,122,${1 - k})`; c.font = `700 16px "Pixelify Sans", sans-serif`; c.textAlign = 'center';
+          c.fillStyle = `rgba(143,224,122,${1 - k})`; c.font = `700 16px "Lilita One", sans-serif`; c.textAlign = 'center';
           c.fillText('ᚱᚢᚾᛖᛋᚨᛚᛁ'[j], p.x + Math.cos(a) * rr, p.y - 70 + Math.sin(a) * rr * 0.5 - k * 40); }
         const g = c.createRadialGradient(p.x, p.y - 60, 4, p.x, p.y - 60, 80); g.addColorStop(0, `rgba(143,224,122,${.4 * (1 - k)})`); g.addColorStop(1, 'rgba(143,224,122,0)'); c.fillStyle = g; c.fillRect(p.x - 90, p.y - 150, 180, 180); }
       else if (p.type === 'ball') { const e = k * k * (3 - 2 * k), x = p.x0 + (p.x1 - p.x0) * e, y = p.y0 + (p.y1 - p.y0) * e - Math.sin(e * Math.PI) * 26;
@@ -1652,14 +1697,51 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   G.inv.forEach(it => { if (it.slot === 'arme' && !it.cls) it.cls = 'guerrier'; });
 
   // ---------- Start ----------
+  // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
+  const VERSION = 'Bêta 1.0';
+  document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
+  // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
+  const INTRO = [
+    { img: ['intro1', 'bg1_0'], txt: 'Il était une fois la vallée d\u2019Aube-Claire, un pays de forêts dorées et de villages paisibles.' },
+    { img: ['intro2', 'bg2_4'], txt: 'Mais une nuit, sous les Mines de Braise, le Dragon Écarlate s\u2019est réveillé…' },
+    { img: ['intro3', 'bg5_4'], txt: 'Son rugissement a brisé le sceau du Néant. Les monstres ont envahi les huit royaumes.' },
+    { img: ['intro4', 'bg0_0'], txt: 'Des cryptes oubliées au château des vampires, les ténèbres se répandent.' },
+    { img: ['intro5', 'bg1_1'], heroes: true, txt: 'Trois jeunes héros se lèvent : Aldric le guerrier, Lyra l\u2019archère et Orin le mage.' },
+    { img: ['intro6', 'bg0_4'], logo: true, txt: 'Ta quête commence maintenant.' },
+  ];
+  function playIntro(done) {
+    const el = $('intro'); let k = -1, timer = null;
+    const pick = s => s.img.find(n => n.startsWith('bg') ? BG_HAVE.has(n) : OPT.has(n)) || 'bg1_0';
+    el.innerHTML = INTRO.map(s => `<div class="pic" style="background-image:url(img/${pick(s)}.webp)"></div>`).join('')
+      + `<div class="heroes"><img src="img/archer.webp" alt=""><img src="img/hero.webp" alt="" style="height:190px"><img src="img/mage.webp" alt="" style="transform:scaleX(-1)"></div>
+         <img class="logo" src="img/logo.webp" alt="StepQuest Dragonbound"><div class="txt"></div>
+         <div class="tapnote">Touche pour continuer</div><div class="dots">${INTRO.map(() => '<i></i>').join('')}</div>
+         <button class="btn small skip" type="button" style="width:auto">Passer ⏭</button>`;
+    el.hidden = false;
+    const pics = el.querySelectorAll('.pic'), txt = el.querySelector('.txt'), dots = el.querySelectorAll('.dots i');
+    const finish = () => { clearTimeout(timer); el.hidden = true; el.innerHTML = ''; G.introSeen = true; save(); if (done) done(); };
+    const next = () => {
+      k++; if (k >= INTRO.length) return finish();
+      const sl = INTRO[k]; clearTimeout(timer);
+      pics.forEach((p, i) => p.classList.toggle('on', i === k)); dots.forEach((d, i) => d.classList.toggle('on', i <= k));
+      txt.classList.remove('on'); setTimeout(() => { txt.textContent = sl.txt; txt.classList.add('on'); }, 150);
+      el.querySelector('.heroes').classList.toggle('on', !!sl.heroes); el.querySelector('.logo').classList.toggle('on', !!sl.logo);
+      timer = setTimeout(next, 6500);
+    };
+    el.onclick = e => { if (e.target.closest('.skip')) finish(); else next(); };
+    next();
+  }
+  $('introBtn').addEventListener('click', () => playIntro());
   if (!G.cls && G.welcomed) { G.cls = 'guerrier'; save(); } // players from before the hero choice
   render();
   if (!G.welcomed) {
     G.welcomed = true; save();
+    playIntro(() => {
     modal('Bienvenue, aventurier', 'b', `<img src="img/logo.webp" alt="StepQuest Dragonbound" style="width:100%; max-width:320px; margin:0 auto; display:block">
       <div style="font-size:15px">Les monstres envahissent la vallée. Choisis ton héros parmi un guerrier, une archère et un mage, traverse les mondes et bats les boss.</div>
       <div class="note">Chaque niveau coûte de l'énergie ⚡. Elle se recharge toute seule : +1 toutes les 2 minutes, jusqu'à ${EN_MAX}. Reviens chaque jour pour ton coffre gratuit !</div>
       <button class="btn" type="button" data-pickhero="1"><i>⚔️</i> Choisir mon héros</button>`);
+    });
   }
   function loop(t) { drawHero(t); drawScene(t); requestAnimationFrame(loop); }
   requestAnimationFrame(loop);
