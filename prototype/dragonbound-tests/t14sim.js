@@ -21,6 +21,8 @@ const cls=process.argv[2], RUNS=+process.argv[3]||1, out=[];
       else if (F.foe.charging||F.foe.howl) k='def';
       else if (cls==='guerrier') k = (!F.buff&&can('roar'))?'roar':can('whirl')?'whirl':'atk';
       else if (cls==='archer') k = (!F.foeSt.poison&&can('venom'))?'venom':can('rain')?'rain':'atk';
+      else if (cls==='paladin') k = (!F.aegis&&can('aegis')&&G.hp<s.hp*0.75)?'aegis':can('smite')?'smite':'atk';
+      else if (cls==='rogue') k = (!F.shadowCrit&&can('shadow'))?'shadow':can('blades')?'blades':'atk';
       else k = can('frost')&&!F.foeSt.frozen?'frost':can('fire')?'fire':'atk';
       if(k!=='atk' && F.st<stc(k)) k=(k==='def'&&G.potions>0&&G.hp<s.hp*0.5)?'pot':'atk';
       if(k==='atk' && F.st<10) rec.ex++;
