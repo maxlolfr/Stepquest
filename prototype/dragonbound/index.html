@@ -1319,6 +1319,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (F.status.poison) st.push(`☠️ Poison ${F.status.poison.turns}`);
     if (F.status.burn) st.push(`🔥 Brûlure ${F.status.burn.turns}`);
     if (F.foe.howl) st.push('🐺 Prêt à mordre');
+    if (F.foe.ph) { const ph = F.foe.ph; st.push(`⚠️ Phase 2 : ${PHASES[F.foe.id].name}`);
+      if (ph.shield > 0) st.push(`🦴 Mur d\u2019os ${ph.shield}`); if (ph.fly) st.push('🐉 En vol'); if (ph.stun) st.push('💫 Dragon étourdi'); if (ph.ghost) st.push('👻 Intangible'); }
+    if (F.heroFrozen) st.push('🧊 Tu es gelé');
     $('status').innerHTML = st.map(x => `<span>${x}</span>`).join('');
     document.querySelectorAll('#skills .skill').forEach(b => { const id = b.dataset.skill, sp = SPELLS[id];
       b.disabled = F.busy || (sp && F.mp < sp.cost) || (id !== 'atk' && stCost(id) > F.st) || (id === 'pot' && (G.potions < 1 || (G.hp >= s.hp && !F.status.poison && !F.status.burn)))
@@ -1360,17 +1363,96 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const ZOOM = 0.76; // smaller characters, more of the scene visible
   const pos = () => { const W = scv.clientWidth, H = scv.clientHeight; return { W, H, hx: W * 0.25, hy: H * 0.86, ex: W * 0.74, ey: H * 0.86 }; };
 
+  // ---------- Boss phases: at half health every boss transforms and gains its own mechanic ----------
+  const MELEE = k => (k === 'atk' && CL().atk.fx === 'slash') || k === 'whirl';
+  const MAGIC = k => k === 'fire' || k === 'frost' || (k === 'atk' && CL().atk.fx === 'orb');
+  const PHASES = {
+    bossBone:   { name: 'Mur d’os', line: 'Le Roi des Os lève une muraille d’ossements !', tip: 'Brise le bouclier d’os (le feu le brise deux fois plus vite).',
+                  enter: f => { f.ph.shield = f.ph.max = Math.round(f.hpMax * 0.16); } },
+    bossWitch:  { name: 'Ronces maudites', line: 'Sylvaine s’entoure de ronces vivantes !', tip: 'Les coups au corps à corps te blessent. Attaque à distance ou à la magie.' },
+    bossDragon: { name: 'Envol', line: 'Le Dragon Écarlate s’envole dans les airs !', tip: 'En vol, il est hors de portée de l’épée. Pare ses piqués enflammés, frappe-le quand il s’écrase.',
+                  enter: f => { f.ph.fly = true; f.ph.t = 0; }, special: true },
+    bossHag:    { name: 'Marais toxique', line: 'Morgane renverse son chaudron : le sol devient toxique !', tip: 'Le poison te ronge chaque tour. Parer protège de la vase.' },
+    bossQueen:  { name: 'Hiver éternel', line: 'La Reine des Glaces gèle tout le terrain !', tip: 'Le froid vide ton endurance. Pare la Prison de glace ou tu seras gelé un tour.',
+                  enter: f => { f.ph.t = 0; }, special: true },
+    bossVoid:   { name: 'Faille du Néant', line: 'Le Seigneur du Néant se fond dans la faille !', tip: 'Un tour sur deux il est intangible : seule la magie le touche, à moitié.' },
+    bossLich:   { name: 'Âme damnée', line: 'Le Roi-Liche aspire ton énergie magique !', tip: 'Il vide ton mana chaque tour… et son phylactère pourrait le ramener à la vie.' },
+    bossVamp:   { name: 'Nuée de sang', line: 'Le Comte se change en nuée de chauves-souris !', tip: 'La nuée esquive souvent et ses morsures le soignent deux fois plus.' },
+  };
+  function phaseBanner(title, sub, k) {
+    SFX.thump(); setTimeout(SFX.boom, 200); if (F && !reduce) F.shake = { t0: performance.now(), amp: 6 };
+    const img = ready(k) ? `<img class="bimg" src="img/${k}.webp" alt="">` : `<div class="bimg" style="font-size:140px;font-family:var(--emoji);display:grid;place-items:center">${M[k].emoji}</div>`;
+    return celebrate(`<div class="in bossin"><div class="vs">⚠️ ${title} ⚠️</div>${img}<h2>${sub}</h2><div class="sub">${(PHASES[k] && PHASES[k].tip) || ''}</div><div class="tap">Touche pour continuer</div></div>`, 'rgba(160,40,255,.22)', 2600);
+  }
+  async function phaseEvents() {
+    const f = F.foe; if (!f) return;
+    if (F.pendingPhase) { F.pendingPhase = false; const P = PHASES[f.id]; f.ph = { t: 0 }; if (P.special) { f.charging = false; $('intent').hidden = true; } if (P.enter) P.enter(f); say(P.line); updFight(); await phaseBanner('PHASE 2', P.name, f.id); }
+    if (F.pendingRage) { F.pendingRage = false; f.atk *= 1.3; say('Le Comte entre dans une soif de sang ! (+30 % de force)'); await phaseBanner('PHASE 3', 'Soif de sang', f.id); }
+    if (F.pendingRevive) { F.pendingRevive = false; say('Le phylactère brille… le Roi-Liche revient à la vie !'); const { H, ex, ey } = pos(); rise(ex, ey - 40, ['#9fd0ff', '#ffffff', '#5fb0ff'], 30, 40); await phaseBanner('RÉSURRECTION', 'Le phylactère !', f.id); }
+  }
+  // Damage the boss actually takes, given the current phase. Returns [damage, label].
+  function phaseDmg(f, d, kind) {
+    const ph = f.ph; if (!ph) return [d];
+    if (f.id === 'bossBone' && ph.shield > 0) { const eff = kind === 'fire' ? d * 2 : d, a = Math.min(ph.shield, eff); ph.shield -= a; const rest = Math.max(0, Math.round((eff - a) / (kind === 'fire' ? 2 : 1)));
+      if (ph.shield <= 0) { const { H, ex, ey } = pos(); shards(ex, ey - H * f.size * ZOOM * 0.5, ['#f2ead8', '#d8ccb0', '#ffffff'], 18); SFX.shatter(); floatTxt('Mur brisé !', ex, ey - H * f.size * ZOOM - 30, '#ffe08a', true); }
+      return [rest, rest ? '' : 'Os !']; }
+    if (f.id === 'bossDragon' && ph.fly && MELEE(kind)) return [Math.max(1, Math.round(d * 0.3)), 'Hors de portée'];
+    if (f.id === 'bossDragon' && ph.stun) return [Math.round(d * 1.5)];
+    if (f.id === 'bossVoid' && ph.ghost) return MAGIC(kind) ? [Math.round(d * 0.5)] : [0, 'Intangible !'];
+    if (f.id === 'bossVamp' && Math.random() < 0.25) return [0, 'Nuée !'];
+    if (f.id === 'bossWitch' && MELEE(kind)) { const r = Math.max(1, Math.round(d * 0.25)); G.hp = Math.max(1, G.hp - r); F.hero.hit = performance.now(); const { H, hx, hy } = pos(); floatTxt(`-${r} 🌿`, hx, hy - H * 0.55, '#7cc45a'); }
+    return [d];
+  }
+  // Boss turn under a phase. Returns 'skip' to end the turn, or overrides for the attack.
+  async function phaseTurn(f) {
+    const ph = f.ph, P = PHASES[f.id], s = stats(), { H, hx, hy } = pos(); ph.t = (ph.t || 0) + 1;
+    const warn = (txt) => { $('intent').innerHTML = '⚠️ ' + txt; $('intent').hidden = false; say(txt); updFight(); };
+    if (f.id === 'bossBone' && ph.shield <= 0 && ph.t % 3 === 0) { ph.shield = ph.max; say('Le Roi des Os relève son mur d’ossements !'); SFX.thump(); updFight(); await wait(500); return 'skip'; }
+    if (f.id === 'bossWitch' && ph.t % 3 === 0) return { mult: 1.6, line: 'Ronces étouffantes' };
+    if (f.id === 'bossHag') {
+      if (!F.defending) { F.status.poison = { dmg: Math.max(2, Math.round(s.hp * 0.03)), turns: 2 }; floatTxt('Vase toxique', hx, hy - H * 0.6, '#a8e070'); }
+      if (ph.t % 4 === 0 && f.hp < f.hpMax) { const h = Math.round(f.hpMax * 0.06); f.hp = Math.min(f.hpMax, f.hp + h); const { ex, ey } = pos(); floatTxt(`+${h} 🧪`, ex, ey - H * f.size * ZOOM, '#8fe07a', true); SFX.heal(); say('Morgane boit une potion et se soigne !'); updFight(); await wait(500); return 'skip'; }
+    }
+    if (f.id === 'bossQueen') {
+      F.st = Math.max(0, F.st - 10); floatTxt('-10 💪 froid', hx, hy - H * 0.62, '#bfe8ff');
+      if (ph.prison) { ph.prison = false; $('intent').hidden = true; return { mult: 1.3, line: 'Prison de glace', freeze: true }; }
+      if (ph.t % 3 === 0) { ph.prison = true; warn('La Reine prépare une Prison de glace ! Pare pour ne pas être gelé.'); await wait(500); return 'skip'; }
+    }
+    if (f.id === 'bossDragon') {
+      const step = (ph.t - 1) % 8; // warn, dive, warn, dive, crash (stunned), attack, attack, take off
+      if (step === 0 || step === 2) { ph.fly = true; ph.dive = true; warn('Le dragon prend de la hauteur… piqué enflammé au prochain tour ! Pare !'); await wait(500); return 'skip'; }
+      if (step === 1 || step === 3) { ph.dive = false; $('intent').hidden = true; return { mult: 2.4, line: 'Piqué enflammé', burn: Math.round(f.atk * 0.3) }; }
+      if (step === 4) { ph.fly = false; ph.stun = true; SFX.boom(); if (!reduce) F.shake = { t0: performance.now(), amp: 6 }; const { ex, ey } = pos(); puffs(ex, ey - 10, ['rgba(200,170,140,.5)', 'rgba(160,130,110,.45)'], 12, 1.4);
+        say('Le dragon s’écrase au sol, étourdi ! Frappe maintenant (+50 % de dégâts) !'); updFight(); await wait(600); return 'skip'; }
+      if (step === 5) ph.stun = false;
+      if (step === 7) { ph.fly = true; say('Le dragon s’envole à nouveau !'); SFX.whoosh(); updFight(); await wait(500); return 'skip'; }
+    }
+    if (f.id === 'bossVoid') { ph.ghost = !ph.ghost; if (ph.ghost) { say('Le Seigneur devient intangible…'); } }
+    if (f.id === 'bossLich') { const m = Math.min(F.mp, 8); F.mp -= m; if (m) floatTxt(`-${m} 💧`, hx, hy - H * 0.62, '#7ab8ff'); }
+    return null;
+  }
+
   function hitFoe(d, crit, big, color) {
     const { H, ex, ey } = pos(), fh = H * (F.foe.size || .5) * ZOOM;
     if (F.foe.trait === 'evade' && Math.random() < 0.25) { floatTxt('Esquive !', ex, ey - fh, '#c8d2da', true); SFX.guard(); return; }
-    F.foe.hp -= d; F.foe.anim.hit = performance.now(); F.foe.anim.kb = crit ? 26 : big ? 18 : 12; (crit ? SFX.crit : SFX.hit)();
+    { const [dd, lab] = phaseDmg(F.foe, d, F.curKind); d = dd; if (!d) { floatTxt(lab || 'Bloqué !', ex, ey - fh, '#d8c8ff', true); SFX.guard(); return; } if (lab) floatTxt(lab, ex, ey - fh - 28, '#ffe08a'); }
+    F.foe.hp -= d; F.foe.anim.hit = performance.now();
+    { const f = F.foe;
+      if (f.hp <= 0 && f.id === 'bossLich' && !f.revived) { f.revived = true; f.hp = Math.round(f.hpMax * 0.3); F.pendingRevive = true; }
+      if (PHASES[f.id] && !f.ph && f.hp > 0 && f.hp <= f.hpMax * 0.5) F.pendingPhase = true;
+      if (f.id === 'bossVamp' && f.ph && !f.ph.rage && f.hp > 0 && f.hp <= f.hpMax * 0.25) { f.ph.rage = true; F.pendingRage = true; } } F.foe.anim.kb = crit ? 26 : big ? 18 : 12; (crit ? SFX.crit : SFX.hit)();
     floatTxt(`-${d}`, ex + rnd(-14, 14), ey - fh - rnd(0, 16), color || (crit ? '#ffd76a' : '#fff'), crit || big, crit);
     if (crit) { const fy = ey - fh * 0.5; fx.push({ type: 'flash', x: ex, y: fy, t0: performance.now(), dur: 220, col: 'rgba(255,230,140,.9)', r: 80 }); burst(ex, fy, ['#fff1a8', '#ffd76a', '#ffffff'], 12, 1.4); if (!reduce) F.shake = { t0: performance.now(), amp: 6 }; }
   }
   async function act(kind) {
     if (!F || F.busy) return;
     const sp = SPELLS[kind]; if (sp && F.mp < sp.cost) return;
+    if (F.heroFrozen) {
+      F.busy = true; F.heroFrozen = false; say('Tu es prisonnier de la glace et ne peux pas agir !'); SFX.shatter(); updFight(); await wait(700);
+      await foeTurn(); if (G.hp <= 0) { await lose(); return; } F.st = Math.min(ST_MAX, F.st + 20); F.busy = false; updFight(); return;
+    }
     const sc = stCost(kind); if (kind !== 'atk' && sc > F.st) return;
+    F.curKind = kind;
     const winded = kind === 'atk' && F.st < sc;
     F.st = Math.max(0, F.st - sc);
     F.busy = true; updFight();
@@ -1438,7 +1520,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       floatTxt(`+${heal} ❤️`, hx, hy - H * 0.5, '#8fe07a', true); say(`Tu bois une potion : +${heal} PV et tu es soigné de tes maux.`); await wait(420);
     }
     if (F.buff && kind !== 'roar' && --F.buff.turns <= 0) F.buff = null;
-    updFight();
+    updFight(); await phaseEvents();
+    if (G.hp <= 0) { await lose(); return; }
     if (F.foe.hp <= 0) { await win(); return; }
     await wait(450);
     await foeTurn();
@@ -1460,13 +1543,15 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     }
     if (F.foeSt.poison) { const p = F.foeSt.poison; f.hp -= p.dmg; f.anim.hit = performance.now(); floatTxt(`-${p.dmg} ☠️`, ex, ey - H * f.size * ZOOM, '#b6f27a');
       if (--p.turns <= 0) delete F.foeSt.poison; updFight();
+      if (f.hp <= 0 && f.id === 'bossLich' && !f.revived) { f.revived = true; f.hp = Math.round(f.hpMax * 0.3); F.pendingRevive = true; }
       if (f.hp <= 0) { F.foeKilledByDot = true; return; } await wait(300); }
     if (!F.foeSt.frozen) delete F.foeSt.thawed;
     if (F.foeSt.frozen) { delete F.foeSt.frozen; F.foeSt.thawed = true; say(`${f.name} est gelé et ne peut pas agir !`); updFight(); return wait(500); }
     if (f.trait === 'regen' && f.hp < f.hpMax) { const h = Math.round(f.hpMax * 0.06); f.hp = Math.min(f.hpMax, f.hp + h); floatTxt(`+${h}`, ex, ey - H * f.size * ZOOM, '#8fe07a'); }
     if (f.trait === 'slow' && F.turn % 2 === 0) { say(`${f.name} reprend son souffle.`); updFight(); return wait(450); }
-    let mult = 1, line = `${f.name} attaque`, extra = null;
-    if (f.special) {
+    let mult = 1, line = `${f.name} attaque`, extra = null, ov = null;
+    if (f.ph) { ov = await phaseTurn(f); if (ov === 'skip') return; if (ov) { mult = ov.mult; line = ov.line; extra = ov; } }
+    if (f.special && !(f.ph && PHASES[f.id].special) && !ov) {
       if (f.charging) { mult = f.special.mult; line = f.special.hit; f.charging = false; $('intent').hidden = true; extra = f.special; }
       else if (F.turn % f.special.every === 0) { f.charging = true; $('intent').textContent = '⚠️ ' + f.special.warn + ' Pare le coup !'; $('intent').hidden = false; say(f.special.warn); updFight(); return wait(500); }
     }
@@ -1489,7 +1574,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       }
       G.hp -= r.d; total += r.d; if (r.d > 0) { F.hero.hit = performance.now(); if (!F.defending) SFX.hurt(); }
       floatTxt(r.d === 0 ? (dodged ? 'Esquive !' : 'Absorbé !') : `-${r.d}`, hx + i * 20, hy - H * 0.5 - i * 14, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1 || r.d === 0);
-      if (f.trait === 'drain') f.hp = Math.min(f.hpMax, f.hp + Math.round(r.d * 0.5));
+      if (f.trait === 'drain') f.hp = Math.min(f.hpMax, f.hp + Math.round(r.d * (f.ph && f.id === 'bossVamp' ? 1 : 0.5)));
       if (f.trait === 'chill' && !F.defending) F.mp = Math.max(0, F.mp - 5);
     }
     let after = '';
@@ -1497,6 +1582,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const bz = (extra && extra.burn) || (f.trait === 'burn' && Math.random() < 0.45 ? Math.max(3, Math.round(f.atk * 0.25)) : 0);
     if (pz && !F.defending) { F.status.poison = { dmg: pz, turns: 3 }; after += ' Tu es empoisonné !'; }
     if (bz && !F.defending) { F.status.burn = { dmg: bz, turns: 3 }; after += ' Tu brûles !'; }
+    if (extra && extra.freeze && !F.defending) { F.heroFrozen = true; after += ' Tu es pris dans la glace !'; SFX.shatter(); }
     if (extra && extra.chill && !F.defending) { F.mp = 0; after += ' Ton mana est gelé !'; }
     else if (f.trait === 'chill' && !F.defending) after += ' Ton mana gèle (-5 💧).';
     if (f.trait === 'steal' && G.gold > 0 && Math.random() < 0.5) { const g = Math.min(G.gold, 6 + Math.floor(Math.random() * 6)); G.gold -= g; F.stolen += g; after += ` Il te vole ${g} <i class="coin" aria-label="or"></i> !`; }
@@ -1776,6 +1862,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     }
     if (cast) { const gr = 10 + cast * 26, g = c.createRadialGradient(hx + 28, hcY, 1, hx + 28, hcY, gr); g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(0.35, F.hero.cast.col + '0.75)'); g.addColorStop(1, F.hero.cast.col + '0)');
       c.save(); c.globalCompositeOperation = 'lighter'; c.fillStyle = g; c.beginPath(); c.arc(hx + 28, hcY, gr, 0, 7); c.fill(); c.restore(); }
+    if (F.heroFrozen) { const R = H * 0.3 * ZOOM; c.save(); c.fillStyle = 'rgba(180,225,255,.4)'; c.strokeStyle = 'rgba(240,250,255,.9)'; c.lineWidth = 2;
+      c.beginPath(); c.moveTo(hx - R * 0.7, hy); c.lineTo(hx - R * 0.8, hy - R * 1.9); c.lineTo(hx - R * 0.1, hy - R * 2.15); c.lineTo(hx + R * 0.75, hy - R * 1.8); c.lineTo(hx + R * 0.7, hy); c.closePath(); c.fill(); c.stroke();
+      c.strokeStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.moveTo(hx - R * 0.4, hy - R * 1.6); c.lineTo(hx - R * 0.1, hy - R); c.lineTo(hx + R * 0.3, hy - R * 1.3); c.stroke(); c.restore(); }
     const shOn = F.defending, sp = F.hero.shield ? Math.min(1, (now - F.hero.shield) / 260) : 1, pop = sp < 1 ? 1 + Math.sin(sp * Math.PI) * 0.25 : 1, bkh = pulse(F.hero.block || 0, 260);
     if (shOn && cls === 'guerrier') {
       const sx = hx + W * 0.085, sy = hcY + 4, S = H * 0.17 * ZOOM * pop * sp;
@@ -1803,13 +1892,29 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     // foe
     const f = F.foe, fl = pulse(f.anim.lunge, 300) * -54, fh = pulse(f.anim.hit, 300), dead = f.anim.dead ? Math.min(1, (now - f.anim.dead) / 600) : 0;
     const hk = f.anim.hit ? Math.min(1, (now - f.anim.hit) / 320) : 1, recoil = hk < 1 ? Math.pow(1 - hk, 2) * (f.anim.kb || 12) : 0;
-    const size = H * (f.size || .5) * ZOOM, fly = f.fly ? H * 0.2 + (reduce ? 0 : Math.sin(t / 260) * 6) : 0, bobF = reduce ? 0 : Math.sin(t / 380) * 2.5;
-    c.save(); c.globalAlpha = 1 - dead; c.translate(recoil, dead * 20);
+    const ph = f.ph; f.flyK = (f.flyK || 0) + (((ph && ph.fly) ? 1 : 0) - (f.flyK || 0)) * 0.06;
+    const size = H * (f.size || .5) * ZOOM, fly = (f.fly ? H * 0.2 + (reduce ? 0 : Math.sin(t / 260) * 6) : 0) + f.flyK * H * 0.22 + (f.flyK > 0.05 && !reduce ? Math.sin(t / 220) * 5 * f.flyK : 0), bobF = reduce ? 0 : Math.sin(t / 380) * 2.5;
+    // phase ground effects (behind the fighters)
+    if (ph && f.id === 'bossQueen') { const g = c.createLinearGradient(0, H * 0.72, 0, H); g.addColorStop(0, 'rgba(200,235,255,0)'); g.addColorStop(0.4, 'rgba(200,235,255,.35)'); g.addColorStop(1, 'rgba(230,248,255,.6)'); c.fillStyle = g; c.fillRect(0, H * 0.72, W, H * 0.28);
+      c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1.5; for (let j = 0; j < 7; j++) { const x0 = (j * 0.15 + 0.05) * W, y0 = H * (0.86 + (j % 3) * 0.04); c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + 18, y0 - 5); c.lineTo(x0 + 30, y0 + 3); c.lineTo(x0 + 46, y0 - 2); c.stroke(); }
+      if (!reduce) for (let j = 0; j < 8; j++) { const k = ((t / 1800) + j / 8) % 1; c.fillStyle = `rgba(255,255,255,${Math.sin(k * Math.PI)})`; c.fillRect((j * 53) % W, H * 0.8 + (j * 17) % (H * 0.15), 2, 2); } }
+    if (ph && f.id === 'bossHag' && !reduce) for (let j = 0; j < 9; j++) { const k = ((t / 1400) + j / 9) % 1, x = (j * 0.11 + 0.03) * W; c.fillStyle = `rgba(140,220,90,${0.5 * (1 - k)})`; c.beginPath(); c.arc(x, H * 0.95 - k * 26, 3 + k * 6, 0, 7); c.fill(); }
+    c.save(); c.globalAlpha = (1 - dead) * (ph && ph.ghost ? 0.35 + 0.1 * Math.sin(t / 120) : ph && f.id === 'bossVamp' ? 0.82 : 1); c.translate(recoil, dead * 20);
     if (dead) { c.translate(ex, ey); c.scale(1 - dead * 0.25, 1 - dead * 0.25); c.translate(-ex, -ey); }
     if (recoil) { c.translate(ex, ey); c.rotate(recoil * 0.004); c.translate(-ex, -ey); }
     c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(ex, ey, size * 0.42, 8, 0, 0, Math.PI * 2); c.fill();
     if (f.charging || f.howl) { const g = c.createRadialGradient(ex, ey - size * 0.5 - fly, 4, ex, ey - size * 0.5 - fly, size * 0.7); g.addColorStop(0, `rgba(255,80,60,${0.35 + 0.2 * Math.sin(now / 120)})`); g.addColorStop(1, 'rgba(255,80,60,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.4 - fly, size * 2, size * 1.6); }
+    if (ph && f.id === 'bossLich') { const g = c.createRadialGradient(ex, ey - size * 0.5, 4, ex, ey - size * 0.5, size * 0.75); g.addColorStop(0, `rgba(110,180,255,${0.35 + 0.15 * Math.sin(t / 200)})`); g.addColorStop(1, 'rgba(110,180,255,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.3, size * 2, size * 1.6); }
+    if (ph && ph.ghost) { const g = c.createRadialGradient(ex, ey - size * 0.5, 4, ex, ey - size * 0.5, size * 0.8); g.addColorStop(0, 'rgba(150,60,255,.35)'); g.addColorStop(1, 'rgba(150,60,255,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.4, size * 2, size * 1.7); }
     sprite(c, f.id, ex + fl, ey - fly + bobF * 0.3, size + bobF, fh * 0.5, f.emoji);
+    if (ph && ph.stun && !reduce) for (let j = 0; j < 3; j++) { const a = t / 300 + j * 2.1; c.font = `18px ${EMO}`; c.textAlign = 'center'; c.fillText('⭐', ex + Math.cos(a) * size * 0.3, ey - size * 0.95 + Math.sin(a) * 6); }
+    if (ph && f.id === 'bossBone' && ph.shield > 0) for (let j = 0; j < 9; j++) { const a = t / 900 + j / 9 * Math.PI * 2, x = ex + Math.cos(a) * size * 0.55, y = ey - size * 0.45 + Math.sin(a) * size * 0.18;
+      c.save(); c.translate(x, y); c.rotate(a * 2); c.fillStyle = '#f2ead8'; c.strokeStyle = '#6a5a40'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(0, 0, 9, 3, 0, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.arc(-9, 0, 3, 0, 7); c.arc(9, 0, 3, 0, 7); c.fill(); c.restore(); }
+    if (ph && f.id === 'bossWitch') { c.strokeStyle = '#3f7a2a'; c.lineWidth = 4; c.lineCap = 'round'; for (let j = 0; j < 6; j++) { const a = j / 6 * Math.PI * 2 + Math.sin(t / 900) * 0.2, r0 = size * 0.4, r1 = size * 0.62;
+      c.beginPath(); c.moveTo(ex + Math.cos(a) * r0, ey - size * 0.45 + Math.sin(a) * r0 * 0.8); c.quadraticCurveTo(ex + Math.cos(a + 0.4) * r1, ey - size * 0.45 + Math.sin(a + 0.4) * r1 * 0.8, ex + Math.cos(a + 0.7) * r1 * 1.05, ey - size * 0.45 + Math.sin(a + 0.7) * r1 * 0.85); c.stroke();
+      c.fillStyle = '#c0392b'; c.beginPath(); c.arc(ex + Math.cos(a + 0.7) * r1 * 1.05, ey - size * 0.45 + Math.sin(a + 0.7) * r1 * 0.85, 3, 0, 7); c.fill(); } }
+    if (ph && f.id === 'bossVamp' && !reduce) for (let j = 0; j < 7; j++) { const a = t / 500 + j / 7 * Math.PI * 2, x = ex + Math.cos(a) * size * 0.6, y = ey - size * 0.6 + Math.sin(a * 1.3) * size * 0.3, wv = Math.sin(t / 60 + j) * 4;
+      c.fillStyle = '#1a0a14'; c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x - 8, y - 6 - wv, x - 14, y + 2); c.quadraticCurveTo(x - 7, y, x, y + 4); c.quadraticCurveTo(x + 7, y, x + 14, y + 2); c.quadraticCurveTo(x + 8, y - 6 - wv, x, y); c.fill(); }
     if (F.foeSt && F.foeSt.frozen) { c.fillStyle = 'rgba(160,215,255,.28)'; c.beginPath(); c.ellipse(ex, ey - size * 0.5 - fly, size * 0.48, size * 0.55, 0, 0, 7); c.fill();
       c.strokeStyle = 'rgba(230,246,255,.8)'; c.lineWidth = 2; c.stroke(); }
     if (F.foeSt && F.foeSt.poison && !reduce) for (let j = 0; j < 3; j++) { const k = ((t / 900) + j / 3) % 1; c.fillStyle = `rgba(143,224,122,${.7 * (1 - k)})`; c.beginPath(); c.arc(ex - 20 + j * 20, ey - size * 0.3 - k * size * 0.6 - fly, 4, 0, 7); c.fill(); }
@@ -2002,7 +2107,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Bêta 1.6';
+  const VERSION = 'Bêta 1.7';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
