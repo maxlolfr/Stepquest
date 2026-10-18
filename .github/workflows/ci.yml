@@ -67,7 +67,9 @@ jobs:
 
       # Installable offline prototype of the island concept, served at /ile/.
       - name: Add island prototype
-        run: cp -r prototype/ile build/web/ile
+        run: |
+          cp -r prototype/ile build/web/ile
+          cp -r prototype/dragonbound build/web/dragonbound
 
       - uses: actions/upload-pages-artifact@v3
         with:

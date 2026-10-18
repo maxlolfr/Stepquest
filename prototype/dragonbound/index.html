@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dragonbound</title>
+<meta name="theme-color" content="#2f5d3a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Dragonbound">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: cozy fantasy RPG, one phone column of parchment panels framed in wood, ribbon titles, HUD on top, round tab buttons at the bottom; combat opens full screen. Committed single light look. */
+:root {
+  color-scheme: light;
+  --bg: #2f5d3a;
+  --bg-2: #24492d;
+  --parch: #f6e7c4;
+  --parch-2: #ead2a0;
+  --wood: #8a5a34;
+  --wood-d: #5b3a22;
+  --ink: #3b2414;
+  --muted: #7d5f42;
+  --gold: #f2b632;
+  --heart: #e0413b;
+  --mana: #3d8be0;
+  --xp: #5cb85c;
+  --rib-g: #4c8a3a;
+  --rib-p: #6c4ab6;
+  --rib-b: #2f5fa8;
+  --rib-r: #b53a2c;
+  --r0: #a7a29a; --r1: #3d8be0; --r2: #9b59d0; --r3: #f08c1a;
+  --font-display: "Pixelify Sans", "Nunito", system-ui, sans-serif;
+  --font-body: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --emoji: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+}
+* { box-sizing: border-box; }
+body {
+  background: radial-gradient(120% 70% at 50% 0%, #3f7a4b 0%, var(--bg) 45%, var(--bg-2) 100%) fixed, var(--bg);
+  color: var(--ink); font-family: var(--font-body); font-size: 15px; line-height: 1.4;
+}
+.app {
+  max-width: 460px; margin: 0 auto;
+  padding-left: max(14px, env(safe-area-inset-left, 0px));
+  padding-right: max(14px, env(safe-area-inset-right, 0px));
+  padding-block: 10px calc(104px + env(safe-area-inset-bottom, 0px));
+  display: flex; flex-direction: column; gap: 18px;
+}
+@media (max-width: 360px) { .app { padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); } }
+
+/* Wooden panel with parchment */
+.panel {
+  position: relative; background: linear-gradient(180deg, var(--parch), var(--parch-2));
+  border: 4px solid var(--wood); border-radius: 14px;
+  outline: 2px solid #d9a63a; outline-offset: -9px;
+  box-shadow: inset 0 0 0 2px #c99a5e, inset 0 0 18px rgba(138, 90, 52, .25), 0 4px 0 var(--wood-d), 0 8px 18px rgba(0,0,0,.25);
+  padding: 22px 14px 14px;
+}
+.panel::before, .panel::after {
+  content: ""; position: absolute; top: -9px; width: 14px; height: 14px; transform: rotate(45deg);
+  background: linear-gradient(135deg, #fff1a8, #f2b632 45%, #a8700f); border: 2px solid #6e4410; box-shadow: 0 2px 0 rgba(0,0,0,.25);
+}
+.panel::before { left: -9px; } .panel::after { right: -9px; }
+.ribbon {
+  position: absolute; top: -14px; left: 50%; transform: translateX(-50%);
+  background: var(--rib-g); color: #fff8e6; font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: .3px;
+  padding: 3px 22px; white-space: nowrap; text-shadow: 0 1px 0 rgba(0,0,0,.35);
+  clip-path: polygon(0 0, 100% 0, 94% 50%, 100% 100%, 0 100%, 6% 50%);
+  box-shadow: inset 0 -3px 0 rgba(0,0,0,.18);
+}
+.ribbon.p { background: var(--rib-p); } .ribbon.b { background: var(--rib-b); } .ribbon.r { background: var(--rib-r); } .ribbon.w { background: var(--wood); }
+
+/* HUD */
+.hud { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: center; }
+.portrait {
+  width: 74px; height: 74px; border-radius: 50%; position: relative;
+  background: radial-gradient(circle at 50% 40%, #fff3d4, #e9c98d);
+  border: 4px solid var(--wood); box-shadow: 0 0 0 3px var(--gold), 0 4px 0 var(--wood-d);
+  display: grid; place-items: center; font-family: var(--emoji); font-size: 42px;
+}
+.lvl {
+  position: absolute; bottom: -10px; left: 50%; transform: translateX(-50%);
+  background: var(--wood-d); color: #fff3d4; font-family: var(--font-display); font-weight: 700; font-size: 13px;
+  padding: 1px 9px; border-radius: 99px; border: 2px solid var(--gold); white-space: nowrap;
+}
+.bars { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+.hearts { display: flex; gap: 2px; }
+.hearts svg { width: 20px; height: 18px; flex: none; }
+.gbar {
+  position: relative; height: 18px; border-radius: 99px; background: #4a2f1c; border: 2px solid var(--wood-d);
+  overflow: hidden; box-shadow: inset 0 2px 3px rgba(0,0,0,.4);
+}
+.gbar > i { position: absolute; inset: 0 auto 0 0; width: 0; border-radius: 99px; transition: width .35s; }
+.gbar.mana > i { background: linear-gradient(180deg, #7ab8ff, var(--mana)); }
+.gbar.xp > i { background: linear-gradient(180deg, #9be08f, var(--xp)); }
+.gbar.hp > i { background: linear-gradient(180deg, #ff8a7a, var(--heart)); }
+.gbar.en > i { background: linear-gradient(180deg, #ffe08a, var(--gold)); }
+.gbar span { position: absolute; inset: 0; display: grid; place-items: center; color: #fff; font-family: var(--font-display); font-size: 12px; font-weight: 700; text-shadow: 0 1px 1px rgba(0,0,0,.6); }
+.gbar b { position: absolute; left: 6px; top: 50%; transform: translateY(-50%); font-family: var(--font-display); font-size: 11px; color: #fff; z-index: 1; text-shadow: 0 1px 1px rgba(0,0,0,.6); }
+.money { display: flex; gap: 8px; flex-wrap: wrap; }
+.pill {
+  display: flex; align-items: center; gap: 6px; background: #4a2f1c; color: #fff3d4; border: 2px solid var(--wood-d);
+  border-radius: 99px; padding: 2px 10px 2px 4px; font-family: var(--font-display); font-weight: 700; font-size: 15px; font-variant-numeric: tabular-nums;
+}
+.pill i { font-style: normal; font-family: var(--emoji); font-size: 18px; }
+
+/* Hero home */
+.stage { display: grid; grid-template-columns: 64px 1fr 64px; gap: 8px; align-items: center; }
+.slots { display: flex; flex-direction: column; gap: 8px; }
+.slot {
+  width: 60px; height: 60px; border-radius: 10px; background: linear-gradient(180deg, #d9b47a, #c79a5e);
+  border: 3px solid var(--wood); box-shadow: inset 0 0 0 2px #e8c891, 0 3px 0 var(--wood-d);
+  display: grid; place-items: center; font-family: var(--emoji); font-size: 30px; cursor: pointer; position: relative; padding: 0;
+}
+.slot.empty { font-size: 0; }
+.slot.empty::after { content: attr(data-ghost); font-family: var(--emoji); font-size: 26px; opacity: .25; filter: grayscale(1); }
+.slot .up { position: absolute; right: 2px; bottom: 0; font-family: var(--font-display); font-size: 11px; color: #fff; text-shadow: 0 1px 1px #000; }
+.slot.r1 { border-color: var(--r1); } .slot.r2 { border-color: var(--r2); } .slot.r3 { border-color: var(--r3); }
+.herobox { text-align: center; }
+.herobox canvas { width: 100%; height: 190px; display: block; }
+.hname { font-family: var(--font-display); font-weight: 700; font-size: 22px; }
+.stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 10px; }
+.st { background: rgba(255,255,255,.45); border: 2px solid #d6b07a; border-radius: 10px; padding: 6px 4px; text-align: center; }
+.st i { display: block; font-style: normal; font-family: var(--emoji); font-size: 18px; }
+.st b { font-family: var(--font-display); font-size: 17px; font-variant-numeric: tabular-nums; }
+.st span { display: block; font-size: 11px; color: var(--muted); font-weight: 700; }
+
+.btn {
+  font: inherit; font-family: var(--font-display); font-weight: 700; font-size: 20px; letter-spacing: .4px; color: #fff8e6; cursor: pointer;
+  background: linear-gradient(180deg, #f0a43a, #d9761e); border: 3px solid #7a3e12; border-radius: 14px; padding: 12px 18px;
+  box-shadow: inset 0 -4px 0 rgba(0,0,0,.18), inset 0 2px 0 rgba(255,255,255,.35), 0 4px 0 #5a2e0e; text-shadow: 0 2px 0 rgba(0,0,0,.3);
+  width: 100%; display: flex; align-items: center; justify-content: center; gap: 10px;
+}
+.btn:active { transform: translateY(2px); box-shadow: inset 0 -2px 0 rgba(0,0,0,.18), 0 2px 0 #5a2e0e; }
+.btn.green { background: linear-gradient(180deg, #7cc45a, #4c8a3a); border-color: #2e5a22; box-shadow: inset 0 -4px 0 rgba(0,0,0,.18), inset 0 2px 0 rgba(255,255,255,.3), 0 4px 0 #1f3f17; }
+.btn.blue { background: linear-gradient(180deg, #6aa8ef, #2f6fc0); border-color: #1d3f72; box-shadow: inset 0 -4px 0 rgba(0,0,0,.18), inset 0 2px 0 rgba(255,255,255,.3), 0 4px 0 #142c50; }
+.btn.small { font-size: 15px; padding: 8px 12px; border-radius: 12px; }
+.btn[disabled] { filter: grayscale(.8) brightness(.9); cursor: not-allowed; }
+.btn i { font-style: normal; font-family: var(--emoji); }
+.note { font-size: 13px; color: var(--muted); font-weight: 700; }
+.row { display: flex; align-items: center; gap: 10px; }
+.grow { flex: 1; min-width: 0; }
+
+/* Dungeon card */
+.dungeon { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: center; }
+.dicon { width: 76px; height: 76px; border-radius: 14px; background: linear-gradient(180deg, #5b4a6e, #2e2440); border: 3px solid var(--wood-d); display: grid; place-items: center; font-family: var(--emoji); font-size: 40px; }
+.dtitle { font-family: var(--font-display); font-weight: 700; font-size: 19px; }
+.foes { display: flex; gap: 6px; margin: 4px 0 2px; font-family: var(--emoji); font-size: 22px; }
+.foes span.beaten { filter: grayscale(1); opacity: .45; }
+
+/* Inventory */
+.grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 7px; }
+.cell { aspect-ratio: 1; max-width: 100%; font-size: 26px; width: 100%; height: auto; }
+.cell .cnt { position: absolute; right: 3px; bottom: 1px; font-family: var(--font-display); font-size: 12px; color: #fff; text-shadow: 0 1px 1px #000; }
+.cell.sel { outline: 3px solid var(--gold); outline-offset: 1px; }
+.tip {
+  background: linear-gradient(180deg, #3d2a1a, #2a1c11); color: #f6e7c4; border: 3px solid #a87a45; border-radius: 12px; padding: 12px 14px;
+  display: flex; flex-direction: column; gap: 6px; box-shadow: 0 4px 0 #1a110a;
+}
+.tip .top { display: flex; align-items: baseline; gap: 8px; }
+.tip h3 { margin: 0; font-family: var(--font-display); font-size: 18px; color: #7ec8ff; }
+.tip .rar { margin-left: auto; font-size: 12px; font-weight: 800; }
+.tip .kind { font-size: 12px; color: #c8b28c; font-weight: 700; margin-top: -4px; }
+.tip .line { display: flex; gap: 10px; align-items: center; }
+.tip .big { width: 54px; height: 54px; border-radius: 10px; border: 2px solid #a87a45; background: #4a3422; display: grid; place-items: center; font-family: var(--emoji); font-size: 30px; flex: none; }
+.tip .sts { display: flex; flex-direction: column; gap: 2px; font-family: var(--font-display); font-size: 15px; }
+.up-g { color: #8fe07a; } .down-r { color: #ff8a7a; }
+.tip .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
+.r0t { color: var(--r0) !important; } .r1t { color: #7ec8ff !important; } .r2t { color: #d29bff !important; } .r3t { color: #ffb347 !important; }
+
+/* Walk */
+.bigsteps { font-family: var(--font-display); font-weight: 700; font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; }
+.wk { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; align-items: end; height: 110px; }
+.wk div { display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 4px; height: 100%; }
+.wk i { display: block; width: 70%; border-radius: 6px 6px 2px 2px; background: linear-gradient(180deg, #ffe08a, var(--gold)); border: 2px solid #b07a1a; min-height: 4px; }
+.wk i.none { background: none; border-style: dashed; border-color: #c9a46a; }
+.wk span { font-family: var(--font-display); font-size: 12px; color: var(--muted); }
+.msg { background: #fff3d4; border: 2px solid #e0b866; border-radius: 10px; padding: 8px 10px; font-size: 13px; font-weight: 700; }
+.pulse { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: var(--heart); margin-right: 6px; animation: pulse 1.2s infinite; }
+@keyframes pulse { 50% { opacity: .25; } }
+
+/* Tabs */
+.tabs {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 5;
+  padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px));
+  padding-top: 10px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  background: linear-gradient(180deg, #6e4628, #4a2f1c); border-top: 4px solid #a87a45; box-shadow: 0 -4px 12px rgba(0,0,0,.3);
+}
+.tabs nav { max-width: 460px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
+.tabs button {
+  font: inherit; font-family: var(--font-display); font-weight: 700; font-size: 13px; color: #f6e7c4; background: none; border: 0; cursor: pointer;
+  display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 0;
+}
+.tabs button i { font-style: normal; font-family: var(--emoji); font-size: 24px; width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 35%, #a87a45, #6e4628); border: 3px solid #3b2414; box-shadow: 0 3px 0 #2a190c; }
+.tabs button[aria-selected="true"] i { background: radial-gradient(circle at 50% 35%, #ffd76a, #e09a1e); border-color: #7a3e12; }
+.tabs button[aria-selected="true"] { color: #ffd76a; }
+
+/* Combat */
+.fight {
+  position: fixed; inset: 0; z-index: 20; background: #1b1424; display: flex; flex-direction: column;
+  padding-top: env(safe-area-inset-top, 0px); padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+}
+.fight-in { max-width: 460px; width: 100%; margin: 0 auto; flex: 1; display: flex; flex-direction: column; gap: 10px;
+  padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); padding-top: 10px; min-height: 0; }
+.foebar { display: flex; align-items: center; gap: 10px; color: #f6e7c4; }
+.foebar .name { font-family: var(--font-display); font-weight: 700; font-size: 18px; white-space: nowrap; }
+.foebar .gbar { flex: 1; }
+.room { font-family: var(--font-display); font-size: 13px; color: #c8b28c; white-space: nowrap; }
+.scene { position: relative; border: 4px solid var(--wood); border-radius: 14px; overflow: hidden; box-shadow: 0 4px 0 var(--wood-d); flex: 1; min-height: 220px; max-height: 360px; }
+.scene canvas { width: 100%; height: 100%; display: block; }
+.intent { position: absolute; left: 50%; top: 10px; transform: translateX(-50%); background: rgba(40,20,10,.85); color: #ffd76a; font-weight: 800; font-size: 13px; padding: 5px 10px; border-radius: 99px; border: 2px solid #a87a45; white-space: nowrap; }
+.log { color: #f6e7c4; font-weight: 700; font-size: 14px; min-height: 40px; text-align: center; }
+.mebars { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.skills { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.skill {
+  font: inherit; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 3px; background: none; border: 0; color: #f6e7c4; padding: 0;
+  font-family: var(--font-display); font-weight: 700; font-size: 12px; position: relative;
+}
+.skill i { font-style: normal; font-family: var(--emoji); font-size: 30px; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center;
+  background: radial-gradient(circle at 50% 35%, #8a5a34, #4a2f1c); border: 4px solid #2a190c; box-shadow: 0 0 0 3px #a87a45, 0 4px 0 #120a05; }
+.skill.fire i { background: radial-gradient(circle at 50% 35%, #ff9a3c, #b3361b); }
+.skill.def i { background: radial-gradient(circle at 50% 35%, #e9c75a, #9a7418); }
+.skill.pot i { background: radial-gradient(circle at 50% 35%, #ff7a8a, #a8243a); }
+.skill .cnt { position: absolute; top: 44px; right: 6px; background: #2a190c; color: #fff; border-radius: 99px; padding: 0 6px; font-size: 12px; border: 2px solid #a87a45; }
+.skill[disabled] { opacity: .45; cursor: not-allowed; }
+.flee { font: inherit; background: none; border: 0; color: #c8b28c; font-weight: 800; font-size: 13px; cursor: pointer; padding: 4px; }
+.modal { position: fixed; inset: 0; z-index: 30; background: rgba(10,6,4,.6); display: grid; place-items: center;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.modal .panel { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 12px; text-align: center; }
+.modal h2 { margin: 0; font-family: var(--font-display); font-size: 26px; }
+.rew { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.toast { position: fixed; left: 50%; top: calc(14px + env(safe-area-inset-top, 0px)); transform: translate(-50%, -20px); opacity: 0; z-index: 40;
+  background: linear-gradient(180deg, #ffe08a, #f2b632); color: #4a2a08; font-family: var(--font-display); font-weight: 700; font-size: 16px;
+  padding: 8px 16px; border-radius: 99px; border: 3px solid #7a3e12; box-shadow: 0 4px 0 #5a2e0e; transition: .3s; white-space: nowrap; pointer-events: none; }
+.toast.on { opacity: 1; transform: translate(-50%, 0); }
+button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) { .gbar > i, .toast { transition: none; } .pulse { animation: none; } }
+</style>
+
+<style>
+html { -webkit-text-size-adjust: 100%; }
+body { margin: 0; -webkit-tap-highlight-color: transparent; }
+.app { padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important; }
+[hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <!-- HUD -->
+  <header class="hud">
+    <div class="portrait" id="portrait" aria-hidden="true">🧝<div class="lvl" id="lvl">Niv. 1</div></div>
+    <div class="bars">
+      <div class="hearts" id="hearts" aria-label="Vie"></div>
+      <div class="gbar mana"><i id="manaBar"></i><span id="manaTxt">20/20</span></div>
+      <div class="gbar xp"><b>XP</b><i id="xpBar"></i><span id="xpTxt">0/60</span></div>
+    </div>
+  </header>
+  <div class="money">
+    <div class="pill" title="Or"><i>🪙</i><span id="gold">0</span></div>
+    <div class="pill" title="Énergie d'aventure : 1 tous les 100 pas"><i>⚡</i><span id="energy">0</span></div>
+    <div class="pill" title="Pas aujourd'hui"><i>👣</i><span id="stepsPill">0</span></div>
+    <div class="pill" title="Potions"><i>🧪</i><span id="potPill">0</span></div>
+  </div>
+
+  <!-- HÉROS -->
+  <section class="view" id="v-hero">
+    <div class="panel">
+      <div class="ribbon">Héros</div>
+      <div class="stage">
+        <div class="slots" id="slotsL"></div>
+        <div class="herobox">
+          <canvas id="heroCv" aria-label="Ton héros"></canvas>
+          <div class="hname">Aldric</div>
+          <div class="note" id="heroSub">Aventurier de la vallée</div>
+        </div>
+        <div class="slots" id="slotsR"></div>
+      </div>
+      <div class="stats" id="stats"></div>
+    </div>
+  </section>
+
+  <section class="view" id="v-hero2">
+    <div class="panel">
+      <div class="ribbon p">Donjon</div>
+      <div class="dungeon">
+        <div class="dicon" aria-hidden="true">🏰</div>
+        <div>
+          <div class="dtitle">La Crypte oubliée</div>
+          <div class="foes" id="foes"></div>
+          <div class="note" id="dungNote"></div>
+        </div>
+      </div>
+      <div style="margin-top:12px; display:flex; flex-direction:column; gap:8px">
+        <button class="btn" id="exploreBtn" type="button"><i>⚔️</i> Explorer</button>
+        <div class="note" id="exploreNote" style="text-align:center"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SAC -->
+  <section class="view" id="v-bag" hidden>
+    <div class="panel">
+      <div class="ribbon">Inventaire</div>
+      <div class="grid" id="bagGrid"></div>
+      <div class="note" id="bagNote" style="margin-top:8px"></div>
+    </div>
+    <div id="tipWrap" style="margin-top:14px"></div>
+    <div class="panel" style="margin-top:22px">
+      <div class="ribbon p">Boutique</div>
+      <div class="row">
+        <div class="slot" style="flex:none" aria-hidden="true">🧪</div>
+        <div class="grow"><b>Potion de soin</b><div class="note">Rend 45 % de ta vie en combat.</div></div>
+        <button class="btn small green" id="buyPot" type="button" style="width:auto">🪙 15</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- MARCHE -->
+  <section class="view" id="v-walk" hidden>
+    <div class="panel">
+      <div class="ribbon b">Podomètre</div>
+      <div class="row">
+        <div class="grow">
+          <div class="note" id="walkLabel">Pas aujourd'hui</div>
+          <div class="bigsteps" id="bigSteps">0</div>
+          <div class="note" id="walkSub">Chaque 100 pas = 1 ⚡ d'énergie d'aventure</div>
+        </div>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:8px; margin-top:12px">
+        <button class="btn blue" id="walkBtn" type="button"><i>👣</i> Partir en balade</button>
+        <div class="msg" id="walkMsg" hidden></div>
+        <div class="note">Garde l'app ouverte, écran allumé, téléphone en main ou en poche. Tes pas restent sur ton téléphone.</div>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:22px">
+      <div class="ribbon w">Cette semaine</div>
+      <div class="wk" id="week"></div>
+    </div>
+    <div class="panel" style="margin-top:22px">
+      <div class="ribbon r">Démo</div>
+      <div class="note">Pour tester le jeu sans marcher : ajoute des pas fictifs.</div>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:10px">
+        <button class="btn small" id="demo1" type="button">+1 000 pas</button>
+        <button class="btn small" id="demo5" type="button">+5 000 pas</button>
+      </div>
+      <button class="flee" id="resetBtn" type="button" style="color:var(--rib-r); margin-top:8px">Recommencer la partie</button>
+      <div class="msg" id="resetAsk" hidden>Effacer ta partie et tes pas ? <button class="flee" id="resetYes" type="button" style="color:var(--rib-r)">Oui</button> <button class="flee" id="resetNo" type="button">Non</button></div>
+    </div>
+  </section>
+</div>
+
+<div class="tabs">
+  <nav role="tablist" aria-label="Menu">
+    <button role="tab" aria-selected="true" data-v="hero" type="button"><i>🛡️</i>Héros</button>
+    <button role="tab" aria-selected="false" data-v="bag" type="button"><i>🎒</i>Sac</button>
+    <button role="tab" aria-selected="false" data-v="walk" type="button"><i>👣</i>Marche</button>
+    <button role="tab" aria-selected="false" data-v="explore" type="button"><i>⚔️</i>Explorer</button>
+  </nav>
+</div>
+
+<!-- COMBAT -->
+<div class="fight" id="fight" hidden>
+  <div class="fight-in">
+    <div class="foebar">
+      <div class="name" id="foeName">Squelette</div>
+      <div class="gbar hp"><i id="foeHp"></i><span id="foeHpTxt"></span></div>
+      <div class="room" id="roomTxt">Salle 1/3</div>
+    </div>
+    <div class="scene">
+      <canvas id="sceneCv"></canvas>
+      <div class="intent" id="intent" hidden></div>
+    </div>
+    <div class="log" id="log" aria-live="polite"></div>
+    <div class="mebars">
+      <div class="gbar hp"><i id="meHp"></i><span id="meHpTxt"></span></div>
+      <div class="gbar mana"><i id="meMp"></i><span id="meMpTxt"></span></div>
+    </div>
+    <div class="skills">
+      <button class="skill" id="sAtk" type="button"><i>🗡️</i>Attaque</button>
+      <button class="skill fire" id="sFire" type="button"><i>🔥</i>Boule de feu<span class="cnt">8 💧</span></button>
+      <button class="skill def" id="sDef" type="button"><i>🛡️</i>Parade</button>
+      <button class="skill pot" id="sPot" type="button"><i>🧪</i>Potion<span class="cnt" id="potCnt">3</span></button>
+    </div>
+    <button class="flee" id="fleeBtn" type="button">Fuir le donjon</button>
+  </div>
+</div>
+
+<div class="modal" id="modal" hidden><div class="panel"><div class="ribbon" id="mRib">Victoire</div><div id="mBody"></div></div></div>
+<div class="toast" id="toast"></div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const nf = new Intl.NumberFormat('fr-FR');
+  const fmt = n => nf.format(Math.round(n));
+  const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const EMO = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  const rnd = (a, b) => a + Math.random() * (b - a);
+
+  // ---------- Game data ----------
+  const SLOTS = [
+    { id: 'arme', name: 'Arme', ghost: '🗡️' }, { id: 'casque', name: 'Casque', ghost: '🪖' }, { id: 'armure', name: 'Armure', ghost: '🥋' },
+    { id: 'bottes', name: 'Bottes', ghost: '🥾' }, { id: 'amulette', name: 'Amulette', ghost: '📿' },
+  ];
+  const RAR = ['Commun', 'Rare', 'Épique', 'Légendaire'];
+  const ADJ = ['de fer', 'des runes', 'du Crépuscule', 'de Draconis'];
+  const KINDS = { arme: [['Épée', '🗡️'], ['Hache', '🪓'], ['Masse', '🔨']], casque: [['Heaume', '🪖']], armure: [['Cuirasse', '🥋']], bottes: [['Bottes', '🥾']], amulette: [['Amulette', '📿']] };
+  const DESC = { arme: 'Une arme solide et fiable.', casque: 'Protège la tête des mauvais coups.', armure: 'Encaisse les coups à ta place.', bottes: 'Idéales pour les longues marches.', amulette: 'Vibre d’une magie ancienne.' };
+  const FOES = [
+    { id: 'slime', name: 'Gluant vert', emoji: null, hp: 34, atk: 7, def: 1, xp: 22, gold: 10 },
+    { id: 'skel', name: 'Squelette', emoji: '💀', hp: 48, atk: 10, def: 3, xp: 34, gold: 16 },
+    { id: 'boss', name: 'Roi des Os', emoji: '💀', crown: true, boss: true, hp: 82, atk: 11, def: 4, xp: 90, gold: 45, special: { every: 3, mult: 2.3, warn: 'Le Roi des Os lève sa faux…', hit: 'Coup de faux !' } },
+  ];
+  const ENERGY_COST = 10;
+  const ENERGY_MAX = 150;
+
+  // ---------- Save ----------
+  const KEY = 'dragonbound.v1';
+  const fresh = () => ({
+    lvl: 1, xp: 0, gold: 20, potions: 3, energy: 20, stepsCredited: 0, days: {}, nextId: 2, cleared: 0,
+    inv: [{ id: 1, slot: 'arme', name: 'Épée de bois', icon: '🗡️', r: 0, up: 0, base: { atk: 3 } }],
+    eq: { arme: 1 },
+  });
+  let G;
+  try { G = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch (e) { G = fresh(); }
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(G)); } catch (e) {} };
+  const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const todaySteps = () => G.days[dayKey(new Date())] || 0;
+
+  // ---------- Hero stats ----------
+  const itemStats = it => { const m = 1 + 0.15 * it.up, o = {}; for (const k in it.base) o[k] = Math.round(it.base[k] * m); return o; };
+  const itemById = id => G.inv.find(i => i.id === id);
+  function stats() {
+    const L = G.lvl, s = { hp: 64 + 12 * (L - 1), atk: 7 + 2.4 * (L - 1), def: 2 + 1.3 * (L - 1), mag: 9 + 2.6 * (L - 1) };
+    for (const sl in G.eq) { const it = itemById(G.eq[sl]); if (!it) continue; const st = itemStats(it); for (const k in st) s[k] += st[k]; }
+    for (const k in s) s[k] = Math.round(s[k]);
+    s.mp = 20 + Math.floor((L - 1) * 2);
+    return s;
+  }
+  const xpNeed = () => 60 + 45 * (G.lvl - 1);
+  if (G.hp == null) G.hp = stats().hp;
+
+  // ---------- Steps → energy ----------
+  function addSteps(n) {
+    const k = dayKey(new Date()); G.days[k] = (G.days[k] || 0) + n;
+    const all = Object.values(G.days).reduce((a, b) => a + b, 0);
+    const gained = Math.floor(all / 100) - Math.floor(G.stepsCredited / 100);
+    if (gained > 0) G.energy = Math.min(ENERGY_MAX, G.energy + gained);
+    G.stepsCredited = all;
+    save(); render();
+    return gained;
+  }
+
+  // ---------- UI helpers ----------
+  function toast(t) { const el = $('toast'); el.textContent = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200); }
+  const HEART = 'M8 14 C2 9 0 6.5 0 4.2 C0 1.8 1.9 0 4.1 0 C5.6 0 7 .9 8 2.3 C9 .9 10.4 0 11.9 0 C14.1 0 16 1.8 16 4.2 C16 6.5 14 9 8 14Z';
+  function hearts(el, hp, max) {
+    const n = 8, per = max / n; let html = '';
+    for (let i = 0; i < n; i++) {
+      const f = Math.max(0, Math.min(1, (hp - i * per) / per));
+      html += `<svg viewBox="0 0 16 14" aria-hidden="true"><defs><clipPath id="h${i}"><rect width="${(16 * f).toFixed(2)}" height="14"/></clipPath></defs>
+        <path d="${HEART}" fill="#5a2a22" stroke="#3b1a12" stroke-width="1"/><path d="${HEART}" fill="#e0413b" clip-path="url(#h${i})"/>
+        <path d="M3.4 2.6 C4.6 1.9 5.8 2.4 6.2 3.2" stroke="#ffb3a8" stroke-width="1.2" fill="none" clip-path="url(#h${i})"/></svg>`;
+    }
+    el.innerHTML = html; el.setAttribute('aria-label', `Vie ${Math.round(hp)} sur ${max}`);
+  }
+  const bar = (fill, txt, v, max) => { $(fill).style.width = Math.max(0, Math.min(100, v / max * 100)) + '%'; if (txt) $(txt).textContent = `${fmt(Math.max(0, v))}/${fmt(max)}`; };
+
+  // ---------- Render ----------
+  let view = 'hero', selItem = null;
+  function render() {
+    const s = stats(); G.hp = Math.min(G.hp, s.hp);
+    $('lvl').textContent = `Niv. ${G.lvl}`;
+    hearts($('hearts'), G.hp, s.hp);
+    bar('manaBar', 'manaTxt', s.mp, s.mp);
+    bar('xpBar', 'xpTxt', G.xp, xpNeed());
+    $('gold').textContent = fmt(G.gold); $('energy').textContent = fmt(G.energy);
+    $('stepsPill').textContent = fmt(todaySteps()); $('potPill').textContent = G.potions;
+    $('heroSub').textContent = G.cleared ? `A vaincu le Roi des Os ${G.cleared > 1 ? G.cleared + ' fois' : ''}` : 'Aventurier de la vallée';
+    // equipment slots
+    const slotHtml = sl => {
+      const it = itemById(G.eq[sl.id]);
+      return it ? `<button class="slot r${it.r}" type="button" data-item="${it.id}" aria-label="${it.name}">${it.icon}${it.up ? `<span class="up">+${it.up}</span>` : ''}</button>`
+                : `<button class="slot empty" type="button" data-ghost="${sl.ghost}" data-slot="${sl.id}" aria-label="${sl.name} : vide"></button>`;
+    };
+    $('slotsL').innerHTML = SLOTS.slice(0, 3).map(slotHtml).join('');
+    $('slotsR').innerHTML = SLOTS.slice(3).map(slotHtml).join('') + `<button class="slot" type="button" data-pot="1" aria-label="Potions">🧪<span class="up">${G.potions}</span></button>`;
+    $('stats').innerHTML = [['❤️', s.hp, 'Vie'], ['⚔️', s.atk, 'Force'], ['🛡️', s.def, 'Défense'], ['✨', s.mag, 'Magie']]
+      .map(([i, v, l]) => `<div class="st"><i>${i}</i><b>${fmt(v)}</b><span>${l}</span></div>`).join('');
+    // dungeon
+    $('foes').innerHTML = FOES.map(f => `<span title="${f.name}">${f.emoji || '🟢'}${f.crown ? '👑' : ''}</span>`).join('');
+    $('dungNote').textContent = `3 salles · ${ENERGY_COST} ⚡ par expédition · conseillé niv. 2`;
+    const can = G.energy >= ENERGY_COST;
+    $('exploreBtn').disabled = !can;
+    $('exploreNote').textContent = can ? `Tu as ${G.energy} ⚡, de quoi faire ${Math.floor(G.energy / ENERGY_COST)} expédition${G.energy >= 2 * ENERGY_COST ? 's' : ''}.`
+      : `Il te manque ${ENERGY_COST - G.energy} ⚡ : marche environ ${fmt((ENERGY_COST - G.energy) * 100)} pas.`;
+    renderBag(); renderWalk();
+  }
+
+  function renderBag() {
+    const cells = [];
+    const items = [...G.inv].sort((a, b) => b.r - a.r || b.id - a.id);
+    items.forEach(it => {
+      const eq = G.eq[it.slot] === it.id;
+      cells.push(`<button class="slot cell r${it.r} ${selItem === it.id ? 'sel' : ''}" type="button" data-item="${it.id}" aria-label="${it.name}">${it.icon}${eq ? '<span class="cnt">É</span>' : (it.up ? `<span class="cnt">+${it.up}</span>` : '')}</button>`);
+    });
+    cells.push(`<button class="slot cell" type="button" data-pot="1" aria-label="Potions">🧪<span class="cnt">${G.potions}</span></button>`);
+    while (cells.length < 15) cells.push('<div class="slot cell empty" data-ghost=""></div>');
+    $('bagGrid').innerHTML = cells.join('');
+    $('bagNote').textContent = `${G.inv.length} objet${G.inv.length > 1 ? 's' : ''} · touche un objet pour le voir. « É » = équipé.`;
+    renderTip();
+  }
+
+  function statLines(it, compare) {
+    const st = itemStats(it), cur = compare ? itemStats(compare) : {};
+    const names = { atk: ['⚔️', 'Force'], def: ['🛡️', 'Défense'], hp: ['❤️', 'Vie'], mag: ['✨', 'Magie'] };
+    const keys = [...new Set([...Object.keys(st), ...Object.keys(cur)])];
+    return keys.map(k => { const d = (st[k] || 0) - (cur[k] || 0);
+      const diff = compare && d !== 0 ? ` <span class="${d > 0 ? 'up-g' : 'down-r'}">(${d > 0 ? '+' : ''}${d})</span>` : '';
+      return `<div>${names[k][0]} ${names[k][1]} +${st[k] || 0}${diff}</div>`; }).join('');
+  }
+  const upCost = it => 15 * (it.up + 1) * (it.r + 1);
+  const sellPrice = it => 5 * (it.r + 1) * (it.up + 1);
+  function tipHtml(it, withActs) {
+    const eqd = G.eq[it.slot] === it.id, cur = itemById(G.eq[it.slot]);
+    const cmp = !eqd && cur ? cur : null;
+    return `<div class="tip">
+      <div class="top"><h3 class="r${it.r}t">${it.name}${it.up ? ' +' + it.up : ''}</h3><span class="rar r${it.r}t">${RAR[it.r]}</span></div>
+      <div class="kind">${SLOTS.find(s => s.id === it.slot).name}${eqd ? ' · équipé' : ''}</div>
+      <div class="line"><div class="big">${it.icon}</div><div class="sts">${statLines(it, cmp)}</div></div>
+      <div style="font-size:13px">${DESC[it.slot]}${cmp ? ` Comparé à ${cur.name}.` : ''}</div>
+      ${withActs ? `<div class="acts">
+        ${eqd ? `<button class="btn small" type="button" data-up="${it.id}" ${G.gold < upCost(it) ? 'disabled' : ''}>Forger 🪙 ${upCost(it)}</button>
+                 <button class="btn small green" type="button" data-unequip="${it.id}">Retirer</button>`
+              : `<button class="btn small green" type="button" data-equip="${it.id}">Équiper</button>
+                 <button class="btn small" type="button" data-sell="${it.id}">Vendre 🪙 ${sellPrice(it)}</button>`}
+      </div>` : ''}
+    </div>`;
+  }
+  function renderTip() {
+    const it = itemById(selItem);
+    $('tipWrap').innerHTML = it ? tipHtml(it, true) : '';
+  }
+
+  function renderWalk() {
+    $('bigSteps').textContent = fmt(todaySteps());
+    const now = new Date(), days = [], wd = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+    for (let i = 6; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i); days.push({ d, v: G.days[dayKey(d)] || 0 }); }
+    const max = Math.max(5000, ...days.map(x => x.v));
+    $('week').innerHTML = days.map(x => `<div><i class="${x.v ? '' : 'none'}" style="height:${x.v ? Math.max(6, x.v / max * 80) : 6}px" title="${fmt(x.v)} pas"></i><span>${wd[x.d.getDay()]}</span></div>`).join('');
+  }
+
+  // ---------- Hero canvas (home) ----------
+  function drawHero(t) {
+    const cv = $('heroCv'), r = cv.getBoundingClientRect(); if (!r.width) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (cv.width !== Math.round(r.width * dpr)) { cv.width = Math.round(r.width * dpr); cv.height = Math.round(r.height * dpr); }
+    const c = cv.getContext('2d'); c.setTransform(dpr, 0, 0, dpr, 0, 0); c.clearRect(0, 0, r.width, r.height);
+    const w = r.width, h = r.height, bob = reduce ? 0 : Math.sin(t / 500) * 3;
+    // pedestal glow
+    const g = c.createRadialGradient(w / 2, h * 0.86, 4, w / 2, h * 0.86, w * 0.45); g.addColorStop(0, 'rgba(255,215,106,.55)'); g.addColorStop(1, 'rgba(255,215,106,0)');
+    c.fillStyle = g; c.fillRect(0, 0, w, h);
+    c.fillStyle = 'rgba(90,58,34,.35)'; c.beginPath(); c.ellipse(w / 2, h * 0.9, 46, 9, 0, 0, Math.PI * 2); c.fill();
+    drawHeroFig(c, w / 2, h * 0.88 + bob * 0.2, 120, bob, 1);
+    // sparkles
+    if (!reduce) for (let i = 0; i < 5; i++) { const a = t / 1400 + i * 1.26, x = w / 2 + Math.cos(a) * 62, y = h * 0.45 + Math.sin(a * 1.3) * 50, f = (Math.sin(t / 300 + i) + 1) / 2;
+      c.fillStyle = `rgba(255,236,150,${f})`; c.save(); c.translate(x, y); c.rotate(Math.PI / 4); c.fillRect(-3 * f, -0.7, 6 * f, 1.4); c.fillRect(-0.7, -3 * f, 1.4, 6 * f); c.restore(); }
+  }
+  // Hero = emoji body + equipped weapon in hand.
+  function drawHeroFig(c, x, y, size, bob, dir) {
+    c.save(); c.translate(x, y);
+    c.font = `${size}px ${EMO}`; c.textAlign = 'center'; c.textBaseline = 'bottom';
+    c.fillText('🧝', 0, bob);
+    const w = itemById(G.eq.arme);
+    if (w) { c.save(); c.translate(dir * size * 0.34, -size * 0.32 + bob); c.rotate(dir * -0.5); c.font = `${size * 0.42}px ${EMO}`; c.fillText(w.icon, 0, 0); c.restore(); }
+    const a = itemById(G.eq.casque);
+    if (a) { c.font = `${size * 0.3}px ${EMO}`; c.fillText(a.icon, -dir * size * 0.32, -size * 0.75 + bob); }
+    c.restore();
+  }
+
+  // ---------- Combat ----------
+  let F = null; // fight state
+  const scv = $('sceneCv'), sctx = scv.getContext('2d');
+  let fx = []; // floating texts & particles
+  function startRun() {
+    if (G.energy < ENERGY_COST) return;
+    G.energy -= ENERGY_COST; G.hp = stats().hp; save();
+    F = { room: 0, mp: stats().mp, turn: 0, busy: false, defending: false, loot: { xp: 0, gold: 0, items: [], pots: 0 } };
+    $('fight').hidden = false; document.body.style.overflow = 'hidden';
+    nextFoe();
+  }
+  function nextFoe() {
+    const f = FOES[F.room], L = Math.max(0, G.lvl - 2) * 0.08 + 1;
+    F.foe = { ...f, hpMax: Math.round(f.hp * L), hp: Math.round(f.hp * L), atk: f.atk * L, charging: false, anim: { lunge: 0, hit: 0, dead: 0 } };
+    F.hero = { lunge: 0, hit: 0, shield: 0, heal: 0 };
+    F.turn = 0; F.defending = false; F.busy = false;
+    $('foeName').textContent = f.name; $('roomTxt').textContent = `Salle ${F.room + 1}/3`;
+    say(f.boss ? 'Le Roi des Os se dresse devant toi !' : `Un ${f.name.toLowerCase()} surgit !`);
+    $('intent').hidden = true; updFight();
+  }
+  function say(t) { $('log').textContent = t; }
+  function updFight() {
+    const s = stats();
+    bar('foeHp', 'foeHpTxt', F.foe.hp, F.foe.hpMax); bar('meHp', 'meHpTxt', G.hp, s.hp); bar('meMp', 'meMpTxt', F.mp, s.mp);
+    $('potCnt').textContent = G.potions;
+    $('sFire').disabled = F.busy || F.mp < 8; $('sAtk').disabled = F.busy; $('sDef').disabled = F.busy; $('sPot').disabled = F.busy || G.potions < 1 || G.hp >= s.hp;
+  }
+  function floatTxt(text, x, y, color, big) { fx.push({ type: 'txt', text, x, y, color, big, t0: performance.now() }); }
+  function dmgCalc(atk, def, mult = 1) { let d = atk * rnd(0.85, 1.15) * mult - def * 0.6; let crit = Math.random() < 0.12; if (crit) d *= 1.6; return { d: Math.max(1, Math.round(d)), crit }; }
+  const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 120) : ms));
+  function tick(o, key, ms) { o[key] = performance.now(); return wait(ms); }
+
+  async function act(kind) {
+    if (!F || F.busy) return;
+    F.busy = true; updFight();
+    const s = stats(), W = scv.clientWidth, H = scv.clientHeight, ex = W * 0.72, ey = H * 0.55, hx = W * 0.28, hy = H * 0.62;
+    F.defending = false;
+    if (kind === 'atk') {
+      await tick(F.hero, 'lunge', 260);
+      const r = dmgCalc(s.atk, F.foe.def); F.foe.hp -= r.d; F.foe.anim.hit = performance.now();
+      floatTxt(`-${r.d}${r.crit ? ' !' : ''}`, ex, ey - 60, r.crit ? '#ffd76a' : '#fff', r.crit);
+      say(r.crit ? `Coup critique ! ${r.d} dégâts.` : `Tu frappes : ${r.d} dégâts.`);
+    } else if (kind === 'fire') {
+      F.mp -= 8; fx.push({ type: 'ball', t0: performance.now(), x0: hx + 20, y0: hy - 50, x1: ex, y1: ey - 30 });
+      await wait(420);
+      const r = dmgCalc(s.mag * 1.7, F.foe.def * 0.3); F.foe.hp -= r.d; F.foe.anim.hit = performance.now();
+      for (let i = 0; i < 18; i++) fx.push({ type: 'spark', x: ex, y: ey - 30, vx: rnd(-3, 3), vy: rnd(-4, 1), t0: performance.now(), col: ['#ffd76a', '#ff8a3c', '#ff4a2a'][i % 3] });
+      floatTxt(`-${r.d}`, ex, ey - 60, '#ffb347', true); say(`Boule de feu ! ${r.d} dégâts.`);
+    } else if (kind === 'def') {
+      F.defending = true; F.hero.shield = performance.now(); F.mp = Math.min(s.mp, F.mp + 6);
+      floatTxt('+6 💧', hx, hy - 110, '#7ab8ff'); say('Tu te protèges derrière ton bouclier et récupères du mana.'); await wait(380);
+    } else if (kind === 'pot') {
+      G.potions--; const heal = Math.round(s.hp * 0.45); G.hp = Math.min(s.hp, G.hp + heal); F.hero.heal = performance.now();
+      floatTxt(`+${heal} ❤️`, hx, hy - 110, '#8fe07a', true); say(`Tu bois une potion : +${heal} PV.`); await wait(420);
+    }
+    updFight();
+    if (F.foe.hp <= 0) { await win(); return; }
+    await wait(450);
+    await foeTurn();
+    if (G.hp <= 0) { await lose(); return; }
+    F.mp = Math.min(s.mp, F.mp + 2);
+    F.busy = false; updFight();
+  }
+
+  async function foeTurn() {
+    const f = F.foe, s = stats(), W = scv.clientWidth, H = scv.clientHeight, hx = W * 0.28, hy = H * 0.62;
+    F.turn++;
+    let mult = 1, line = `${f.name} attaque`;
+    if (f.special) {
+      if (f.charging) { mult = f.special.mult; line = f.special.hit; f.charging = false; $('intent').hidden = true; }
+      else if (F.turn % f.special.every === 0) { f.charging = true; $('intent').textContent = '⚠️ ' + f.special.warn + ' Pare le coup !'; $('intent').hidden = false; say(f.special.warn); return wait(500); }
+    }
+    await tick(f.anim, 'lunge', 300);
+    let r = dmgCalc(f.atk, s.def, mult);
+    if (F.defending) r.d = Math.max(1, Math.round(r.d * 0.35));
+    G.hp -= r.d; F.hero.hit = performance.now();
+    floatTxt(`-${r.d}`, hx, hy - 110, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1);
+    say(F.defending ? `${line}, mais tu pares : seulement ${r.d} dégâts.` : `${line} : ${r.d} dégâts.`);
+    updFight(); render();
+    await wait(300);
+  }
+
+  function rollItem(boss) {
+    const roll = Math.random(), ch = boss ? [0.15, 0.55, 0.85] : [0.6, 0.9, 0.985];
+    const r = roll < ch[0] ? 0 : roll < ch[1] ? 1 : roll < ch[2] ? 2 : 3;
+    const sl = SLOTS[Math.floor(Math.random() * SLOTS.length)].id, [kind, icon] = KINDS[sl][Math.floor(Math.random() * KINDS[sl].length)];
+    const v = (4 + G.lvl * 1.6) * [1, 1.5, 2.2, 3.2][r];
+    const base = { arme: { atk: v }, casque: { def: v * 0.5, hp: v * 1.6 }, armure: { def: v * 0.8, hp: v * 2.2 }, bottes: { def: v * 0.4, hp: v }, amulette: { mag: v, hp: v * 0.8 } }[sl];
+    for (const k in base) base[k] = Math.max(1, Math.round(base[k]));
+    return { id: G.nextId++, slot: sl, name: `${kind} ${ADJ[r]}`, icon, r, up: 0, base };
+  }
+
+  async function win() {
+    const f = F.foe; f.anim.dead = performance.now(); say(`${f.name} est vaincu !`);
+    await wait(700);
+    const xp = Math.round(f.xp * rnd(0.9, 1.15)), gold = Math.round(f.gold * rnd(0.8, 1.3));
+    const item = (f.boss || Math.random() < 0.45) ? rollItem(f.boss) : null;
+    const pot = !item && Math.random() < 0.6;
+    G.gold += gold; if (pot) G.potions++;
+    if (item) G.inv.push(item);
+    const lv = gainXp(xp);
+    F.loot.xp += xp; F.loot.gold += gold; if (item) F.loot.items.push(item); if (pot) F.loot.pots++;
+    save(); render();
+    const last = F.room === FOES.length - 1;
+    if (last) { G.cleared++; save(); }
+    modal(last ? 'Donjon terminé !' : 'Victoire !', last ? 'r' : '', `
+      <div style="font-family:var(--emoji); font-size:46px">${last ? '🏆' : '✨'}</div>
+      <div class="rew"><div class="pill"><i>⭐</i>+${xp} XP</div><div class="pill"><i>🪙</i>+${gold}</div>${pot ? '<div class="pill"><i>🧪</i>+1</div>' : ''}</div>
+      ${lv ? `<div class="msg">Niveau ${G.lvl} atteint ! Tes statistiques augmentent et ta vie est restaurée.</div>` : ''}
+      ${item ? `<div class="note">Butin trouvé :</div>${tipHtml(item, false)}` : ''}
+      ${last ? `<div class="note">Tu as vaincu le Roi des Os. Rapporte ton butin au camp. D'autres donjons arrivent bientôt.</div>` : `<div class="note">Vie actuelle : ${fmt(G.hp)}/${fmt(stats().hp)}</div>`}
+      <div style="display:grid; gap:8px">
+        ${item ? `<button class="btn green" type="button" data-mequip="${item.id}"><i>✅</i> Équiper ${item.name.split(' ')[0].toLowerCase()}</button>` : ''}
+        ${last ? `<button class="btn" type="button" data-home="1"><i>🏕️</i> Retour au camp</button>`
+               : `<button class="btn" type="button" data-next="1"><i>🚪</i> Salle suivante</button>`}
+      </div>`);
+  }
+  function gainXp(xp) {
+    G.xp += xp; let up = false;
+    while (G.xp >= xpNeed()) { G.xp -= xpNeed(); G.lvl++; up = true; }
+    if (up) { G.hp = stats().hp; if (F) F.mp = stats().mp; }
+    return up;
+  }
+  async function lose() {
+    say('Tu t’effondres…'); await wait(700);
+    G.hp = stats().hp; save(); render();
+    modal('Tu as été vaincu', 'r', `<div style="font-family:var(--emoji); font-size:46px">💫</div>
+      <div class="note">Un villageois t'a ramené au camp. Tu gardes ce que tu as gagné : ${F.loot.xp} XP, ${F.loot.gold} 🪙${F.loot.items.length ? ' et ' + F.loot.items.length + ' objet(s)' : ''}.</div>
+      <div class="note">Conseil : équipe ton meilleur butin, forge ton arme ou marche pour revenir plus fort.</div>
+      <button class="btn" type="button" data-home="1"><i>🏕️</i> Retour au camp</button>`);
+  }
+  function endRun() { F = null; $('fight').hidden = true; document.body.style.overflow = ''; G.hp = stats().hp; save(); render(); }
+
+  function modal(title, rib, body) { $('mRib').textContent = title; $('mRib').className = 'ribbon ' + rib; $('mBody').innerHTML = body; $('mBody').style.display = 'grid'; $('mBody').style.gap = '10px'; $('modal').hidden = false; }
+  $('modal').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.mequip) { equip(+b.dataset.mequip); b.disabled = true; b.innerHTML = '<i>✅</i> Équipé'; return; }
+    $('modal').hidden = true;
+    if (b.dataset.next) { F.room++; F.mp = Math.min(stats().mp, F.mp + 6); nextFoe(); }
+    if (b.dataset.home) endRun();
+  });
+
+  // Scene drawing
+  function slime(c, x, y, s, t, hit) {
+    const sq = reduce ? 0 : Math.sin(t / 260) * 0.06;
+    c.save(); c.translate(x, y); c.scale(1 + sq, 1 - sq);
+    c.fillStyle = 'rgba(0,0,0,.25)'; c.beginPath(); c.ellipse(0, 2, 40 * s, 8 * s, 0, 0, Math.PI * 2); c.fill();
+    const g = c.createRadialGradient(-12 * s, -40 * s, 4, 0, -24 * s, 50 * s); g.addColorStop(0, hit ? '#ffffff' : '#b6f27a'); g.addColorStop(1, hit ? '#ffd0d0' : '#4caf3a');
+    c.fillStyle = g; c.beginPath(); c.moveTo(-40 * s, 0); c.bezierCurveTo(-44 * s, -30 * s, -20 * s, -62 * s, 0, -64 * s); c.bezierCurveTo(20 * s, -62 * s, 44 * s, -30 * s, 40 * s, 0); c.closePath(); c.fill();
+    c.strokeStyle = '#2e6b22'; c.lineWidth = 3 * s; c.stroke();
+    c.fillStyle = '#ffffff'; c.beginPath(); c.ellipse(-14 * s, -44 * s, 6 * s, 9 * s, -0.4, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#1b2a14'; c.beginPath(); c.ellipse(-12 * s, -28 * s, 5 * s, 7 * s, 0, 0, Math.PI * 2); c.ellipse(12 * s, -28 * s, 5 * s, 7 * s, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff'; c.beginPath(); c.arc(-10 * s, -31 * s, 1.8 * s, 0, 7); c.arc(14 * s, -31 * s, 1.8 * s, 0, 7); c.fill();
+    c.fillStyle = '#ff8a9a'; c.globalAlpha = .6; c.beginPath(); c.ellipse(-22 * s, -18 * s, 5 * s, 3 * s, 0, 0, 7); c.ellipse(22 * s, -18 * s, 5 * s, 3 * s, 0, 0, 7); c.fill(); c.globalAlpha = 1;
+    c.strokeStyle = '#1b2a14'; c.lineWidth = 2 * s; c.beginPath(); c.arc(0, -20 * s, 5 * s, 0.2, Math.PI - 0.2); c.stroke();
+    c.restore();
+  }
+  function drawScene(t) {
+    const r = scv.getBoundingClientRect(); if (!r.width || $('fight').hidden) return;
+    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    if (scv.width !== Math.round(r.width * dpr) || scv.height !== Math.round(r.height * dpr)) { scv.width = Math.round(r.width * dpr); scv.height = Math.round(r.height * dpr); }
+    const c = sctx; c.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const W = r.width, H = r.height;
+    // crypt background: wall + floor tiles + torches
+    const wall = c.createLinearGradient(0, 0, 0, H * 0.55); wall.addColorStop(0, '#2a2236'); wall.addColorStop(1, '#4a3d5c');
+    c.fillStyle = wall; c.fillRect(0, 0, W, H * 0.55);
+    c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 2;
+    for (let y = 0; y < H * 0.55; y += 22) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+      for (let x = (y / 22) % 2 ? 0 : 24; x < W; x += 48) { c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + 22); c.stroke(); } }
+    const floor = c.createLinearGradient(0, H * 0.55, 0, H); floor.addColorStop(0, '#6b5a48'); floor.addColorStop(1, '#3d3128');
+    c.fillStyle = floor; c.fillRect(0, H * 0.55, W, H * 0.45);
+    c.strokeStyle = 'rgba(0,0,0,.22)';
+    for (let i = 0; i < 6; i++) { const y = H * 0.55 + (H * 0.45) * (i / 6) ** 1.4; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); }
+    for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(W / 2 + i * 30, H * 0.55); c.lineTo(W / 2 + i * 90, H); c.stroke(); }
+    [W * 0.12, W * 0.88].forEach((x, i) => {
+      c.fillStyle = '#3b2414'; c.fillRect(x - 3, H * 0.2, 6, 26);
+      const fl = reduce ? 1 : 0.85 + Math.sin(t / 90 + i * 2) * 0.15;
+      const g = c.createRadialGradient(x, H * 0.18, 2, x, H * 0.18, 70 * fl); g.addColorStop(0, 'rgba(255,190,90,.45)'); g.addColorStop(1, 'rgba(255,190,90,0)');
+      c.fillStyle = g; c.fillRect(x - 80, H * 0.18 - 80, 160, 160);
+      c.fillStyle = '#ffb347'; c.beginPath(); c.ellipse(x, H * 0.18, 6 * fl, 11 * fl, 0, 0, Math.PI * 2); c.fill();
+      c.fillStyle = '#fff1a8'; c.beginPath(); c.ellipse(x, H * 0.19, 3, 6 * fl, 0, 0, Math.PI * 2); c.fill();
+    });
+    if (!F) return;
+    const now = performance.now();
+    const pulse = (t0, dur) => { const k = (now - t0) / dur; return k >= 0 && k < 1 ? Math.sin(k * Math.PI) : 0; };
+    const hx = W * 0.28, hy = H * 0.86, ex = W * 0.72, ey = H * 0.86;
+    // hero
+    const hl = pulse(F.hero.lunge, 260) * 40, hh = pulse(F.hero.hit, 300);
+    c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(hx, hy, 34, 8, 0, 0, Math.PI * 2); c.fill();
+    c.save(); if (hh) c.translate(Math.sin(now / 20) * 5 * hh, 0);
+    if (hh) c.globalAlpha = 0.6 + 0.4 * Math.abs(Math.sin(now / 40));
+    drawHeroFig(c, hx + hl, hy, Math.min(96, H * 0.36), reduce ? 0 : Math.sin(t / 400) * 2, 1);
+    c.restore(); c.globalAlpha = 1;
+    if (F.defending || pulse(F.hero.shield, 600)) { c.strokeStyle = 'rgba(126,200,255,.8)'; c.lineWidth = 4; c.beginPath(); c.arc(hx, hy - H * 0.18, H * 0.24, 0, Math.PI * 2); c.stroke();
+      c.fillStyle = 'rgba(126,200,255,.12)'; c.fill(); }
+    const hl2 = pulse(F.hero.heal, 700); if (hl2) for (let i = 0; i < 6; i++) { c.fillStyle = `rgba(143,224,122,${hl2})`; c.font = `16px ${EMO}`; c.fillText('✚', hx - 30 + i * 12, hy - 40 - ((now - F.hero.heal) / 8 + i * 10) % 90); }
+    // foe
+    const f = F.foe, fl = pulse(f.anim.lunge, 300) * -50, fh = pulse(f.anim.hit, 300), dead = f.anim.dead ? Math.min(1, (now - f.anim.dead) / 600) : 0;
+    c.save(); c.globalAlpha = 1 - dead; c.translate(fh ? Math.sin(now / 18) * 6 : 0, dead * 20);
+    c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(ex, ey, f.boss ? 46 : 36, 8, 0, 0, Math.PI * 2); c.fill();
+    if (f.id === 'slime') slime(c, ex + fl, ey, Math.min(1.2, H / 260), t, fh > 0.3);
+    else {
+      const size = Math.min(f.boss ? 120 : 92, H * (f.boss ? 0.46 : 0.36)), bob = reduce ? 0 : Math.sin(t / 350) * 3;
+      c.save(); c.translate(ex + fl, ey); c.scale(-1, 1); c.font = `${size}px ${EMO}`; c.textAlign = 'center'; c.textBaseline = 'bottom';
+      if (fh > 0.3) c.filter = 'brightness(2.2)';
+      c.fillText(f.emoji, 0, bob); c.filter = 'none';
+      if (f.crown) { c.font = `${size * 0.45}px ${EMO}`; c.fillText('👑', 0, -size * 0.78 + bob); }
+      if (f.charging) { c.fillStyle = `rgba(255,80,60,${0.35 + 0.25 * Math.sin(now / 120)})`; c.beginPath(); c.arc(0, -size * 0.45, size * 0.62, 0, Math.PI * 2); c.fill(); }
+      c.restore();
+    }
+    c.restore(); c.globalAlpha = 1;
+    // fx
+    fx = fx.filter(p => {
+      const k = (now - p.t0) / (p.type === 'txt' ? 1100 : p.type === 'ball' ? 420 : 700);
+      if (k >= 1) return false;
+      if (p.type === 'txt') { c.font = `700 ${p.big ? 30 : 22}px "Pixelify Sans", system-ui, sans-serif`; c.textAlign = 'center'; c.lineWidth = 4; c.strokeStyle = 'rgba(30,15,5,.8)';
+        const y = p.y - k * 40; c.globalAlpha = 1 - Math.max(0, k - 0.6) / 0.4; c.strokeText(p.text, p.x, y); c.fillStyle = p.color; c.fillText(p.text, p.x, y); c.globalAlpha = 1; }
+      else if (p.type === 'ball') { const x = p.x0 + (p.x1 - p.x0) * k, y = p.y0 + (p.y1 - p.y0) * k - Math.sin(k * Math.PI) * 30;
+        const g = c.createRadialGradient(x, y, 2, x, y, 22); g.addColorStop(0, '#fff1a8'); g.addColorStop(0.4, '#ff8a3c'); g.addColorStop(1, 'rgba(255,60,30,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, 22, 0, 7); c.fill(); }
+      else { p.x += p.vx; p.y += p.vy; p.vy += 0.15; c.globalAlpha = 1 - k; c.fillStyle = p.col; c.fillRect(p.x, p.y, 4, 4); c.globalAlpha = 1; }
+      return true;
+    });
+  }
+
+  // ---------- Equipment actions ----------
+  function equip(id) { const it = itemById(id); if (!it) return; const s0 = stats().hp; G.eq[it.slot] = it.id; G.hp = Math.min(stats().hp, G.hp + Math.max(0, stats().hp - s0)); save(); render(); toast(`${it.name} équipé`); }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.item && !b.closest('#modal')) { selItem = +b.dataset.item; if (view !== 'bag') show('bag'); renderBag(); $('tipWrap').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'nearest' }); return; }
+    if (b.dataset.slot) { show('bag'); toast('Trouve des objets dans le donjon pour remplir cet emplacement'); return; }
+    if (b.dataset.pot && !b.closest('#modal')) { show('bag'); return; }
+    if (b.dataset.equip) { equip(+b.dataset.equip); return; }
+    if (b.dataset.unequip) { const it = itemById(+b.dataset.unequip); delete G.eq[it.slot]; save(); render(); toast(`${it.name} retiré`); return; }
+    if (b.dataset.sell) { const it = itemById(+b.dataset.sell); G.gold += sellPrice(it); G.inv = G.inv.filter(x => x !== it); selItem = null; save(); render(); toast(`Vendu pour ${sellPrice(it)} 🪙`); return; }
+    if (b.dataset.up) { const it = itemById(+b.dataset.up), cost = upCost(it); if (G.gold < cost) return; G.gold -= cost; it.up++; save(); render(); toast(`${it.name} forgé +${it.up} !`); return; }
+  });
+  $('buyPot').addEventListener('click', () => { if (G.gold < 15) { toast('Pas assez d’or'); return; } G.gold -= 15; G.potions++; save(); render(); toast('Potion achetée'); });
+
+  // ---------- Navigation ----------
+  function show(v) {
+    if (v === 'explore') { show('hero'); $('v-hero2').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); return; }
+    view = v;
+    $('v-hero').hidden = v !== 'hero'; $('v-hero2').hidden = v !== 'hero'; $('v-bag').hidden = v !== 'bag'; $('v-walk').hidden = v !== 'walk';
+    document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v ? 'true' : 'false'));
+    if (v !== 'bag') window.scrollTo({ top: 0 });
+    render();
+  }
+  document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.v)));
+  $('exploreBtn').addEventListener('click', startRun);
+  $('sAtk').addEventListener('click', () => act('atk'));
+  $('sFire').addEventListener('click', () => act('fire'));
+  $('sDef').addEventListener('click', () => act('def'));
+  $('sPot').addEventListener('click', () => act('pot'));
+  $('fleeBtn').addEventListener('click', () => { if (F && !F.busy) { toast('Tu quittes le donjon'); endRun(); } });
+
+  // ---------- Demo & reset ----------
+  $('demo1').addEventListener('click', () => { const g = addSteps(1000); toast(`+1 000 pas · +${g} ⚡`); });
+  $('demo5').addEventListener('click', () => { const g = addSteps(5000); toast(`+5 000 pas · +${g} ⚡`); });
+  $('resetBtn').addEventListener('click', () => { $('resetAsk').hidden = false; });
+  $('resetNo').addEventListener('click', () => { $('resetAsk').hidden = true; });
+  $('resetYes').addEventListener('click', () => { G = fresh(); G.hp = stats().hp; save(); $('resetAsk').hidden = true; selItem = null; render(); toast('Nouvelle partie'); });
+
+  // ---------- Live pedometer ----------
+  const wk = { on: false, sm: 9.81, base: 9.81, above: false, last: 0, streak: 0, pending: 0, steps: 0, got: false, lock: null, unsaved: 0 };
+  function wMsg(t) { $('walkMsg').textContent = t || ''; $('walkMsg').hidden = !t; }
+  function onMotion(e) {
+    const a = e.accelerationIncludingGravity; if (!a || a.x == null) return; wk.got = true;
+    const m = Math.hypot(a.x, a.y, a.z); wk.sm = wk.sm * 0.55 + m * 0.45; wk.base = wk.base * 0.97 + m * 0.03;
+    const diff = wk.sm - wk.base, now = performance.now();
+    if (!wk.above && diff > 1.15) {
+      wk.above = true; const gap = now - wk.last; if (gap < 260) return; wk.last = now;
+      if (gap > 2000) { wk.streak = 0; wk.pending = 0; }
+      wk.streak++;
+      if (wk.streak < 4) wk.pending++; else { const n = wk.pending + 1; wk.pending = 0; wk.steps += n; const g = addSteps(n); if (g > 0) toast(`+${g} ⚡ énergie d'aventure`); $('walkLabel').innerHTML = `<span class="pulse"></span>Balade : ${fmt(wk.steps)} pas`; }
+    } else if (wk.above && diff < 0.35) wk.above = false;
+  }
+  async function lock() { try { if (navigator.wakeLock) wk.lock = await navigator.wakeLock.request('screen'); } catch (e) { wk.lock = null; } }
+  document.addEventListener('visibilitychange', () => { if (wk.on && document.visibilityState === 'visible') lock(); });
+  $('walkBtn').addEventListener('click', async () => {
+    if (wk.on) {
+      wk.on = false; window.removeEventListener('devicemotion', onMotion); try { wk.lock && wk.lock.release(); } catch (e) {} wk.lock = null;
+      $('walkBtn').innerHTML = '<i>👣</i> Partir en balade'; $('walkLabel').textContent = "Pas aujourd'hui";
+      wMsg(wk.steps ? `Bravo ! ${fmt(wk.steps)} pas pendant cette balade.` : ''); return;
+    }
+    wMsg('');
+    if (typeof DeviceMotionEvent === 'undefined') { wMsg('Ce navigateur ne donne pas accès au capteur de mouvement.'); return; }
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      try { if (await DeviceMotionEvent.requestPermission() !== 'granted') { wMsg('Autorise « Mouvement et orientation » pour compter tes pas, puis réessaie.'); return; } }
+      catch (e) { wMsg("Le capteur n'est pas disponible ici. Ouvre le jeu installé sur ton écran d'accueil."); return; }
+    }
+    Object.assign(wk, { on: true, steps: 0, streak: 0, pending: 0, last: 0, above: false, got: false });
+    window.addEventListener('devicemotion', onMotion); lock();
+    $('walkBtn').innerHTML = '<i>⏹️</i> Arrêter la balade'; $('walkLabel').innerHTML = '<span class="pulse"></span>Balade : 0 pas';
+    setTimeout(() => { if (wk.on && !wk.got) wMsg("Aucun mouvement reçu. Ouvre le jeu depuis ton écran d'accueil, pas depuis une autre app."); }, 3000);
+  });
+
+  // ---------- Loop ----------
+  render();
+  if (!G.welcomed) {
+    G.welcomed = true; save();
+    modal('Bienvenue, aventurier', 'b', `<div style="font-family:var(--emoji); font-size:46px">🧝</div>
+      <div style="font-size:15px">Tes pas dans la vraie vie se transforment en <b>énergie d'aventure ⚡</b> : 100 pas = 1 ⚡.</div>
+      <div class="note">Une expédition dans la Crypte oubliée coûte ${ENERGY_COST} ⚡. Tu commences avec ${G.energy} ⚡ pour essayer tout de suite.</div>
+      <button class="btn" type="button" data-home="0"><i>⚔️</i> C'est parti</button>`);
+  }
+  function loop(t) { drawHero(t); drawScene(t); requestAnimationFrame(loop); }
+  requestAnimationFrame(loop);
+})();
+</script>
+<script>
+if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+</script>
+</body>
+</html>

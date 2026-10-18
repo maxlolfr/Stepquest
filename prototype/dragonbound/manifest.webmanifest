@@ -1,0 +1,17 @@
+{
+  "name": "StepQuest: Dragonbound",
+  "short_name": "Dragonbound",
+  "description": "Un RPG fantasy où tes vrais pas font progresser ton héros.",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2f5d3a",
+  "theme_color": "#2f5d3a",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
