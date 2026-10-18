@@ -305,6 +305,29 @@ i.coin { display: inline-block; width: 1em; height: 1em; vertical-align: -0.14em
 .pill > i > i.coin { width: 20px; height: 20px; }
 .legfx { font-size: 13px; font-weight: 800; color: #ffc23a; background: rgba(255,194,58,.12); border: 1px solid rgba(255,194,58,.5); border-radius: 8px; padding: 4px 8px; text-shadow: 0 1px 0 rgba(0,0,0,.4); }
 .cell .better { position: absolute; left: 3px; top: 1px; font-size: 13px; font-weight: 900; color: #6ee05a; text-shadow: 0 1px 1px #000; }
+.obj { display: grid; grid-template-columns: 54px 1fr; gap: 10px; align-items: center; background: rgba(255,255,255,.45); border: 2px solid #d6b07a; border-radius: 12px; padding: 8px; }
+.obj .ic { width: 54px; height: 54px; display: grid; place-items: center; font-family: var(--emoji); font-size: 32px; }
+.obj .ic img { width: 100%; height: 100%; object-fit: contain; }
+.obj b { font-family: var(--font-display); font-weight: 400; font-size: 16px; display: block; }
+.obj small { font-size: 12px; color: var(--muted); font-weight: 800; }
+.qrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: center; padding: 8px 0; }
+.qrow + .qrow { border-top: 2px dashed #d6b07a; }
+.qrow b { font-size: 14px; font-weight: 800; display: block; }
+.qbar { height: 9px; border-radius: 99px; background: rgba(60,30,10,.2); overflow: hidden; margin-top: 4px; }
+.qbar i { display: block; height: 100%; background: linear-gradient(90deg, #7cc45a, #4c8a3a); border-radius: 99px; }
+.qrow .rw { font-size: 12px; font-weight: 800; color: var(--muted); }
+.qrow.done b { text-decoration: line-through; opacity: .6; }
+.achs { display: flex; flex-direction: column; }
+.tabs button .dot { position: absolute; top: 0; right: calc(50% - 26px); width: 14px; height: 14px; border-radius: 50%; background: #e8453c; border: 2px solid #fff3d4; box-shadow: 0 0 6px #e8453c; }
+.tabs button { position: relative; }
+.story { position: fixed; inset: 0; z-index: 72; background: rgba(8,4,14,.72); display: flex; flex-direction: column; justify-content: flex-end; cursor: pointer; animation: celIn .25s; }
+.story .who { display: flex; align-items: flex-end; gap: 10px; padding: 0 16px; }
+.story .who img, .story .who .em { width: 150px; height: 170px; object-fit: contain; filter: drop-shadow(0 6px 8px rgba(0,0,0,.7)); font-family: var(--emoji); font-size: 110px; display: grid; place-items: center; animation: rise .35s; }
+.story .who.r { justify-content: flex-end; }
+.story .box { margin: 0 12px calc(16px + env(safe-area-inset-bottom, 0px)); background: linear-gradient(180deg, #fff6df, #f1dcae); border: 4px solid #6e4628; border-radius: 18px; padding: 14px 16px 12px; box-shadow: 0 6px 0 #3b2414; min-height: 120px; }
+.story .nm { font-family: var(--font-display); font-size: 18px; color: #8a3a12; margin-bottom: 4px; }
+.story .tx { font-size: 16px; font-weight: 700; line-height: 1.35; color: #3b2414; }
+.story .nx { text-align: right; font-size: 12px; font-weight: 800; color: #8a6a44; margin-top: 6px; animation: blink 1.4s infinite; }
 .modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .mode { font: inherit; font-weight: 800; font-size: 13px; border-radius: 10px; padding: 7px 4px; border: 2px solid #d6b07a; background: rgba(255,255,255,.45); color: var(--ink); cursor: pointer; }
 .mode.on { border-color: var(--gold); background: #fff3d4; box-shadow: 0 0 0 2px rgba(242,182,50,.5); }
@@ -523,6 +546,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <div class="ribbon r">Aventure</div>
       <div id="continue"></div>
     </div>
+    <div class="panel" id="questPanel"></div>
+    <div class="panel" id="achPanel"></div>
     <div class="panel">
       <div class="ribbon b">Coffre du jour</div>
       <div class="daily" id="dailyRow"></div>
@@ -1053,6 +1078,94 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     for (let k = 0; k < on; k++) setTimeout(() => SFX.star(k), 120 + k * 450);
   }
 
+  // ---------- Story, daily quests and achievements (2.0) ----------
+  const STORY = {
+    0: { in: [['narr', 'Chapitre 1 · La Crypte oubliée. Sous la vallée, les morts se relèvent.'], ['hero', 'Les os qui marchent… Quelqu’un les commande. Je vais trouver qui.']],
+         out: [['bossBone', 'Mon trône… n’était qu’un début. Le Dragon est réveillé…'], ['hero', 'Le Dragon ? Alors il faut traverser la forêt.']] },
+    1: { in: [['narr', 'Chapitre 2 · La Forêt des Murmures. Les arbres chuchotent ton nom.'], ['hero', 'Une sorcière a ensorcelé la forêt. Restons sur nos gardes.']],
+         out: [['bossWitch', 'Tu crois m’avoir vaincue ? Les Mines de Braise te brûleront !'], ['hero', 'Direction les Mines. Le Dragon nous attend.']] },
+    2: { in: [['narr', 'Chapitre 3 · Les Mines de Braise. La chaleur est écrasante.'], ['hero', 'Ce trésor… c’est l’antre du Dragon Écarlate.']],
+         out: [['bossDragon', 'Grrr… Le sceau du Néant est déjà brisé… tu arrives trop tard…'], ['hero', 'Trop tard ? Alors je vais jusqu’au bout.']] },
+    3: { in: [['narr', 'Chapitre 4 · Les Marais Hantés. La brume étouffe les cris.'], ['hero', 'Ça sent la potion et la vase. Morgane n’est pas loin.']],
+         out: [['bossHag', 'Ma vase… mon chaudron… La Reine te gèlera le cœur !'], ['hero', 'Les Pics Gelés, alors. Couvrons-nous.']] },
+    4: { in: [['narr', 'Chapitre 5 · Les Pics Gelés. Le vent coupe comme une lame.'], ['hero', 'Chaque pas sur la glace pourrait être le dernier.']],
+         out: [['bossQueen', 'Le Seigneur du Néant… il m’a promis l’hiver éternel…'], ['hero', 'Le Néant. C’est lui qui tire les ficelles.']] },
+    5: { in: [['narr', 'Chapitre 6 · La Citadelle du Néant. Le ciel lui-même se déchire.'], ['hero', 'Voilà la source de tout ce chaos.']],
+         out: [['bossVoid', 'Tu ne fermes pas une faille… tu en ouvres d’autres. La Nécropole s’éveille.'], ['hero', 'Encore des morts. Je n’ai pas fini.']] },
+    6: { in: [['narr', 'Chapitre 7 · La Nécropole. Ici, la mort a un roi.'], ['hero', 'Un Roi-Liche… Il faudra le tuer deux fois, je le sens.']],
+         out: [['bossLich', 'Mon phylactère… brisé… Le Comte boira ton sang…'], ['hero', 'Un dernier château. Un dernier combat.']] },
+    7: { in: [['narr', 'Chapitre 8 · Le Château des Vampires. La lune est rouge sang.'], ['hero', 'C’est ici que tout se termine.']],
+         out: [['bossVamp', 'Impossible… un simple mortel…'], ['narr', 'Les huit royaumes sont libérés. Mais au loin, une tour de dragons s’illumine… La légende continue.']] },
+  };
+  function storyFx(lines) {
+    return new Promise(res => {
+      const el = document.createElement('div'); el.className = 'story'; document.body.appendChild(el); let k = -1;
+      const C = CL();
+      const nextL = () => { k++; if (k >= lines.length) { el.remove(); return res(); }
+        const [who, t] = lines[k], isHero = who === 'hero', isNarr = who === 'narr';
+        const img = isHero ? (OPT.has(C.sprite) || C.sprite === 'hero' ? `<img src="img/${C.sprite}.webp" alt="">` : `<div class="em">${C.emoji}</div>`) : isNarr ? '' : (ready(who) ? `<img src="img/${who}.webp" alt="">` : `<div class="em">${M[who].emoji}</div>`);
+        el.innerHTML = `<div class="who ${isHero ? '' : 'r'}">${img}</div><div class="box"><div class="nm">${isHero ? C.name : isNarr ? 'Le conteur' : M[who].name}</div><div class="tx">${t}</div><div class="nx">Touche pour continuer ▸</div></div>`;
+        SFX.click(); };
+      el.addEventListener('click', nextL); nextL();
+    });
+  }
+  const QPOOL = [
+    { id: 'kill', t: n => `Vaincre ${n} monstres`, n: 12, rw: { gold: 1 } },
+    { id: 'boss', t: () => 'Vaincre un boss', n: 1, rw: { pot: 2 } },
+    { id: 'stars3', t: n => `Finir ${n} niveaux avec 3 étoiles`, n: 2, rw: { en: 15 } },
+    { id: 'nopot', t: () => 'Finir un niveau sans boire de potion', n: 1, rw: { mats: 5 } },
+    { id: 'spell', t: n => `Lancer ${n} sorts`, n: 8, rw: { gold: 1 } },
+    { id: 'block', t: n => `Parer ${n} fois`, n: 5, rw: { pot: 1 } },
+    { id: 'crit', t: n => `Réussir ${n} coups critiques`, n: 4, rw: { gold: 1 } },
+    { id: 'level', t: n => `Terminer ${n} niveaux`, n: 4, rw: { en: 20 } },
+  ];
+  const ACH = [
+    { id: 'kill', n: 'Chasseur de monstres', ic: '⚔️', tiers: [50, 250, 1000], rw: [300, 1200, 5000] },
+    { id: 'boss', n: 'Tueur de boss', ic: '👑', tiers: [1, 8, 25], rw: [200, 1500, 5000] },
+    { id: 'lvl', n: 'Héros aguerri', ic: '⭐', tiers: [10, 20, 30], rw: [500, 2000, 6000] },
+    { id: 'stars', n: 'Collection d’étoiles', ic: '🌟', tiers: [30, 75, 120], rw: [400, 1500, 4000] },
+    { id: 'craft', n: 'Maître forgeron', ic: '🔨', tiers: [1, 8, 24], rw: [150, 1000, 4000] },
+    { id: 'legend', n: 'Objet légendaire', ic: '✦', tiers: [1, 3, 6], rw: [500, 1500, 4000] },
+    { id: 'hboss', n: 'Héroïque', ic: '🔥', tiers: [1, 4, 8], rw: [800, 2500, 6000] },
+    { id: 'dq', n: 'Fidèle au poste', ic: '📜', tiers: [5, 20, 60], rw: [300, 1200, 4000] },
+  ];
+  function qInit() {
+    G.cnt = G.cnt || {}; G.ach = G.ach || {}; G.story = G.story || {};
+    const day = dayKey(new Date());
+    if (!G.dq || G.dq.day !== day) {
+      let seed = [...day].reduce((a, ch) => a * 31 + ch.charCodeAt(0), 7) >>> 0; const pool = QPOOL.slice(), list = [];
+      while (list.length < 3) { seed = (seed * 1103515245 + 12345) >>> 0; list.push(pool.splice(seed % pool.length, 1)[0].id); }
+      G.dq = { day, list: list.map(id => ({ id, p: 0, c: false })), bonus: false };
+    }
+  }
+  function track(ev, n = 1) {
+    if (!G.dq) qInit();
+    G.cnt[ev] = (G.cnt[ev] || 0) + n;
+    for (const q of G.dq.list) if (q.id === ev) { const Q = QPOOL.find(x => x.id === ev); const was = q.p >= Q.n; q.p = Math.min(Q.n, q.p + n); if (!was && q.p >= Q.n) toast(`📜 Quête accomplie : ${Q.t(Q.n)} !`); }
+  }
+  const achVal = id => id === 'lvl' ? G.lvl : id === 'stars' ? Object.keys(G.stars).filter(k => /^\d-\d$/.test(k)).reduce((a, k) => a + G.stars[k], 0) : id === 'legend' ? G.inv.filter(it => legOf(it)).length : (G.cnt[id] || 0);
+  const rwText = (rw, mult = 1) => rw.gold ? `<i class="coin"></i> ${Math.round((40 + 12 * G.lvl) * mult)}` : rw.pot ? `🧪 ${rw.pot}` : rw.en ? `⚡ ${rw.en}` : rw.mats ? `${MATS[topTier() - 1].icon} ${rw.mats}` : '';
+  function giveRw(rw) { if (rw.gold) G.gold += Math.round(40 + 12 * G.lvl); if (rw.pot) G.potions += rw.pot; if (rw.en) G.energy += rw.en; if (rw.mats) { const m = MATS[topTier() - 1]; G.mats[m.id] = (G.mats[m.id] || 0) + rw.mats; } }
+  function claimable() { qInit(); let n = G.dq.list.filter(q => !q.c && q.p >= QPOOL.find(x => x.id === q.id).n).length + (G.dq.list.every(q => q.c) && !G.dq.bonus ? 1 : 0);
+    for (const A of ACH) { const got = G.ach[A.id] || 0; if (got < 3 && achVal(A.id) >= A.tiers[got]) n++; } return n; }
+  function renderQuests() {
+    qInit();
+    const nl = nextLevel(), w = nl ? nl[0] : 7, W = WORLDS[w], bossK = W.levels[4][0][W.levels[4][0].length - 1], chap = WORLDS.filter((_, k) => G.stars[lkey(k, 4)] > 0).length;
+    const obj = nl ? `<div class="obj"><div class="ic">${icoHtml('wm' + w, W.icon)}</div><div><b>Chapitre ${w + 1} : ${W.name}</b><small>Prochaine étape : niveau ${nl[0] + 1}-${nl[1] + 1}${nl[1] === 4 ? ` · affronte ${M[bossK].name}` : ` · puis bats ${M[bossK].name}`}</small><div class="qbar"><i style="width:${chap / 8 * 100}%"></i></div><small>Histoire : ${chap}/8 royaumes libérés</small></div></div>`
+                   : `<div class="obj"><div class="ic">🏆</div><div><b>Les huit royaumes sont libres !</b><small>Tente les modes Héroïque, Légendaire et Cauchemar.</small></div></div>`;
+    const qs = G.dq.list.map((q, i) => { const Q = QPOOL.find(x => x.id === q.id), done = q.p >= Q.n;
+      return `<div class="qrow ${q.c ? 'done' : ''}"><div><b>${Q.t(Q.n)}</b><div class="qbar"><i style="width:${q.p / Q.n * 100}%"></i></div><span class="rw">${q.p}/${Q.n} · récompense ${rwText(Q.rw)}</span></div>
+        ${q.c ? '<span>✅</span>' : `<button class="btn small ${done ? 'green' : ''}" type="button" data-claimq="${i}" ${done ? '' : 'disabled'} style="width:auto">Prendre</button>`}</div>`; }).join('');
+    const all = G.dq.list.every(q => q.c);
+    $('questPanel').innerHTML = `<div class="ribbon p">Quêtes</div>${obj}<div class="note" style="margin:10px 0 0; font-weight:800">Quêtes du jour</div>${qs}
+      <div class="qrow"><div><b>Bonus : toutes les quêtes du jour</b><span class="rw">un coffre rare</span></div>${G.dq.bonus ? '<span>✅</span>' : `<button class="btn small ${all ? 'green' : ''}" type="button" data-claimq="bonus" ${all ? '' : 'disabled'} style="width:auto">🎁</button>`}</div>`;
+    $('achPanel').innerHTML = `<div class="ribbon w">Succès</div><div class="achs">${ACH.map(A => { const got = G.ach[A.id] || 0, v = achVal(A.id), tgt = A.tiers[Math.min(got, 2)], ok = got < 3 && v >= tgt;
+      return `<div class="qrow ${got >= 3 ? 'done' : ''}"><div><b>${A.ic} ${A.n} ${'★'.repeat(got)}${'☆'.repeat(3 - got)}</b><div class="qbar"><i style="width:${Math.min(1, v / tgt) * 100}%"></i></div><span class="rw">${Math.min(v, tgt)}/${tgt}${got < 3 ? ` · <i class="coin"></i> ${A.rw[got]}` : ' · terminé'}</span></div>
+        ${got >= 3 ? '<span>🏅</span>' : `<button class="btn small ${ok ? 'green' : ''}" type="button" data-claima="${A.id}" ${ok ? '' : 'disabled'} style="width:auto">Prendre</button>`}</div>`; }).join('')}</div>`;
+    const n = claimable(), tb = document.querySelector('.tabs [data-v="hero"]');
+    if (tb) { let d = tb.querySelector('.dot'); if (n && !d) tb.insertAdjacentHTML('beforeend', '<span class="dot"></span>'); else if (!n && d) d.remove(); }
+  }
+
   // ---------- UI helpers ----------
   function toast(t) { const el = $('toast'); el.innerHTML = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), 2200); }
   const HEART = 'M8 14 C2 9 0 6.5 0 4.2 C0 1.8 1.9 0 4.1 0 C5.6 0 7 .9 8 2.3 C9 .9 10.4 0 11.9 0 C14.1 0 16 1.8 16 4.2 C16 6.5 14 9 8 14Z';
@@ -1102,7 +1215,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     $('stats').innerHTML = [['❤️', s.hp, 'Vie'], ['⚔️', s.atk, 'Force'], ['🛡️', s.def, 'Défense'], ['✨', s.mag, 'Magie']]
       .map(([i, v, l]) => `<div class="st"><i>${i}</i><b>${fmt(v)}</b><span>${l}</span></div>`).join('')
       + (sb.n >= 2 ? `<div class="setbonus" style="grid-column:1/-1; margin:4px 0 0">Panoplie ${SETS[sb.set]} ${sb.n}/4 : ${sb.n >= 4 ? '+10 % vie, +12 % force, défense et magie' : '+10 % vie (4 pièces : +12 % force, défense et magie)'}</div>` : '');
-    renderContinue(); renderDaily(); renderAdventure(); renderBag(); renderForge();
+    renderContinue(); renderDaily(); renderQuests(); renderAdventure(); renderBag(); renderForge();
   }
 
   function renderContinue() {
@@ -1232,7 +1345,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function craft(w, k) {
     const pc = SET_PIECES[k], mat = MATS[w], tro = TROPHIES[w], gold = pc.gold * (w + 1);
     if ((G.mats[mat.id] || 0) < pc.mats || G.gold < gold || (pc.trophy && !(G.mats[tro.id] > 0))) return;
-    G.mats[mat.id] -= pc.mats; G.gold -= gold; if (pc.trophy) G.mats[tro.id]--;
+    G.mats[mat.id] -= pc.mats; G.gold -= gold; if (pc.trophy) G.mats[tro.id]--; G.cnt = G.cnt || {}; G.cnt.craft = (G.cnt.craft || 0) + 1;
     const it = { id: G.nextId++, ...setPiece(w, k) }; G.inv.push(it); save(); render(); SFX.level();
     modal('Pièce forgée', 'w', `<div style="font-family:var(--emoji); font-size:46px">🔨</div>${tipHtml(it, false)}
       <button class="btn green" type="button" data-mequip="${it.id}"><i>✅</i> Équiper</button><button class="flee" type="button" data-close="1">Garder dans le sac</button>`);
@@ -1334,6 +1447,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     F = { w, i, mode: MD, tier: w + 1 + modeIdx(MD.id), mats: 0, trophy: 0, bg: bgKey(w, i), rooms: lv[0], room: 0, mp: stats().mp, st: ST_MAX, turn: 0, busy: false, defending: false, status: {}, buff: null, stolen: 0, loot: { xp: 0, gold: 0, items: [], pots: 0 } };
     $('fight').hidden = false; document.body.style.overflow = 'hidden'; buildSkills(); render();
     nextFoe();
+    if (i === 0 && !MD.id && STORY[w] && !(G.story || {})['in' + w]) { G.story = G.story || {}; G.story['in' + w] = 1; save(); F.busy = true; updFight(); storyFx(STORY[w].in).then(() => { if (F) { F.busy = false; updFight(); } }); }
   }
   function nextFoe() {
     const k = F.rooms[F.room], f = M[k];
@@ -1490,7 +1604,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     { const f = F.foe;
       if (f.hp <= 0 && f.id === 'bossLich' && !f.revived) { f.revived = true; f.hp = Math.round(f.hpMax * 0.3); F.pendingRevive = true; }
       if (PHASES[f.id] && !f.ph && f.hp > 0 && f.hp <= f.hpMax * 0.5) F.pendingPhase = true;
-      if (f.id === 'bossVamp' && f.ph && !f.ph.rage && f.hp > 0 && f.hp <= f.hpMax * 0.25) { f.ph.rage = true; F.pendingRage = true; } } F.foe.anim.kb = crit ? 26 : big ? 18 : 12; (crit ? SFX.crit : SFX.hit)();
+      if (f.id === 'bossVamp' && f.ph && !f.ph.rage && f.hp > 0 && f.hp <= f.hpMax * 0.25) { f.ph.rage = true; F.pendingRage = true; } } if (crit) track('crit'); F.foe.anim.kb = crit ? 26 : big ? 18 : 12; (crit ? SFX.crit : SFX.hit)();
     floatTxt(`-${d}`, ex + rnd(-14, 14), ey - fh - rnd(0, 16), color || (crit ? '#ffd76a' : '#fff'), crit || big, crit);
     if (crit) { const fy = ey - fh * 0.5; fx.push({ type: 'flash', x: ex, y: fy, t0: performance.now(), dur: 220, col: 'rgba(255,230,140,.9)', r: 80 }); burst(ex, fy, ['#fff1a8', '#ffd76a', '#ffffff'], 12, 1.4); if (!reduce) F.shake = { t0: performance.now(), amp: 6 }; }
   }
@@ -1510,7 +1624,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const atk = s.atk * (F.buff ? 1.4 : 1) * (winded ? 0.5 : 1), fy = ey - fh * 0.5, hyC = hy - H * 0.33 * ZOOM;
     if (winded) floatTxt('Essoufflé…', hx, hy - H * 0.55, '#ffe58a');
     F.defending = false; F.barrier = 0;
-    if (sp) F.mp -= sp.cost;
+    if (sp) { F.mp -= sp.cost; track('spell'); }
+    if (kind === 'def') track('block');
+    if (kind === 'pot') F.usedPot = true;
     if (kind === 'atk') {
       if (C.atk.fx === 'slash') { F.hero.wind = now(); await wait(140); SFX.slash(); await tick(F.hero, 'lunge', 200); fx.push({ type: 'slash', x: ex, y: fy, t0: now() }); }
       else if (C.atk.fx === 'orb') { await castPrep(['#cfe4ff', '#9fd0ff', '#ffffff'], 'rgba(150,200,255,', 170); SFX.ice(); burst(hx + 30, hyC, ['#cfe4ff', '#ffffff'], 6, 0.8); fx.push({ type: 'orb', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(320); }
@@ -1706,7 +1822,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     }
     F.loot.xp += xp; F.loot.gold += gold;
     save(); render();
+    track('kill'); if (f.boss) { track('boss'); if (F.mode.id) G.cnt.hboss = (G.cnt.hboss || 0) + 1; }
+    if (last) { track('level'); if (G.hp / stats().hp > 0.7) track('stars3'); if (!F.usedPot) track('nopot'); }
+    save();
     if (tro && last) await trophyFx(tro, f.name);
+    if (last && F.i === 4 && !F.mode.id && !G.story['out' + F.w] && STORY[F.w]) { G.story['out' + F.w] = 1; save(); await storyFx(STORY[F.w].out); }
     if (lv) await levelUpFx(G.lvl, s0, stats());
     modal(last ? `Niveau ${F.w + 1}-${F.i + 1} réussi !` : 'Victoire !', last ? 'r' : '', `
       ${last ? '' : `<div style="font-family:var(--emoji); font-size:46px">✨</div>`}
@@ -1923,14 +2043,32 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       c.strokeStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.moveTo(hx - R * 0.4, hy - R * 1.6); c.lineTo(hx - R * 0.1, hy - R); c.lineTo(hx + R * 0.3, hy - R * 1.3); c.stroke(); c.restore(); }
     const shOn = F.defending, sp = F.hero.shield ? Math.min(1, (now - F.hero.shield) / 260) : 1, pop = sp < 1 ? 1 + Math.sin(sp * Math.PI) * 0.25 : 1, bkh = pulse(F.hero.block || 0, 260);
     if (shOn && cls === 'guerrier') {
-      const sx = hx + W * 0.085, sy = hcY + 4, S = H * 0.17 * ZOOM * pop * sp;
-      c.save(); c.translate(sx, sy); c.scale(S / 40, S / 40);
-      if (bkh) { c.globalCompositeOperation = 'lighter'; const g = c.createRadialGradient(0, 0, 4, 0, 0, 70); g.addColorStop(0, `rgba(255,240,180,${bkh})`); g.addColorStop(1, 'rgba(255,240,180,0)'); c.fillStyle = g; c.beginPath(); c.arc(0, 0, 70, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over'; }
-      c.beginPath(); c.moveTo(0, -42); c.quadraticCurveTo(30, -38, 32, -26); c.quadraticCurveTo(30, 18, 0, 44); c.quadraticCurveTo(-30, 18, -32, -26); c.quadraticCurveTo(-30, -38, 0, -42); c.closePath();
-      const g2 = c.createLinearGradient(-30, -40, 30, 40); g2.addColorStop(0, '#fff2b0'); g2.addColorStop(0.45, '#e6b84a'); g2.addColorStop(1, '#9a6a18');
-      c.fillStyle = g2; c.fill(); c.lineWidth = 5; c.strokeStyle = '#5a3a0e'; c.stroke();
-      c.fillStyle = '#c0392b'; c.beginPath(); c.moveTo(0, -26); c.lineTo(14, 0); c.lineTo(0, 28); c.lineTo(-14, 0); c.closePath(); c.fill();
-      c.fillStyle = 'rgba(255,255,255,.55)'; c.beginPath(); c.ellipse(-12, -22, 7, 14, -0.5, 0, 7); c.fill(); c.restore();
+      // Knight's tower shield: steel rim, royal blue field, golden lion crest, rivets; pops in with a golden ward ring.
+      const sx = hx + W * 0.11, sy = hcY + 8, S = H * 0.18 * ZOOM * pop * sp, glowA = 0.25 + bkh * 0.6 + (sp < 1 ? (1 - sp) * 0.6 : 0);
+      c.save();
+      const ring = c.createRadialGradient(sx, sy, S * 0.3, sx, sy, S * 1.25); ring.addColorStop(0, `rgba(255,220,120,${glowA * 0.5})`); ring.addColorStop(0.7, `rgba(255,200,80,${glowA * 0.25})`); ring.addColorStop(1, 'rgba(255,200,80,0)');
+      c.globalCompositeOperation = 'lighter'; c.fillStyle = ring; c.beginPath(); c.arc(sx, sy, S * 1.25, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over';
+      c.translate(sx, sy); c.rotate(-0.08 + (bkh ? Math.sin(now / 25) * 0.04 * bkh : 0)); c.scale(S / 50, S / 50);
+      const body = () => { c.beginPath(); c.moveTo(-34, -46); c.lineTo(34, -46); c.quadraticCurveTo(40, -46, 40, -38); c.lineTo(40, 2); c.quadraticCurveTo(38, 34, 0, 56); c.quadraticCurveTo(-38, 34, -40, 2); c.lineTo(-40, -38); c.quadraticCurveTo(-40, -46, -34, -46); c.closePath(); };
+      c.shadowColor = 'rgba(0,0,0,.45)'; c.shadowBlur = 8; c.shadowOffsetY = 4;
+      body(); const rim = c.createLinearGradient(-40, -46, 40, 56); rim.addColorStop(0, '#ffffff'); rim.addColorStop(0.25, '#c9d3dc'); rim.addColorStop(0.55, '#8a97a3'); rim.addColorStop(0.8, '#d7e0e8'); rim.addColorStop(1, '#6e7a86'); c.fillStyle = rim; c.fill();
+      c.shadowColor = 'transparent'; c.lineWidth = 3.5; c.strokeStyle = '#2c3640'; c.stroke();
+      c.save(); c.translate(0, 2); c.scale(0.8, 0.8); body(); c.restore();
+      const fld = c.createLinearGradient(0, -40, 0, 48); fld.addColorStop(0, '#3b6fd1'); fld.addColorStop(1, '#1d3a86'); c.fillStyle = fld; c.fill(); c.lineWidth = 2; c.strokeStyle = '#13265a'; c.stroke();
+      // golden cross band
+      c.fillStyle = '#f2c14e'; c.strokeStyle = '#8a5a12'; c.lineWidth = 1.5;
+      c.beginPath(); c.rect(-5, -34, 10, 74); c.rect(-30, -12, 60, 10); c.fill(); c.stroke();
+      // central boss with lion-ish crest
+      const bg = c.createRadialGradient(-3, -9, 2, 0, -7, 14); bg.addColorStop(0, '#fff6c8'); bg.addColorStop(0.5, '#f2c14e'); bg.addColorStop(1, '#a8701a'); c.fillStyle = bg; c.beginPath(); c.arc(0, -7, 13, 0, 7); c.fill(); c.strokeStyle = '#7a4a0e'; c.lineWidth = 2; c.stroke();
+      c.fillStyle = '#7a4a0e'; c.beginPath(); c.moveTo(0, -15); c.lineTo(4, -8); c.lineTo(0, 1); c.lineTo(-4, -8); c.closePath(); c.fill();
+      // rivets
+      c.fillStyle = '#eef3f7'; for (const [rx, ry] of [[-33, -39], [33, -39], [-35, 0], [35, 0], [-20, 34], [20, 34], [0, 50]]) { c.beginPath(); c.arc(rx, ry, 2.6, 0, 7); c.fill(); c.strokeStyle = '#4a5560'; c.lineWidth = 1; c.stroke(); }
+      // glossy sweep
+      c.save(); body(); c.clip(); const gl = c.createLinearGradient(-40, -46, 10, 10); gl.addColorStop(0, 'rgba(255,255,255,.55)'); gl.addColorStop(0.35, 'rgba(255,255,255,.08)'); gl.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gl; c.fillRect(-40, -46, 80, 102);
+      const sweep = ((now / 1600) % 1) * 160 - 80; c.fillStyle = 'rgba(255,255,255,.18)'; c.beginPath(); c.moveTo(sweep - 10, -46); c.lineTo(sweep + 6, -46); c.lineTo(sweep - 24, 56); c.lineTo(sweep - 40, 56); c.closePath(); c.fill(); c.restore();
+      if (bkh) { c.globalCompositeOperation = 'lighter'; c.strokeStyle = `rgba(255,236,170,${bkh})`; c.lineWidth = 6; body(); c.stroke(); }
+      c.restore();
+      if (bkh && !reduce) { c.save(); c.strokeStyle = `rgba(255,230,150,${bkh * 0.8})`; c.lineWidth = 3; c.beginPath(); c.arc(sx + 6, sy, S * (1.1 + (1 - bkh) * 0.5), -1.1, 1.1); c.stroke(); c.restore(); }
     } else if (shOn && cls === 'archer') {
       if (!reduce && !rolling) { c.save(); c.globalAlpha = 0.5; c.strokeStyle = '#e8f6ff'; c.lineWidth = 2; for (let j = 0; j < 3; j++) { const a = now / 200 + j * 2.1; c.beginPath(); c.ellipse(hx, hy - 10, 34 + j * 6, 8, 0, a, a + 1.4); c.stroke(); } c.restore(); }
     } else if ((shOn && cls === 'mage') || pulse(F.hero.broke || 0, 400)) {
@@ -2056,6 +2194,15 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (d.level) { closeModal(); if (F) endRun(false); const [w, i] = d.level.split('-').map(Number); levelSheet(w, i); return; }
     if (d.mode != null && d.mode !== undefined && b.classList.contains('mode')) { const [w, i, m] = d.mode.split('-'); levelSheet(+w, +i, m || ''); return; }
     if (d.goworld != null) { const t = $('world-' + d.goworld); if (t) t.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }); return; }
+    if (d.claimq != null && d.claimq !== undefined && b.hasAttribute('data-claimq')) {
+      qInit();
+      if (d.claimq === 'bonus') { if (G.dq.bonus || !G.dq.list.every(q => q.c)) return; G.dq.bonus = true; const it = rollItem(topTier(), true); if (it.r < 1) it.r = 1; G.inv.push(it); save(); render();
+        chestFx(it, 'uiChest2', '🎁').then(() => modal('Bonus du jour', 'p', `${tipHtml(it, false)}<button class="btn green" type="button" data-mequip="${it.id}"><i>✅</i> Équiper</button><button class="flee" type="button" data-close="1">Garder</button>`)); return; }
+      const q = G.dq.list[+d.claimq], Q = q && QPOOL.find(x => x.id === q.id); if (!q || q.c || q.p < Q.n) return;
+      q.c = true; giveRw(Q.rw); G.cnt.dq = (G.cnt.dq || 0) + 1; SFX.coin(); toast('Récompense récupérée !'); save(); render(); return; }
+    if (d.claima) { const A = ACH.find(x => x.id === d.claima), got = G.ach[A.id] || 0; if (got >= 3 || achVal(A.id) < A.tiers[got]) return;
+      G.ach[A.id] = got + 1; G.gold += A.rw[got]; save(); render(); SFX.fanfare();
+      celebrate(`${confetti(30, ['#ffd76a', '#ffffff', '#ff8a3c'])}<div class="in"><div class="loot" style="--rc:#ffc23a">${A.ic}</div><div class="rar" style="--rc:#ffc23a">SUCCÈS ${'★'.repeat(got + 1)}</div><div class="iname">${A.n}</div><div class="sub">+${A.rw[got]} pièces d\u2019or</div><div class="tap">Touche pour continuer</div></div>`); return; }
     if (d.craft) { const [w, k] = d.craft.split('-').map(Number); craft(w, k); return; }
     if (d.start) { closeModal(); const [w, i] = d.start.split('-').map(Number); startLevel(w, i); return; }
     if (d.tab) { closeModal(); show(d.tab); return; }
@@ -2163,7 +2310,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Bêta 1.9';
+  const VERSION = 'Version 2.0';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [

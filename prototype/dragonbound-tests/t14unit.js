@@ -2,7 +2,7 @@ global.HEAD=require('fs').readFileSync('t14head.js','utf8'); eval(HEAD);
 const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else {fail++; console.log('FAIL', msg);} };
 (async()=>{
   const G=api.G; G.welcomed=true; G.lvl=10;
-  const fresh=(cls)=>{ api.setHero(cls); G.hp=api.stats().hp; G.energy=99; G.test=true; api.startLevel(0,0); const F=api.F; F.foe.trait=null; F.foe.special=null; F.foe.hp=F.foe.hpMax=1e9; return F; };
+  const fresh=(cls)=>{ G.story={}; for(let w=0;w<8;w++){G.story['in'+w]=1;G.story['out'+w]=1;} api.setHero(cls); G.hp=api.stats().hp; G.energy=99; G.test=true; api.startLevel(0,0); const F=api.F; F.foe.trait=null; F.foe.special=null; F.foe.hp=F.foe.hpMax=1e9; return F; };
   // A. costs
   for (const [cls,exp] of [['guerrier',25],['archer',20],['mage',20]]) { api.setHero(cls); ok(api.stCost('def')===exp, `def cost ${cls}`); }
   ok(api.stCost('atk')===10 && api.stCost('whirl')===15 && api.stCost('rain')===15 && api.stCost('fire')===0, 'action costs');
