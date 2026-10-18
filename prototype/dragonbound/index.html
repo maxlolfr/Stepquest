@@ -148,6 +148,14 @@ body {
 .grow { flex: 1; min-width: 0; }
 
 /* Dungeon card */
+.dlist { display: flex; flex-direction: column; gap: 14px; }
+.dcard { display: grid; grid-template-columns: 70px 1fr; gap: 12px; align-items: center; padding: 10px; border-radius: 12px; background: rgba(255,255,255,.4); border: 2px solid #d6b07a; }
+.dcard.locked { opacity: .6; filter: grayscale(.6); }
+.dcard .dicon { width: 70px; height: 70px; font-size: 36px; }
+.dcard .btn { margin-top: 8px; }
+.dcard .done { color: var(--rib-g); font-weight: 800; }
+.status { display: flex; gap: 6px; justify-content: center; min-height: 22px; flex-wrap: wrap; }
+.status span { background: rgba(0,0,0,.45); color: #f6e7c4; border: 2px solid #a87a45; border-radius: 99px; padding: 1px 8px; font-size: 12px; font-weight: 800; }
 .dungeon { display: grid; grid-template-columns: 76px 1fr; gap: 12px; align-items: center; }
 .dicon { width: 76px; height: 76px; border-radius: 14px; background: linear-gradient(180deg, #5b4a6e, #2e2440); border: 3px solid var(--wood-d); display: grid; place-items: center; font-family: var(--emoji); font-size: 40px; }
 .dtitle { font-family: var(--font-display); font-weight: 700; font-size: 19px; }
@@ -288,19 +296,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   <section class="view" id="v-hero2">
     <div class="panel">
-      <div class="ribbon p">Donjon</div>
-      <div class="dungeon">
-        <div class="dicon" aria-hidden="true">🏰</div>
-        <div>
-          <div class="dtitle">La Crypte oubliée</div>
-          <div class="foes" id="foes"></div>
-          <div class="note" id="dungNote"></div>
-        </div>
-      </div>
-      <div style="margin-top:12px; display:flex; flex-direction:column; gap:8px">
-        <button class="btn" id="exploreBtn" type="button"><i>⚔️</i> Explorer</button>
-        <div class="note" id="exploreNote" style="text-align:center"></div>
-      </div>
+      <div class="ribbon p">Donjons</div>
+      <div class="dlist" id="dlist"></div>
     </div>
   </section>
 
@@ -377,6 +374,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <canvas id="sceneCv"></canvas>
       <div class="intent" id="intent" hidden></div>
     </div>
+    <div class="status" id="status"></div>
     <div class="log" id="log" aria-live="polite"></div>
     <div class="mebars">
       <div class="gbar hp"><i id="meHp"></i><span id="meHpTxt"></span></div>
@@ -413,23 +411,48 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const ADJ = ['de fer', 'des runes', 'du Crépuscule', 'de Draconis'];
   const KINDS = { arme: [['Épée', '🗡️'], ['Hache', '🪓'], ['Masse', '🔨']], casque: [['Heaume', '🪖']], armure: [['Cuirasse', '🥋']], bottes: [['Bottes', '🥾']], amulette: [['Amulette', '📿']] };
   const DESC = { arme: 'Une arme solide et fiable.', casque: 'Protège la tête des mauvais coups.', armure: 'Encaisse les coups à ta place.', bottes: 'Idéales pour les longues marches.', amulette: 'Vibre d’une magie ancienne.' };
-  const FOES = [
-    { id: 'slime', name: 'Gluant vert', emoji: null, hp: 34, atk: 7, def: 1, xp: 22, gold: 10 },
-    { id: 'skel', name: 'Squelette', emoji: '💀', hp: 48, atk: 10, def: 3, xp: 34, gold: 16 },
-    { id: 'boss', name: 'Roi des Os', emoji: '💀', crown: true, boss: true, hp: 82, atk: 11, def: 4, xp: 90, gold: 45, special: { every: 3, mult: 2.3, warn: 'Le Roi des Os lève sa faux…', hit: 'Coup de faux !' } },
+  // Monsters. trait: double (2 hits), poison, burn, regen, steal, howl (charges a bite), slow (hits every other turn), drain (heals on hit)
+  const M = {
+    slime:  { name: 'Gluant vert', emoji: null, hp: 34, atk: 7, def: 1, xp: 22, gold: 10, trait: 'regen', tip: 'Il se régénère un peu à chaque tour.' },
+    skel:   { name: 'Squelette', emoji: '💀', hp: 46, atk: 10, def: 3, xp: 30, gold: 14, tip: 'Solide et têtu.' },
+    bat:    { name: 'Chauve-souris', emoji: '🦇', hp: 28, atk: 6, def: 1, xp: 24, gold: 9, trait: 'double', tip: 'Rapide : elle frappe deux fois.' },
+    rat:    { name: 'Rat des égouts', emoji: '🐀', hp: 32, atk: 7, def: 2, xp: 24, gold: 11, trait: 'poison', tip: 'Sa morsure empoisonne.' },
+    bossBone: { name: 'Roi des Os', emoji: '💀', crown: true, boss: true, hp: 82, atk: 11, def: 4, xp: 90, gold: 45,
+      special: { every: 3, mult: 2.3, warn: 'Le Roi des Os lève sa faux…', hit: 'Coup de faux !' } },
+
+    wolf:   { name: 'Loup gris', emoji: '🐺', hp: 70, atk: 15, def: 5, xp: 55, gold: 22, trait: 'howl', tip: 'Il hurle, puis mord très fort.' },
+    spider: { name: 'Araignée géante', emoji: '🕷️', hp: 62, atk: 13, def: 4, xp: 52, gold: 20, trait: 'poison', tip: 'Son venin brûle pendant 3 tours.' },
+    shroom: { name: 'Champignon furieux', emoji: '🍄', hp: 80, atk: 12, def: 6, xp: 50, gold: 18, trait: 'regen', tip: 'Ses spores le soignent.' },
+    goblin: { name: 'Gobelin voleur', emoji: '👺', hp: 64, atk: 14, def: 5, xp: 56, gold: 30, trait: 'steal', tip: 'Il vole ton or… que tu récupères si tu gagnes.' },
+    bossWitch: { name: 'Sylvaine la Sorcière', emoji: '🧙‍♀️', boss: true, hp: 170, atk: 18, def: 7, xp: 220, gold: 110, trait: 'drain',
+      special: { every: 3, mult: 2.0, warn: 'Sylvaine prépare une malédiction…', hit: 'Malédiction des ronces !', poison: 6 } },
+
+    golem:  { name: 'Golem de lave', emoji: '🗿', hp: 150, atk: 30, def: 14, xp: 95, gold: 38, trait: 'slow', tip: 'Lent mais dévastateur : il frappe un tour sur deux.' },
+    scorp:  { name: 'Scorpion de braise', emoji: '🦂', hp: 100, atk: 20, def: 10, xp: 90, gold: 34, trait: 'poison', tip: 'Son dard empoisonne.' },
+    imp:    { name: 'Diablotin', emoji: '😈', hp: 90, atk: 21, def: 8, xp: 92, gold: 36, trait: 'burn', tip: 'Il t’enflamme : brûlure pendant 3 tours.' },
+    snake:  { name: 'Serpent des cendres', emoji: '🐍', hp: 95, atk: 15, def: 9, xp: 88, gold: 32, trait: 'double', tip: 'Il attaque deux fois par tour.' },
+    bossDragon: { name: 'Dragon Écarlate', emoji: '🐉', boss: true, hp: 300, atk: 26, def: 12, xp: 520, gold: 260, trait: 'burn',
+      special: { every: 3, mult: 2.4, warn: 'Le dragon inspire profondément…', hit: 'Souffle de feu !', burn: 8 } },
+  };
+  const DUNGEONS = [
+    { id: 0, name: 'La Crypte oubliée', icon: '🏰', lvl: 1, cost: 10, theme: 'crypt', pool: ['slime', 'skel', 'bat', 'rat'], rooms: 3, boss: 'bossBone', tier: 1 },
+    { id: 1, name: 'La Forêt des Murmures', icon: '🌲', lvl: 4, cost: 15, theme: 'forest', pool: ['wolf', 'spider', 'shroom', 'goblin'], rooms: 4, boss: 'bossWitch', tier: 2 },
+    { id: 2, name: 'Les Mines de Braise', icon: '🌋', lvl: 7, cost: 20, theme: 'mine', pool: ['golem', 'scorp', 'imp', 'snake'], rooms: 4, boss: 'bossDragon', tier: 3 },
   ];
-  const ENERGY_COST = 10;
   const ENERGY_MAX = 150;
 
   // ---------- Save ----------
   const KEY = 'dragonbound.v1';
   const fresh = () => ({
-    lvl: 1, xp: 0, gold: 20, potions: 3, energy: 20, stepsCredited: 0, days: {}, nextId: 2, cleared: 0,
+    lvl: 1, xp: 0, gold: 20, potions: 3, energy: 20, stepsCredited: 0, days: {}, nextId: 2, cleared: {},
     inv: [{ id: 1, slot: 'arme', name: 'Épée de bois', icon: '🗡️', r: 0, up: 0, base: { atk: 3 } }],
     eq: { arme: 1 },
   });
   let G;
   try { G = JSON.parse(localStorage.getItem(KEY)) || fresh(); } catch (e) { G = fresh(); }
+  if (typeof G.cleared === 'number') G.cleared = G.cleared ? { 0: G.cleared } : {};
+  G.cleared = G.cleared || {};
+  const unlocked = d => d.id === 0 || (G.cleared[d.id - 1] || 0) > 0;
   const save = () => { try { localStorage.setItem(KEY, JSON.stringify(G)); } catch (e) {} };
   const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
   const todaySteps = () => G.days[dayKey(new Date())] || 0;
@@ -483,7 +506,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     bar('xpBar', 'xpTxt', G.xp, xpNeed());
     $('gold').textContent = fmt(G.gold); $('energy').textContent = fmt(G.energy);
     $('stepsPill').textContent = fmt(todaySteps()); $('potPill').textContent = G.potions;
-    $('heroSub').textContent = G.cleared ? `A vaincu le Roi des Os ${G.cleared > 1 ? G.cleared + ' fois' : ''}` : 'Aventurier de la vallée';
+    const nb = Object.values(G.cleared).filter(Boolean).length;
+    $('heroSub').textContent = ['Aventurier de la vallée', 'Pourfendeur d\u2019os', 'Ami de la forêt', 'Tueur de dragon'][nb];
     // equipment slots
     const slotHtml = sl => {
       const it = itemById(G.eq[sl.id]);
@@ -494,13 +518,16 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     $('slotsR').innerHTML = SLOTS.slice(3).map(slotHtml).join('') + `<button class="slot" type="button" data-pot="1" aria-label="Potions">🧪<span class="up">${G.potions}</span></button>`;
     $('stats').innerHTML = [['❤️', s.hp, 'Vie'], ['⚔️', s.atk, 'Force'], ['🛡️', s.def, 'Défense'], ['✨', s.mag, 'Magie']]
       .map(([i, v, l]) => `<div class="st"><i>${i}</i><b>${fmt(v)}</b><span>${l}</span></div>`).join('');
-    // dungeon
-    $('foes').innerHTML = FOES.map(f => `<span title="${f.name}">${f.emoji || '🟢'}${f.crown ? '👑' : ''}</span>`).join('');
-    $('dungNote').textContent = `3 salles · ${ENERGY_COST} ⚡ par expédition · conseillé niv. 2`;
-    const can = G.energy >= ENERGY_COST;
-    $('exploreBtn').disabled = !can;
-    $('exploreNote').textContent = can ? `Tu as ${G.energy} ⚡, de quoi faire ${Math.floor(G.energy / ENERGY_COST)} expédition${G.energy >= 2 * ENERGY_COST ? 's' : ''}.`
-      : `Il te manque ${ENERGY_COST - G.energy} ⚡ : marche environ ${fmt((ENERGY_COST - G.energy) * 100)} pas.`;
+    // dungeons
+    $('dlist').innerHTML = DUNGEONS.map(d => {
+      const open = unlocked(d), done = G.cleared[d.id] || 0, can = open && G.energy >= d.cost;
+      const foes = [...d.pool.map(k => M[k]), M[d.boss]].map(f => `<span title="${f.name}">${f.emoji || '🟢'}${f.crown ? '👑' : ''}</span>`).join('');
+      const note = !open ? `🔒 Termine « ${DUNGEONS[d.id - 1].name} » pour débloquer`
+        : `${d.rooms} salles · ${d.cost} ⚡ · conseillé niv. ${d.lvl}` + (done ? ` · <span class="done">✓ terminé${done > 1 ? ' ×' + done : ''}</span>` : '');
+      const btn = !open ? '' : `<button class="btn ${can ? '' : ''}" type="button" data-run="${d.id}" ${can ? '' : 'disabled'}><i>⚔️</i> ${can ? 'Explorer' : `Il manque ${d.cost - G.energy} ⚡`}</button>`;
+      return `<div class="dcard ${open ? '' : 'locked'}"><div class="dicon" aria-hidden="true">${open ? d.icon : '🔒'}</div>
+        <div style="min-width:0"><div class="dtitle">${d.name}</div><div class="foes">${foes}</div><div class="note">${note}</div>${btn}</div></div>`;
+    }).join('') + (G.energy < 10 ? `<div class="note" style="text-align:center">Marche environ ${fmt((10 - G.energy) * 100)} pas pour ta prochaine expédition.</div>` : '');
     renderBag(); renderWalk();
   }
 
@@ -589,20 +616,23 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   let F = null; // fight state
   const scv = $('sceneCv'), sctx = scv.getContext('2d');
   let fx = []; // floating texts & particles
-  function startRun() {
-    if (G.energy < ENERGY_COST) return;
-    G.energy -= ENERGY_COST; G.hp = stats().hp; save();
-    F = { room: 0, mp: stats().mp, turn: 0, busy: false, defending: false, loot: { xp: 0, gold: 0, items: [], pots: 0 } };
+  function startRun(di) {
+    const d = DUNGEONS[di]; if (!d || !unlocked(d) || G.energy < d.cost) return;
+    G.energy -= d.cost; G.hp = stats().hp; save();
+    const rooms = [];
+    for (let i = 0; i < d.rooms - 1; i++) { let k; do { k = d.pool[Math.floor(Math.random() * d.pool.length)]; } while (rooms.length && rooms[rooms.length - 1] === k); rooms.push(k); }
+    rooms.push(d.boss);
+    F = { d, rooms, room: 0, mp: stats().mp, turn: 0, busy: false, defending: false, status: {}, stolen: 0, loot: { xp: 0, gold: 0, items: [], pots: 0 } };
     $('fight').hidden = false; document.body.style.overflow = 'hidden';
     nextFoe();
   }
   function nextFoe() {
-    const f = FOES[F.room], L = Math.max(0, G.lvl - 2) * 0.08 + 1;
-    F.foe = { ...f, hpMax: Math.round(f.hp * L), hp: Math.round(f.hp * L), atk: f.atk * L, charging: false, anim: { lunge: 0, hit: 0, dead: 0 } };
+    const f = M[F.rooms[F.room]], L = 1 + Math.max(0, G.lvl - F.d.lvl - 1) * 0.06;
+    F.foe = { ...f, id: F.rooms[F.room], hpMax: Math.round(f.hp * L), hp: Math.round(f.hp * L), atk: f.atk * L, charging: false, howl: false, anim: { lunge: 0, hit: 0, dead: 0 } };
     F.hero = { lunge: 0, hit: 0, shield: 0, heal: 0 };
     F.turn = 0; F.defending = false; F.busy = false;
-    $('foeName').textContent = f.name; $('roomTxt').textContent = `Salle ${F.room + 1}/3`;
-    say(f.boss ? 'Le Roi des Os se dresse devant toi !' : `Un ${f.name.toLowerCase()} surgit !`);
+    $('foeName').textContent = f.name; $('roomTxt').textContent = f.boss ? 'Boss' : `Salle ${F.room + 1}/${F.rooms.length}`;
+    say(f.boss ? `${f.name} se dresse devant toi !` : `${f.name} surgit ! ${f.tip || ''}`);
     $('intent').hidden = true; updFight();
   }
   function say(t) { $('log').textContent = t; }
@@ -610,6 +640,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const s = stats();
     bar('foeHp', 'foeHpTxt', F.foe.hp, F.foe.hpMax); bar('meHp', 'meHpTxt', G.hp, s.hp); bar('meMp', 'meMpTxt', F.mp, s.mp);
     $('potCnt').textContent = G.potions;
+    const st = [];
+    if (F.status.poison) st.push(`☠️ Poison ${F.status.poison.turns}`);
+    if (F.status.burn) st.push(`🔥 Brûlure ${F.status.burn.turns}`);
+    if (F.foe.howl) st.push('🐺 Prêt à mordre');
+    $('status').innerHTML = st.map(x => `<span>${x}</span>`).join('');
     $('sFire').disabled = F.busy || F.mp < 8; $('sAtk').disabled = F.busy; $('sDef').disabled = F.busy; $('sPot').disabled = F.busy || G.potions < 1 || G.hp >= s.hp;
   }
   function floatTxt(text, x, y, color, big) { fx.push({ type: 'txt', text, x, y, color, big, t0: performance.now() }); }
@@ -637,8 +672,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       F.defending = true; F.hero.shield = performance.now(); F.mp = Math.min(s.mp, F.mp + 6);
       floatTxt('+6 💧', hx, hy - 110, '#7ab8ff'); say('Tu te protèges derrière ton bouclier et récupères du mana.'); await wait(380);
     } else if (kind === 'pot') {
-      G.potions--; const heal = Math.round(s.hp * 0.45); G.hp = Math.min(s.hp, G.hp + heal); F.hero.heal = performance.now();
-      floatTxt(`+${heal} ❤️`, hx, hy - 110, '#8fe07a', true); say(`Tu bois une potion : +${heal} PV.`); await wait(420);
+      G.potions--; const heal = Math.round(s.hp * 0.45); G.hp = Math.min(s.hp, G.hp + heal); F.hero.heal = performance.now(); F.status = {};
+      floatTxt(`+${heal} ❤️`, hx, hy - 110, '#8fe07a', true); say(`Tu bois une potion : +${heal} PV et tu es soigné de tes maux.`); await wait(420);
     }
     updFight();
     if (F.foe.hp <= 0) { await win(); return; }
@@ -652,26 +687,51 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   async function foeTurn() {
     const f = F.foe, s = stats(), W = scv.clientWidth, H = scv.clientHeight, hx = W * 0.28, hy = H * 0.62;
     F.turn++;
-    let mult = 1, line = `${f.name} attaque`;
-    if (f.special) {
-      if (f.charging) { mult = f.special.mult; line = f.special.hit; f.charging = false; $('intent').hidden = true; }
-      else if (F.turn % f.special.every === 0) { f.charging = true; $('intent').textContent = '⚠️ ' + f.special.warn + ' Pare le coup !'; $('intent').hidden = false; say(f.special.warn); return wait(500); }
+    // Damage over time on the hero
+    for (const k of ['poison', 'burn']) {
+      const st = F.status[k]; if (!st) continue;
+      G.hp -= st.dmg; floatTxt(`-${st.dmg} ${k === 'poison' ? '☠️' : '🔥'}`, hx, hy - 140, k === 'poison' ? '#a8e070' : '#ffb347');
+      if (--st.turns <= 0) delete F.status[k];
+      updFight(); if (G.hp <= 0) return;
+      await wait(250);
     }
-    await tick(f.anim, 'lunge', 300);
-    let r = dmgCalc(f.atk, s.def, mult);
-    if (F.defending) r.d = Math.max(1, Math.round(r.d * 0.35));
-    G.hp -= r.d; F.hero.hit = performance.now();
-    floatTxt(`-${r.d}`, hx, hy - 110, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1);
-    say(F.defending ? `${line}, mais tu pares : seulement ${r.d} dégâts.` : `${line} : ${r.d} dégâts.`);
+    if (f.trait === 'regen' && f.hp < f.hpMax) { const h = Math.round(f.hpMax * 0.06); f.hp = Math.min(f.hpMax, f.hp + h); floatTxt(`+${h}`, W * 0.72, H * 0.4, '#8fe07a'); }
+    if (f.trait === 'slow' && F.turn % 2 === 0) { say(`${f.name} reprend son souffle.`); updFight(); return wait(450); }
+    let mult = 1, line = `${f.name} attaque`, extra = null;
+    if (f.special) {
+      if (f.charging) { mult = f.special.mult; line = f.special.hit; f.charging = false; $('intent').hidden = true; extra = f.special; }
+      else if (F.turn % f.special.every === 0) { f.charging = true; $('intent').textContent = '⚠️ ' + f.special.warn + ' Pare le coup !'; $('intent').hidden = false; say(f.special.warn); updFight(); return wait(500); }
+    }
+    if (f.trait === 'howl') {
+      if (f.howl) { mult *= 1.8; line = `${f.name} mord sauvagement`; f.howl = false; }
+      else if (F.turn % 3 === 0) { f.howl = true; say(`${f.name} hurle à la lune… Pare au prochain tour !`); updFight(); return wait(500); }
+    }
+    const hits = f.trait === 'double' ? 2 : 1;
+    let total = 0;
+    for (let i = 0; i < hits; i++) {
+      await tick(f.anim, 'lunge', hits > 1 ? 220 : 300);
+      let r = dmgCalc(f.atk * (hits > 1 ? 0.6 : 1), s.def, mult);
+      if (F.defending) r.d = Math.max(1, Math.round(r.d * 0.35));
+      G.hp -= r.d; total += r.d; F.hero.hit = performance.now();
+      floatTxt(`-${r.d}`, hx + i * 20, hy - 110 - i * 14, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1);
+      if (f.trait === 'drain') { const h = Math.round(r.d * 0.5); f.hp = Math.min(f.hpMax, f.hp + h); }
+    }
+    let after = '';
+    const pz = (extra && extra.poison) || (f.trait === 'poison' && Math.random() < 0.5 ? Math.max(2, Math.round(f.atk * 0.22)) : 0);
+    const bz = (extra && extra.burn) || (f.trait === 'burn' && Math.random() < 0.45 ? Math.max(3, Math.round(f.atk * 0.25)) : 0);
+    if (pz && !F.defending) { F.status.poison = { dmg: pz, turns: 3 }; after += ' Tu es empoisonné !'; }
+    if (bz && !F.defending) { F.status.burn = { dmg: bz, turns: 3 }; after += ' Tu brûles !'; }
+    if (f.trait === 'steal' && G.gold > 0 && Math.random() < 0.5) { const g = Math.min(G.gold, 6 + Math.floor(Math.random() * 6)); G.gold -= g; F.stolen += g; after += ` Il te vole ${g} 🪙 !`; }
+    say((F.defending ? `${line}, mais tu pares : ${total} dégâts.` : `${line} : ${total} dégâts${hits > 1 ? ' en 2 coups' : ''}.`) + after);
     updFight(); render();
     await wait(300);
   }
 
   function rollItem(boss) {
-    const roll = Math.random(), ch = boss ? [0.15, 0.55, 0.85] : [0.6, 0.9, 0.985];
+    const t = F.d.tier - 1, roll = Math.random(), ch = boss ? [0.15 - t * 0.05, 0.55 - t * 0.1, 0.85 - t * 0.1] : [0.6 - t * 0.12, 0.9 - t * 0.08, 0.985 - t * 0.02];
     const r = roll < ch[0] ? 0 : roll < ch[1] ? 1 : roll < ch[2] ? 2 : 3;
     const sl = SLOTS[Math.floor(Math.random() * SLOTS.length)].id, [kind, icon] = KINDS[sl][Math.floor(Math.random() * KINDS[sl].length)];
-    const v = (4 + G.lvl * 1.6) * [1, 1.5, 2.2, 3.2][r];
+    const v = (2 + F.d.tier * 4 + G.lvl * 1.4) * [1, 1.5, 2.2, 3.2][r];
     const base = { arme: { atk: v }, casque: { def: v * 0.5, hp: v * 1.6 }, armure: { def: v * 0.8, hp: v * 2.2 }, bottes: { def: v * 0.4, hp: v }, amulette: { mag: v, hp: v * 0.8 } }[sl];
     for (const k in base) base[k] = Math.max(1, Math.round(base[k]));
     return { id: G.nextId++, slot: sl, name: `${kind} ${ADJ[r]}`, icon, r, up: 0, base };
@@ -683,19 +743,21 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const xp = Math.round(f.xp * rnd(0.9, 1.15)), gold = Math.round(f.gold * rnd(0.8, 1.3));
     const item = (f.boss || Math.random() < 0.45) ? rollItem(f.boss) : null;
     const pot = !item && Math.random() < 0.6;
-    G.gold += gold; if (pot) G.potions++;
+    const back = F.stolen; F.stolen = 0;
+    G.gold += gold + back; if (pot) G.potions++;
     if (item) G.inv.push(item);
     const lv = gainXp(xp);
     F.loot.xp += xp; F.loot.gold += gold; if (item) F.loot.items.push(item); if (pot) F.loot.pots++;
     save(); render();
-    const last = F.room === FOES.length - 1;
-    if (last) { G.cleared++; save(); }
+    const last = F.room === F.rooms.length - 1, first = last && !G.cleared[F.d.id];
+    if (last) { G.cleared[F.d.id] = (G.cleared[F.d.id] || 0) + 1; save(); render(); }
+    const nextD = DUNGEONS[F.d.id + 1];
     modal(last ? 'Donjon terminé !' : 'Victoire !', last ? 'r' : '', `
       <div style="font-family:var(--emoji); font-size:46px">${last ? '🏆' : '✨'}</div>
-      <div class="rew"><div class="pill"><i>⭐</i>+${xp} XP</div><div class="pill"><i>🪙</i>+${gold}</div>${pot ? '<div class="pill"><i>🧪</i>+1</div>' : ''}</div>
+      <div class="rew"><div class="pill"><i>⭐</i>+${xp} XP</div><div class="pill"><i>🪙</i>+${gold}${back ? ` (+${back} repris)` : ''}</div>${pot ? '<div class="pill"><i>🧪</i>+1</div>' : ''}</div>
       ${lv ? `<div class="msg">Niveau ${G.lvl} atteint ! Tes statistiques augmentent et ta vie est restaurée.</div>` : ''}
       ${item ? `<div class="note">Butin trouvé :</div>${tipHtml(item, false)}` : ''}
-      ${last ? `<div class="note">Tu as vaincu le Roi des Os. Rapporte ton butin au camp. D'autres donjons arrivent bientôt.</div>` : `<div class="note">Vie actuelle : ${fmt(G.hp)}/${fmt(stats().hp)}</div>`}
+      ${last ? `<div class="note">Tu as vaincu ${f.name} !${first && nextD ? ` <b>Nouveau donjon débloqué : ${nextD.name}.</b>` : (first && !nextD ? ' Tu as terminé tous les donjons de cette version !' : '')}</div>` : `<div class="note">Vie actuelle : ${fmt(G.hp)}/${fmt(stats().hp)}${F.status.poison || F.status.burn ? ' · encore sous l\u2019effet d\u2019un mal' : ''}</div>`}
       <div style="display:grid; gap:8px">
         ${item ? `<button class="btn green" type="button" data-mequip="${item.id}"><i>✅</i> Équiper ${item.name.split(' ')[0].toLowerCase()}</button>` : ''}
         ${last ? `<button class="btn" type="button" data-home="1"><i>🏕️</i> Retour au camp</button>`
@@ -742,31 +804,69 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     c.strokeStyle = '#1b2a14'; c.lineWidth = 2 * s; c.beginPath(); c.arc(0, -20 * s, 5 * s, 0.2, Math.PI - 0.2); c.stroke();
     c.restore();
   }
+  function torch(c, x, y, t, i) {
+    c.fillStyle = '#3b2414'; c.fillRect(x - 3, y, 6, 26);
+    const fl = reduce ? 1 : 0.85 + Math.sin(t / 90 + i * 2) * 0.15;
+    const g = c.createRadialGradient(x, y - 2, 2, x, y - 2, 70 * fl); g.addColorStop(0, 'rgba(255,190,90,.45)'); g.addColorStop(1, 'rgba(255,190,90,0)');
+    c.fillStyle = g; c.fillRect(x - 80, y - 82, 160, 160);
+    c.fillStyle = '#ffb347'; c.beginPath(); c.ellipse(x, y - 2, 6 * fl, 11 * fl, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = '#fff1a8'; c.beginPath(); c.ellipse(x, y, 3, 6 * fl, 0, 0, Math.PI * 2); c.fill();
+  }
+  function drawBg(c, W, H, t, theme) {
+    const gy = H * 0.55;
+    if (theme === 'forest') {
+      const sky = c.createLinearGradient(0, 0, 0, gy); sky.addColorStop(0, '#0f2a2a'); sky.addColorStop(1, '#2f5a46');
+      c.fillStyle = sky; c.fillRect(0, 0, W, gy);
+      c.fillStyle = 'rgba(255,250,220,.85)'; c.beginPath(); c.arc(W * 0.8, H * 0.14, 16, 0, 7); c.fill();
+      const tree = (x, h, col) => { c.fillStyle = col; c.fillRect(x - 4, gy - h * 0.3, 8, h * 0.3);
+        for (let k = 0; k < 3; k++) { c.beginPath(); c.moveTo(x - 26 + k * 4, gy - h * 0.25 - k * h * 0.22); c.lineTo(x, gy - h * 0.6 - k * h * 0.22); c.lineTo(x + 26 - k * 4, gy - h * 0.25 - k * h * 0.22); c.fill(); } };
+      [[0.05, 120], [0.2, 90], [0.38, 110], [0.6, 95], [0.78, 125], [0.95, 100]].forEach(([fx, h], i) => tree(W * fx, h, i % 2 ? '#173a2c' : '#1d4433'));
+      const fl = c.createLinearGradient(0, gy, 0, H); fl.addColorStop(0, '#3f6b3a'); fl.addColorStop(1, '#22401f'); c.fillStyle = fl; c.fillRect(0, gy, W, H - gy);
+      c.strokeStyle = 'rgba(20,50,20,.5)'; c.lineWidth = 1.5;
+      for (let i = 0; i < 40; i++) { const x = (i * 53) % W, y = gy + 10 + ((i * 37) % (H - gy - 10)); c.beginPath(); c.moveTo(x, y); c.lineTo(x - 2, y - 6); c.moveTo(x + 3, y); c.lineTo(x + 4, y - 7); c.stroke(); }
+      for (let i = 0; i < 12; i++) { const a = (reduce ? 0 : t / 1600) + i * 1.9, x = (i * 71 % W) + Math.sin(a) * 10, y = H * 0.25 + (i * 29 % (H * 0.4)) + Math.cos(a * 1.3) * 8;
+        const f = reduce ? .8 : .4 + .6 * Math.abs(Math.sin(t / 500 + i)); c.fillStyle = `rgba(220,255,140,${f * .25})`; c.beginPath(); c.arc(x, y, 6, 0, 7); c.fill(); c.fillStyle = `rgba(230,255,160,${f})`; c.beginPath(); c.arc(x, y, 2, 0, 7); c.fill(); }
+      return;
+    }
+    if (theme === 'mine') {
+      const wall = c.createLinearGradient(0, 0, 0, gy); wall.addColorStop(0, '#1e1210'); wall.addColorStop(1, '#4a2418');
+      c.fillStyle = wall; c.fillRect(0, 0, W, gy);
+      c.fillStyle = 'rgba(0,0,0,.25)';
+      for (let i = 0; i < 9; i++) { const x = (i * 97) % W, y = (i * 41) % (gy * 0.8); c.beginPath(); c.moveTo(x, y); c.lineTo(x + 30, y + 12); c.lineTo(x + 10, y + 30); c.fill(); }
+      [[0.15, 0.3, '#7fd0ff'], [0.85, 0.22, '#ff7ad9'], [0.62, 0.38, '#7fd0ff']].forEach(([fx, fy, col]) => { const x = W * fx, y = H * fy;
+        const g = c.createRadialGradient(x, y, 1, x, y, 26); g.addColorStop(0, col + '88'); g.addColorStop(1, col + '00'); c.fillStyle = g; c.fillRect(x - 30, y - 30, 60, 60);
+        c.fillStyle = col; c.beginPath(); c.moveTo(x, y - 12); c.lineTo(x + 6, y); c.lineTo(x, y + 8); c.lineTo(x - 6, y); c.fill(); });
+      // beams
+      c.fillStyle = '#5b3a22'; c.fillRect(W * 0.04, 0, 10, gy); c.fillRect(W * 0.96 - 10, 0, 10, gy); c.fillRect(0, 8, W, 10);
+      const fl = c.createLinearGradient(0, gy, 0, H); fl.addColorStop(0, '#4a3020'); fl.addColorStop(1, '#2a1810'); c.fillStyle = fl; c.fillRect(0, gy, W, H - gy);
+      // lava river
+      const ly = H * 0.97, pulse = reduce ? .8 : .7 + .3 * Math.sin(t / 400);
+      const lg = c.createLinearGradient(0, ly - 16, 0, H); lg.addColorStop(0, `rgba(255,120,30,${pulse})`); lg.addColorStop(1, '#ff3a10'); c.fillStyle = lg;
+      c.beginPath(); c.moveTo(0, H); for (let x = 0; x <= W; x += 10) c.lineTo(x, ly - 6 + Math.sin(x / 25 + (reduce ? 0 : t / 500)) * 4); c.lineTo(W, H); c.fill();
+      for (let i = 0; i < 10; i++) { const k = ((reduce ? 0 : t / 2500) + i / 10) % 1, x = (i * 89) % W; c.fillStyle = `rgba(255,170,60,${1 - k})`; c.fillRect(x, ly - k * H * 0.5, 3, 3); }
+      torch(c, W * 0.12, H * 0.2, t, 0); torch(c, W * 0.88, H * 0.2, t, 1);
+      return;
+    }
+    // crypt
+    const wall = c.createLinearGradient(0, 0, 0, gy); wall.addColorStop(0, '#2a2236'); wall.addColorStop(1, '#4a3d5c');
+    c.fillStyle = wall; c.fillRect(0, 0, W, gy);
+    c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 2;
+    for (let y = 0; y < gy; y += 22) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
+      for (let x = (y / 22) % 2 ? 0 : 24; x < W; x += 48) { c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + 22); c.stroke(); } }
+    const floor = c.createLinearGradient(0, gy, 0, H); floor.addColorStop(0, '#6b5a48'); floor.addColorStop(1, '#3d3128');
+    c.fillStyle = floor; c.fillRect(0, gy, W, H - gy);
+    c.strokeStyle = 'rgba(0,0,0,.22)';
+    for (let i = 0; i < 6; i++) { const y = gy + (H - gy) * (i / 6) ** 1.4; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); }
+    for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(W / 2 + i * 30, gy); c.lineTo(W / 2 + i * 90, H); c.stroke(); }
+    torch(c, W * 0.12, H * 0.2, t, 0); torch(c, W * 0.88, H * 0.2, t, 1);
+  }
   function drawScene(t) {
     const r = scv.getBoundingClientRect(); if (!r.width || $('fight').hidden) return;
     const dpr = Math.min(2, window.devicePixelRatio || 1);
     if (scv.width !== Math.round(r.width * dpr) || scv.height !== Math.round(r.height * dpr)) { scv.width = Math.round(r.width * dpr); scv.height = Math.round(r.height * dpr); }
     const c = sctx; c.setTransform(dpr, 0, 0, dpr, 0, 0);
     const W = r.width, H = r.height;
-    // crypt background: wall + floor tiles + torches
-    const wall = c.createLinearGradient(0, 0, 0, H * 0.55); wall.addColorStop(0, '#2a2236'); wall.addColorStop(1, '#4a3d5c');
-    c.fillStyle = wall; c.fillRect(0, 0, W, H * 0.55);
-    c.strokeStyle = 'rgba(0,0,0,.25)'; c.lineWidth = 2;
-    for (let y = 0; y < H * 0.55; y += 22) { c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke();
-      for (let x = (y / 22) % 2 ? 0 : 24; x < W; x += 48) { c.beginPath(); c.moveTo(x, y); c.lineTo(x, y + 22); c.stroke(); } }
-    const floor = c.createLinearGradient(0, H * 0.55, 0, H); floor.addColorStop(0, '#6b5a48'); floor.addColorStop(1, '#3d3128');
-    c.fillStyle = floor; c.fillRect(0, H * 0.55, W, H * 0.45);
-    c.strokeStyle = 'rgba(0,0,0,.22)';
-    for (let i = 0; i < 6; i++) { const y = H * 0.55 + (H * 0.45) * (i / 6) ** 1.4; c.beginPath(); c.moveTo(0, y); c.lineTo(W, y); c.stroke(); }
-    for (let i = -6; i <= 6; i++) { c.beginPath(); c.moveTo(W / 2 + i * 30, H * 0.55); c.lineTo(W / 2 + i * 90, H); c.stroke(); }
-    [W * 0.12, W * 0.88].forEach((x, i) => {
-      c.fillStyle = '#3b2414'; c.fillRect(x - 3, H * 0.2, 6, 26);
-      const fl = reduce ? 1 : 0.85 + Math.sin(t / 90 + i * 2) * 0.15;
-      const g = c.createRadialGradient(x, H * 0.18, 2, x, H * 0.18, 70 * fl); g.addColorStop(0, 'rgba(255,190,90,.45)'); g.addColorStop(1, 'rgba(255,190,90,0)');
-      c.fillStyle = g; c.fillRect(x - 80, H * 0.18 - 80, 160, 160);
-      c.fillStyle = '#ffb347'; c.beginPath(); c.ellipse(x, H * 0.18, 6 * fl, 11 * fl, 0, 0, Math.PI * 2); c.fill();
-      c.fillStyle = '#fff1a8'; c.beginPath(); c.ellipse(x, H * 0.19, 3, 6 * fl, 0, 0, Math.PI * 2); c.fill();
-    });
+    drawBg(c, W, H, t, F ? F.d.theme : 'crypt');
     if (!F) return;
     const now = performance.now();
     const pulse = (t0, dur) => { const k = (now - t0) / dur; return k >= 0 && k < 1 ? Math.sin(k * Math.PI) : 0; };
@@ -819,13 +919,14 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (b.dataset.equip) { equip(+b.dataset.equip); return; }
     if (b.dataset.unequip) { const it = itemById(+b.dataset.unequip); delete G.eq[it.slot]; save(); render(); toast(`${it.name} retiré`); return; }
     if (b.dataset.sell) { const it = itemById(+b.dataset.sell); G.gold += sellPrice(it); G.inv = G.inv.filter(x => x !== it); selItem = null; save(); render(); toast(`Vendu pour ${sellPrice(it)} 🪙`); return; }
+    if (b.dataset.run != null && !b.closest('#modal')) { startRun(+b.dataset.run); return; }
     if (b.dataset.up) { const it = itemById(+b.dataset.up), cost = upCost(it); if (G.gold < cost) return; G.gold -= cost; it.up++; save(); render(); toast(`${it.name} forgé +${it.up} !`); return; }
   });
   $('buyPot').addEventListener('click', () => { if (G.gold < 15) { toast('Pas assez d’or'); return; } G.gold -= 15; G.potions++; save(); render(); toast('Potion achetée'); });
 
   // ---------- Navigation ----------
   function show(v) {
-    if (v === 'explore') { show('hero'); $('v-hero2').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); return; }
+    if (v === 'explore') { show('hero'); $('dlist').scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'center' }); return; }
     view = v;
     $('v-hero').hidden = v !== 'hero'; $('v-hero2').hidden = v !== 'hero'; $('v-bag').hidden = v !== 'bag'; $('v-walk').hidden = v !== 'walk';
     document.querySelectorAll('.tabs button').forEach(b => b.setAttribute('aria-selected', b.dataset.v === v ? 'true' : 'false'));
@@ -833,7 +934,6 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     render();
   }
   document.querySelectorAll('.tabs button').forEach(b => b.addEventListener('click', () => show(b.dataset.v)));
-  $('exploreBtn').addEventListener('click', startRun);
   $('sAtk').addEventListener('click', () => act('atk'));
   $('sFire').addEventListener('click', () => act('fire'));
   $('sDef').addEventListener('click', () => act('def'));
@@ -887,7 +987,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     G.welcomed = true; save();
     modal('Bienvenue, aventurier', 'b', `<div style="font-family:var(--emoji); font-size:46px">🧝</div>
       <div style="font-size:15px">Tes pas dans la vraie vie se transforment en <b>énergie d'aventure ⚡</b> : 100 pas = 1 ⚡.</div>
-      <div class="note">Une expédition dans la Crypte oubliée coûte ${ENERGY_COST} ⚡. Tu commences avec ${G.energy} ⚡ pour essayer tout de suite.</div>
+      <div class="note">Une expédition dans la Crypte oubliée coûte 10 ⚡. Tu commences avec ${G.energy} ⚡ pour essayer tout de suite.</div>
       <button class="btn" type="button" data-home="0"><i>⚔️</i> C'est parti</button>`);
   }
   function loop(t) { drawHero(t); drawScene(t); requestAnimationFrame(loop); }
