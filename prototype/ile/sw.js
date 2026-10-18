@@ -1,5 +1,5 @@
 // Offline support: the app shell is cached on first visit, fonts as they load.
-const CACHE = 'stepquest-ile-v2';
+const CACHE = 'stepquest-ile-v3';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png'];
 
 self.addEventListener('install', e => {

@@ -66,7 +66,7 @@ header.top { display: flex; align-items: center; gap: 10px; }
   background: var(--card); padding: 5px 12px 5px 8px; border-radius: 99px;
 }
 .suns svg { width: 22px; height: 22px; }
-.demo { font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--coral);
+.demo { border: 0; cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 700; letter-spacing: 0.6px; text-transform: uppercase; color: var(--coral);
   background: color-mix(in srgb, var(--coral) 14%, transparent); padding: 4px 9px; border-radius: 99px; white-space: nowrap; }
 .island-wrap { position: relative; border-radius: 28px; overflow: hidden; background: var(--sky); aspect-ratio: 1 / 0.95; max-width: 100%; }
 canvas#island { width: 100%; height: 100%; display: block; }
@@ -110,7 +110,7 @@ input[type="range"] { width: 100%; accent-color: var(--sea); height: 28px; }
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-top: 8px; padding-bottom: calc(10px + env(safe-area-inset-bottom, 0px));
   background: color-mix(in srgb, var(--card) 92%, transparent); backdrop-filter: blur(10px); border-top: 1px solid var(--line); }
-.tabs nav { max-width: 440px; margin: 0 auto; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.tabs nav { max-width: 440px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 4px; }
 .tabs button { font: inherit; font-weight: 700; font-size: 13px; color: var(--muted); background: none; border: 0; padding: 8px 4px; border-radius: 14px; cursor: pointer;
   display: flex; flex-direction: column; align-items: center; gap: 3px; }
 .tabs button svg { width: 22px; height: 22px; }
@@ -134,6 +134,22 @@ button:focus-visible, input:focus-visible { outline: 3px solid var(--sun); outli
 .detail { background: var(--chip); border-radius: 16px; padding: 12px 14px; font-size: 14px; }
 .detail b { font-family: var(--font-display); font-weight: 600; font-size: 16px; display: block; }
 .note { font-size: 12.5px; color: var(--muted); }
+.walkbtn { font: inherit; font-weight: 700; font-size: 16px; color: #fff; background: var(--sea); border: 0; border-radius: 99px; padding: 12px 20px; cursor: pointer; white-space: nowrap; }
+.walkbtn.on { background: var(--coral); }
+.walk-live { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pulse { width: 10px; height: 10px; border-radius: 50%; background: var(--coral); display: inline-block; margin-right: 6px; animation: pulse 1.2s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+.msg { font-size: 13px; color: var(--ink); background: color-mix(in srgb, var(--sun) 22%, var(--card)); border-radius: 12px; padding: 8px 10px; }
+.seg { display: grid; grid-template-columns: 1fr 1fr; background: var(--chip); border-radius: 99px; padding: 4px; gap: 4px; }
+.seg button { font: inherit; font-weight: 700; font-size: 14px; color: var(--muted); background: none; border: 0; border-radius: 99px; padding: 8px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--card); color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.08); }
+.histchart canvas { width: 100%; height: 190px; display: block; }
+.stats4 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { font: inherit; font-weight: 700; font-size: 14px; color: var(--ink); background: var(--chip); border: 2px solid transparent; border-radius: 99px; padding: 7px 12px; cursor: pointer; font-variant-numeric: tabular-nums; }
+.chip[aria-pressed="true"] { border-color: var(--sea); background: color-mix(in srgb, var(--sea) 14%, var(--card)); }
+.linkbtn { font: inherit; font-size: 13px; font-weight: 700; color: var(--coral); background: none; border: 0; padding: 4px 0; cursor: pointer; text-align: left; }
+@media (prefers-reduced-motion: reduce) { .pulse { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .bar > i, .toast { transition: none; } .mile.pop .disc { animation: none; } }
 </style>
 
@@ -149,7 +165,7 @@ img { max-width: 100%; }
 <div class="app">
   <header class="top">
     <div class="brand">Step<span>Quest</span></div>
-    <span class="demo" title="Pas fictifs pour la démo">Démo</span>
+    <button class="demo" id="demoBtn" type="button" hidden title="Quitter le mode démo">Démo ✕</button>
     <div class="suns" title="Tes soleils : 1 soleil tous les 1 000 pas">
       <svg viewBox="0 0 24 24" aria-hidden="true"><g stroke="#ffb72e" stroke-width="2" stroke-linecap="round"><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/></g><circle cx="12" cy="12" r="5.2" fill="#ffc94a" stroke="#f29b17" stroke-width="1.2"/></svg>
       <span id="sunCount">0</span>
@@ -170,6 +186,23 @@ img { max-width: 100%; }
       <div class="toast off" id="toast" role="status"></div>
     </div>
 
+    <div class="card" id="walkCard">
+      <div class="row">
+        <div class="grow">
+          <div class="label" id="walkLabel">Podomètre</div>
+          <div class="big" id="walkTitle">Prêt à marcher ?</div>
+        </div>
+        <button class="walkbtn" id="walkBtn" type="button">Démarrer</button>
+      </div>
+      <div class="walk-live" id="walkLive" hidden>
+        <div class="stat"><b id="wSteps">0</b><span>pas cette balade</span></div>
+        <div class="stat"><b id="wTime">0:00</b><span>durée</span></div>
+        <div class="stat"><b id="wDist">0,0</b><span>km</span></div>
+      </div>
+      <div class="small" id="walkHelp">Lance une balade : l'app compte tes pas en direct. Garde-la ouverte, téléphone en main ou en poche, écran allumé.</div>
+      <div class="msg" id="walkMsg" hidden></div>
+    </div>
+
     <div class="card">
       <div class="row">
         <div class="grow">
@@ -179,8 +212,10 @@ img { max-width: 100%; }
         <div class="big" id="goalText">0</div>
       </div>
       <div class="miles" id="miles"></div>
-      <label class="small" for="sim">Démo : fais glisser pour simuler ta marche du jour</label>
-      <input type="range" id="sim" min="0" max="15000" step="50" value="5420">
+      <div id="demoCtl" hidden>
+        <label class="small" for="sim">Démo : fais glisser pour simuler ta marche du jour</label>
+        <input type="range" id="sim" min="0" max="15000" step="50" value="5420">
+      </div>
     </div>
 
     <div class="card">
@@ -199,6 +234,35 @@ img { max-width: 100%; }
       <div class="stat"><b id="stDist">0</b><span>km aujourd'hui</span></div>
       <div class="stat"><b id="stStreak">6 j</b><span>de série</span></div>
       <div class="stat"><b id="stTotal">0</b><span>pas au total</span></div>
+    </div>
+  </section>
+
+  <!-- HISTORIQUE -->
+  <section id="tab-historique" class="view" hidden style="flex-direction:column;gap:14px">
+    <div class="seg" role="group" aria-label="Période">
+      <button type="button" data-range="7" aria-pressed="true">Semaine</button>
+      <button type="button" data-range="30" aria-pressed="false">Mois</button>
+    </div>
+    <div class="card">
+      <div class="row"><div class="grow"><div class="label" id="histLabel">7 derniers jours</div><div class="big" id="histTotal">0 pas</div></div></div>
+      <div class="histchart"><canvas id="histChart" aria-label="Pas par jour"></canvas></div>
+      <div class="small">Barres jaunes : objectif atteint. Pointillés : ton objectif.</div>
+    </div>
+    <div class="stats4">
+      <div class="stat"><b id="hAvg">0</b><span>pas par jour en moyenne</span></div>
+      <div class="stat"><b id="hBest">0</b><span id="hBestDay">meilleur jour</span></div>
+      <div class="stat"><b id="hGoal">0</b><span>jours objectif atteint</span></div>
+      <div class="stat"><b id="hKm">0</b><span>km au total</span></div>
+    </div>
+    <div class="card">
+      <div class="label">Objectif quotidien</div>
+      <div class="chips" id="goalChips"></div>
+      <div class="label" style="margin-top:6px">Mode démo</div>
+      <div class="small">Affiche une île et un historique fictifs pour voir à quoi ressemble l'app après quelques semaines de marche. Tes vrais pas restent enregistrés.</div>
+      <div class="chips"><button class="chip" type="button" id="demoToggle" aria-pressed="false">Mode démo</button></div>
+      <button class="linkbtn" type="button" id="resetBtn">Effacer mes pas enregistrés</button>
+      <div class="msg" id="resetConfirm" hidden>Tout effacer ? <button class="linkbtn" type="button" id="resetYes">Oui, effacer</button> · <button class="linkbtn" type="button" id="resetNo" style="color:var(--muted)">Annuler</button></div>
+      <div class="note">Tes pas sont enregistrés uniquement sur ce téléphone. Rien n'est envoyé sur Internet.</div>
     </div>
   </section>
 
@@ -247,6 +311,10 @@ img { max-width: 100%; }
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 18c2 1.5 4 1.5 6 0s4-1.5 6 0 4 1.5 6 0"/><path d="M12 15V7"/><path d="M12 7c-2-2-5-2-6 0 2 0 4 .5 6 0zM12 7c2-2 5-2 6 0-2 0-4 .5-6 0z"/></svg>
       Mon île
     </button>
+    <button role="tab" aria-selected="false" data-tab="historique" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>
+      Historique
+    </button>
     <button role="tab" aria-selected="false" data-tab="assiette" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="3"/><path d="M2 5v6M22 5v14"/></svg>
       Assiette
@@ -261,9 +329,8 @@ img { max-width: 100%; }
 <script>
 (() => {
   // ---------- Demo data ----------
-  const GOAL = 8000;
-  const BASE_TOTAL = 189000;         // steps walked before today (demo)
-  const BASE_SUNS = 191;             // suns collected before today (demo)
+  let GOAL = 8000;
+  const BASE_TOTAL = 130000;         // demo: steps walked before today
   const STRIDE_M = 0.74;
   const KCAL_PER_STEP = 0.04;
   const STEPS_PER_MIN = 100;
@@ -271,21 +338,21 @@ img { max-width: 100%; }
   // Permanent island rewards (cumulative steps).
   const UNLOCKS = [
     { id: 'shells',    name: 'Les coquillages',   at: 0,      desc: "La plage de départ, avec ses coquillages roses." },
-    { id: 'sunflowers',name: 'Les tournesols',    at: 20000,  desc: "Ils suivent le soleil toute la journée." },
-    { id: 'trees',     name: 'Les arbres',        at: 35000,  desc: "Un nouvel arbre pousse tous les 12 000 pas." },
-    { id: 'tulips',    name: 'Le pré fleuri',     at: 55000,  desc: "Plus tu marches dans la journée, plus il fleurit." },
-    { id: 'hut',       name: 'La cabane',         at: 75000,  desc: "Ton petit chez-toi au cœur de l'île." },
-    { id: 'butterflies', name: 'Les papillons',   at: 95000,  desc: "Ils virevoltent autour des fleurs." },
-    { id: 'boat',      name: 'La barque',         at: 115000, desc: "Elle se balance au bout du ponton." },
-    { id: 'garden',    name: 'Le potager',        at: 135000, desc: "Citrouilles et carottes, cultivées pas à pas." },
-    { id: 'windmill',  name: 'Le moulin',         at: 155000, desc: "Ses ailes tournent avec le vent du large." },
-    { id: 'sheep',     name: 'Les moutons',       at: 175000, desc: "Trois moutons qui sautillent dans l'herbe." },
-    { id: 'lighthouse',name: 'Le phare',          at: 195000, desc: "La nuit, il balaie la mer de sa lumière." },
-    { id: 'turtle',    name: 'La tortue',         at: 203000, desc: "Elle prend le soleil sur la plage." },
-    { id: 'orchard',   name: 'Les orangers',      at: 240000, desc: "Des arbres couverts d'oranges." },
-    { id: 'cat',       name: 'Le chat',           at: 260000, desc: "Il fait la sieste devant la cabane." },
-    { id: 'village',   name: 'Le village',        at: 285000, desc: "Deux maisons pour accueillir des amis." },
-    { id: 'fireflies', name: 'Les lucioles',      at: 310000, desc: "Elles s'allument dès que la nuit tombe." },
+    { id: 'sunflowers',name: 'Les tournesols',    at: 3000,   desc: "Ils suivent le soleil toute la journée." },
+    { id: 'trees',     name: 'Les arbres',        at: 8000,   desc: "Un nouvel arbre pousse tous les 12 000 pas." },
+    { id: 'tulips',    name: 'Le pré fleuri',     at: 15000,  desc: "Plus tu marches dans la journée, plus il fleurit." },
+    { id: 'hut',       name: 'La cabane',         at: 25000,  desc: "Ton petit chez-toi au cœur de l'île." },
+    { id: 'butterflies', name: 'Les papillons',   at: 38000,  desc: "Ils virevoltent autour des fleurs." },
+    { id: 'boat',      name: 'La barque',         at: 52000,  desc: "Elle se balance au bout du ponton." },
+    { id: 'garden',    name: 'Le potager',        at: 70000,  desc: "Citrouilles et carottes, cultivées pas à pas." },
+    { id: 'windmill',  name: 'Le moulin',         at: 90000,  desc: "Ses ailes tournent avec le vent du large." },
+    { id: 'sheep',     name: 'Les moutons',       at: 112000, desc: "Trois moutons qui sautillent dans l'herbe." },
+    { id: 'lighthouse',name: 'Le phare',          at: 136000, desc: "La nuit, il balaie la mer de sa lumière." },
+    { id: 'turtle',    name: 'La tortue',         at: 145000, desc: "Elle prend le soleil sur la plage." },
+    { id: 'orchard',   name: 'Les orangers',      at: 175000, desc: "Des arbres couverts d'oranges." },
+    { id: 'cat',       name: 'Le chat',           at: 210000, desc: "Il fait la sieste devant la cabane." },
+    { id: 'village',   name: 'Le village',        at: 250000, desc: "Deux maisons pour accueillir des amis." },
+    { id: 'fireflies', name: 'Les lucioles',      at: 295000, desc: "Elles s'allument dès que la nuit tombe." },
     { id: 'balloon',   name: 'La montgolfière',   at: 340000, desc: "Elle flotte au-dessus de l'île." },
     { id: 'castle',    name: 'Le château',        at: 400000, desc: "Le grand trésor de l'île." },
   ];
@@ -294,7 +361,7 @@ img { max-width: 100%; }
   const MILES = [
     { id: 'dew',      name: 'La rosée',     at: 2000,  toast: 'La rosée fait briller ton île' },
     { id: 'bees',     name: 'Les abeilles', at: 5000,  toast: 'Les abeilles sont arrivées' },
-    { id: 'rainbow',  name: 'Arc-en-ciel',  at: GOAL,  toast: "Objectif atteint : arc-en-ciel !" },
+    { id: 'rainbow',  name: 'Arc-en-ciel',  at: 8000,  toast: "Objectif atteint : arc-en-ciel !" },
     { id: 'star',     name: 'Étoile filante', at: 12000, toast: 'Une étoile filante pour toi' },
   ];
 
@@ -304,15 +371,35 @@ img { max-width: 100%; }
     { name: 'Smoothie mangue', kcal: 250 }, { name: 'Bière', kcal: 150 },
   ];
 
+  function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
   const nf = new Intl.NumberFormat('fr-FR');
   const fmt = n => nf.format(Math.round(n));
   const $ = id => document.getElementById(id);
   const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  let today = 5420;
-  const total = () => BASE_TOTAL + today;
+  // ---------- Storage (this phone only) ----------
+  const KEY = 'stepquest.v1';
+  const store = (() => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch (e) { return {}; } })();
+  store.days = store.days || {};
+  store.goal = store.goal || 8000;
+  store.demo = store.demo === true;
+  function save() { try { localStorage.setItem(KEY, JSON.stringify(store)); } catch (e) {} }
+  GOAL = store.goal;
+  const dayKey = d => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const todayKey = () => dayKey(new Date());
+
+  let demoToday = 5420;
+  const demoHistory = (() => { const r = rng(5), out = {}; const d = new Date();
+    for (let i = 1; i <= 60; i++) { const x = new Date(d.getFullYear(), d.getMonth(), d.getDate() - i); if (r() < 0.08) continue; out[dayKey(x)] = Math.round(3000 + r() * 9500); }
+    return out; })();
+  const days = () => store.demo ? { ...demoHistory, [todayKey()]: demoToday } : store.days;
+  let today = 0;
+  function syncToday() { today = store.demo ? demoToday : (store.days[todayKey()] || 0); }
+  const realTotal = () => Object.values(store.days).reduce((a, b) => a + b, 0);
+  const total = () => store.demo ? BASE_TOTAL + demoToday : realTotal();
+  syncToday();
   const has = id => total() >= UNLOCKS.find(u => u.id === id).at;
-  const mile = id => today >= MILES.find(m => m.id === id).at;
+  const mile = id => today >= (id === 'rainbow' ? GOAL : MILES.find(m => m.id === id).at);
 
   // ---------- Theme ----------
   let C = {};
@@ -323,12 +410,11 @@ img { max-width: 100%; }
   }
   function readTokens() {
     const s = getComputedStyle(document.documentElement), g = n => s.getPropertyValue(n).trim();
-    C = { sea: g('--sea'), seaDeep: g('--sea-deep'), leaf: g('--leaf'), sun: g('--sun'), coral: g('--coral'), ink: g('--ink'), chip: g('--chip') };
+    C = { sea: g('--sea'), seaDeep: g('--sea-deep'), leaf: g('--leaf'), sun: g('--sun'), coral: g('--coral'), ink: g('--ink'), chip: g('--chip'), muted: g('--muted') };
     C.night = isDark();
   }
 
   // ---------- Helpers ----------
-  function rng(seed) { let s = seed >>> 0; return () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296); }
   function blob(c, x, y, r) { c.beginPath(); c.arc(x, y, Math.max(0.1, r), 0, Math.PI * 2); c.fill(); }
   function ell(c, x, y, rx, ry, rot = 0) { c.beginPath(); c.ellipse(x, y, Math.max(0.1, rx), Math.max(0.1, ry), rot, 0, Math.PI * 2); c.fill(); }
   function shade(hex, amt) {
@@ -670,7 +756,7 @@ img { max-width: 100%; }
       for (let i = 0; i < n; i++) { const f = flowerSpots[i], p = at(f.u, f.v); add({ y: p.y - 0.2 }, () => tulip(c, p.x, p.y, s * 0.85, fc[Math.floor(f.c * 5)])); }
     }
     if (has('trees')) {
-      const exact = 3 + (total() - 35000) / 12000;
+      const exact = 3 + (total() - 8000) / 12000;
       const cap = Math.min(treeSpots.length, has('orchard') ? 22 : 18);
       const n = Math.min(cap, Math.floor(exact));
       for (let i = 0; i < Math.min(cap, n + 1); i++) {
@@ -766,7 +852,7 @@ img { max-width: 100%; }
   }
 
   // ---------- UI ----------
-  let lastLevel = -1, lastMiles = -1, lastUnlockId = null, selected = null;
+  let lastLevel = -1, lastMiles = -1, lastUnlockId = null, selected = null, current = 'ile';
   const levelOf = tot => UNLOCKS.reduce((l, u, i) => (tot >= u.at ? i : l), 0);
   function toast(msg) { const el = $('toast'); el.textContent = msg; el.classList.remove('off'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.add('off'), 2600); }
 
@@ -786,7 +872,8 @@ img { max-width: 100%; }
     $('goalText').textContent = `${Math.min(MILES.length, MILES.filter(m => today >= m.at).length)} / ${MILES.length}`;
     const nextMile = MILES.find(m => today < m.at);
     $('goalMsg').textContent = nextMile ? `Encore ${fmt(nextMile.at - today)} pas pour ${nextMile.name.toLowerCase()}` : 'Toutes les étapes du jour sont faites';
-    $('sunCount').textContent = fmt(BASE_SUNS + Math.floor(today / 1000));
+    MILES[2].at = GOAL;
+    $('sunCount').textContent = fmt(Math.floor(tot / 1000));
 
     const got = MILES.filter(m => today >= m.at).length;
     [...milesEl.children].forEach((el, i) => {
@@ -801,6 +888,7 @@ img { max-width: 100%; }
     $('hudLevel').textContent = `Niveau ${lvl + 1}`;
     if (fromUser && lastLevel !== -1 && lvl > lastLevel) {
       toast(`Nouveau sur ton île : ${UNLOCKS[lvl].name.toLowerCase()} !`); burstAt = performance.now(); lastUnlockId = UNLOCKS[lvl].id; selected = lastUnlockId;
+      if (navigator.vibrate) { try { navigator.vibrate([30, 40, 30]); } catch (e) {} }
     }
     lastLevel = lvl;
 
@@ -816,7 +904,9 @@ img { max-width: 100%; }
     $('stDist').textContent = (today * STRIDE_M / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1, minimumFractionDigits: 1 });
     $('stStreak').textContent = (pct >= 1 ? 7 : 6) + ' j';
     $('stTotal').textContent = Math.round(tot / 1000) + ' k';
-    renderMeal(); renderCollection();
+    if (current === 'assiette') renderMeal();
+    if (current === 'collection' || fromUser === 'level') renderCollection();
+    if (current === 'historique') renderHistory();
     if (reduceMotion) drawScene(performance.now());
   }
 
@@ -877,17 +967,146 @@ img { max-width: 100%; }
     document.querySelectorAll('.tabs button').forEach(x => x.setAttribute('aria-selected', x === b ? 'true' : 'false'));
     document.querySelectorAll('.view').forEach(v => { v.hidden = v.id !== 'tab-' + b.dataset.tab; v.style.display = v.hidden ? '' : 'flex'; });
     window.scrollTo({ top: 0 });
-    if (b.dataset.tab === 'assiette') renderMeal();
-    if (b.dataset.tab === 'ile') resize();
+    current = b.dataset.tab;
+    if (current === 'assiette') renderMeal();
+    if (current === 'collection') renderCollection();
+    if (current === 'historique') renderHistory();
+    if (current === 'ile') resize();
   }));
-  $('sim').addEventListener('input', e => { today = +e.target.value; update(true); });
+  $('sim').addEventListener('input', e => { demoToday = +e.target.value; syncToday(); update(true); });
+
+  // ---------- Mode (real / demo) ----------
+  function applyMode() {
+    syncToday();
+    $('demoBtn').hidden = !store.demo;
+    $('demoCtl').hidden = !store.demo;
+    $('walkCard').hidden = store.demo;
+    $('demoToggle').setAttribute('aria-pressed', store.demo ? 'true' : 'false');
+    lastLevel = -1; lastMiles = -1;
+    update(false); renderCollection();
+  }
+  $('demoBtn').addEventListener('click', () => { store.demo = false; save(); applyMode(); });
+  $('demoToggle').addEventListener('click', () => { store.demo = !store.demo; save(); applyMode(); });
+  $('resetBtn').addEventListener('click', () => { $('resetConfirm').hidden = false; });
+  $('resetNo').addEventListener('click', () => { $('resetConfirm').hidden = true; });
+  $('resetYes').addEventListener('click', () => { store.days = {}; save(); $('resetConfirm').hidden = true; applyMode(); });
+
+  // Goal chips
+  [5000, 6000, 8000, 10000, 12000].forEach(g => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = fmt(g);
+    b.addEventListener('click', () => { GOAL = g; store.goal = g; save(); renderGoalChips(); update(false); });
+    $('goalChips').appendChild(b);
+  });
+  function renderGoalChips() { [...$('goalChips').children].forEach(b => b.setAttribute('aria-pressed', b.textContent === fmt(GOAL) ? 'true' : 'false')); }
+  renderGoalChips();
+
+  // ---------- Live pedometer (accelerometer while the app is open) ----------
+  const walk = { on: false, steps: 0, start: 0, timer: 0, lock: null, got: false, sm: 9.81, base: 9.81, above: false, last: 0, streak: 0, pending: 0, unsaved: 0 };
+  function fmtTime(ms) { const t = Math.floor(ms / 1000), h = Math.floor(t / 3600), m = Math.floor(t / 60) % 60, ss = t % 60;
+    return h ? `${h}:${String(m).padStart(2, '0')}:${String(ss).padStart(2, '0')}` : `${m}:${String(ss).padStart(2, '0')}`; }
+  function walkMsg(text) { $('walkMsg').textContent = text || ''; $('walkMsg').hidden = !text; }
+  function addSteps(n) {
+    const k = todayKey(); store.days[k] = (store.days[k] || 0) + n; walk.steps += n; walk.unsaved += n;
+    if (walk.unsaved >= 10) { save(); walk.unsaved = 0; }
+    syncToday(); update(true);
+    $('wSteps').textContent = fmt(walk.steps);
+    $('wDist').textContent = (walk.steps * STRIDE_M / 1000).toLocaleString('fr-FR', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+  }
+  function onMotion(e) {
+    const a = e.accelerationIncludingGravity; if (!a || a.x == null) return;
+    walk.got = true;
+    const m = Math.hypot(a.x, a.y, a.z);
+    walk.sm = walk.sm * 0.55 + m * 0.45;            // smooth out jitter
+    walk.base = walk.base * 0.97 + m * 0.03;        // slow average (gravity)
+    const diff = walk.sm - walk.base, now = performance.now();
+    if (!walk.above && diff > 1.15) {
+      walk.above = true;
+      const gap = now - walk.last;
+      if (gap < 260) return;                         // too fast to be a step
+      walk.last = now;
+      if (gap > 2000) { walk.streak = 0; walk.pending = 0; }
+      walk.streak++;
+      // A few steps in a regular rhythm are needed before counting, so shaking the phone doesn't count.
+      if (walk.streak < 4) walk.pending++;
+      else { addSteps(walk.pending + 1); walk.pending = 0; }
+    } else if (walk.above && diff < 0.35) walk.above = false;
+  }
+  async function keepAwake() { try { if (navigator.wakeLock) walk.lock = await navigator.wakeLock.request('screen'); } catch (e) { walk.lock = null; } }
+  document.addEventListener('visibilitychange', () => { if (walk.on && document.visibilityState === 'visible') keepAwake(); if (document.visibilityState === 'hidden') save(); });
+  async function startWalk() {
+    walkMsg('');
+    if (typeof DeviceMotionEvent === 'undefined') { walkMsg("Ce téléphone ou ce navigateur ne donne pas accès au capteur de mouvement."); return; }
+    if (typeof DeviceMotionEvent.requestPermission === 'function') {
+      try { const r = await DeviceMotionEvent.requestPermission(); if (r !== 'granted') { walkMsg("Autorise « Mouvement et orientation » pour compter tes pas. Tu peux réessayer en touchant Démarrer."); return; } }
+      catch (e) { walkMsg("Le capteur de mouvement n'est pas disponible ici. Ouvre l'app installée sur ton écran d'accueil."); return; }
+    }
+    Object.assign(walk, { on: true, steps: 0, start: Date.now(), got: false, streak: 0, pending: 0, last: 0, above: false });
+    window.addEventListener('devicemotion', onMotion);
+    keepAwake();
+    $('walkBtn').textContent = 'Arrêter'; $('walkBtn').classList.add('on');
+    $('walkLive').hidden = false; $('walkHelp').hidden = true;
+    $('walkLabel').innerHTML = '<span class="pulse"></span>Balade en cours'; $('walkTitle').textContent = 'Je compte tes pas';
+    $('wSteps').textContent = '0'; $('wDist').textContent = '0,0';
+    walk.timer = setInterval(() => { $('wTime').textContent = fmtTime(Date.now() - walk.start); }, 1000);
+    setTimeout(() => { if (walk.on && !walk.got) walkMsg("Aucun mouvement reçu. Ouvre l'app depuis ton écran d'accueil, pas depuis une autre app."); }, 3000);
+  }
+  function stopWalk() {
+    walk.on = false; window.removeEventListener('devicemotion', onMotion); clearInterval(walk.timer);
+    try { walk.lock && walk.lock.release(); } catch (e) {} walk.lock = null; save();
+    $('walkBtn').textContent = 'Démarrer'; $('walkBtn').classList.remove('on');
+    $('walkLabel').textContent = 'Podomètre';
+    $('walkTitle').textContent = walk.steps ? `Bravo, ${fmt(walk.steps)} pas !` : 'Prêt à marcher ?';
+    walkMsg(walk.steps ? `Ta balade est ajoutée à ta journée : ${fmt(today)} pas aujourd'hui.` : '');
+  }
+  $('walkBtn').addEventListener('click', () => (walk.on ? stopWalk() : startWalk()));
+
+  // ---------- History ----------
+  let range = 7;
+  document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => {
+    range = +b.dataset.range; document.querySelectorAll('.seg button').forEach(x => x.setAttribute('aria-pressed', x === b ? 'true' : 'false')); renderHistory();
+  }));
+  const WD = ['D', 'L', 'M', 'M', 'J', 'V', 'S'];
+  function renderHistory() {
+    const data = days(), now = new Date(), list = [];
+    for (let i = range - 1; i >= 0; i--) { const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i); list.push({ d, v: data[dayKey(d)] }); }
+    const withData = list.filter(x => x.v != null && x.v > 0), sum = withData.reduce((a, x) => a + x.v, 0);
+    $('histLabel').textContent = range === 7 ? '7 derniers jours' : '30 derniers jours';
+    $('histTotal').textContent = `${fmt(sum)} pas`;
+    $('hAvg').textContent = withData.length ? fmt(sum / withData.length) : '–';
+    const best = withData.reduce((b, x) => (!b || x.v > b.v ? x : b), null);
+    $('hBest').textContent = best ? fmt(best.v) : '–';
+    $('hBestDay').textContent = best ? 'meilleur jour, ' + best.d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric' }) : 'meilleur jour';
+    $('hGoal').textContent = `${withData.filter(x => x.v >= GOAL).length} / ${range}`;
+    $('hKm').textContent = (sum * STRIDE_M / 1000).toLocaleString('fr-FR', { maximumFractionDigits: 1 });
+    const cnv = $('histChart'), r = cnv.getBoundingClientRect(); if (!r.width) return;
+    const dp = Math.min(2, window.devicePixelRatio || 1); cnv.width = r.width * dp; cnv.height = 190 * dp;
+    const c = cnv.getContext('2d'); c.setTransform(dp, 0, 0, dp, 0, 0);
+    const w = r.width, h = 190, top = 14, bottom = 22, ch = h - top - bottom;
+    const max = Math.max(GOAL, ...list.map(x => x.v || 0)) * 1.1, slot = w / list.length, bw = Math.max(3, Math.min(26, slot * 0.66));
+    const y = v => top + ch - (v / max) * ch;
+    c.font = '600 11px "Nunito Sans", system-ui, sans-serif'; c.textAlign = 'center';
+    list.forEach((x, i) => {
+      const cx = slot * i + slot / 2;
+      if (x.v == null || x.v === 0) { c.strokeStyle = C.chip; c.lineWidth = 1.5; c.strokeRect(cx - bw / 2, top + ch - 8, bw, 8); }
+      else { c.fillStyle = x.v >= GOAL ? C.sun : C.sea; c.beginPath(); c.roundRect(cx - bw / 2, y(x.v), bw, top + ch - y(x.v), [Math.min(6, bw / 2), Math.min(6, bw / 2), 0, 0]); c.fill(); }
+      const isToday = i === list.length - 1;
+      if (range === 7 || i % 5 === 4 || isToday) { c.fillStyle = isToday ? C.ink : C.muted; c.globalAlpha = isToday ? 1 : 0.6;
+        c.fillText(range === 7 ? WD[x.d.getDay()] : String(x.d.getDate()), cx, h - 6); c.globalAlpha = 1; }
+    });
+    c.strokeStyle = C.coral; c.setLineDash([4, 4]); c.lineWidth = 1.5; c.beginPath(); c.moveTo(0, y(GOAL)); c.lineTo(w, y(GOAL)); c.stroke(); c.setLineDash([]);
+    c.fillStyle = C.coral; c.textAlign = 'right'; c.fillText(fmt(GOAL), w - 2, y(GOAL) - 4);
+  }
+
+  // Day change while the app stays open
+  let lastKey = todayKey();
+  setInterval(() => { const k = todayKey(); if (k !== lastKey) { lastKey = k; syncToday(); update(false); } }, 30000);
 
   readTokens();
   const mq = window.matchMedia('(prefers-color-scheme: dark)'), retheme = () => { readTokens(); update(false); };
   mq.addEventListener ? mq.addEventListener('change', retheme) : mq.addListener(retheme);
   new MutationObserver(retheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
   window.addEventListener('resize', () => { resize(); renderMeal(); });
-  resize(); update(false);
+  resize(); applyMode();
   function loop(t) { drawScene(t); if (!reduceMotion) requestAnimationFrame(loop); }
   requestAnimationFrame(loop);
 })();
