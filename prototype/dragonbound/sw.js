@@ -1,5 +1,5 @@
 // Offline support: the app shell is cached on first visit, fonts as they load.
-const CACHE = 'dragonbound-v3';
+const CACHE = 'dragonbound-v4';
 const SHELL = ['./', 'index.html', 'manifest.webmanifest', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'img/hero.webp', 'img/hero-face.webp', 'img/slime.webp', 'img/rat.webp', 'img/bat.webp', 'img/skel.webp', 'img/bossBone.webp', 'img/wolf.webp', 'img/spider.webp', 'img/shroom.webp', 'img/goblin.webp', 'img/bossWitch.webp', 'img/snake.webp', 'img/imp.webp', 'img/scorp.webp', 'img/golem.webp', 'img/bossDragon.webp'];
 
 self.addEventListener('install', e => {

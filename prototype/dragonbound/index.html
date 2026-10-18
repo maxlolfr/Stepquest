@@ -289,6 +289,28 @@ button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
 .shoprow + .shoprow { margin-top: 10px; padding-top: 10px; border-top: 2px dashed #d6b07a; }
 .tag { display: inline-block; font-size: 11px; font-weight: 800; color: #fff; background: var(--rib-r); border-radius: 99px; padding: 1px 7px; margin-left: 4px; }
 .herobox canvas { height: 210px; }
+.skills { grid-template-columns: repeat(var(--n, 4), 1fr); gap: 6px; }
+.skills.many .skill i { width: 54px; height: 54px; font-size: 26px; border-width: 3px; }
+.skills.many .skill { font-size: 11px; }
+.skills.many .skill .cnt { top: 36px; }
+.skill.sp i { background: radial-gradient(circle at 50% 35%, #6aa8ef, #2f4fa0); }
+.skill.heal i { background: radial-gradient(circle at 50% 35%, #8fe07a, #2f7a36); }
+.skill.roar i { background: radial-gradient(circle at 50% 35%, #ff8a6a, #a8243a); }
+.skill.venom i { background: radial-gradient(circle at 50% 35%, #b6f27a, #3f7a22); }
+.skill.frost i { background: radial-gradient(circle at 50% 35%, #bfe8ff, #3d8be0); }
+.skill i img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.picks { display: flex; flex-direction: column; gap: 10px; text-align: left; }
+.pick { display: grid; grid-template-columns: 76px 1fr; gap: 10px; align-items: center; background: rgba(255,255,255,.45); border: 3px solid #d6b07a; border-radius: 14px; padding: 8px; cursor: pointer; font: inherit; color: inherit; width: 100%; text-align: left; }
+.pick.on { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242,182,50,.45); }
+.pick .pf { width: 76px; height: 76px; border-radius: 12px; background: radial-gradient(circle at 50% 40%, #fff3d4, #e9c98d); display: grid; place-items: center; overflow: hidden; font-family: var(--emoji); font-size: 46px; }
+.pick .pf img { width: 100%; height: 100%; object-fit: contain; object-position: center top; }
+.pick b { font-family: var(--font-display); font-size: 18px; }
+.pick .cl { font-size: 12px; font-weight: 800; color: var(--rib-p); text-transform: uppercase; letter-spacing: .6px; }
+.pick .sk { font-size: 12px; color: var(--muted); font-weight: 700; margin-top: 2px; }
+.minibars { display: grid; grid-template-columns: auto 1fr; gap: 2px 6px; align-items: center; font-size: 11px; font-weight: 800; color: var(--muted); margin-top: 4px; }
+.minibars i { display: block; height: 6px; border-radius: 99px; background: linear-gradient(90deg, var(--gold), #e09a1e); }
+.portrait .pe { font-family: var(--emoji); font-size: 42px; }
+.cls-lock { color: #ff8a7a; font-size: 12px; font-weight: 800; }
 </style>
 
 <style>
@@ -301,7 +323,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 <body>
 <div class="app" id="app">
   <header class="hud">
-    <div class="portrait" aria-hidden="true"><img src="img/hero-face.webp" alt=""><div class="lvl" id="lvl">Niv. 1</div></div>
+    <div class="portrait" aria-hidden="true" id="portrait"><img src="img/hero-face.webp" alt=""><div class="lvl" id="lvl">Niv. 1</div></div>
     <div class="bars">
       <div class="hearts" id="hearts" aria-label="Vie"></div>
       <div class="gbar mana"><i id="manaBar"></i><span id="manaTxt">20/20</span></div>
@@ -322,12 +344,13 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         <div class="slots" id="slotsL"></div>
         <div class="herobox">
           <canvas id="heroCv" aria-label="Aldric, ton héros"></canvas>
-          <div class="hname">Aldric</div>
+          <div class="hname" id="hname">Aldric</div>
           <div class="note" id="heroSub">Chevalier elfe</div>
         </div>
         <div class="slots" id="slotsR"></div>
       </div>
       <div class="stats" id="stats"></div>
+      <button class="btn small blue" type="button" data-pickhero="1" style="margin-top:10px"><i>🔄</i> Changer de héros</button>
     </div>
     <div class="panel">
       <div class="ribbon r">Aventure</div>
@@ -410,12 +433,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <div class="gbar hp"><i id="meHp"></i><span id="meHpTxt"></span></div>
       <div class="gbar mana"><i id="meMp"></i><span id="meMpTxt"></span></div>
     </div>
-    <div class="skills">
-      <button class="skill" id="sAtk" type="button"><i>🗡️</i>Attaque</button>
-      <button class="skill fire" id="sFire" type="button"><i>🔥</i>Boule de feu<span class="cnt">8 💧</span></button>
-      <button class="skill def" id="sDef" type="button"><i>🛡️</i>Parade</button>
-      <button class="skill pot" id="sPot" type="button"><i>🧪</i>Potion<span class="cnt" id="potCnt">3</span></button>
-    </div>
+    <div class="skills" id="skills"></div>
     <button class="flee" id="fleeBtn" type="button">Fuir le niveau</button>
   </div>
 </div>
@@ -446,13 +464,13 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
   const ready = k => IMG[k] && IMG[k].complete && IMG[k].naturalWidth > 0;
   // Draw a sprite standing on (x, y), height h. Emoji fallback while missing.
-  function sprite(c, k, x, y, h, flash, emoji) {
+  function sprite(c, k, x, y, h, flash, emoji, noFlip) {
     if (ready(k)) {
       const im = IMG[k], w = h * im.naturalWidth / im.naturalHeight;
       c.drawImage(im, x - w / 2, y - h, w, h);
       if (flash > 0 && WHITE[k]) { c.globalAlpha = flash; c.drawImage(WHITE[k], x - w / 2, y - h, w, h); c.globalAlpha = 1; }
     } else if (emoji) {
-      c.save(); c.font = `${h * 0.9}px ${EMO}`; c.textAlign = 'center'; c.textBaseline = 'bottom'; c.scale(-1, 1); c.fillText(emoji, -x, y); c.restore();
+      c.save(); c.font = `${h * 0.9}px ${EMO}`; c.textAlign = 'center'; c.textBaseline = 'bottom'; if (noFlip) c.fillText(emoji, x, y); else { c.scale(-1, 1); c.fillText(emoji, -x, y); } c.restore();
     }
   }
   const thumb = k => (M[k] && M[k].noImg) ? `<div class="fe">${M[k].emoji}</div>` : `<img src="img/${k}.webp" alt="">`;
@@ -499,12 +517,44 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   ['hero', ...Object.keys(M).filter(k => !M[k].noImg)].forEach(loadSprite);
   const EN_MAX = 50, EN_SEC = 120;
 
+  // ---------- Classes & spells ----------
+  // Weapons: [name, emoji, image key]. Images arrive with batch 2; emoji until then.
+  const CLASSES = {
+    guerrier: { name: 'Aldric', cls: 'Guerrier', sprite: 'hero', face: 'hero-face', emoji: '🤺', desc: 'Robuste et puissant au corps à corps.',
+      mult: { hp: 1.2, atk: 1.1, def: 1.3, mag: 0.6, mp: 0.9 }, atk: { name: 'Coup d’épée', icon: '🗡️', fx: 'slash' },
+      spells: ['whirl', 'roar'], weapons: [['Épée longue', '🗡️', 'wSword'], ['Hache de guerre', '🪓', 'wAxe'], ['Marteau de bataille', '🔨', 'wHammer']], wstat: 'atk' },
+    archer: { name: 'Lyra', cls: 'Archère', sprite: 'archer', face: 'archer-face', emoji: '🧝‍♀️', desc: 'Rapide et précise, frappe de loin.',
+      mult: { hp: 0.95, atk: 1.3, def: 0.9, mag: 0.8, mp: 1.1 }, atk: { name: 'Tir', icon: '🏹', fx: 'arrow' },
+      spells: ['rain', 'venom'], weapons: [['Arc court', '🏹', 'wShortbow'], ['Arc long elfique', '🏹', 'wElvenbow'], ['Arbalète', '🎯', 'wCrossbow']], wstat: 'atk' },
+    mage: { name: 'Orin', cls: 'Mage', sprite: 'mage', face: 'mage-face', emoji: '🧙', desc: 'Fragile mais maître des sorts.',
+      mult: { hp: 0.85, atk: 0.7, def: 0.8, mag: 1.45, mp: 1.5 }, atk: { name: 'Bâton', icon: '🪄', fx: 'orb' },
+      spells: ['fire', 'frost', 'heal'], weapons: [['Bâton de chêne', '🪄', 'wStaff'], ['Sceptre de cristal', '🔮', 'wScepter'], ['Grimoire des arcanes', '📖', 'wTome']], wstat: 'mag' },
+  };
+  const SPELLS = {
+    fire:  { name: 'Boule de feu', icon: '🔥', cls: 'fire', cost: 8, img: null, tip: 'Gros dégâts magiques.' },
+    frost: { name: 'Givre', icon: '❄️', cls: 'frost', cost: 7, img: 'spFrost', tip: 'Dégâts et peut geler l’ennemi un tour.' },
+    heal:  { name: 'Soin', icon: '💚', cls: 'heal', cost: 9, img: 'spHeal', tip: 'Rend 35 % de vie et guérit les maux.' },
+    whirl: { name: 'Tourbillon', icon: '🌀', cls: 'sp', cost: 8, img: 'spWhirl', tip: 'Un coup dévastateur.' },
+    roar:  { name: 'Cri de guerre', icon: '📣', cls: 'roar', cost: 6, img: 'spRoar', tip: '+40 % de force pendant 3 tours.' },
+    rain:  { name: 'Pluie', icon: '🎯', cls: 'sp', cost: 8, img: 'spRain', tip: '3 flèches d’affilée.' },
+    venom: { name: 'Venin', icon: '🧪', cls: 'venom', cost: 6, img: 'spVenom', tip: 'Empoisonne l’ennemi 3 tours.' },
+  };
+  const OPT = new Set(); // optional images that loaded (batch 2)
+  ['archer', 'mage', 'archer-face', 'mage-face', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
+   'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome'].forEach(k => {
+    const im = new Image(); im.onload = () => { OPT.add(k); IMG[k] = im; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+      const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; if (typeof render === 'function' && G) render(); };
+    im.onerror = () => {}; im.src = `img/${k}.webp`;
+  });
+  const CL = () => CLASSES[G.cls || 'guerrier'];
+  const icoHtml = (img, emo) => OPT.has(img) ? `<img src="img/${img}.webp" alt="">` : emo;
+
   // ---------- Save ----------
   const KEY = 'dragonbound.v2';
   const fresh = () => ({
-    lvl: 1, xp: 0, gold: 30, potions: 3, energy: EN_MAX, enAt: Date.now(), nextId: 2, stars: {}, daily: { last: '', streak: 0 },
-    inv: [{ id: 1, slot: 'arme', name: 'Épée d’entraînement', icon: '🗡️', r: 0, up: 0, base: { atk: 3 } }],
-    eq: { arme: 1 },
+    lvl: 1, xp: 0, gold: 30, potions: 3, energy: EN_MAX, enAt: Date.now(), nextId: 2, stars: {}, daily: { last: '', streak: 0 }, cls: null,
+    inv: [],
+    eq: {},
   });
   let G;
   try { G = JSON.parse(localStorage.getItem(KEY)); } catch (e) { G = null; }
@@ -536,11 +586,12 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // ---------- Hero stats ----------
   const itemStats = it => { const m = 1 + 0.15 * it.up, o = {}; for (const k in it.base) o[k] = Math.round(it.base[k] * m); return o; };
   const itemById = id => G.inv.find(i => i.id === id);
+  const itemIcon = it => it.img && OPT.has(it.img) ? `<img src="img/${it.img}.webp" alt="" style="width:85%;height:85%;object-fit:contain">` : it.icon;
   function stats() {
-    const L = G.lvl, s = { hp: 64 + 12 * (L - 1), atk: 7 + 2.4 * (L - 1), def: 2 + 1.3 * (L - 1), mag: 9 + 2.6 * (L - 1) };
+    const L = G.lvl, m = CL().mult, s = { hp: (64 + 12 * (L - 1)) * m.hp, atk: (7 + 2.4 * (L - 1)) * m.atk, def: (2 + 1.3 * (L - 1)) * m.def, mag: (9 + 2.6 * (L - 1)) * m.mag };
     for (const sl in G.eq) { const it = itemById(G.eq[sl]); if (!it) continue; const st = itemStats(it); for (const k in st) s[k] += st[k]; }
     for (const k in s) s[k] = Math.round(s[k]);
-    s.mp = 20 + Math.floor((L - 1) * 2);
+    s.mp = Math.round((20 + (L - 1) * 2) * m.mp);
     return s;
   }
   const xpNeed = () => 70 + 75 * (G.lvl - 1);
@@ -581,16 +632,21 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function render() {
     const s = stats(); G.hp = Math.min(G.hp, s.hp);
     $('lvl').textContent = `Niv. ${G.lvl}`;
+    const C = CL(), faceOk = C.face === 'hero-face' || OPT.has(C.face);
+    const pimg = $('portrait').querySelector('img'), pe = $('portrait').querySelector('.pe');
+    if (faceOk) { pimg.hidden = false; if (!pimg.src.endsWith(C.face + '.webp')) pimg.src = `img/${C.face}.webp`; if (pe) pe.remove(); }
+    else { pimg.hidden = true; if (!pe) $('portrait').insertAdjacentHTML('afterbegin', `<span class="pe">${C.emoji}</span>`); else pe.textContent = C.emoji; }
+    $('hname').textContent = C.name;
     hearts($('hearts'), G.hp, s.hp);
     bar('manaBar', 'manaTxt', s.mp, s.mp);
     bar('xpBar', 'xpTxt', G.xp, xpNeed());
     $('gold').textContent = fmt(G.gold); $('potPill').textContent = G.potions;
     renderEnergy();
     const total = Object.values(G.stars).reduce((a, b) => a + b, 0);
-    $('heroSub').textContent = `Chevalier elfe · ⭐ ${total}/${WORLDS.length * 15}`;
+    $('heroSub').textContent = `${CL().cls} · ⭐ ${total}/${WORLDS.length * 15}`;
     const slotHtml = sl => {
       const it = itemById(G.eq[sl.id]);
-      return it ? `<button class="slot r${it.r}" type="button" data-item="${it.id}" aria-label="${it.name}">${it.icon}${it.up ? `<span class="up">+${it.up}</span>` : ''}</button>`
+      return it ? `<button class="slot r${it.r}" type="button" data-item="${it.id}" aria-label="${it.name}">${itemIcon(it)}${it.up ? `<span class="up">+${it.up}</span>` : ''}</button>`
                 : `<button class="slot empty" type="button" data-ghost="${sl.ghost}" data-slot="${sl.id}" aria-label="${sl.name} : vide"></button>`;
     };
     $('slotsL').innerHTML = SLOTS.slice(0, 3).map(slotHtml).join('');
@@ -673,7 +729,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const cells = [];
     [...G.inv].sort((a, b) => b.r - a.r || b.id - a.id).forEach(it => {
       const eq = G.eq[it.slot] === it.id;
-      cells.push(`<button class="slot cell r${it.r} ${selItem === it.id ? 'sel' : ''}" type="button" data-item="${it.id}" aria-label="${it.name}">${it.icon}${eq ? '<span class="cnt">É</span>' : (it.up ? `<span class="cnt">+${it.up}</span>` : '')}</button>`);
+      cells.push(`<button class="slot cell r${it.r} ${selItem === it.id ? 'sel' : ''}" type="button" data-item="${it.id}" aria-label="${it.name}">${itemIcon(it)}${eq ? '<span class="cnt">É</span>' : (it.up ? `<span class="cnt">+${it.up}</span>` : '')}</button>`);
     });
     cells.push(`<button class="slot cell" type="button" data-tab="shop" aria-label="Potions">🧪<span class="cnt">${G.potions}</span></button>`);
     while (cells.length < 15) cells.push('<div class="slot cell empty" data-ghost=""></div>');
@@ -684,9 +740,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function statLines(it, compare) {
     const st = itemStats(it), cur = compare ? itemStats(compare) : {};
     const names = { atk: ['⚔️', 'Force'], def: ['🛡️', 'Défense'], hp: ['❤️', 'Vie'], mag: ['✨', 'Magie'] };
+    const sign = v => (v >= 0 ? '+' : '') + v;
     return [...new Set([...Object.keys(st), ...Object.keys(cur)])].map(k => { const d = (st[k] || 0) - (cur[k] || 0);
       const diff = compare && d !== 0 ? ` <span class="${d > 0 ? 'up-g' : 'down-r'}">(${d > 0 ? '+' : ''}${d})</span>` : '';
-      return `<div>${names[k][0]} ${names[k][1]} +${st[k] || 0}${diff}</div>`; }).join('');
+      return `<div>${names[k][0]} ${names[k][1]} ${sign(st[k] || 0)}${diff}</div>`; }).join('');
   }
   const upCost = it => 15 * (it.up + 1) * (it.r + 1);
   const sellPrice = it => 5 * (it.r + 1) * (it.up + 1);
@@ -694,12 +751,13 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const eqd = G.eq[it.slot] === it.id, cur = itemById(G.eq[it.slot]), cmp = !eqd && cur ? cur : null;
     return `<div class="tip">
       <div class="top"><h3 class="r${it.r}t">${it.name}${it.up ? ' +' + it.up : ''}</h3><span class="rar r${it.r}t">${RAR[it.r]}</span></div>
-      <div class="kind">${SLOTS.find(s => s.id === it.slot).name}${eqd ? ' · équipé' : ''}</div>
-      <div class="line"><div class="big">${it.icon}</div><div class="sts">${statLines(it, cmp)}</div></div>
+      <div class="kind">${SLOTS.find(s => s.id === it.slot).name}${it.cls ? ' · ' + CLASSES[it.cls].cls : ''}${eqd ? ' · équipé' : ''}</div>
+      <div class="line"><div class="big">${itemIcon(it)}</div><div class="sts">${statLines(it, cmp)}</div></div>
       <div style="font-size:13px">${DESC[it.slot]}${cmp ? ` Comparé à ${cur.name}.` : ''}</div>
       ${withActs ? `<div class="acts">
         ${eqd ? `<button class="btn small" type="button" data-up="${it.id}" ${G.gold < upCost(it) ? 'disabled' : ''}>Forger 🪙 ${upCost(it)}</button>
                  <button class="btn small green" type="button" data-unequip="${it.id}">Retirer</button>`
+              : (it.cls && it.cls !== (G.cls || 'guerrier')) ? `<div class="cls-lock" style="align-self:center">Réservé : ${CLASSES[it.cls].cls}</div>`
               : `<button class="btn small green" type="button" data-equip="${it.id}">Équiper</button>
                  <button class="btn small" type="button" data-sell="${it.id}">Vendre 🪙 ${sellPrice(it)}</button>`}
       </div>` : ''}
@@ -717,7 +775,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const g = c.createRadialGradient(w / 2, h * 0.9, 4, w / 2, h * 0.9, w * 0.55); g.addColorStop(0, 'rgba(255,215,106,.6)'); g.addColorStop(1, 'rgba(255,215,106,0)');
     c.fillStyle = g; c.fillRect(0, 0, w, h);
     c.fillStyle = 'rgba(90,58,34,.35)'; c.beginPath(); c.ellipse(w / 2, h * 0.95, 40, 8, 0, 0, Math.PI * 2); c.fill();
-    sprite(c, 'hero', w / 2, h * 0.96 + bob * 0.3, h * 0.9 + bob, 0);
+    sprite(c, CL().sprite, w / 2, h * 0.96 + bob * 0.3, h * 0.9 + bob, 0, CL().emoji, true);
     if (!reduce) for (let i = 0; i < 5; i++) { const a = t / 1400 + i * 1.26, x = w / 2 + Math.cos(a) * w * 0.4, y = h * 0.45 + Math.sin(a * 1.3) * h * 0.3, f = (Math.sin(t / 300 + i) + 1) / 2;
       c.fillStyle = `rgba(255,236,150,${f})`; c.save(); c.translate(x, y); c.rotate(Math.PI / 4); c.fillRect(-3 * f, -0.7, 6 * f, 1.4); c.fillRect(-0.7, -3 * f, 1.4, 6 * f); c.restore(); }
   }
@@ -725,12 +783,19 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // ---------- Combat ----------
   let F = null, fx = [];
   const scv = $('sceneCv'), sctx = scv.getContext('2d');
+  function buildSkills() {
+    const C = CL(), list = [{ id: 'atk', name: C.atk.name, icon: C.atk.icon, cls: '' }]
+      .concat(C.spells.map(k => ({ id: k, name: SPELLS[k].name, icon: icoHtml(SPELLS[k].img, SPELLS[k].icon), cls: SPELLS[k].cls, cost: SPELLS[k].cost })))
+      .concat([{ id: 'def', name: 'Parade', icon: '🛡️', cls: 'def' }, { id: 'pot', name: 'Potion', icon: '🧪', cls: 'pot', pot: true }]);
+    const el = $('skills'); el.style.setProperty('--n', list.length); el.classList.toggle('many', list.length > 4);
+    el.innerHTML = list.map(b => `<button class="skill ${b.cls}" type="button" data-skill="${b.id}"><i>${b.icon}</i>${b.name}${b.cost ? `<span class="cnt">${b.cost} 💧</span>` : ''}${b.pot ? '<span class="cnt" id="potCnt"></span>' : ''}</button>`).join('');
+  }
   function startLevel(w, i) {
     tickEnergy();
     const lv = WORLDS[w].levels[i]; if (!isOpen(w, i) || G.energy < lv[1]) return;
     spendEnergy(lv[1]); G.hp = stats().hp; save();
-    F = { w, i, tier: w + 1, rooms: lv[0], room: 0, mp: stats().mp, turn: 0, busy: false, defending: false, status: {}, stolen: 0, loot: { xp: 0, gold: 0, items: [], pots: 0 } };
-    $('fight').hidden = false; document.body.style.overflow = 'hidden'; render();
+    F = { w, i, tier: w + 1, rooms: lv[0], room: 0, mp: stats().mp, turn: 0, busy: false, defending: false, status: {}, buff: null, stolen: 0, loot: { xp: 0, gold: 0, items: [], pots: 0 } };
+    $('fight').hidden = false; document.body.style.overflow = 'hidden'; buildSkills(); render();
     nextFoe();
   }
   function nextFoe() {
@@ -738,7 +803,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const L = (1.15 + F.w * 0.2 + F.i * 0.15) * (1 + Math.max(0, G.lvl - recLvl(F.w, F.i) - 1) * 0.06);
     F.foe = { ...f, id: k, hpMax: Math.round(f.hp * L), hp: Math.round(f.hp * L), atk: f.atk * (0.5 + L * 0.5), charging: false, howl: false, anim: { lunge: 0, hit: 0, dead: 0 } };
     F.hero = { lunge: 0, hit: 0, shield: 0, heal: 0 };
-    F.turn = 0; F.defending = false; F.busy = false;
+    F.turn = 0; F.defending = false; F.busy = false; F.foeSt = {};
     $('foeName').textContent = f.name;
     $('roomTxt').textContent = `${F.w + 1}-${F.i + 1} · ${F.room + 1}/${F.rooms.length}`;
     say(f.boss ? `${f.name} se dresse devant toi !` : `${f.name} surgit ! ${f.tip || ''}`);
@@ -748,48 +813,88 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function updFight() {
     const s = stats();
     bar('foeHp', 'foeHpTxt', F.foe.hp, F.foe.hpMax); bar('meHp', 'meHpTxt', G.hp, s.hp); bar('meMp', 'meMpTxt', F.mp, s.mp);
-    $('potCnt').textContent = G.potions;
+    if ($('potCnt')) $('potCnt').textContent = G.potions;
     const st = [];
+    if (F.buff) st.push(`📣 Force +40 % (${F.buff.turns})`);
+    if (F.foeSt && F.foeSt.poison) st.push(`☠️ Ennemi empoisonné ${F.foeSt.poison.turns}`);
+    if (F.foeSt && F.foeSt.frozen) st.push('❄️ Ennemi gelé');
     if (F.status.poison) st.push(`☠️ Poison ${F.status.poison.turns}`);
     if (F.status.burn) st.push(`🔥 Brûlure ${F.status.burn.turns}`);
     if (F.foe.howl) st.push('🐺 Prêt à mordre');
     $('status').innerHTML = st.map(x => `<span>${x}</span>`).join('');
-    $('sFire').disabled = F.busy || F.mp < 8; $('sAtk').disabled = F.busy; $('sDef').disabled = F.busy;
-    $('sPot').disabled = F.busy || G.potions < 1 || (G.hp >= s.hp && !F.status.poison && !F.status.burn);
+    document.querySelectorAll('#skills .skill').forEach(b => { const id = b.dataset.skill, sp = SPELLS[id];
+      b.disabled = F.busy || (sp && F.mp < sp.cost) || (id === 'pot' && (G.potions < 1 || (G.hp >= s.hp && !F.status.poison && !F.status.burn)))
+        || (id === 'heal' && G.hp >= s.hp && !F.status.poison && !F.status.burn); });
   }
+  function burst(x, y, cols, n) { for (let i = 0; i < n; i++) fx.push({ type: 'spark', x, y, vx: rnd(-3, 3), vy: rnd(-4, 1), t0: performance.now(), col: cols[i % cols.length] }); }
   function floatTxt(text, x, y, color, big) { fx.push({ type: 'txt', text, x, y, color, big, t0: performance.now() }); }
   function dmgCalc(atk, def, mult = 1) { let d = atk * rnd(0.85, 1.15) * mult - def * 0.6; const crit = Math.random() < 0.12; if (crit) d *= 1.6; return { d: Math.max(1, Math.round(d)), crit }; }
   const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 120) : ms));
   function tick(o, key, ms) { o[key] = performance.now(); return wait(ms); }
   const pos = () => { const W = scv.clientWidth, H = scv.clientHeight; return { W, H, hx: W * 0.27, hy: H * 0.9, ex: W * 0.72, ey: H * 0.9 }; };
 
+  function hitFoe(d, crit, big, color) {
+    const { H, ex, ey } = pos(), fh = H * (F.foe.size || .5);
+    F.foe.hp -= d; F.foe.anim.hit = performance.now();
+    floatTxt(`-${d}${crit ? ' !' : ''}`, ex + rnd(-14, 14), ey - fh - rnd(0, 16), color || (crit ? '#ffd76a' : '#fff'), crit || big);
+  }
   async function act(kind) {
     if (!F || F.busy) return;
+    const sp = SPELLS[kind]; if (sp && F.mp < sp.cost) return;
     F.busy = true; updFight();
-    const s = stats(), { H, hx, hy, ex, ey } = pos(), fh = H * (F.foe.size || .5);
+    const s = stats(), C = CL(), { W, H, hx, hy, ex, ey } = pos(), fh = H * (F.foe.size || .5), now = () => performance.now();
+    const atk = s.atk * (F.buff ? 1.4 : 1), fy = ey - fh * 0.5, hyC = hy - H * 0.33;
     F.defending = false;
+    if (sp) F.mp -= sp.cost;
     if (kind === 'atk') {
-      await tick(F.hero, 'lunge', 260);
-      const r = dmgCalc(s.atk, F.foe.def); F.foe.hp -= r.d; F.foe.anim.hit = performance.now();
-      floatTxt(`-${r.d}${r.crit ? ' !' : ''}`, ex, ey - fh, r.crit ? '#ffd76a' : '#fff', r.crit);
-      say(r.crit ? `Coup critique ! ${r.d} dégâts.` : `Tu frappes : ${r.d} dégâts.`);
+      if (C.atk.fx === 'slash') { await tick(F.hero, 'lunge', 260); fx.push({ type: 'slash', x: ex, y: fy, t0: now() }); }
+      else { fx.push({ type: C.atk.fx, t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(320); }
+      const r = dmgCalc(C.atk.fx === 'orb' ? Math.max(atk, s.mag * 0.6) : atk, F.foe.def); hitFoe(r.d, r.crit);
+      say(r.crit ? `Coup critique ! ${r.d} dégâts.` : `${C.atk.name} : ${r.d} dégâts.`);
     } else if (kind === 'fire') {
-      F.mp -= 8; fx.push({ type: 'ball', t0: performance.now(), x0: hx + 30, y0: hy - H * 0.35, x1: ex, y1: ey - fh * 0.5 });
-      await wait(420);
-      const r = dmgCalc(s.mag * 1.7, F.foe.def * 0.3); F.foe.hp -= r.d; F.foe.anim.hit = performance.now();
-      for (let i = 0; i < 18; i++) fx.push({ type: 'spark', x: ex, y: ey - fh * 0.5, vx: rnd(-3, 3), vy: rnd(-4, 1), t0: performance.now(), col: ['#ffd76a', '#ff8a3c', '#ff4a2a'][i % 3] });
-      floatTxt(`-${r.d}`, ex, ey - fh, '#ffb347', true); say(`Boule de feu ! ${r.d} dégâts.`);
+      fx.push({ type: 'ball', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(420);
+      const r = dmgCalc(s.mag * 1.7, F.foe.def * 0.3); hitFoe(r.d, r.crit, true, '#ffb347');
+      burst(ex, fy, ['#ffd76a', '#ff8a3c', '#ff4a2a'], 20); say(`Boule de feu ! ${r.d} dégâts.`);
+    } else if (kind === 'frost') {
+      fx.push({ type: 'ice', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(380);
+      const r = dmgCalc(s.mag * 1.25, F.foe.def * 0.4); hitFoe(r.d, r.crit, true, '#bfe8ff');
+      burst(ex, fy, ['#ffffff', '#bfe8ff', '#7ab8ff'], 22);
+      const frz = !F.foe.boss ? Math.random() < 0.6 : Math.random() < 0.3;
+      if (frz) { F.foeSt.frozen = true; fx.push({ type: 'snow', x: ex, y: fy, t0: now(), dur: 1400 }); }
+      say(`Éclair de givre : ${r.d} dégâts${frz ? ' et l’ennemi est gelé !' : '.'}`);
+    } else if (kind === 'heal') {
+      const heal = Math.round(s.hp * 0.35); G.hp = Math.min(s.hp, G.hp + heal); F.status = {}; F.hero.heal = now();
+      fx.push({ type: 'runes', x: hx, y: hy, t0: now() }); floatTxt(`+${heal} ❤️`, hx, hy - H * 0.66, '#8fe07a', true);
+      say(`Soin arcanique : +${heal} PV, tu es guéri de tes maux.`); await wait(600);
+    } else if (kind === 'whirl') {
+      await tick(F.hero, 'lunge', 200); fx.push({ type: 'whirl', x: ex, y: fy, t0: now() }); await wait(360);
+      const r = dmgCalc(atk * 2.0, F.foe.def); hitFoe(r.d, r.crit, true, '#e8f0f8'); say(`Tourbillon d’acier ! ${r.d} dégâts.`);
+    } else if (kind === 'roar') {
+      F.buff = { turns: 3 }; fx.push({ type: 'rings', x: hx, y: hyC, t0: now() });
+      floatTxt('Force +40 %', hx, hy - H * 0.7, '#ff8a6a', true); say('Cri de guerre ! Ta force augmente pendant 3 tours.'); await wait(500);
+    } else if (kind === 'rain') {
+      let tot = 0;
+      for (let k = 0; k < 3; k++) { fx.push({ type: 'rainArrow', t0: now(), x: ex + (k - 1) * 18, y: fy }); await wait(170);
+        const r = dmgCalc(atk * 0.72, F.foe.def); tot += r.d; hitFoe(r.d, r.crit); }
+      say(`Pluie de flèches : ${tot} dégâts en 3 tirs.`);
+    } else if (kind === 'venom') {
+      fx.push({ type: 'arrow', venom: true, t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(320);
+      const r = dmgCalc(atk * 0.8, F.foe.def); hitFoe(r.d, r.crit, false, '#b6f27a');
+      F.foeSt.poison = { dmg: Math.max(3, Math.round(atk * 0.4)), turns: 3 }; fx.push({ type: 'cloud', x: ex, y: fy, t0: now() });
+      say(`Flèche empoisonnée : ${r.d} dégâts, l’ennemi est empoisonné.`);
     } else if (kind === 'def') {
-      F.defending = true; F.hero.shield = performance.now(); F.mp = Math.min(s.mp, F.mp + 6);
-      floatTxt('+6 💧', hx, hy - H * 0.62, '#7ab8ff'); say('Tu lèves ton bouclier et récupères du mana.'); await wait(380);
+      F.defending = true; F.hero.shield = now(); F.mp = Math.min(s.mp, F.mp + 6);
+      floatTxt('+6 💧', hx, hy - H * 0.62, '#7ab8ff'); say('Tu te mets en garde et récupères du mana.'); await wait(380);
     } else if (kind === 'pot') {
-      G.potions--; const heal = Math.round(s.hp * 0.45); G.hp = Math.min(s.hp, G.hp + heal); F.hero.heal = performance.now(); F.status = {};
+      G.potions--; const heal = Math.round(s.hp * 0.45); G.hp = Math.min(s.hp, G.hp + heal); F.hero.heal = now(); F.status = {};
       floatTxt(`+${heal} ❤️`, hx, hy - H * 0.62, '#8fe07a', true); say(`Tu bois une potion : +${heal} PV et tu es soigné de tes maux.`); await wait(420);
     }
+    if (F.buff && kind !== 'roar' && --F.buff.turns <= 0) F.buff = null;
     updFight();
     if (F.foe.hp <= 0) { await win(); return; }
     await wait(450);
     await foeTurn();
+    if (F.foe.hp <= 0) { await win(); return; }
     if (G.hp <= 0) { await lose(); return; }
     F.mp = Math.min(s.mp, F.mp + 2);
     F.busy = false; updFight();
@@ -805,6 +910,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       updFight(); if (G.hp <= 0) return;
       await wait(250);
     }
+    if (F.foeSt.poison) { const p = F.foeSt.poison; f.hp -= p.dmg; f.anim.hit = performance.now(); floatTxt(`-${p.dmg} ☠️`, ex, ey - H * f.size, '#b6f27a');
+      if (--p.turns <= 0) delete F.foeSt.poison; updFight();
+      if (f.hp <= 0) { F.foeKilledByDot = true; return; } await wait(300); }
+    if (F.foeSt.frozen) { delete F.foeSt.frozen; say(`${f.name} est gelé et ne peut pas agir !`); updFight(); return wait(500); }
     if (f.trait === 'regen' && f.hp < f.hpMax) { const h = Math.round(f.hpMax * 0.06); f.hp = Math.min(f.hpMax, f.hp + h); floatTxt(`+${h}`, ex, ey - H * f.size, '#8fe07a'); }
     if (f.trait === 'slow' && F.turn % 2 === 0) { say(`${f.name} reprend son souffle.`); updFight(); return wait(450); }
     let mult = 1, line = `${f.name} attaque`, extra = null;
@@ -840,11 +949,22 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function rollItem(tier, boss) {
     const t = tier - 1, roll = Math.random(), ch = boss ? [0.15 - t * 0.05, 0.55 - t * 0.1, 0.85 - t * 0.1] : [0.6 - t * 0.12, 0.9 - t * 0.08, 0.985 - t * 0.02];
     const r = roll < ch[0] ? 0 : roll < ch[1] ? 1 : roll < ch[2] ? 2 : 3;
-    const sl = SLOTS[Math.floor(Math.random() * SLOTS.length)].id, [kind, icon] = KINDS[sl][Math.floor(Math.random() * KINDS[sl].length)];
+    const sl = SLOTS[Math.floor(Math.random() * SLOTS.length)].id;
     const v = (2 + tier * 4 + G.lvl * 1.4) * [1, 1.5, 2.2, 3.2][r];
-    const base = { arme: { atk: v }, casque: { def: v * 0.5, hp: v * 1.6 }, armure: { def: v * 0.8, hp: v * 2.2 }, bottes: { def: v * 0.4, hp: v }, amulette: { mag: v, hp: v * 0.8 } }[sl];
+    if (sl === 'arme') return makeWeapon(G.cls || 'guerrier', Math.floor(Math.random() * 3), r, v);
+    const [kind, icon] = KINDS[sl][Math.floor(Math.random() * KINDS[sl].length)];
+    const base = { casque: { def: v * 0.5, hp: v * 1.6 }, armure: { def: v * 0.8, hp: v * 2.2 }, bottes: { def: v * 0.4, hp: v }, amulette: { mag: v, hp: v * 0.8 } }[sl];
     for (const k in base) base[k] = Math.max(1, Math.round(base[k]));
     return { id: G.nextId++, slot: sl, name: `${kind} ${ADJ[r]}`, icon, r, up: 0, base };
+  }
+  // Weapon kinds: 0 balanced, 1 offensive, 2 defensive / magic-heavy.
+  function makeWeapon(cls, k, r, v, starter) {
+    const C = CLASSES[cls], [kind, icon, img] = C.weapons[k];
+    const base = C.wstat === 'mag' ? [{ mag: v, atk: v * 0.3 }, { mag: v * 1.25 }, { mag: v * 0.8, hp: v * 1.2 }][k]
+                                   : [{ atk: v }, { atk: v * 1.25, def: -v * 0.1 }, { atk: v * 0.85, def: v * 0.35 }][k];
+    for (const s in base) base[s] = Math.round(base[s]) || (base[s] > 0 ? 1 : 0);
+    for (const s in base) if (!base[s]) delete base[s];
+    return { id: G.nextId++, slot: 'arme', cls, name: starter ? `${kind} d\u2019apprenti` : `${kind} ${ADJ[r]}`, icon, img, r, up: 0, base };
   }
   function gainXp(xp) {
     G.xp += xp; let up = false;
@@ -974,7 +1094,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const hl = pulse(F.hero.lunge, 260) * 44, hh = pulse(F.hero.hit, 300), bobH = reduce ? 0 : Math.sin(t / 420) * 2;
     c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(hx, hy, W * 0.1, 7, 0, 0, Math.PI * 2); c.fill();
     c.save(); if (hh) c.translate(Math.sin(now / 20) * 5 * hh, 0);
-    sprite(c, 'hero', hx + hl, hy, H * 0.6 + bobH, hh * 0.7);
+    sprite(c, CL().sprite, hx + hl, hy, H * 0.6 + bobH, hh * 0.7, CL().emoji, true);
     c.restore();
     if (F.defending || pulse(F.hero.shield, 600)) { c.strokeStyle = 'rgba(126,200,255,.85)'; c.lineWidth = 4; c.beginPath(); c.arc(hx, hy - H * 0.3, H * 0.34, 0, Math.PI * 2); c.stroke(); c.fillStyle = 'rgba(126,200,255,.12)'; c.fill(); }
     const hl2 = pulse(F.hero.heal, 700); if (hl2) for (let i = 0; i < 6; i++) { c.fillStyle = `rgba(143,224,122,${hl2})`; c.font = `16px ${EMO}`; c.fillText('✚', hx - 30 + i * 12, hy - 40 - ((now - F.hero.heal) / 8 + i * 10) % (H * 0.5)); }
@@ -985,13 +1105,48 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(ex, ey, size * 0.42, 8, 0, 0, Math.PI * 2); c.fill();
     if (f.charging || f.howl) { const g = c.createRadialGradient(ex, ey - size * 0.5 - fly, 4, ex, ey - size * 0.5 - fly, size * 0.7); g.addColorStop(0, `rgba(255,80,60,${0.35 + 0.2 * Math.sin(now / 120)})`); g.addColorStop(1, 'rgba(255,80,60,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.4 - fly, size * 2, size * 1.6); }
     sprite(c, f.id, ex + fl, ey - fly + bobF * 0.3, size + bobF, fh * 0.75, f.emoji);
+    if (F.foeSt && F.foeSt.frozen) { c.fillStyle = 'rgba(160,215,255,.28)'; c.beginPath(); c.ellipse(ex, ey - size * 0.5 - fly, size * 0.48, size * 0.55, 0, 0, 7); c.fill();
+      c.strokeStyle = 'rgba(230,246,255,.8)'; c.lineWidth = 2; c.stroke(); }
+    if (F.foeSt && F.foeSt.poison && !reduce) for (let j = 0; j < 3; j++) { const k = ((t / 900) + j / 3) % 1; c.fillStyle = `rgba(143,224,122,${.7 * (1 - k)})`; c.beginPath(); c.arc(ex - 20 + j * 20, ey - size * 0.3 - k * size * 0.6 - fly, 4, 0, 7); c.fill(); }
+    if (F.buff) { const g = c.createRadialGradient(hx, hy - H * 0.3, 4, hx, hy - H * 0.3, H * 0.4); g.addColorStop(0, 'rgba(255,110,80,.25)'); g.addColorStop(1, 'rgba(255,110,80,0)'); c.fillStyle = g; c.fillRect(hx - H * 0.4, hy - H * 0.7, H * 0.8, H * 0.8); }
     c.restore(); c.globalAlpha = 1;
     // fx
     fx = fx.filter(p => {
-      const k = (now - p.t0) / (p.type === 'txt' ? 1100 : p.type === 'ball' ? 420 : 700);
+      const k = (now - p.t0) / (p.dur || { txt: 1100, ball: 420, arrow: 320, orb: 320, ice: 380, slash: 320, whirl: 700, rings: 800, rainArrow: 200, cloud: 1000, snow: 1400, runes: 1000 }[p.type] || 700);
       if (k >= 1) return false;
       if (p.type === 'txt') { c.font = `700 ${p.big ? 30 : 22}px "Pixelify Sans", system-ui, sans-serif`; c.textAlign = 'center'; c.lineWidth = 4; c.strokeStyle = 'rgba(30,15,5,.8)';
         const y = p.y - k * 40; c.globalAlpha = 1 - Math.max(0, k - 0.6) / 0.4; c.strokeText(p.text, p.x, y); c.fillStyle = p.color; c.fillText(p.text, p.x, y); c.globalAlpha = 1; }
+      else if (p.type === 'slash') { c.strokeStyle = `rgba(255,255,255,${1 - k})`; c.lineWidth = 5; c.lineCap = 'round';
+        c.beginPath(); c.arc(p.x - 10, p.y, 46, -1.2 + k * 0.6, 0.6 + k * 0.6); c.stroke(); c.strokeStyle = `rgba(255,215,106,${(1 - k) * .8})`; c.lineWidth = 2; c.beginPath(); c.arc(p.x - 10, p.y, 40, -1.1 + k * 0.6, 0.5 + k * 0.6); c.stroke(); }
+      else if (p.type === 'arrow' || p.type === 'orb' || p.type === 'ice') {
+        const x = p.x0 + (p.x1 - p.x0) * k, y = p.y0 + (p.y1 - p.y0) * k - Math.sin(k * Math.PI) * (p.type === 'arrow' ? 18 : 6);
+        if (p.type === 'arrow') { c.save(); c.translate(x, y); c.rotate(Math.atan2(p.y1 - p.y0, p.x1 - p.x0) - Math.cos(k * Math.PI) * 0.3);
+          c.strokeStyle = '#7a4a1e'; c.lineWidth = 3; c.beginPath(); c.moveTo(-26, 0); c.lineTo(8, 0); c.stroke();
+          c.fillStyle = p.venom ? '#8fe07a' : '#c8d2da'; c.beginPath(); c.moveTo(14, 0); c.lineTo(4, -5); c.lineTo(4, 5); c.fill();
+          c.fillStyle = '#e0413b'; c.fillRect(-28, -4, 6, 3); c.fillRect(-28, 1, 6, 3);
+          if (p.venom) { c.fillStyle = 'rgba(143,224,122,.5)'; for (let i = 1; i < 5; i++) { c.beginPath(); c.arc(-i * 8, Math.sin(i + k * 9) * 3, 3, 0, 7); c.fill(); } } c.restore(); }
+        else { const col = p.type === 'ice' ? ['#ffffff', '#bfe8ff', 'rgba(122,184,255,0)'] : ['#ffffff', '#9fd0ff', 'rgba(80,120,255,0)'];
+          const g = c.createRadialGradient(x, y, 1, x, y, 16); g.addColorStop(0, col[0]); g.addColorStop(.45, col[1]); g.addColorStop(1, col[2]); c.fillStyle = g; c.beginPath(); c.arc(x, y, 16, 0, 7); c.fill();
+          if (p.type === 'ice') { c.save(); c.translate(x, y); c.rotate(Math.atan2(p.y1 - p.y0, p.x1 - p.x0)); c.fillStyle = '#e8f6ff'; c.beginPath(); c.moveTo(18, 0); c.lineTo(-10, -6); c.lineTo(-4, 0); c.lineTo(-10, 6); c.fill(); c.restore();
+            for (let i = 0; i < 4; i++) { c.fillStyle = `rgba(255,255,255,${1 - k})`; c.fillRect(x - i * 10, y + Math.sin(i * 2 + k * 10) * 6, 3, 3); } } } }
+      else if (p.type === 'whirl') { for (let j = 0; j < 3; j++) { const a = k * 14 + j * 2.1; c.strokeStyle = `rgba(232,240,248,${(1 - k) * (1 - j * .25)})`; c.lineWidth = 5 - j;
+          c.beginPath(); c.ellipse(p.x, p.y, 54 - j * 12, 22 - j * 4, 0, a, a + 2.2); c.stroke(); }
+        for (let j = 0; j < 6; j++) { const a = k * 12 + j; c.fillStyle = `rgba(255,215,106,${1 - k})`; c.fillRect(p.x + Math.cos(a) * 50, p.y + Math.sin(a) * 20, 3, 3); } }
+      else if (p.type === 'rings') { for (let j = 0; j < 3; j++) { const rk = Math.max(0, k - j * .15); if (!rk) continue;
+          c.strokeStyle = `rgba(255,110,80,${(1 - rk) * .9})`; c.lineWidth = 4; c.beginPath(); c.arc(p.x, p.y, 20 + rk * 90, 0, 7); c.stroke(); } }
+      else if (p.type === 'rainArrow') { const y = p.y - 140 + k * 140, x = p.x - 40 + k * 40;
+        c.save(); c.translate(x, y); c.rotate(Math.PI * 0.3); c.strokeStyle = '#ffe08a'; c.lineWidth = 3; c.beginPath(); c.moveTo(-22, 0); c.lineTo(8, 0); c.stroke();
+        c.fillStyle = '#fff1a8'; c.beginPath(); c.moveTo(14, 0); c.lineTo(4, -5); c.lineTo(4, 5); c.fill(); c.restore();
+        c.strokeStyle = `rgba(255,224,138,${.5 * (1 - k)})`; c.lineWidth = 2; c.beginPath(); c.moveTo(x - 50, y - 40); c.lineTo(x, y); c.stroke(); }
+      else if (p.type === 'cloud') { for (let j = 0; j < 7; j++) { const a = j * .9 + k * 2; c.fillStyle = `rgba(143,224,122,${.35 * (1 - k)})`;
+          c.beginPath(); c.arc(p.x + Math.cos(a) * 26 * (0.5 + k), p.y + Math.sin(a) * 14 - k * 20, 14 + k * 10, 0, 7); c.fill(); } }
+      else if (p.type === 'snow') { for (let j = 0; j < 14; j++) { const a = j * 1.7; c.fillStyle = `rgba(230,246,255,${1 - k})`;
+          c.fillRect(p.x + Math.cos(a) * (20 + k * 50), p.y + Math.sin(a) * (14 + k * 30) + k * 20, 3, 3); }
+        c.fillStyle = `rgba(160,210,255,${.3 * (1 - k)})`; c.beginPath(); c.arc(p.x, p.y, 60, 0, 7); c.fill(); }
+      else if (p.type === 'runes') { for (let j = 0; j < 8; j++) { const a = j / 8 * Math.PI * 2 + k * 3, rr = 40 + k * 10;
+          c.fillStyle = `rgba(143,224,122,${1 - k})`; c.font = `700 16px "Pixelify Sans", sans-serif`; c.textAlign = 'center';
+          c.fillText('ᚱᚢᚾᛖᛋᚨᛚᛁ'[j], p.x + Math.cos(a) * rr, p.y - 70 + Math.sin(a) * rr * 0.5 - k * 40); }
+        const g = c.createRadialGradient(p.x, p.y - 60, 4, p.x, p.y - 60, 80); g.addColorStop(0, `rgba(143,224,122,${.4 * (1 - k)})`); g.addColorStop(1, 'rgba(143,224,122,0)'); c.fillStyle = g; c.fillRect(p.x - 90, p.y - 150, 180, 180); }
       else if (p.type === 'ball') { const x = p.x0 + (p.x1 - p.x0) * k, y = p.y0 + (p.y1 - p.y0) * k - Math.sin(k * Math.PI) * 30;
         const g = c.createRadialGradient(x, y, 2, x, y, 22); g.addColorStop(0, '#fff1a8'); g.addColorStop(0.4, '#ff8a3c'); g.addColorStop(1, 'rgba(255,60,30,0)'); c.fillStyle = g; c.beginPath(); c.arc(x, y, 22, 0, 7); c.fill(); }
       else { p.x += p.vx; p.y += p.vy; p.vy += 0.15; c.globalAlpha = 1 - k; c.fillStyle = p.col; c.fillRect(p.x, p.y, 4, 4); c.globalAlpha = 1; }
@@ -1000,11 +1155,13 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
 
   // ---------- Actions ----------
-  function equip(id) { const it = itemById(id); if (!it) return; const before = stats().hp; G.eq[it.slot] = it.id; G.hp = Math.min(stats().hp, G.hp + Math.max(0, stats().hp - before)); save(); render(); toast(`${it.name} équipé`); }
+  function equip(id) { const it = itemById(id); if (!it) return; if (it.cls && it.cls !== (G.cls || 'guerrier')) { toast(`Réservé : ${CLASSES[it.cls].cls}`); return; } const before = stats().hp; G.eq[it.slot] = it.id; G.hp = Math.min(stats().hp, G.hp + Math.max(0, stats().hp - before)); save(); render(); toast(`${it.name} équipé`); }
   document.addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset, inModal = !!b.closest('#modal');
     if (d.close) { closeModal(); return; }
+    if (d.pickhero) { pickHero(!G.cls); return; }
+    if (d.hero) { const first = !G.cls; setHero(d.hero); closeModal(); toast(`${CLASSES[d.hero].name} rejoint l’aventure !`); if (first) levelSheet(0, 0); return; }
     if (d.level) { closeModal(); if (F) endRun(false); const [w, i] = d.level.split('-').map(Number); levelSheet(w, i); return; }
     if (d.start) { closeModal(); const [w, i] = d.start.split('-').map(Number); startLevel(w, i); return; }
     if (d.tab) { closeModal(); show(d.tab); return; }
@@ -1031,11 +1188,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   $('dailyBtn').addEventListener('click', openDaily);
   $('resetBtn').addEventListener('click', () => { $('resetAsk').hidden = false; });
   $('resetNo').addEventListener('click', () => { $('resetAsk').hidden = true; });
-  $('resetYes').addEventListener('click', () => { G = fresh(); G.hp = stats().hp; G.welcomed = true; save(); $('resetAsk').hidden = true; selItem = null; render(); toast('Nouvelle partie'); });
-  $('sAtk').addEventListener('click', () => act('atk'));
-  $('sFire').addEventListener('click', () => act('fire'));
-  $('sDef').addEventListener('click', () => act('def'));
-  $('sPot').addEventListener('click', () => act('pot'));
+  $('resetYes').addEventListener('click', () => { G = fresh(); G.hp = stats().hp; G.welcomed = true; save(); $('resetAsk').hidden = true; selItem = null; render(); pickHero(true); });
+  $('skills').addEventListener('click', e => { const b = e.target.closest('[data-skill]'); if (b && !b.disabled) act(b.dataset.skill); });
   $('fleeBtn').addEventListener('click', () => { if (F && !F.busy) { toast('Tu quittes le niveau'); endRun(true); } });
 
   // ---------- Navigation ----------
@@ -1050,14 +1204,37 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') render(); });
   setInterval(() => { renderEnergy(); if (!$('modal').hidden && $('mBody').innerHTML.includes('data-start') && $('mBody').querySelector('[data-start][disabled]')) { /* refresh waiting sheet */ } }, 1000);
 
+  // ---------- Hero choice ----------
+  function pickHero(first) {
+    const cur = G.cls;
+    const bars = C => { const m = C.mult; return [['Vie', m.hp], ['Force', m.atk], ['Défense', m.def], ['Magie', m.mag]].map(([l, v]) => `<span>${l}</span><i style="width:${Math.round(v / 1.5 * 100)}%"></i>`).join(''); };
+    modal(first ? 'Choisis ton héros' : 'Changer de héros', 'b', `<div class="picks">${Object.entries(CLASSES).map(([k, C]) => `
+      <button class="pick ${cur === k ? 'on' : ''}" type="button" data-hero="${k}">
+        <div class="pf">${(k === 'guerrier' || OPT.has(C.sprite)) ? `<img src="img/${C.sprite}.webp" alt="">` : C.emoji}</div>
+        <div><div class="cl">${C.cls}</div><b>${C.name}</b><div class="sk">${C.desc}</div>
+          <div class="sk">Sorts : ${C.spells.map(s => SPELLS[s].name).join(', ')}</div>
+          <div class="minibars">${bars(C)}</div></div></button>`).join('')}</div>
+      ${first ? '' : '<div class="note">Ton niveau, ton or et ton équipement sont conservés. Les armes ne vont qu’à leur classe.</div><button class="flee" type="button" data-close="1">Annuler</button>'}`);
+  }
+  function setHero(k) {
+    G.cls = k;
+    const w = itemById(G.eq.arme); if (w && w.cls && w.cls !== k) delete G.eq.arme;
+    if (!G.inv.some(i => i.slot === 'arme' && i.cls === k)) { const it = makeWeapon(k, 0, 0, 4, true); G.inv.push(it); }
+    if (!G.eq.arme) { const best = G.inv.filter(i => i.slot === 'arme' && i.cls === k).sort((a, b) => b.r - a.r)[0]; if (best) G.eq.arme = best.id; }
+    G.hp = stats().hp; save(); render();
+  }
+  // Older saves: their weapons become warrior weapons.
+  G.inv.forEach(it => { if (it.slot === 'arme' && !it.cls) it.cls = 'guerrier'; });
+
   // ---------- Start ----------
+  if (!G.cls && G.welcomed) { G.cls = 'guerrier'; save(); } // players from before the hero choice
   render();
   if (!G.welcomed) {
     G.welcomed = true; save();
-    modal('Bienvenue, Aldric', 'b', `<img src="img/hero.webp" alt="" style="height:150px; margin:0 auto; display:block">
-      <div style="font-size:15px">Les monstres envahissent la vallée. Traverse les mondes, bats les boss et deviens le héros de la légende.</div>
+    modal('Bienvenue, aventurier', 'b', `<div style="font-family:var(--emoji); font-size:56px">🏰</div>
+      <div style="font-size:15px">Les monstres envahissent la vallée. Choisis ton héros parmi un guerrier, une archère et un mage, traverse les mondes et bats les boss.</div>
       <div class="note">Chaque niveau coûte de l'énergie ⚡. Elle se recharge toute seule : +1 toutes les 2 minutes, jusqu'à ${EN_MAX}. Reviens chaque jour pour ton coffre gratuit !</div>
-      <button class="btn" type="button" data-level="0-0"><i>⚔️</i> Commencer l'aventure</button>`);
+      <button class="btn" type="button" data-pickhero="1"><i>⚔️</i> Choisir mon héros</button>`);
   }
   function loop(t) { drawHero(t); drawScene(t); requestAnimationFrame(loop); }
   requestAnimationFrame(loop);
