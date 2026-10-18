@@ -289,6 +289,11 @@ button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
 .shoprow + .shoprow { margin-top: 10px; padding-top: 10px; border-top: 2px dashed #d6b07a; }
 .tag { display: inline-block; font-size: 11px; font-weight: 800; color: #fff; background: var(--rib-r); border-radius: 99px; padding: 1px 7px; margin-left: 4px; }
 .herobox canvas { height: 210px; }
+.fight .scene { min-height: 300px; max-height: 520px; }
+.fight .log { min-height: 34px; font-size: 13px; }
+.fight .mebars .gbar { height: 16px; }
+.pill.snd { cursor: pointer; font: inherit; font-family: var(--font-display); font-weight: 700; margin-left: auto; }
+.fight .sndf { position: absolute; right: 8px; bottom: 8px; background: rgba(40,20,10,.7); border: 2px solid #a87a45; color: #fff; border-radius: 99px; width: 36px; height: 36px; font-family: var(--emoji); font-size: 16px; cursor: pointer; }
 .skills { grid-template-columns: repeat(var(--n, 4), 1fr); gap: 6px; }
 .skills.many .skill i { width: 54px; height: 54px; font-size: 26px; border-width: 3px; }
 .skills.many .skill { font-size: 11px; }
@@ -334,7 +339,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     <div class="pill" title="Or"><i>🪙</i><span id="gold">0</span></div>
     <div class="pill" title="Énergie : +1 toutes les 2 minutes"><i>⚡</i><span id="energy">0</span><small id="enTimer"></small></div>
     <div class="pill" title="Potions"><i>🧪</i><span id="potPill">0</span></div>
+    <button class="pill snd" type="button" id="sndBtn" aria-label="Son"><i>🔊</i></button>
   </div>
+  <audio id="bgm" src="audio/theme.m4a" loop preload="auto"></audio>
 
   <!-- HÉROS -->
   <section class="view" id="v-hero" style="display:flex; flex-direction:column; gap:22px">
@@ -426,6 +433,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     <div class="scene">
       <canvas id="sceneCv"></canvas>
       <div class="intent" id="intent" hidden></div>
+      <button class="sndf" type="button" id="sndBtn2" aria-label="Son">🔊</button>
     </div>
     <div class="status" id="status"></div>
     <div class="log" id="log" aria-live="polite"></div>
@@ -450,6 +458,56 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const EMO = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
   const rnd = (a, b) => a + Math.random() * (b - a);
   const mmss = s => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, '0')}`;
+
+  // ---------- Sound: music + synthesized effects ----------
+  let soundOn = true;
+  try { soundOn = localStorage.getItem('dragonbound.sound') !== 'off'; } catch (e) {}
+  let AC = null;
+  function ac() { if (!AC) { const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; AC = new A(); } if (AC.state === 'suspended') AC.resume(); return AC; }
+  function tone(freq, dur, type = 'square', vol = 0.06, slide = 0, delay = 0) {
+    if (!soundOn) return; const a = ac(); if (!a) return; const t = a.currentTime + delay;
+    const o = a.createOscillator(), g = a.createGain(); o.type = type; o.frequency.setValueAtTime(freq, t);
+    if (slide) o.frequency.linearRampToValueAtTime(Math.max(30, freq + slide), t + dur);
+    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    o.connect(g).connect(a.destination); o.start(t); o.stop(t + dur + 0.02);
+  }
+  function noise(dur, vol = 0.2, freq = 1500, delay = 0) {
+    if (!soundOn) return; const a = ac(); if (!a) return; const t = a.currentTime + delay;
+    const len = Math.floor(a.sampleRate * dur), b = a.createBuffer(1, len, a.sampleRate), d = b.getChannelData(0);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len);
+    const src = a.createBufferSource(), f = a.createBiquadFilter(), g = a.createGain(); src.buffer = b; f.type = 'bandpass'; f.frequency.value = freq; g.gain.value = vol;
+    src.connect(f).connect(g).connect(a.destination); src.start(t);
+  }
+  const SFX = {
+    hit: () => { noise(0.09, 0.35, 1600); tone(150, 0.09, 'square', 0.05, -70); },
+    crit: () => { noise(0.12, 0.45, 2200); tone(520, 0.12, 'square', 0.05, 300); },
+    hurt: () => { noise(0.1, 0.3, 700); tone(110, 0.12, 'sawtooth', 0.05, -40); },
+    slash: () => noise(0.12, 0.3, 3200),
+    arrow: () => noise(0.12, 0.22, 4200),
+    fire: () => { noise(0.4, 0.3, 600); tone(90, 0.35, 'sawtooth', 0.04, 80); },
+    ice: () => { tone(1500, 0.25, 'triangle', 0.05, 700); tone(2300, 0.3, 'sine', 0.03, 0, 0.05); },
+    heal: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.22, 'triangle', 0.05, 0, i * 0.07)),
+    buff: () => { tone(160, 0.35, 'sawtooth', 0.06, 200); noise(0.3, 0.2, 400); },
+    whirl: () => { noise(0.45, 0.3, 2500); tone(300, 0.4, 'triangle', 0.04, 500); },
+    poison: () => [300, 260, 220].forEach((f, i) => tone(f, 0.12, 'sine', 0.05, 0, i * 0.06)),
+    guard: () => tone(700, 0.15, 'triangle', 0.05, -200),
+    win: () => [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, 0.25, 'square', 0.04, 0, i * 0.09)),
+    lose: () => [392, 330, 262, 196].forEach((f, i) => tone(f, 0.3, 'triangle', 0.06, 0, i * 0.14)),
+    coin: () => { tone(988, 0.07, 'square', 0.05); tone(1318, 0.14, 'square', 0.05, 0, 0.07); },
+    level: () => [392, 523, 659, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.06, 0, i * 0.08)),
+    click: () => tone(660, 0.04, 'square', 0.03),
+  };
+  const bgm = document.getElementById('bgm');
+  if (bgm) bgm.volume = 0.45;
+  function playMusic() { if (soundOn && bgm && bgm.paused) bgm.play().catch(() => {}); }
+  function setSound(on) {
+    soundOn = on; try { localStorage.setItem('dragonbound.sound', on ? 'on' : 'off'); } catch (e) {}
+    ['sndBtn', 'sndBtn2'].forEach(id => { const b = document.getElementById(id); if (b) b.innerHTML = id === 'sndBtn' ? `<i>${on ? '🔊' : '🔇'}</i>` : (on ? '🔊' : '🔇'); });
+    if (bgm) { if (on) playMusic(); else bgm.pause(); }
+  }
+  // Browsers only allow audio after a tap: start everything on the first one.
+  document.addEventListener('pointerdown', () => { ac(); playMusic(); }, { once: true });
+  document.addEventListener('visibilitychange', () => { if (!bgm) return; if (document.visibilityState === 'hidden') bgm.pause(); else playMusic(); });
 
   // ---------- Sprites ----------
   const IMG = {}, WHITE = {};
@@ -687,7 +745,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     else if (d === 3) { G.energy += 20; rew.push('⚡ +20'); }
     else if (d === 6) { const it = rollItem(Math.max(1, ...Object.keys(G.stars).map(k => +k[0] + 1)), true); it.r = Math.max(1, it.r); G.inv.push(it); rew.push(`${it.icon} ${it.name}`); }
     else { const g = 30 + 15 * G.lvl; G.gold += g; rew.push(`🪙 +${g}`); }
-    save(); render();
+    save(); render(); SFX.win();
     modal('Coffre du jour', 'b', `<div style="font-family:var(--emoji); font-size:52px">🎁</div>
       <div class="rew">${rew.map(r => `<div class="pill">${r}</div>`).join('')}</div>
       <div class="note">Jour ${d + 1} sur 7 · série de ${G.daily.streak} jour${G.daily.streak > 1 ? 's' : ''}.</div>
@@ -831,32 +889,34 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function dmgCalc(atk, def, mult = 1) { let d = atk * rnd(0.85, 1.15) * mult - def * 0.6; const crit = Math.random() < 0.12; if (crit) d *= 1.6; return { d: Math.max(1, Math.round(d)), crit }; }
   const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 120) : ms));
   function tick(o, key, ms) { o[key] = performance.now(); return wait(ms); }
-  const pos = () => { const W = scv.clientWidth, H = scv.clientHeight; return { W, H, hx: W * 0.27, hy: H * 0.9, ex: W * 0.72, ey: H * 0.9 }; };
+  const ZOOM = 0.76; // smaller characters, more of the scene visible
+  const pos = () => { const W = scv.clientWidth, H = scv.clientHeight; return { W, H, hx: W * 0.25, hy: H * 0.86, ex: W * 0.74, ey: H * 0.86 }; };
 
   function hitFoe(d, crit, big, color) {
-    const { H, ex, ey } = pos(), fh = H * (F.foe.size || .5);
-    F.foe.hp -= d; F.foe.anim.hit = performance.now();
+    const { H, ex, ey } = pos(), fh = H * (F.foe.size || .5) * ZOOM;
+    F.foe.hp -= d; F.foe.anim.hit = performance.now(); (crit ? SFX.crit : SFX.hit)();
     floatTxt(`-${d}${crit ? ' !' : ''}`, ex + rnd(-14, 14), ey - fh - rnd(0, 16), color || (crit ? '#ffd76a' : '#fff'), crit || big);
   }
   async function act(kind) {
     if (!F || F.busy) return;
     const sp = SPELLS[kind]; if (sp && F.mp < sp.cost) return;
     F.busy = true; updFight();
-    const s = stats(), C = CL(), { W, H, hx, hy, ex, ey } = pos(), fh = H * (F.foe.size || .5), now = () => performance.now();
-    const atk = s.atk * (F.buff ? 1.4 : 1), fy = ey - fh * 0.5, hyC = hy - H * 0.33;
+    const s = stats(), C = CL(), { W, H, hx, hy, ex, ey } = pos(), fh = H * (F.foe.size || .5) * ZOOM, now = () => performance.now();
+    const atk = s.atk * (F.buff ? 1.4 : 1), fy = ey - fh * 0.5, hyC = hy - H * 0.33 * ZOOM;
     F.defending = false;
     if (sp) F.mp -= sp.cost;
     if (kind === 'atk') {
+      (C.atk.fx === 'slash' ? SFX.slash : C.atk.fx === 'arrow' ? SFX.arrow : SFX.ice)();
       if (C.atk.fx === 'slash') { await tick(F.hero, 'lunge', 260); fx.push({ type: 'slash', x: ex, y: fy, t0: now() }); }
       else { fx.push({ type: C.atk.fx, t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(320); }
       const r = dmgCalc(C.atk.fx === 'orb' ? Math.max(atk, s.mag * 0.6) : atk, F.foe.def); hitFoe(r.d, r.crit);
       say(r.crit ? `Coup critique ! ${r.d} dégâts.` : `${C.atk.name} : ${r.d} dégâts.`);
     } else if (kind === 'fire') {
-      fx.push({ type: 'ball', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(420);
+      SFX.fire(); fx.push({ type: 'ball', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(420);
       const r = dmgCalc(s.mag * 1.7, F.foe.def * 0.3); hitFoe(r.d, r.crit, true, '#ffb347');
       burst(ex, fy, ['#ffd76a', '#ff8a3c', '#ff4a2a'], 20); say(`Boule de feu ! ${r.d} dégâts.`);
     } else if (kind === 'frost') {
-      fx.push({ type: 'ice', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(380);
+      SFX.ice(); fx.push({ type: 'ice', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(380);
       const r = dmgCalc(s.mag * 1.25, F.foe.def * 0.4); hitFoe(r.d, r.crit, true, '#bfe8ff');
       burst(ex, fy, ['#ffffff', '#bfe8ff', '#7ab8ff'], 22);
       const frz = !F.foe.boss ? Math.random() < 0.6 : Math.random() < 0.3;
@@ -864,30 +924,30 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       say(`Éclair de givre : ${r.d} dégâts${frz ? ' et l’ennemi est gelé !' : '.'}`);
     } else if (kind === 'heal') {
       const heal = Math.round(s.hp * 0.35); G.hp = Math.min(s.hp, G.hp + heal); F.status = {}; F.hero.heal = now();
-      fx.push({ type: 'runes', x: hx, y: hy, t0: now() }); floatTxt(`+${heal} ❤️`, hx, hy - H * 0.66, '#8fe07a', true);
+      SFX.heal(); fx.push({ type: 'runes', x: hx, y: hy, t0: now() }); floatTxt(`+${heal} ❤️`, hx, hy - H * 0.52, '#8fe07a', true);
       say(`Soin arcanique : +${heal} PV, tu es guéri de tes maux.`); await wait(600);
     } else if (kind === 'whirl') {
-      await tick(F.hero, 'lunge', 200); fx.push({ type: 'whirl', x: ex, y: fy, t0: now() }); await wait(360);
+      SFX.whirl(); await tick(F.hero, 'lunge', 200); fx.push({ type: 'whirl', x: ex, y: fy, t0: now() }); await wait(360);
       const r = dmgCalc(atk * 2.0, F.foe.def); hitFoe(r.d, r.crit, true, '#e8f0f8'); say(`Tourbillon d’acier ! ${r.d} dégâts.`);
     } else if (kind === 'roar') {
-      F.buff = { turns: 3 }; fx.push({ type: 'rings', x: hx, y: hyC, t0: now() });
-      floatTxt('Force +40 %', hx, hy - H * 0.7, '#ff8a6a', true); say('Cri de guerre ! Ta force augmente pendant 3 tours.'); await wait(500);
+      SFX.buff(); F.buff = { turns: 3 }; fx.push({ type: 'rings', x: hx, y: hyC, t0: now() });
+      floatTxt('Force +40 %', hx, hy - H * 0.56, '#ff8a6a', true); say('Cri de guerre ! Ta force augmente pendant 3 tours.'); await wait(500);
     } else if (kind === 'rain') {
       let tot = 0;
-      for (let k = 0; k < 3; k++) { fx.push({ type: 'rainArrow', t0: now(), x: ex + (k - 1) * 18, y: fy }); await wait(170);
+      for (let k = 0; k < 3; k++) { SFX.arrow(); fx.push({ type: 'rainArrow', t0: now(), x: ex + (k - 1) * 18, y: fy }); await wait(170);
         const r = dmgCalc(atk * 0.72, F.foe.def); tot += r.d; hitFoe(r.d, r.crit); }
       say(`Pluie de flèches : ${tot} dégâts en 3 tirs.`);
     } else if (kind === 'venom') {
-      fx.push({ type: 'arrow', venom: true, t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(320);
+      SFX.arrow(); fx.push({ type: 'arrow', venom: true, t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(320); SFX.poison();
       const r = dmgCalc(atk * 0.8, F.foe.def); hitFoe(r.d, r.crit, false, '#b6f27a');
       F.foeSt.poison = { dmg: Math.max(3, Math.round(atk * 0.4)), turns: 3 }; fx.push({ type: 'cloud', x: ex, y: fy, t0: now() });
       say(`Flèche empoisonnée : ${r.d} dégâts, l’ennemi est empoisonné.`);
     } else if (kind === 'def') {
-      F.defending = true; F.hero.shield = now(); F.mp = Math.min(s.mp, F.mp + 6);
-      floatTxt('+6 💧', hx, hy - H * 0.62, '#7ab8ff'); say('Tu te mets en garde et récupères du mana.'); await wait(380);
+      SFX.guard(); F.defending = true; F.hero.shield = now(); F.mp = Math.min(s.mp, F.mp + 6);
+      floatTxt('+6 💧', hx, hy - H * 0.5, '#7ab8ff'); say('Tu te mets en garde et récupères du mana.'); await wait(380);
     } else if (kind === 'pot') {
-      G.potions--; const heal = Math.round(s.hp * 0.45); G.hp = Math.min(s.hp, G.hp + heal); F.hero.heal = now(); F.status = {};
-      floatTxt(`+${heal} ❤️`, hx, hy - H * 0.62, '#8fe07a', true); say(`Tu bois une potion : +${heal} PV et tu es soigné de tes maux.`); await wait(420);
+      SFX.heal(); G.potions--; const heal = Math.round(s.hp * 0.45); G.hp = Math.min(s.hp, G.hp + heal); F.hero.heal = now(); F.status = {};
+      floatTxt(`+${heal} ❤️`, hx, hy - H * 0.5, '#8fe07a', true); say(`Tu bois une potion : +${heal} PV et tu es soigné de tes maux.`); await wait(420);
     }
     if (F.buff && kind !== 'roar' && --F.buff.turns <= 0) F.buff = null;
     updFight();
@@ -905,16 +965,16 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     F.turn++;
     for (const k of ['poison', 'burn']) {
       const st = F.status[k]; if (!st) continue;
-      G.hp -= st.dmg; floatTxt(`-${st.dmg} ${k === 'poison' ? '☠️' : '🔥'}`, hx, hy - H * 0.7, k === 'poison' ? '#a8e070' : '#ffb347');
+      G.hp -= st.dmg; floatTxt(`-${st.dmg} ${k === 'poison' ? '☠️' : '🔥'}`, hx, hy - H * 0.56, k === 'poison' ? '#a8e070' : '#ffb347');
       if (--st.turns <= 0) delete F.status[k];
       updFight(); if (G.hp <= 0) return;
       await wait(250);
     }
-    if (F.foeSt.poison) { const p = F.foeSt.poison; f.hp -= p.dmg; f.anim.hit = performance.now(); floatTxt(`-${p.dmg} ☠️`, ex, ey - H * f.size, '#b6f27a');
+    if (F.foeSt.poison) { const p = F.foeSt.poison; f.hp -= p.dmg; f.anim.hit = performance.now(); floatTxt(`-${p.dmg} ☠️`, ex, ey - H * f.size * ZOOM, '#b6f27a');
       if (--p.turns <= 0) delete F.foeSt.poison; updFight();
       if (f.hp <= 0) { F.foeKilledByDot = true; return; } await wait(300); }
     if (F.foeSt.frozen) { delete F.foeSt.frozen; say(`${f.name} est gelé et ne peut pas agir !`); updFight(); return wait(500); }
-    if (f.trait === 'regen' && f.hp < f.hpMax) { const h = Math.round(f.hpMax * 0.06); f.hp = Math.min(f.hpMax, f.hp + h); floatTxt(`+${h}`, ex, ey - H * f.size, '#8fe07a'); }
+    if (f.trait === 'regen' && f.hp < f.hpMax) { const h = Math.round(f.hpMax * 0.06); f.hp = Math.min(f.hpMax, f.hp + h); floatTxt(`+${h}`, ex, ey - H * f.size * ZOOM, '#8fe07a'); }
     if (f.trait === 'slow' && F.turn % 2 === 0) { say(`${f.name} reprend son souffle.`); updFight(); return wait(450); }
     let mult = 1, line = `${f.name} attaque`, extra = null;
     if (f.special) {
@@ -931,8 +991,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       await tick(f.anim, 'lunge', hits > 1 ? 220 : 300);
       const r = dmgCalc(f.atk * (hits > 1 ? 0.6 : 1), s.def, mult);
       if (F.defending) r.d = Math.max(1, Math.round(r.d * 0.35));
-      G.hp -= r.d; total += r.d; F.hero.hit = performance.now();
-      floatTxt(`-${r.d}`, hx + i * 20, hy - H * 0.62 - i * 14, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1);
+      G.hp -= r.d; total += r.d; F.hero.hit = performance.now(); (F.defending ? SFX.guard : SFX.hurt)();
+      floatTxt(`-${r.d}`, hx + i * 20, hy - H * 0.5 - i * 14, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1);
       if (f.trait === 'drain') f.hp = Math.min(f.hpMax, f.hp + Math.round(r.d * 0.5));
     }
     let after = '';
@@ -969,12 +1029,12 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function gainXp(xp) {
     G.xp += xp; let up = false;
     while (G.xp >= xpNeed()) { G.xp -= xpNeed(); G.lvl++; up = true; }
-    if (up) { G.hp = stats().hp; if (F) F.mp = stats().mp; }
+    if (up) { G.hp = stats().hp; if (F) F.mp = stats().mp; setTimeout(SFX.level, 500); }
     return up;
   }
 
   async function win() {
-    const f = F.foe; f.anim.dead = performance.now(); say(`${f.name} est vaincu !`);
+    const f = F.foe; f.anim.dead = performance.now(); say(`${f.name} est vaincu !`); SFX.win();
     await wait(700);
     const last = F.room === F.rooms.length - 1;
     const xp = Math.round(f.xp * (1 + F.i * 0.1) * rnd(0.9, 1.15)), gold = Math.round(f.gold * rnd(0.8, 1.3));
@@ -1013,7 +1073,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       </div>`);
   }
   async function lose() {
-    say('Tu t’effondres…'); await wait(700);
+    say('Tu t’effondres…'); SFX.lose(); await wait(700);
     G.hp = stats().hp; save(); render();
     modal('Défaite', 'r', `<div style="font-family:var(--emoji); font-size:46px">💫</div>
       <div class="note">Tu as été ramené au camp. Tu gardes ce que tu as gagné : ${F.loot.xp} XP et ${F.loot.gold} 🪙.</div>
@@ -1092,15 +1152,15 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const { hx, hy, ex, ey } = pos();
     // hero
     const hl = pulse(F.hero.lunge, 260) * 44, hh = pulse(F.hero.hit, 300), bobH = reduce ? 0 : Math.sin(t / 420) * 2;
-    c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(hx, hy, W * 0.1, 7, 0, 0, Math.PI * 2); c.fill();
+    c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(hx, hy, W * 0.08, 6, 0, 0, Math.PI * 2); c.fill();
     c.save(); if (hh) c.translate(Math.sin(now / 20) * 5 * hh, 0);
-    sprite(c, CL().sprite, hx + hl, hy, H * 0.6 + bobH, hh * 0.7, CL().emoji, true);
+    sprite(c, CL().sprite, hx + hl, hy, H * 0.6 * ZOOM + bobH, hh * 0.7, CL().emoji, true);
     c.restore();
-    if (F.defending || pulse(F.hero.shield, 600)) { c.strokeStyle = 'rgba(126,200,255,.85)'; c.lineWidth = 4; c.beginPath(); c.arc(hx, hy - H * 0.3, H * 0.34, 0, Math.PI * 2); c.stroke(); c.fillStyle = 'rgba(126,200,255,.12)'; c.fill(); }
+    if (F.defending || pulse(F.hero.shield, 600)) { c.strokeStyle = 'rgba(126,200,255,.85)'; c.lineWidth = 4; c.beginPath(); c.arc(hx, hy - H * 0.3 * ZOOM, H * 0.34 * ZOOM, 0, Math.PI * 2); c.stroke(); c.fillStyle = 'rgba(126,200,255,.12)'; c.fill(); }
     const hl2 = pulse(F.hero.heal, 700); if (hl2) for (let i = 0; i < 6; i++) { c.fillStyle = `rgba(143,224,122,${hl2})`; c.font = `16px ${EMO}`; c.fillText('✚', hx - 30 + i * 12, hy - 40 - ((now - F.hero.heal) / 8 + i * 10) % (H * 0.5)); }
     // foe
     const f = F.foe, fl = pulse(f.anim.lunge, 300) * -54, fh = pulse(f.anim.hit, 300), dead = f.anim.dead ? Math.min(1, (now - f.anim.dead) / 600) : 0;
-    const size = H * (f.size || .5), fly = f.fly ? H * 0.22 + (reduce ? 0 : Math.sin(t / 260) * 6) : 0, bobF = reduce ? 0 : Math.sin(t / 380) * 2.5;
+    const size = H * (f.size || .5) * ZOOM, fly = f.fly ? H * 0.2 + (reduce ? 0 : Math.sin(t / 260) * 6) : 0, bobF = reduce ? 0 : Math.sin(t / 380) * 2.5;
     c.save(); c.globalAlpha = 1 - dead; c.translate(fh ? Math.sin(now / 18) * 6 : 0, dead * 20);
     c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(ex, ey, size * 0.42, 8, 0, 0, Math.PI * 2); c.fill();
     if (f.charging || f.howl) { const g = c.createRadialGradient(ex, ey - size * 0.5 - fly, 4, ex, ey - size * 0.5 - fly, size * 0.7); g.addColorStop(0, `rgba(255,80,60,${0.35 + 0.2 * Math.sin(now / 120)})`); g.addColorStop(1, 'rgba(255,80,60,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.4 - fly, size * 2, size * 1.6); }
@@ -1108,7 +1168,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (F.foeSt && F.foeSt.frozen) { c.fillStyle = 'rgba(160,215,255,.28)'; c.beginPath(); c.ellipse(ex, ey - size * 0.5 - fly, size * 0.48, size * 0.55, 0, 0, 7); c.fill();
       c.strokeStyle = 'rgba(230,246,255,.8)'; c.lineWidth = 2; c.stroke(); }
     if (F.foeSt && F.foeSt.poison && !reduce) for (let j = 0; j < 3; j++) { const k = ((t / 900) + j / 3) % 1; c.fillStyle = `rgba(143,224,122,${.7 * (1 - k)})`; c.beginPath(); c.arc(ex - 20 + j * 20, ey - size * 0.3 - k * size * 0.6 - fly, 4, 0, 7); c.fill(); }
-    if (F.buff) { const g = c.createRadialGradient(hx, hy - H * 0.3, 4, hx, hy - H * 0.3, H * 0.4); g.addColorStop(0, 'rgba(255,110,80,.25)'); g.addColorStop(1, 'rgba(255,110,80,0)'); c.fillStyle = g; c.fillRect(hx - H * 0.4, hy - H * 0.7, H * 0.8, H * 0.8); }
+    if (F.buff) { const g = c.createRadialGradient(hx, hy - H * 0.3, 4, hx, hy - H * 0.3, H * 0.4); g.addColorStop(0, 'rgba(255,110,80,.25)'); g.addColorStop(1, 'rgba(255,110,80,0)'); c.fillStyle = g; c.fillRect(hx - H * 0.4, hy - H * 0.56, H * 0.8, H * 0.8); }
     c.restore(); c.globalAlpha = 1;
     // fx
     fx = fx.filter(p => {
@@ -1176,7 +1236,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (d.sell) { const it = itemById(+d.sell); G.gold += sellPrice(it); G.inv = G.inv.filter(x => x !== it); selItem = null; save(); render(); toast(`Vendu pour ${sellPrice(it)} 🪙`); return; }
     if (d.up) { const it = itemById(+d.up), cost = upCost(it); if (G.gold < cost) return; G.gold -= cost; it.up++; save(); render(); toast(`${it.name} forgé +${it.up} !`); return; }
   });
-  const buy = (cost, fn, msg) => { if (G.gold < cost) { toast('Pas assez d’or'); return; } G.gold -= cost; fn(); save(); render(); toast(msg); };
+  const buy = (cost, fn, msg) => { if (G.gold < cost) { toast('Pas assez d’or'); return; } G.gold -= cost; fn(); save(); render(); toast(msg); SFX.coin(); };
   $('buyPot').addEventListener('click', () => buy(15, () => G.potions++, 'Potion achetée'));
   $('buyEn').addEventListener('click', () => buy(60, () => { tickEnergy(); G.energy += 20; }, '+20 ⚡'));
   $('buyBox').addEventListener('click', () => {
@@ -1186,6 +1246,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <button class="btn green" type="button" data-mequip="${it.id}"><i>✅</i> Équiper</button><button class="flee" type="button" data-close="1">Garder dans le sac</button>`);
   });
   $('dailyBtn').addEventListener('click', openDaily);
+  $('sndBtn').addEventListener('click', () => setSound(!soundOn));
+  $('sndBtn2').addEventListener('click', () => setSound(!soundOn));
+  setSound(soundOn);
   $('resetBtn').addEventListener('click', () => { $('resetAsk').hidden = false; });
   $('resetNo').addEventListener('click', () => { $('resetAsk').hidden = true; });
   $('resetYes').addEventListener('click', () => { G = fresh(); G.hp = stats().hp; G.welcomed = true; save(); $('resetAsk').hidden = true; selItem = null; render(); pickHero(true); });
