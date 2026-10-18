@@ -8,15 +8,15 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
   ok(api.stCost('atk')===10 && api.stCost('whirl')===15 && api.stCost('rain')===15 && api.stCost('fire')===0, 'action costs');
   // B. endurance edge cases
   let F=fresh('guerrier');
-  F.st=0; const hp0=F.foe.hp; await api.act('atk'); ok(F.st===20, `winded attack keeps 0 then +20 (got ${F.st})`); ok(F.foe.hp<hp0, 'winded attack still hits');
-  F.st=9; await api.act('atk'); ok(F.st===20, `st 9 -> 0 -> 20 (got ${F.st})`);
-  F.st=10; await api.act('atk'); ok(F.st===20, `exact cost 10 -> 0 -> 20 (got ${F.st})`);
-  F.st=95; await api.act('atk'); ok(F.st===100, `cap at max (got ${F.st})`);
+  F.st=0; const hp0=F.foe.hp; await api.act('atk'); ok(F.st===12, `winded attack keeps 0 then +12 (got ${F.st})`); ok(F.foe.hp<hp0, 'winded attack still hits');
+  F.st=9; await api.act('atk'); ok(F.st===12, `st 9 -> 0 -> 12 (got ${F.st})`);
+  F.st=10; await api.act('atk'); ok(F.st===12, `exact cost 10 -> 0 -> 12 (got ${F.st})`);
+  F.st=99; await api.act('atk'); ok(F.st===100, `cap at max (got ${F.st})`);
   F.st=24; const before=G.hp; await api.act('def'); ok(F.st===24 && !F.busy && G.hp===before, 'block refused without enough endurance');
   F.st=14; F.mp=99; await api.act('whirl'); ok(F.st===14, 'whirl refused at 14');
   let minSt=999; F.mp=1e6; for(let i=0;i<30;i++){ await api.act(F.st>=15?'whirl':'atk'); minSt=Math.min(minSt,F.st); } ok(minSt>=0, 'never negative over 30 turns');
   F.st=100; F.busy=true; await api.act('atk'); ok(F.st===100, 'input ignored while busy'); F.busy=false;
-  F.st=60; await api.act('def'); ok(F.st===65, `block: 60-25+30 = 65 (got ${F.st})`);
+  F.st=60; await api.act('def'); ok(F.st===57, `block: 60-25+22 = 57 (got ${F.st})`);
   // C. warrior shield 75%
   const raw=(F)=>{ const s=api.stats(); return Math.max(1, Math.round(F.foe.atk*(0.85+0.3*0.5)-s.def*0.6)); };
   F=fresh('guerrier'); Math.random=()=>0.5; F.defending=true; let h=G.hp; await api.foeTurn(); ok(h-G.hp===Math.max(1,Math.round(raw(F)*0.25)), `warrior 75% (lost ${h-G.hp}, raw ${raw(F)})`); Math.random=R;

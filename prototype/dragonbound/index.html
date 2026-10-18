@@ -303,6 +303,8 @@ button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
 i.coin { display: inline-block; width: 1em; height: 1em; vertical-align: -0.14em; border-radius: 50%; font-style: normal; flex: none;
   background: radial-gradient(circle at 35% 30%, #fff6c2 0 12%, #ffd84a 30%, #f0a91c 62%, #b8700c 100%); box-shadow: inset 0 0 0 0.09em #a8620a, inset 0 0 0 0.17em #ffe680, 0 0.06em 0 rgba(90,45,0,.5); }
 .pill > i > i.coin { width: 20px; height: 20px; }
+.legfx { font-size: 13px; font-weight: 800; color: #ffc23a; background: rgba(255,194,58,.12); border: 1px solid rgba(255,194,58,.5); border-radius: 8px; padding: 4px 8px; text-shadow: 0 1px 0 rgba(0,0,0,.4); }
+.cell .better { position: absolute; left: 3px; top: 1px; font-size: 13px; font-weight: 900; color: #6ee05a; text-shadow: 0 1px 1px #000; }
 .modes { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
 .mode { font: inherit; font-weight: 800; font-size: 13px; border-radius: 10px; padding: 7px 4px; border: 2px solid #d6b07a; background: rgba(255,255,255,.45); color: var(--ink); cursor: pointer; }
 .mode.on { border-color: var(--gold); background: #fff3d4; box-shadow: 0 0 0 2px rgba(242,182,50,.5); }
@@ -1239,7 +1241,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const cells = [];
     [...G.inv].sort((a, b) => b.r - a.r || b.id - a.id).forEach(it => {
       const eq = G.eq[it.slot] === it.id;
-      cells.push(`<button class="slot cell r${it.r} ${selItem === it.id ? 'sel' : ''}" type="button" data-item="${it.id}" aria-label="${it.name}">${itemIcon(it)}${eq ? '<span class="cnt">É</span>' : (it.up ? `<span class="cnt">+${it.up}</span>` : '')}</button>`);
+      cells.push(`<button class="slot cell r${it.r} ${selItem === it.id ? 'sel' : ''}" type="button" data-item="${it.id}" aria-label="${it.name}">${itemIcon(it)}${eq ? '<span class="cnt">É</span>' : (it.up ? `<span class="cnt">+${it.up}</span>` : '')}${!eq && (!it.cls || it.cls === (G.cls || 'guerrier')) && (!itemById(G.eq[it.slot]) || score(it) > score(itemById(G.eq[it.slot]))) ? '<span class="better">▲</span>' : ''}</button>`);
     });
     cells.push(`<button class="slot cell" type="button" data-tab="shop" aria-label="Potions">${icoHtml('uiPotion', '🧪')}<span class="cnt">${G.potions}</span></button>`);
     while (cells.length < 15) cells.push('<div class="slot cell empty" data-ghost=""></div>');
@@ -1257,12 +1259,26 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
   const upCost = it => 15 * (it.up + 1) * (it.r + 1);
   const sellPrice = it => 5 * (it.r + 1) * (it.up + 1);
+  // Legendary items carry a unique power, derived from their slot (and class for weapons).
+  const LEG = {
+    ardent: { n: 'Lame ardente', d: '+25 % de dégâts et 30 % de chances d\u2019enflammer l\u2019ennemi' },
+    givre:  { n: 'Flèches de givre', d: '20 % de chances de geler l\u2019ennemi' },
+    siphon: { n: 'Siphon arcanique', d: 'chaque coup te rend 3 de mana' },
+    vamp:   { n: 'Vampirisme', d: 'tu récupères 8 % des dégâts infligés' },
+    epines: { n: 'Épines', d: 'renvoie 20 % des dégâts reçus' },
+    crit:   { n: 'Clairvoyance', d: '+8 % de chances de coup critique' },
+    celer:  { n: 'Célérité', d: '+5 d\u2019endurance par tour' },
+  };
+  const legOf = it => it && it.r === 3 && it.set == null ? (it.slot === 'arme' ? { guerrier: 'ardent', archer: 'givre', mage: 'siphon' }[it.cls] : { amulette: 'vamp', armure: 'epines', casque: 'crit', bottes: 'celer' }[it.slot]) : null;
+  const hasLeg = k => Object.values(G.eq).some(id => legOf(itemById(id)) === k && (!itemById(id).cls || itemById(id).cls === (G.cls || 'guerrier')));
+  const score = it => { const s = itemStats(it); return (s.atk || 0) * 2 + (s.def || 0) * 2 + (s.hp || 0) * 0.5 + (s.mag || 0) * (CL().wstat === 'mag' ? 2 : 0.8) + (legOf(it) ? 25 : 0); };
   function tipHtml(it, withActs) {
     const eqd = G.eq[it.slot] === it.id, cur = itemById(G.eq[it.slot]), cmp = !eqd && cur ? cur : null;
     return `<div class="tip">
       <div class="top"><h3 class="r${it.r}t">${it.name}${it.up ? ' +' + it.up : ''}</h3><span class="rar r${it.r}t">${RAR[it.r]}</span></div>
       <div class="kind">${SLOTS.find(s => s.id === it.slot).name}${it.cls ? ' · ' + CLASSES[it.cls].cls : ''}${it.set != null ? ' · Panoplie ' + SETS[it.set] : ''}${eqd ? ' · équipé' : ''}</div>
       <div class="line"><div class="big">${itemIcon(it)}</div><div class="sts">${statLines(it, cmp)}</div></div>
+      ${legOf(it) ? `<div class="legfx">✦ ${LEG[legOf(it)].n} : ${LEG[legOf(it)].d}</div>` : ''}
       <div style="font-size:13px">${DESC[it.slot]}${cmp ? ` Comparé à ${cur.name}.` : ''}</div>
       ${withActs ? `<div class="acts">
         ${eqd ? `<button class="btn small" type="button" data-up="${it.id}" ${G.gold < upCost(it) ? 'disabled' : ''}>Forger <i class="coin" aria-label="or"></i> ${upCost(it)}</button>
@@ -1340,6 +1356,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (F.buff) st.push(`📣 Force +40 % (${F.buff.turns})`);
     if (F.foeSt && F.foeSt.poison) st.push(`☠️ Ennemi empoisonné ${F.foeSt.poison.turns}`);
     if (F.foeSt && F.foeSt.frozen) st.push('❄️ Ennemi gelé');
+    if (F.foeSt && F.foeSt.burn) st.push(`🔥 Ennemi en feu ${F.foeSt.burn.turns}`);
     if (F.status.poison) st.push(`☠️ Poison ${F.status.poison.turns}`);
     if (F.status.burn) st.push(`🔥 Brûlure ${F.status.burn.turns}`);
     if (F.foe.howl) st.push('🐺 Prêt à mordre');
@@ -1381,7 +1398,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     for (let i = 0; i < n; i++) { const a = rnd(0, Math.PI * 2), v = rnd(1.5, 4); fx.push({ type: 'shard', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, rot: rnd(0, 6), vr: rnd(-0.3, 0.3), s: rnd(4, 9), t0, dur: rnd(500, 800), col: cols[i % cols.length] }); } }
   function puffs(x, y, cols, n, size = 1) { if (reduce) n = Math.ceil(n / 2); const t0 = performance.now();
     for (let i = 0; i < n; i++) { const a = rnd(0, Math.PI * 2), v = rnd(0.8, 2.2) * size; fx.push({ type: 'pt', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v * 0.8, r: rnd(8, 14) * size, grow: 0.35 * size, drag: 0.9, grav: -0.02, glow: true, t0, dur: rnd(380, 560), col: cols[i % cols.length] }); } }
-  function dmgCalc(atk, def, mult = 1) { let d = atk * rnd(0.85, 1.15) * mult - def * 0.6; const crit = Math.random() < 0.12; if (crit) d *= 1.6; return { d: Math.max(1, Math.round(d)), crit }; }
+  function dmgCalc(atk, def, mult = 1) { let d = atk * rnd(0.85, 1.15) * mult - def * 0.6; const crit = Math.random() < 0.12 + (F && F.actor === 'hero' && hasLeg('crit') ? 0.08 : 0); if (crit) d *= 1.6; return { d: Math.max(1, Math.round(d)), crit }; }
   const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 120) : ms));
   function tick(o, key, ms) { o[key] = performance.now(); return wait(ms); }
   const ZOOM = 0.76; // smaller characters, more of the scene visible
@@ -1461,7 +1478,15 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const { H, ex, ey } = pos(), fh = H * (F.foe.size || .5) * ZOOM;
     if (F.foe.trait === 'evade' && Math.random() < 0.25) { floatTxt('Esquive !', ex, ey - fh, '#c8d2da', true); SFX.guard(); return; }
     { const [dd, lab] = phaseDmg(F.foe, d, F.curKind); d = dd; if (!d) { floatTxt(lab || 'Bloqué !', ex, ey - fh, '#d8c8ff', true); SFX.guard(); return; } if (lab) floatTxt(lab, ex, ey - fh - 28, '#ffe08a'); }
+    if (G.cls === 'archer' && F.foe.boss) d = Math.round(d * 1.2);
+    if (hasLeg('ardent')) d = Math.round(d * 1.25);
     F.foe.hp -= d; F.foe.anim.hit = performance.now();
+    if (F.foe.hp > 0) {
+      if (hasLeg('ardent') && Math.random() < 0.3) { F.foeSt.burn = { dmg: Math.max(3, Math.round(d * 0.25)), turns: 3 }; floatTxt('🔥 Enflammé', ex, ey - fh - 44, '#ffb347'); }
+      if (hasLeg('givre') && !F.foeSt.thawed && !F.foeSt.frozen && Math.random() < 0.2) { F.foeSt.frozen = true; fx.push({ type: 'snow', x: ex, y: ey - fh * 0.5, t0: performance.now(), dur: 1400 }); floatTxt('❄️ Gelé', ex, ey - fh - 44, '#bfe8ff'); }
+    }
+    if (hasLeg('siphon')) F.mp = Math.min(stats().mp, F.mp + 3);
+    if (hasLeg('vamp')) { const h = Math.max(1, Math.round(d * 0.08)); G.hp = Math.min(stats().hp, G.hp + h); }
     { const f = F.foe;
       if (f.hp <= 0 && f.id === 'bossLich' && !f.revived) { f.revived = true; f.hp = Math.round(f.hpMax * 0.3); F.pendingRevive = true; }
       if (PHASES[f.id] && !f.ph && f.hp > 0 && f.hp <= f.hpMax * 0.5) F.pendingPhase = true;
@@ -1474,10 +1499,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const sp = SPELLS[kind]; if (sp && F.mp < sp.cost) return;
     if (F.heroFrozen) {
       F.busy = true; F.heroFrozen = false; say('Tu es prisonnier de la glace et ne peux pas agir !'); SFX.shatter(); updFight(); await wait(700);
-      await foeTurn(); if (G.hp <= 0) { await lose(); return; } F.st = Math.min(ST_MAX, F.st + 20); F.busy = false; updFight(); return;
+      await foeTurn(); if (G.hp <= 0) { await lose(); return; } F.st = Math.min(ST_MAX, F.st + 12); F.busy = false; updFight(); return;
     }
     const sc = stCost(kind); if (kind !== 'atk' && sc > F.st) return;
-    F.curKind = kind;
+    F.curKind = kind; F.actor = 'hero';
     const winded = kind === 'atk' && F.st < sc;
     F.st = Math.max(0, F.st - sc);
     F.busy = true; updFight();
@@ -1552,11 +1577,12 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     await foeTurn();
     if (F.foe.hp <= 0) { await win(); return; }
     if (G.hp <= 0) { await lose(); return; }
-    F.mp = Math.min(s.mp, F.mp + 2); F.st = Math.min(ST_MAX, F.st + (kind === 'def' ? 30 : 20));
+    F.mp = Math.min(s.mp, F.mp + 2); F.st = Math.min(ST_MAX, F.st + (kind === 'def' ? 22 : 12) + (hasLeg('celer') ? 5 : 0));
     F.busy = false; updFight();
   }
 
   async function foeTurn() {
+    if (F) F.actor = 'foe';
     const f = F.foe, s = stats(), { W, H, hx, hy, ex, ey } = pos();
     F.turn++;
     for (const k of ['poison', 'burn']) {
@@ -1566,6 +1592,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       updFight(); if (G.hp <= 0) return;
       await wait(250);
     }
+    if (F.foeSt.burn) { const b = F.foeSt.burn; f.hp -= b.dmg; f.anim.hit = performance.now(); floatTxt(`-${b.dmg} 🔥`, ex, ey - H * f.size * ZOOM - 20, '#ffb347');
+      if (--b.turns <= 0) delete F.foeSt.burn; updFight();
+      if (f.hp <= 0) { F.foeKilledByDot = true; return; } await wait(250); }
     if (F.foeSt.poison) { const p = F.foeSt.poison; f.hp -= p.dmg; f.anim.hit = performance.now(); floatTxt(`-${p.dmg} ☠️`, ex, ey - H * f.size * ZOOM, '#b6f27a');
       if (--p.turns <= 0) delete F.foeSt.poison; updFight();
       if (f.hp <= 0 && f.id === 'bossLich' && !f.revived) { f.revived = true; f.hp = Math.round(f.hpMax * 0.3); F.pendingRevive = true; }
@@ -1597,6 +1626,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         else { const a = Math.min(F.barrier, r.d); F.barrier -= a; r.d -= a; F.hero.block = performance.now(); SFX.zap();
           if (F.barrier <= 0 && a > 0) { SFX.shatter(); shards(hx, hcY, ['#7ab8ff', '#bfe8ff', '#ffffff'], 16); F.hero.broke = performance.now(); } }
       }
+      if (r.d > 0 && hasLeg('epines')) { const t = Math.max(1, Math.round(r.d * 0.2)); f.hp = Math.max(1, f.hp - t); floatTxt(`-${t} 🌵`, ex, ey - H * f.size * ZOOM, '#e8d9b0'); }
       G.hp -= r.d; total += r.d; if (r.d > 0) { F.hero.hit = performance.now(); if (!F.defending) SFX.hurt(); }
       floatTxt(r.d === 0 ? (dodged ? 'Esquive !' : 'Absorbé !') : `-${r.d}`, hx + i * 20, hy - H * 0.5 - i * 14, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1 || r.d === 0);
       if (f.trait === 'drain') f.hp = Math.min(f.hpMax, f.hp + Math.round(r.d * (f.ph && f.id === 'bossVamp' ? 1 : 0.5)));
@@ -2133,7 +2163,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Bêta 1.8';
+  const VERSION = 'Bêta 1.9';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
