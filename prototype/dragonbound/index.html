@@ -378,7 +378,9 @@ button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
 .intro .heroes img { height: 170px; filter: drop-shadow(0 6px 8px rgba(0,0,0,.6)); }
 .intro .logo { position: absolute; left: 50%; top: 22%; width: min(86%, 380px); transform: translate(-50%, 0) scale(.9); z-index: 2; opacity: 0; transition: opacity 1s, transform 1.2s; }
 .intro .logo.on { opacity: 1; transform: translate(-50%, 0) scale(1); }
-.intro .skip { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: 14px; z-index: 3; }
+.intro video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 4; background: #000; }
+.intro .play { position: absolute; left: 50%; bottom: calc(110px + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%); z-index: 5; width: auto; }
+.intro .skip { position: absolute; top: calc(14px + env(safe-area-inset-top, 0px)); right: 14px; z-index: 6; }
 .intro .tapnote { position: absolute; left: 0; right: 0; bottom: calc(46px + env(safe-area-inset-bottom, 0px)); z-index: 2; text-align: center; color: rgba(255,243,212,.65); font-size: 14px; font-weight: 800; animation: blink 1.6s ease-in-out infinite; }
 @keyframes blink { 50% { opacity: .3; } }
 .intro .dots { position: absolute; left: 0; right: 0; bottom: calc(26px + env(safe-area-inset-bottom, 0px)); z-index: 2; display: flex; justify-content: center; gap: 6px; }
@@ -1698,7 +1700,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Bêta 1.0';
+  const VERSION = 'Bêta 1.1';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
@@ -1728,8 +1730,18 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       el.querySelector('.heroes').classList.toggle('on', !!sl.heroes); el.querySelector('.logo').classList.toggle('on', !!sl.logo);
       timer = setTimeout(next, 6500);
     };
-    el.onclick = e => { if (e.target.closest('.skip')) finish(); else next(); };
-    next();
+    const vid = document.createElement('video');
+    vid.src = 'audio/intro.mp4'; vid.poster = 'img/intro-poster.jpg'; vid.playsInline = true; vid.setAttribute('playsinline', ''); vid.preload = 'auto';
+    const playBtn = document.createElement('button'); playBtn.type = 'button'; playBtn.className = 'btn play'; playBtn.innerHTML = '▶ Lancer l\u2019intro';
+    el.append(vid, playBtn);
+    let inVideo = true;
+    const endVideo = () => { if (!inVideo) return; inVideo = false; vid.pause(); vid.remove(); playBtn.remove(); playMusic(); next(); };
+    vid.addEventListener('ended', endVideo); vid.addEventListener('error', endVideo);
+    el.onclick = e => {
+      if (e.target.closest('.skip')) { vid.pause(); playMusic(); return finish(); }
+      if (inVideo) { if (vid.paused) { if (bgm) bgm.pause(); playBtn.remove(); vid.play().catch(endVideo); } else endVideo(); return; }
+      next();
+    };
   }
   $('introBtn').addEventListener('click', () => playIntro());
   if (!G.cls && G.welcomed) { G.cls = 'guerrier'; save(); } // players from before the hero choice
