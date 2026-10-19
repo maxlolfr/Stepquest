@@ -1793,6 +1793,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (F && !reduce) F.shake = { t0, amp: Math.min(6, 5 * power) };
   }
   function trail(x, y, cols, n = 2, spread = 4) { if (reduce || fx.length > 240) return; for (let i = 0; i < n; i++) fx.push({ type: 'pt', x: x + rnd(-spread, spread), y: y + rnd(-spread, spread), vx: rnd(-0.6, 0.2), vy: rnd(-0.6, 0.3), r: rnd(3, 7), grow: -0.06, drag: 0.95, grav: -0.02, glow: true, t0: performance.now(), dur: rnd(260, 420), col: cols[i % cols.length] }); }
+  // 5.3: impact juice on every hit: hit-stop, screen shake, sparks and a shockwave
+  function impact(x, y, lv, col) { if (!F || reduce) return; const t0 = performance.now();
+    F.hstop = t0 + [0, 45, 75, 110][lv]; F.shake = { t0: t0 + 20, amp: [0, 3.5, 6, 9][lv] };
+    for (let i = 0; i < 6 + lv * 4; i++) { const a = rnd(-Math.PI, Math.PI); fx.push({ type: 'streak', x, y, a, v: rnd(5, 9) + lv * 2, len: rnd(10, 20) + lv * 4, col: col || (lv > 2 ? '#ffe58a' : '#fff6d0'), t0, dur: rnd(220, 340) }); }
+    fx.push({ type: 'ring', x, y, t0, dur: 260, col: lv > 2 ? '#ffd76a' : 'rgba(255,255,255,.9)', r: 50 + lv * 18 }); }
   function floatTxt(text, x, y, color, big, crit) { fx.push({ type: 'txt', text, x, y, color, big, crit, t0: performance.now(), dur: crit ? 1300 : 1100 }); }
   // Magic gathering toward the hand before a spell: converging motes + growing glow, the hero leans back.
   function castPrep(col, glow, ms = 280) {
@@ -1920,6 +1925,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (G.cls === 'archer' && F.foe.boss) d = Math.round(d * 1.2);
     if (hasLeg('ardent')) d = Math.round(d * 1.25);
     F.foe.hp -= d; F.foe.anim.hit = performance.now();
+    impact(ex, ey - fh * 0.5, crit ? 3 : big ? 2 : 1);
     if (F.foe.hp > 0) {
       if (hasLeg('ardent') && Math.random() < 0.3) { F.foe.st.burn = { dmg: Math.max(2, Math.round(d * 0.25 * elMult(F.foe.id, 'feu'))), turns: 3 }; floatTxt('🔥 Enflammé', ex, ey - fh - 44, '#ffb347'); }
       if (hasLeg('givre') && !F.foe.st.thawed && !F.foe.st.frozen && Math.random() < 0.2) { F.foe.st.frozen = true; fx.push({ type: 'snow', x: ex, y: ey - fh * 0.5, t0: performance.now(), dur: 1400 }); floatTxt('❄️ Gelé', ex, ey - fh - 44, '#bfe8ff'); }
@@ -2174,7 +2180,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       if (r.d > 0 && F.shadowDodge) { r.d = 0; r.graze = false; F.shadowDodge = false; r.shadow = true; F.shadowed = true; }
       if (r.d > 0 && F.aegis > 0) r.d = Math.max(1, Math.round(r.d * 0.6));
       if (r.d > 0 && hasLeg('epines')) { const t = Math.max(1, Math.round(r.d * 0.2)); f.hp = Math.max(1, f.hp - t); floatTxt(`-${t} 🌵`, ex, ey - H * f.size * ZOOM, '#e8d9b0'); }
-      G.hp -= r.d; total += r.d; if (r.d > 0) { F.hero.hit = performance.now(); if (!F.defending) SFX.hurt(); }
+      G.hp -= r.d; total += r.d; if (r.d > 0) { F.hero.hit = performance.now(); if (!F.defending) SFX.hurt(); { const q = pos(); impact(q.hx, q.hy - q.H * 0.3 * ZOOM, F.defending ? 1 : 2, F.defending ? '#bfe0ff' : '#ff8a6a'); } }
       floatTxt(r.d === 0 ? (r.graze ? 'Raté !' : r.evade ? 'Esquive !' : r.shadow ? 'Dans l\u2019ombre !' : dodged ? 'Esquive !' : 'Absorbé !') : `-${r.d}${r.crit ? ' !' : ''}`, hx + i * 20, hy - H * 0.5 - i * 14, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1 || r.d === 0);
       if (f.trait === 'drain') f.hp = Math.min(f.hpMax, f.hp + Math.round(r.d * (f.boss ? (f.ph && f.id === 'bossVamp' ? 0.6 : 0.3) : 0.5)));
       if ((f.trait === 'chill' || f.vtrait === 'chill') && !F.defending) F.mp = Math.max(0, F.mp - 5);
@@ -2661,7 +2667,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     while (fpose !== 'idle' && !poseKey(f.id, fpose)) fpose = FBF[fpose] || 'idle';
     if (lf > 0.3 && !reduce) { c.save(); c.globalAlpha *= 0.18; poseDraw(c, f.id, fpose, ex + fl * 0.6, ey - fly, size, 0, f.emoji, false, fsx, fsy); c.restore(); }
     if (f.elite && !dead) { const g = c.createRadialGradient(ex, ey - size * 0.45 - fly, 4, ex, ey - size * 0.45 - fly, size * 0.75); g.addColorStop(0, `rgba(255,200,80,${0.28 + 0.12 * Math.sin(now / 200)})`); g.addColorStop(1, 'rgba(255,170,40,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.3 - fly, size * 2, size * 1.6); }
-    poseDraw(c, f.id, fpose, ex + fl, ey - fly + bobF * 0.3, size + bobF, fh * 0.5, f.emoji, false, fsx, fsy, f.tint || null);
+    poseDraw(c, f.id, fpose, ex + fl, ey - fly + bobF * 0.3, size + bobF, f.anim.hit && now - f.anim.hit < 110 ? 0.95 : fh * 0.5, f.emoji, false, fsx, fsy, f.tint || null);
     if (((ph && ph.stun) || f.st.stun) && !reduce) for (let j = 0; j < 3; j++) { const a = t / 300 + j * 2.1; c.font = `18px ${EMO}`; c.textAlign = 'center'; c.fillText('⭐', ex + Math.cos(a) * size * 0.3, ey - size * 0.95 + Math.sin(a) * 6); }
     if (ph && f.id === 'bossBone' && ph.shield > 0) for (let j = 0; j < 9; j++) { const a = t / 900 + j / 9 * Math.PI * 2, x = ex + Math.cos(a) * size * 0.55, y = ey - size * 0.45 + Math.sin(a) * size * 0.18;
       c.save(); c.translate(x, y); c.rotate(a * 2); c.fillStyle = '#f2ead8'; c.strokeStyle = '#6a5a40'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(0, 0, 9, 3, 0, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.arc(-9, 0, 3, 0, 7); c.arc(9, 0, 3, 0, 7); c.fill(); c.restore(); }
@@ -2690,7 +2696,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     fx = fx.filter(p => {
       const k = (now - p.t0) / (p.dur || { txt: 1100, ball: 420, arrow: 320, orb: 320, ice: 380, slash: 320, whirl: 700, rings: 800, rainArrow: 200, cloud: 1000, snow: 1400, runes: 1000 }[p.type] || 700);
       if (k >= 1) return false;
-      if (p.type === 'txt') { const pop = k < 0.12 ? 0.5 + (k / 0.12) * 0.8 : k < 0.25 ? 1.3 - (k - 0.12) / 0.13 * 0.3 : 1, sz = (p.sm ? 15 : p.crit ? 36 : p.big ? 30 : 22) * pop;
+      if (p.type === 'txt') { const pop = k < 0.1 ? 0.3 + (k / 0.1) * 1.25 : k < 0.2 ? 1.55 - (k - 0.1) / 0.1 * 0.7 : k < 0.28 ? 0.85 + (k - 0.2) / 0.08 * 0.15 : 1, sz = (p.sm ? 15 : p.crit ? 36 : p.big ? 30 : 22) * pop;
         const y = p.y - (1 - Math.pow(1 - k, 3)) * 46; let x = p.x + (p.crit && k < 0.3 ? Math.sin(now / 25) * 3 : 0);
         c.save(); c.textAlign = 'center'; c.lineJoin = 'round'; c.globalAlpha = 1 - Math.max(0, k - 0.65) / 0.35;
         if (p.crit) { c.font = `400 ${Math.round(13 * pop)}px "Lilita One", system-ui, sans-serif`; c.lineWidth = 4; c.strokeStyle = 'rgba(90,30,0,.9)'; c.strokeText('CRITIQUE !', x, y - sz * 0.85); c.fillStyle = '#ffe58a'; c.fillText('CRITIQUE !', x, y - sz * 0.85); }
@@ -2698,8 +2704,12 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         c.strokeText(p.text, x, y); c.fillStyle = p.color; c.fillText(p.text, x, y);
         if (p.img && IMG[p.img] && OPT.has(p.img)) { const tw = c.measureText(p.text).width, ds = sz * 1.5; c.drawImage(IMG[p.img], x - tw / 2 - ds - 2, y - ds * 0.78, ds, ds); }
         c.restore(); }
-      else if (p.type === 'slash') { c.strokeStyle = `rgba(255,255,255,${1 - k})`; c.lineWidth = 5; c.lineCap = 'round';
-        c.beginPath(); c.arc(p.x - 10, p.y, 46, -1.2 + k * 0.6, 0.6 + k * 0.6); c.stroke(); c.strokeStyle = `rgba(255,215,106,${(1 - k) * .8})`; c.lineWidth = 2; c.beginPath(); c.arc(p.x - 10, p.y, 40, -1.1 + k * 0.6, 0.5 + k * 0.6); c.stroke(); }
+      else if (p.type === 'slash') { const sw = Math.min(1, k * 3), a0 = -2.1, a1 = a0 + 2.9 * sw, R0 = 64; c.save(); c.globalCompositeOperation = 'lighter'; c.lineCap = 'round';
+        for (let j = 0; j < 6; j++) { c.strokeStyle = j < 4 ? `rgba(255,${200 + j * 12},${110 + j * 30},${(1 - k) * (0.14 + j * 0.1)})` : `rgba(255,255,255,${(1 - k) * 0.9})`; c.lineWidth = j < 4 ? 26 - j * 6 : 3;
+          c.beginPath(); c.arc(p.x - 12, p.y, R0 - j * 3, Math.max(a0, a1 - 1.9), a1); c.stroke(); } c.restore(); }
+      else if (p.type === 'streak') { const e = 1 - Math.pow(1 - k, 2), d = p.v * 9 * e, x = p.x + Math.cos(p.a) * d, y = p.y + Math.sin(p.a) * d, l = p.len * (1 - k);
+        c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = p.col; c.globalAlpha = 1 - k; c.lineWidth = 3 * (1 - k) + 1; c.lineCap = 'round';
+        c.beginPath(); c.moveTo(x, y); c.lineTo(x - Math.cos(p.a) * l, y - Math.sin(p.a) * l); c.stroke(); c.restore(); }
       else if (p.type === 'arrow' || p.type === 'orb' || p.type === 'ice') {
         const x = p.x0 + (p.x1 - p.x0) * k, y = p.y0 + (p.y1 - p.y0) * k - Math.sin(k * Math.PI) * (p.type === 'arrow' ? 18 : 6);
         if (p.type === 'ice') trail(x - 8, y, ['#e8f6ff', '#bfe8ff', '#7ab8ff'], 2, 4); else if (p.type === 'orb') trail(x - 6, y, ['#cfe4ff', '#9fd0ff'], 2, 3); else if (!reduce) fx.push({ type: 'pt', x, y, vx: 0, vy: 0, r: 2, grow: -0.05, drag: 1, grav: 0, t0: now, dur: 180, col: p.venom ? 'rgba(143,224,122,.7)' : 'rgba(255,255,255,.6)' });
@@ -2929,7 +2939,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 5.2';
+  const VERSION = 'Version 5.3';
   setTimeout(() => toast(`🛠️ ${VERSION}`), 900);
   if (document.body.insertAdjacentHTML) document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;left:6px;bottom:calc(2px + env(safe-area-inset-bottom,0px));z-index:5;font:700 10px system-ui;color:rgba(255,255,255,.55);pointer-events:none">${VERSION}</div>`);
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
@@ -3005,7 +3015,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       <div class="note">• Touche un ennemi pour le cibler (flèche dorée).<br>• 💚 Les soigneurs réparent leurs alliés : abats-les en premier.<br>• 🛡️ Les gardes s'interposent devant tes attaques ciblées.<br>• Tourbillon, Pluie de flèches et Danse des lames frappent tout le groupe, la Boule de feu éclabousse.<br>• Nouveaux ennemis : toxiques, de feu, de givre et du Néant.<br>• 10 salles par monde (100 niveaux), un champion en salle 5, et des boss bien plus coriaces accompagnés d'un serviteur.</div>
       <button class="btn" type="button" data-close="1"><i>🔥</i> À l'aventure</button>`);
   }
-  function loop(t) { drawHero(t); drawScene(t); requestAnimationFrame(loop); }
+  function loop(t) { if (F && F.hstop && performance.now() < F.hstop) { requestAnimationFrame(loop); return; } drawHero(t); drawScene(t); requestAnimationFrame(loop); }
   requestAnimationFrame(loop);
 })();
 </script>
