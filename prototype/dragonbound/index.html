@@ -870,7 +870,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // 2.5 hero poses (idle / attack / hit / victory), anchored on the torso so switching poses doesn't jump.
   // 3.1 poses for everyone: POSEM[key] = [height ratio to the idle pose, horizontal anchor 0..1 of the body]. Idle = the base image key,
   // other poses are key_atk (attack), key_hit (hurt), key_spe (special / charging), key_def (guard), key_win (victory).
-  const POSEM = { hero2: [1.0, 0.475], hero2_idle2: [0.992, 0.228], hero2_prep: [1.043, 0.39], hero2_atk: [0.85, 0.362], hero2_hit: [0.879, 0.554], hero2_def: [0.796, 0.5], hero2_spe: [0.812, 0.506], hero2_win: [0.997, 0.455], hero2_ko: [0.721, 0.529] };
+  const POSEM = { hero2: [1.0, 0.503], hero2_prep: [1.117, 0.456], hero2_atk: [0.796, 0.362], hero2_hit: [0.861, 0.524], hero2_def: [0.733, 0.467], hero2_spe: [0.688, 0.48], hero2_win: [0.935, 0.42], hero2_ko: [0.677, 0.425] };
   const POSES = {}; const POSE2 = 1;
   function applySkin() { const C = CLASSES.guerrier, v2 = G.skin === 'v2'; C.sprite = v2 ? 'hero2' : 'hero'; C.face = v2 ? 'hero2-face' : 'hero-face'; }
   // filled per class once pose art matching the hero's look exists, e.g. guerrier: { idle: ['hero', 1, 0.5], atk: ['hero_atk', h, anchorX], ... }
@@ -1072,7 +1072,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     blades: { name: 'Danse des lames', icon: '🗡️', cls: 'sp', cost: 9, img: 'spBlades', tip: '4 lames lancées d\u2019affilée.' },
   };
   const OPT = new Set(); // optional images that loaded (batch 2)
-  ['archer', 'mage', 'archer-face', 'mage-face', 'paladin', 'rogue', 'paladin-face', 'rogue-face', 'hero2', 'hero2-face', 'hero2_atk', 'hero2_hit', 'hero2_win', 'hero2_idle2', 'hero2_prep', 'hero2_def', 'hero2_spe', 'hero2_ko', 'ic_sword', 'ic_arrow', 'ic_staff', 'ic_mace', 'ic_dagger', 'bl_shield', 'bl_roll', 'bl_barrier', 'bl_dome', 'pRat', 'pVort', 'wLegP', 'wLegR', 'bl_riposte', 'wFlail', 'wDaggers', 'wFangs', 'wShadow', 'spSmite', 'spShield', 'spShadow', 'spBlades', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
+  ['archer', 'mage', 'archer-face', 'mage-face', 'paladin', 'rogue', 'paladin-face', 'rogue-face', 'hero2', 'hero2-face', 'hero2_atk', 'hero2_hit', 'hero2_win', 'hero2_prep', 'hero2_def', 'hero2_spe', 'hero2_ko', 'ic_sword', 'ic_arrow', 'ic_staff', 'ic_mace', 'ic_dagger', 'bl_shield', 'bl_roll', 'bl_barrier', 'bl_dome', 'pRat', 'pVort', 'wLegP', 'wLegR', 'bl_riposte', 'wFlail', 'wDaggers', 'wFangs', 'wShadow', 'spSmite', 'spShield', 'spShadow', 'spBlades', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
    'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome',
    ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap(n => ['casque', 'armure', 'bottes', 'amulette'].map(sl => `a${n}${sl}`)),
    ...['bone', 'sap', 'ember', 'ooze', 'frost', 'shard', 'soul', 'blood', 'sludge', 'dscale', 't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9'].map(m => 'm_' + m),
@@ -2696,7 +2696,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 3.2.1';
+  const VERSION = 'Version 3.3';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
