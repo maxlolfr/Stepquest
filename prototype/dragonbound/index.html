@@ -1038,7 +1038,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     blades: { name: 'Danse des lames', icon: '🗡️', cls: 'sp', cost: 9, img: 'spBlades', tip: '4 lames lancées d\u2019affilée.' },
   };
   const OPT = new Set(); // optional images that loaded (batch 2)
-  ['archer', 'mage', 'archer-face', 'mage-face', 'paladin', 'rogue', 'paladin-face', 'rogue-face', 'hero2', 'hero2-face', 'hero2_atk', 'hero2_hit', 'hero2_win', 'spSmite', 'spShield', 'spShadow', 'spBlades', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
+  ['archer', 'mage', 'archer-face', 'mage-face', 'paladin', 'rogue', 'paladin-face', 'rogue-face', 'hero2', 'hero2-face', 'hero2_atk', 'hero2_hit', 'hero2_win', 'ic_sword', 'ic_arrow', 'ic_staff', 'ic_mace', 'ic_dagger', 'bl_shield', 'bl_roll', 'bl_barrier', 'bl_dome', 'pRat', 'pVort', 'spSmite', 'spShield', 'spShadow', 'spBlades', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
    'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome',
    ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap(n => ['casque', 'armure', 'bottes', 'amulette'].map(sl => `a${n}${sl}`)),
    ...['bone', 'sap', 'ember', 'ooze', 'frost', 'shard', 'soul', 'blood', 'sludge', 'dscale', 't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9'].map(m => 'm_' + m),
@@ -1168,7 +1168,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     bossLich: 'La mort n\u2019est qu\u2019un commencement.', bossVamp: 'Ton sang sera mon festin !', bossRat: 'Mes enfants ont faim… et tu sens bon.', bossVort: 'Mille ans de chaînes. Tu seras mon premier repas.' };
   function bossIntro(k) {
     const f = M[k]; SFX.thump(); setTimeout(SFX.thump, 220); setTimeout(SFX.roar, 300);
-    const img = ready(k) ? `<img class="bimg" src="img/${k}.webp" alt="">` : `<div class="bimg" style="font-size:150px;font-family:var(--emoji);display:grid;place-items:center">${f.emoji}</div>`;
+    const pk = { bossRat: 'pRat', bossVort: 'pVort' }[k], img = pk && OPT.has(pk) ? `<img class="bimg" src="img/${pk}.webp" alt="" style="border-radius:50%">` : ready(k) ? `<img class="bimg" src="img/${k}.webp" alt="">` : `<div class="bimg" style="font-size:150px;font-family:var(--emoji);display:grid;place-items:center">${f.emoji}</div>`;
     return celebrate(`<div class="in bossin"><div class="vs">⚔️ BOSS ⚔️</div>${img}<h2>${f.name}</h2><div class="sub">« ${TAUNT[k] || 'Prépare-toi à souffrir !'} »</div><div class="tap">Touche pour combattre</div></div>`, 'rgba(255,60,40,.22)', 3500);
   }
   function levelUpFx(lvl, s0, s1) {
@@ -1574,9 +1574,9 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const ST_COST = { atk: 10, whirl: 15, rain: 15, smite: 15, blades: 15, shadow: 10 };
   const stCost = id => id === 'def' ? BLOCK[G.cls || 'guerrier'].cost : (ST_COST[id] || 0);
   function buildSkills() {
-    const C = CL(), list = [{ id: 'atk', name: C.atk.name, icon: C.atk.icon, cls: '' }]
+    const C = CL(), ATKI = { guerrier: 'ic_sword', archer: 'ic_arrow', mage: 'ic_staff', paladin: 'ic_mace', rogue: 'ic_dagger' }, BLI = { guerrier: 'bl_shield', archer: 'bl_roll', mage: 'bl_barrier', paladin: 'bl_dome' }, list = [{ id: 'atk', name: C.atk.name, icon: icoHtml(ATKI[G.cls || 'guerrier'], C.atk.icon), cls: '' }]
       .concat(C.spells.map(k => ({ id: k, name: SPELLS[k].name, icon: icoHtml(SPELLS[k].img, SPELLS[k].icon), cls: SPELLS[k].cls, cost: SPELLS[k].cost })))
-      .concat([{ id: 'def', name: BLOCK[G.cls || 'guerrier'].name, icon: BLOCK[G.cls || 'guerrier'].icon, cls: 'def' }, { id: 'pot', name: 'Potion', icon: icoHtml('uiPotion', '❤️'), cls: 'pot', pot: true }]);
+      .concat([{ id: 'def', name: BLOCK[G.cls || 'guerrier'].name, icon: icoHtml(BLI[G.cls || 'guerrier'], BLOCK[G.cls || 'guerrier'].icon), cls: 'def' }, { id: 'pot', name: 'Potion', icon: icoHtml('uiPotion', '❤️'), cls: 'pot', pot: true }]);
     const el = $('skills'); el.style.setProperty('--n', list.length); el.classList.toggle('many', list.length > 4);
     el.innerHTML = list.map(b => `<button class="skill ${b.cls}" type="button" data-skill="${b.id}"><i>${b.icon}</i>${b.name}${b.cost ? `<span class="cnt">${b.cost} 💧</span>` : ''}${stCost(b.id) ? `<span class="scost">${stCost(b.id)} 💪</span>` : ''}${b.pot ? '<span class="cnt" id="potCnt"></span>' : ''}</button>`).join('');
   }
@@ -1702,7 +1702,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   };
   function phaseBanner(title, sub, k) {
     SFX.thump(); setTimeout(SFX.boom, 200); if (F && !reduce) F.shake = { t0: performance.now(), amp: 6 };
-    const img = ready(k) ? `<img class="bimg" src="img/${k}.webp" alt="">` : `<div class="bimg" style="font-size:140px;font-family:var(--emoji);display:grid;place-items:center">${M[k].emoji}</div>`;
+    const pk = { bossRat: 'pRat', bossVort: 'pVort' }[k], img = pk && OPT.has(pk) ? `<img class="bimg" src="img/${pk}.webp" alt="" style="border-radius:50%">` : ready(k) ? `<img class="bimg" src="img/${k}.webp" alt="">` : `<div class="bimg" style="font-size:140px;font-family:var(--emoji);display:grid;place-items:center">${M[k].emoji}</div>`;
     return celebrate(`<div class="in bossin"><div class="vs">⚠️ ${title} ⚠️</div>${img}<h2>${sub}</h2><div class="sub">${(PHASES[k] && PHASES[k].tip) || ''}</div><div class="tap">Touche pour continuer</div></div>`, 'rgba(160,40,255,.22)', 2600);
   }
   async function phaseEvents() {
@@ -2635,7 +2635,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 2.7';
+  const VERSION = 'Version 2.7.1';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
