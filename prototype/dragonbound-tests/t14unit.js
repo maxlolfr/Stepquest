@@ -22,10 +22,10 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
   F=fresh('guerrier'); Math.random=()=>0.5; F.defending=true; let h=G.hp; await api.foeTurn(); ok(h-G.hp===Math.max(1,Math.round(raw(F)*0.25)), `warrior 75% (lost ${h-G.hp}, raw ${raw(F)})`); Math.random=R;
   // D. archer
   F=fresh('archer'); let dodges=0, N=20000; const base=G.hp;
-  for(let i=0;i<N;i++){ G.hp=api.stats().hp; F.defending=true; const b=G.hp; await api.foeTurn(); if(b===G.hp) dodges++; }
-  const p=dodges/N; ok(Math.abs(p-0.5)<0.02, `archer dodge rate ${p.toFixed(3)} over ${N}`); console.log('archer dodge rate', p.toFixed(4), 'n=',N);
-  G.hp=api.stats().hp; Math.random=()=>0.9; F.defending=true; h=G.hp; await api.foeTurn(); const rawA=Math.max(1,Math.round((F.foe.atk*1.12-api.stats().def*0.6)*1.35)); ok(h-G.hp===Math.max(1,Math.round(rawA*0.7)), `archer failed dodge -30% (lost ${h-G.hp}, raw ${rawA})`);
-  G.hp=api.stats().hp; Math.random=()=>0.3; F.defending=true; h=G.hp; await api.foeTurn(); ok(h===G.hp, 'archer successful dodge = 0'); Math.random=R;
+  for(let i=0;i<N;i++){ G.hp=api.stats().hp; F.evading=true; const b=G.hp; await api.foeTurn(); if(b===G.hp) dodges++; }
+  const p=dodges/N; ok(Math.abs(p-0.715)<0.02, `archer evade rate ${p.toFixed(3)} over ${N}`); console.log('archer evade rate', p.toFixed(4), 'n=',N);
+  G.hp=api.stats().hp; Math.random=()=>0.9; F.evading=true; F.defending=true; h=G.hp; await api.foeTurn(); const rawA=Math.max(1,Math.round((F.foe.atk*1.12-api.stats().def*0.6)*1.35)); ok(h-G.hp===Math.max(1,Math.round(rawA*0.5)), `archer guard 50% (lost ${h-G.hp}, raw ${rawA})`); F.defending=false;
+  G.hp=api.stats().hp; Math.random=()=>0.3; F.evading=true; h=G.hp; await api.foeTurn(); ok(h===G.hp, 'archer successful evade = 0'); Math.random=R;
   // E. mage barrier
   F=fresh("mage"); Math.random=()=>0.5; G.hp=api.stats().hp; const rm=raw(F);
   F.defending=true; F.barrier=rm+50; h=G.hp; await api.foeTurn(); ok(h===G.hp && F.barrier===50, `small hit absorbed (barrier left ${F.barrier})`);
@@ -67,5 +67,11 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
     F=wave('guerrier',['rat','skel']); F.foes[1].role='guard'; for(const o of F.foes){o.hp=o.hpMax=1e6;} F.foe=F.foes[0]; Math.random=()=>0.1; await api.act('atk'); Math.random=R0; ok(F.foes[1].hp<1e6 && F.foes[0].hp===1e6, 'guard steps in front of a single-target attack');
     F=wave('guerrier',['rat','rat']); F.foes[0].hp=1; F.foes[1].hp=F.foes[1].hpMax=1e6; F.foe=F.foes[0]; els.modal.hidden=true; await api.act('atk'); ok(F.foes[0].dead && F.foe===F.foes[1] && els.modal.hidden, 'one kill retargets, the wave goes on');
     F=wave('guerrier',['rat']); F.foes[0].hp=1; els.modal.hidden=true; await api.act('atk'); ok(!els.modal.hidden, 'clearing the wave ends the fight'); els.modal.hidden=true; }
+
+  // 4.1 skills
+  { let F=fresh('guerrier'); F.mp=99; F.foe.charging=true; await api.act('bash'); ok(F.foe.st.stun===undefined||F.foe.st.stunCd, 'charge stuns (turn skipped)'); ok(!F.foe.charging, 'charge cancels a charged attack');
+    F=fresh('rogue'); const R1=Math.random; Math.random=()=>0.5; F.mp=99; F.foe.hpMax=10000; F.foe.hp=9000; let b=F.foe.hp; await api.act('assassin'); const dh=b-F.foe.hp; F.foe.hp=2000; b=2000; F.mp=99; F.st=100; await api.act('assassin'); const dl=b-F.foe.hp; Math.random=R1; ok(dl>dh*2.5, `assassinate x3 under 30% (${dh} -> ${dl})`);
+    F=fresh('mage'); F.st=10; F.mp=0; await api.act('wait'); ok(F.st>=40 && F.mp>=8, `wait restores (${F.st}/${F.mp})`);
+    F=fresh('paladin'); F.mp=99; F.rooms[F.room]=['rat','rat','rat']; api.nextFoe(); for(const o of F.foes){o.hp=o.hpMax=1e6;o.trait=null;o.special=null;o.role='';} await api.act('consecrate'); ok(F.foes.every(o=>o.hp<1e6), 'consecration hits the group'); }
   console.log(`unit tests: ${pass} passed, ${fail} failed`);
 })();
