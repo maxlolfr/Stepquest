@@ -184,7 +184,17 @@ body {
 .up-g { color: #8fe07a; } .down-r { color: #ff8a7a; }
 .tip .acts { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 4px; }
 .r0t { color: var(--r0) !important; } .r1t { color: #8fe07a !important; } .r2t { color: #7ec8ff !important; } .r3t { color: #d29bff !important; } .r4t { color: #ffb347 !important; }
-.shoprow.soon { opacity: .8; } .foe-row .aff { display: block; font-size: 12px; font-weight: 800; color: var(--rib-b); } .dice { font-size: 12px; font-weight: 800; color: #ffe58a; margin-top: 2px; } .pity { font-size: 12px; font-weight: 800; color: var(--muted); }
+.shoprow.soon { opacity: .8; } .foe-row .aff { display: block; font-size: 12px; font-weight: 800; color: var(--rib-b); } .winshow { display: grid; justify-items: center; gap: 4px; margin: 2px 0 4px; }
+.winshow .big { width: 132px; height: 132px; border-radius: 24px; display: grid; place-items: center; font-size: 72px; font-family: var(--emoji); position: relative;
+  background: radial-gradient(circle at 50% 40%, #fff6dc, #e8c891 70%); border: 4px solid var(--rc, #e0a51e); box-shadow: 0 0 0 4px rgba(255,255,255,.35), 0 0 34px var(--rc, #ffc23a); animation: winPop .55s cubic-bezier(.2,1.6,.4,1) both, winGlow 1.8s ease-in-out .6s infinite; }
+.winshow .big img { width: 86%; height: 86%; object-fit: contain; }
+.winshow.gold .big { --rc: #ffc23a; } .winshow.gold .big .coin { width: 70px; height: 70px; }
+.winshow .rar { font-family: var(--font-display); font-size: 15px; letter-spacing: 1px; color: var(--rc); text-shadow: 0 1px 0 rgba(0,0,0,.35); }
+.winshow .iname { font-family: var(--font-display); font-size: 20px; text-align: center; }
+@keyframes winPop { from { transform: scale(.2) rotate(-12deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes winGlow { 50% { box-shadow: 0 0 0 4px rgba(255,255,255,.5), 0 0 52px var(--rc, #ffc23a); } }
+.rew.big .pill { font-size: 19px; padding: 6px 14px; } .rew.big .pill i { font-size: 22px; }
+.poti { width: 1.25em; height: 1.25em; object-fit: contain; vertical-align: -0.28em; } .dice { font-size: 12px; font-weight: 800; color: #ffe58a; margin-top: 2px; } .pity { font-size: 12px; font-weight: 800; color: var(--muted); }
 
 /* Walk */
 .bigsteps { font-family: var(--font-display); font-weight: 700; font-size: 44px; line-height: 1; font-variant-numeric: tabular-nums; }
@@ -527,7 +537,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   <div class="money">
     <div class="pill" title="Or"><i><i class="coin" aria-label="or"></i></i><span id="gold">0</span></div>
     <div class="pill" title="Énergie : +1 toutes les 2 minutes"><i>⚡</i><span id="energy">0</span><small id="enTimer"></small></div>
-    <div class="pill" title="Potions"><i>🧪</i><span id="potPill">0</span></div>
+    <div class="pill" title="Potions"><i><img class="poti" src="img/uiPotion.webp" alt="potion"></i><span id="potPill">0</span></div>
     <button class="pill snd" type="button" id="sndBtn" aria-label="Son"><i>🔊</i></button>
   </div>
   <audio id="bgm" src="audio/map1.mp3" preload="auto"></audio>
@@ -715,10 +725,27 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       const A = window.AudioContext || window.webkitAudioContext; if (!A) return null; AC = new A();
       const comp = AC.createDynamicsCompressor(); comp.connect(AC.destination);
       SFXG = AC.createGain(); SFXG.gain.value = VOL.sfx * 2.6; SFXG.connect(comp);
+      try { // 2.7: a small room reverb on every sound effect makes the synth sounds fuller
+        const cv = AC.createConvolver(), n = Math.floor(AC.sampleRate * 1.1), ir = AC.createBuffer(2, n, AC.sampleRate);
+        for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3); }
+        cv.buffer = ir; const wet = AC.createGain(); wet.gain.value = 0.22; SFXG.connect(wet); wet.connect(cv); cv.connect(comp);
+      } catch (e) {}
+      loadSamples();
       MUSG = AC.createGain(); MUSG.gain.value = VOL.music;
       try { const bg = document.getElementById('bgm'); if (bg) { AC.createMediaElementSource(bg).connect(MUSG); MUSG.connect(AC.destination); bg.volume = 1; } } catch (e) {}
     }
     if (AC.state === 'suspended') AC.resume(); return AC;
+  }
+  // Recorded sound effects (cut from the Gemini sound bank); the synth versions stay as fallback.
+  const SAMP = {};
+  function loadSamples() {
+    ['sword', 'clang', 'impact', 'ring'].forEach(k => fetch(`audio/s_${k}.mp3`).then(r => r.ok ? r.arrayBuffer() : Promise.reject()).then(b => new Promise((ok, ko) => {
+      const p = AC.decodeAudioData(b, ok, ko); if (p && p.then) p.then(ok, ko); })).then(buf => { SAMP[k] = buf; }).catch(() => {}));
+  }
+  function play(k, vol = 0.8, rate = 1) {
+    if (!soundOn || !SAMP[k]) return false; const a = ac(); if (!a) return false;
+    const src = a.createBufferSource(), g = a.createGain(); src.buffer = SAMP[k]; src.playbackRate.value = rate * (0.94 + Math.random() * 0.12); g.gain.value = vol;
+    src.connect(g).connect(SFXG || a.destination); src.start(); return true;
   }
   function applyVol() { if (SFXG) SFXG.gain.value = VOL.sfx * 2.6; if (MUSG) MUSG.gain.value = VOL.music; try { localStorage.setItem('dragonbound.vol', JSON.stringify(VOL)); } catch (e) {} }
   function tone(freq, dur, type = 'square', vol = 0.06, slide = 0, delay = 0) {
@@ -736,33 +763,34 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     src.connect(f).connect(g).connect(SFXG || a.destination); src.start(t);
   }
   const SFX = {
-    hit: () => { noise(0.09, 0.35, 1600); tone(150, 0.09, 'square', 0.05, -70); },
-    crit: () => { noise(0.12, 0.45, 2200); tone(520, 0.12, 'square', 0.05, 300); },
+    hit: () => { if (!play('sword', 0.55)) { noise(0.09, 0.35, 1600); tone(150, 0.09, 'square', 0.05, -70); } else noise(0.06, 0.2, 900); },
+    crit: () => { if (!play('impact', 0.9)) noise(0.12, 0.45, 2200); play('sword', 0.5, 0.85); tone(520, 0.12, 'square', 0.04, 300); tone(60, 0.35, 'sine', 0.12, -20); },
     hurt: () => { noise(0.1, 0.3, 700); tone(110, 0.12, 'sawtooth', 0.05, -40); },
     slash: () => noise(0.12, 0.3, 3200),
     arrow: () => noise(0.12, 0.22, 4200),
-    fire: () => { noise(0.4, 0.3, 600); tone(90, 0.35, 'sawtooth', 0.04, 80); },
-    ice: () => { tone(1500, 0.25, 'triangle', 0.05, 700); tone(2300, 0.3, 'sine', 0.03, 0, 0.05); },
+    fire: () => { noise(0.5, 0.32, 500); noise(0.35, 0.18, 2400, 0.05); tone(90, 0.4, 'sawtooth', 0.04, 80); for (let i = 0; i < 5; i++) noise(0.03, 0.18, 3000 + i * 400, 0.08 + i * 0.07); },
+    ice: () => { tone(1500, 0.25, 'triangle', 0.05, 700); tone(2300, 0.3, 'sine', 0.03, 0, 0.05); [3100, 3700, 4400].forEach((f, i) => tone(f, 0.12, 'sine', 0.02, 0, 0.1 + i * 0.05)); noise(0.2, 0.12, 6500, 0.05); },
     heal: () => [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.22, 'triangle', 0.05, 0, i * 0.07)),
     buff: () => { tone(160, 0.35, 'sawtooth', 0.06, 200); noise(0.3, 0.2, 400); },
     whirl: () => { noise(0.45, 0.3, 2500); tone(300, 0.4, 'triangle', 0.04, 500); },
     poison: () => [300, 260, 220].forEach((f, i) => tone(f, 0.12, 'sine', 0.05, 0, i * 0.06)),
-    guard: () => tone(700, 0.15, 'triangle', 0.05, -200),
-    clang: () => { tone(1250, 0.35, 'triangle', 0.06, -80); tone(1870, 0.25, 'sine', 0.04, -60); noise(0.08, 0.3, 5000); },
+    guard: () => { if (!play('ring', 0.6, 1.1)) tone(700, 0.15, 'triangle', 0.05, -200); },
+    clang: () => { if (!play('clang', 0.8)) { tone(1250, 0.35, 'triangle', 0.06, -80); tone(1870, 0.25, 'sine', 0.04, -60); noise(0.08, 0.3, 5000); } },
     whoosh: () => noise(0.28, 0.25, 1800),
-    zap: () => { tone(900, 0.2, 'sawtooth', 0.035, 600); tone(1400, 0.15, 'sine', 0.04, -400, 0.05); },
+    zap: () => { tone(900, 0.2, 'sawtooth', 0.035, 600); tone(1400, 0.15, 'sine', 0.04, -400, 0.05); noise(0.15, 0.25, 5500); noise(0.25, 0.2, 300, 0.05); },
     shatter: () => { noise(0.35, 0.35, 6000); [2200, 1800, 2600].forEach((f, i) => tone(f, 0.12, 'triangle', 0.03, -300, i * 0.04)); },
     charge: () => tone(220, 0.3, 'sine', 0.04, 500),
     launch: () => { noise(0.2, 0.3, 900); tone(160, 0.2, 'sawtooth', 0.04, 260); },
-    boom: () => { noise(0.45, 0.45, 500); tone(70, 0.4, 'sine', 0.12, -30); },
+    boom: () => { play('impact', 0.8, 0.8); noise(0.45, 0.45, 500); tone(70, 0.4, 'sine', 0.12, -30); },
     win: () => [523, 659, 784, 1046, 1318].forEach((f, i) => tone(f, 0.25, 'square', 0.04, 0, i * 0.09)),
     lose: () => [392, 330, 262, 196].forEach((f, i) => tone(f, 0.3, 'triangle', 0.06, 0, i * 0.14)),
-    coin: () => { tone(988, 0.07, 'square', 0.05); tone(1318, 0.14, 'square', 0.05, 0, 0.07); },
+    coin: () => { [988, 1318, 1175, 1568].forEach((f, i) => { tone(f, 0.1, 'triangle', 0.05, 0, i * 0.06); tone(f * 2.01, 0.06, 'sine', 0.02, 0, i * 0.06); }); },
     level: () => [392, 523, 659, 784, 1046].forEach((f, i) => tone(f, 0.18, 'triangle', 0.06, 0, i * 0.08)),
     click: () => tone(660, 0.04, 'square', 0.03),
     star: n => { tone(880 + n * 220, 0.18, 'triangle', 0.07); tone(1760 + n * 440, 0.12, 'sine', 0.03, 0, 0.04); },
     fanfare: () => { [523, 659, 784, 1046].forEach((f, i) => tone(f, 0.2, 'square', 0.045, 0, i * 0.11)); [1046, 1318, 1568].forEach(f => tone(f, 0.7, 'triangle', 0.05, 0, 0.5)); noise(0.5, 0.12, 6000, 0.5); },
     thump: () => { tone(90, 0.12, 'sine', 0.12, -30); noise(0.06, 0.15, 400); },
+    roar: () => { noise(1.1, 0.35, 260); tone(85, 1.0, 'sawtooth', 0.07, -25); tone(128, 0.9, 'sawtooth', 0.04, -40, 0.05); },
     reveal: r => { [784, 988, 1175, 1568, 1976].slice(0, 2 + r).forEach((f, i) => tone(f, 0.25, 'triangle', 0.05, 0, i * 0.07)); noise(0.4, 0.1 + r * 0.04, 7000); },
   };
   const bgm = document.getElementById('bgm');
@@ -1014,7 +1042,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
    'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome',
    ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap(n => ['casque', 'armure', 'bottes', 'amulette'].map(sl => `a${n}${sl}`)),
    ...['bone', 'sap', 'ember', 'ooze', 'frost', 'shard', 'soul', 'blood', 'sludge', 'dscale', 't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9'].map(m => 'm_' + m),
-   ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => 'wm' + n), 'uiChest1', 'uiChest2', 'uiChest3', 'chestR1', 'chestR2', 'chestR3', 'chestR4', 'wLegG', 'wLegA', 'wLegM', 'aLegArm', 'aLegHelm', 'aLegAmu', 'uiQuest', 'uiAch', 'uiScroll', 'uiDice', 'uiDiceCrit', 'uiSell', 'uiPity', 'uiEnSmall', 'uiEnPack', 'uiGem', 'uiGems', 'uiPotion', 'uiEnergy', 'uiGold', 'uiMats', 'logo', 'worldmap', 'intro1', 'intro2', 'intro3', 'intro4', 'intro5', 'intro6'].forEach(k => {
+   ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => 'wm' + n), 'uiChest1', 'uiChest2', 'uiChest3', 'chestR1', 'chestR2', 'chestR3', 'chestR4', 'wLegG', 'wLegA', 'wLegM', 'aLegArm', 'aLegHelm', 'aLegAmu', 'uiQuest', 'uiAch', 'uiScroll', 'uiDice', 'uiDiceCrit', 'uiSell', 'uiPity', 'uiEnSmall', 'uiEnPack', 'uiGem', 'uiGems', 'uiPotion', 'uiEnergy', 'uiGold', 'uiMats', 'logo', 'worldmap2', 'intro1', 'intro2', 'intro3', 'intro4', 'intro5', 'intro6'].forEach(k => {
     const im = new Image(); im.onload = () => { OPT.add(k); IMG[k] = im; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
       const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; document.querySelectorAll(`[data-ico="${k}"]`).forEach(e => { e.innerHTML = `<img src="img/${k}.webp" alt="">`; }); if (typeof render === 'function' && G) render(); };
     im.onerror = () => {}; im.src = `img/${k}.webp`;
@@ -1139,7 +1167,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     bossHag: 'Mon chaudron a besoin d\u2019un nouvel ingrédient…', bossQueen: 'Ton cœur gèlera avant la fin du combat.', bossVoid: 'Le Néant n\u2019a pas de fin.',
     bossLich: 'La mort n\u2019est qu\u2019un commencement.', bossVamp: 'Ton sang sera mon festin !', bossRat: 'Mes enfants ont faim… et tu sens bon.', bossVort: 'Mille ans de chaînes. Tu seras mon premier repas.' };
   function bossIntro(k) {
-    const f = M[k]; SFX.thump(); setTimeout(SFX.thump, 220); setTimeout(() => tone(110, 0.9, 'sawtooth', 0.06, -40), 300);
+    const f = M[k]; SFX.thump(); setTimeout(SFX.thump, 220); setTimeout(SFX.roar, 300);
     const img = ready(k) ? `<img class="bimg" src="img/${k}.webp" alt="">` : `<div class="bimg" style="font-size:150px;font-family:var(--emoji);display:grid;place-items:center">${f.emoji}</div>`;
     return celebrate(`<div class="in bossin"><div class="vs">⚔️ BOSS ⚔️</div>${img}<h2>${f.name}</h2><div class="sub">« ${TAUNT[k] || 'Prépare-toi à souffrir !'} »</div><div class="tap">Touche pour combattre</div></div>`, 'rgba(255,60,40,.22)', 3500);
   }
@@ -1248,7 +1276,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     for (const q of G.dq.list) if (q.id === ev) { const Q = QPOOL.find(x => x.id === ev); const was = q.p >= Q.n; q.p = Math.min(Q.n, q.p + n); if (!was && q.p >= Q.n) toast(`📜 Quête accomplie : ${Q.t(Q.n)} !`); }
   }
   const achVal = id => id === 'lvl' ? G.lvl : id === 'stars' ? Object.keys(G.stars).filter(k => /^\d-\d$/.test(k)).reduce((a, k) => a + G.stars[k], 0) : id === 'legend' ? G.inv.filter(it => legOf(it)).length : (G.cnt[id] || 0);
-  const rwText = (rw, mult = 1) => rw.gold ? `<i class="coin"></i> ${Math.round((40 + 12 * G.lvl) * mult)}` : rw.pot ? `🧪 ${rw.pot}` : rw.en ? `⚡ ${rw.en}` : rw.mats ? `${MATS[topTier() - 1].icon} ${rw.mats}` : '';
+  const rwText = (rw, mult = 1) => rw.gold ? `<i class="coin"></i> ${Math.round((40 + 12 * G.lvl) * mult)}` : rw.pot ? `<img class="poti" src="img/uiPotion.webp" alt="potion"> ${rw.pot}` : rw.en ? `⚡ ${rw.en}` : rw.mats ? `${MATS[topTier() - 1].icon} ${rw.mats}` : '';
   function giveRw(rw) { if (rw.gold) G.gold += Math.round(40 + 12 * G.lvl); if (rw.pot) G.potions += rw.pot; if (rw.en) G.energy += rw.en; if (rw.mats) { const m = MATS[topTier() - 1]; G.mats[m.id] = (G.mats[m.id] || 0) + rw.mats; } }
   function claimable() { qInit(); let n = G.dq.list.filter(q => !q.c && q.p >= QPOOL.find(x => x.id === q.id).n).length + (G.dq.list.every(q => q.c) && !G.dq.bonus ? 1 : 0);
     for (const A of ACH) { const got = G.ach[A.id] || 0; if (got < 3 && achVal(A.id) >= A.tiers[got]) n++; } return n; }
@@ -1340,7 +1368,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const yesterday = dayKey(new Date(Date.now() - 864e5));
     const streak = got ? G.daily.streak : (G.daily.last === yesterday ? G.daily.streak : 0);
     const pos = got ? (streak - 1) % 7 : streak % 7;
-    const icons = ['<i class="coin" aria-label="or"></i>', '🧪', '<i class="coin" aria-label="or"></i>', '⚡', '<i class="coin" aria-label="or"></i>', '🧪', '🎁'];
+    const icons = ['<i class="coin" aria-label="or"></i>', '<img class="poti" src="img/uiPotion.webp" alt="potion">', '<i class="coin" aria-label="or"></i>', '⚡', '<i class="coin" aria-label="or"></i>', '<img class="poti" src="img/uiPotion.webp" alt="potion">', '🎁'];
     $('dailyRow').innerHTML = icons.map((ic, k) => `<div class="${k < pos || (got && k === pos) ? 'got' : ''} ${k === pos ? 'today' : ''}"><i>${ic}</i><span>J${k + 1}</span></div>`).join('');
     $('dailyBtn').disabled = got;
     $('dailyBtn').innerHTML = got ? '<i>✅</i> Déjà ouvert aujourd’hui' : '<i>🎁</i> Ouvrir le coffre';
@@ -1351,7 +1379,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const yesterday = dayKey(new Date(Date.now() - 864e5));
     G.daily.streak = G.daily.last === yesterday ? G.daily.streak + 1 : 1; G.daily.last = today;
     const d = (G.daily.streak - 1) % 7, rew = [];
-    if (d === 1 || d === 5) { G.potions += 2; rew.push('🧪 +2'); }
+    if (d === 1 || d === 5) { G.potions += 2; rew.push('<img class="poti" src="img/uiPotion.webp" alt="potion"> +2'); }
     else if (d === 3) { G.energy += 20; rew.push('⚡ +20'); }
     else if (d === 6) { const it = rollItem(Math.max(1, ...Object.keys(G.stars).map(k => +k[0] + 1)), true); it.r = Math.max(1, it.r); G.inv.push(it); rew.push(`${it.icon} ${it.name}`); }
     else { const g = 30 + 15 * G.lvl; G.gold += g; rew.push(`<i class="coin" aria-label="or"></i> +${g}`); }
@@ -1363,14 +1391,14 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
 
   // Path positions of the 8 kingdoms on the painted world map (percent of width / height).
-  const MAP_POS = [[45, 88], [50, 72], [47, 55], [55, 41], [50, 30], [50, 21], [43, 13], [52, 5], [30, 38], [64, 72]]; // 9 and 10 live on the 'far lands' strip above the main map
+  const MAP_POS = [[50, 89], [48, 77], [51, 65], [44, 56], [40, 45.5], [66, 39], [38, 30], [36, 15.5], [68, 23], [62, 8]]; // 2.7: one map, ten biomes
   function worldMapHtml() {
     const nl = nextLevel(), cur = nl ? nl[0] : WORLDS.length - 1;
     const C = CL(), face = C.face === 'hero-face' || OPT.has(C.face) ? `<img src="img/${C.face}.webp" alt="">` : C.emoji;
     const pin = (W, w) => {
       const [x, y] = MAP_POS[w] || [50, 50], open = isOpen(w, 0), done = G.stars[lkey(w, 4)] > 0;
       const st = [0, 1, 2, 3, 4].reduce((a, i) => a + (G.stars[lkey(w, i)] || 0), 0);
-      const bossK = W.levels[4][0][W.levels[4][0].length - 1], side = w % 2 ? 'l' : 'r';
+      const bossK = W.levels[4][0][W.levels[4][0].length - 1], side = (w === 6 || w === 7) ? 'l' : w === 8 ? 'r' : w % 2 ? 'l' : 'r';
       return `<button class="pin ${open ? '' : 'lock'} ${done ? 'done' : ''} ${w === cur ? 'cur' : ''}" type="button" data-goworld="${w}" style="left:${x}%;top:${y}%" aria-label="${W.name}">
         <span class="med">${open ? icoHtml('wm' + w, W.icon) : '🔒'}</span>
         <span class="lab">${w + 1}. ${W.name.replace(/^(Les |La |Le |L’)/, '')}${open ? ` · ⭐${st}` : ''}</span>
@@ -1378,8 +1406,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         ${w === cur ? `<span class="me" style="${side === 'l' ? 'left:28px' : 'right:28px'}">${face}</span>` : ''}</button>`;
     };
     const far = WORLDS.map((W, w) => w >= 8 ? pin(W, w) : '').join(''), pins = WORLDS.map((W, w) => w < 8 ? pin(W, w) : '').join('');
-    return `<div class="wmap far"><div class="farbg" style="background-image:url(img/${OPT.has('bg8_0') ? 'bg8_0' : 'bg0_1'}.webp)"></div><div class="farbg r" style="background-image:url(img/bg9_0.webp)"></div><div class="fartitle">Terres lointaines</div>${far}</div>
-      <div class="wmap"><img class="wbg" src="img/worldmap.webp" alt="Carte des dix royaumes">${pins}</div>
+    return `<div class="wmap"><img class="wbg" src="img/worldmap2.webp" alt="Carte des dix royaumes">${far}${pins}</div>
       <div class="note" style="text-align:center; color:#f6e7c4; margin:-6px 0 4px">Touche un royaume pour voir ses niveaux</div>`;
   }
   function renderAdventure() {
@@ -1549,7 +1576,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function buildSkills() {
     const C = CL(), list = [{ id: 'atk', name: C.atk.name, icon: C.atk.icon, cls: '' }]
       .concat(C.spells.map(k => ({ id: k, name: SPELLS[k].name, icon: icoHtml(SPELLS[k].img, SPELLS[k].icon), cls: SPELLS[k].cls, cost: SPELLS[k].cost })))
-      .concat([{ id: 'def', name: BLOCK[G.cls || 'guerrier'].name, icon: BLOCK[G.cls || 'guerrier'].icon, cls: 'def' }, { id: 'pot', name: 'Potion', icon: '🧪', cls: 'pot', pot: true }]);
+      .concat([{ id: 'def', name: BLOCK[G.cls || 'guerrier'].name, icon: BLOCK[G.cls || 'guerrier'].icon, cls: 'def' }, { id: 'pot', name: 'Potion', icon: icoHtml('uiPotion', '❤️'), cls: 'pot', pot: true }]);
     const el = $('skills'); el.style.setProperty('--n', list.length); el.classList.toggle('many', list.length > 4);
     el.innerHTML = list.map(b => `<button class="skill ${b.cls}" type="button" data-skill="${b.id}"><i>${b.icon}</i>${b.name}${b.cost ? `<span class="cnt">${b.cost} 💧</span>` : ''}${stCost(b.id) ? `<span class="scost">${stCost(b.id)} 💪</span>` : ''}${b.pot ? '<span class="cnt" id="potCnt"></span>' : ''}</button>`).join('');
   }
@@ -2024,11 +2051,12 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (last && F.i === 4 && !F.mode.id && !G.story['out' + F.w] && STORY[F.w]) { G.story['out' + F.w] = 1; save(); await storyFx(STORY[F.w].out); }
     if (lv) await levelUpFx(G.lvl, s0, stats());
     modal(last ? `Niveau ${F.w + 1}-${F.i + 1} réussi !` : 'Victoire !', last ? 'r' : '', `
-      ${last ? '' : `<div style="font-family:var(--emoji); font-size:46px">✨</div>`}
+      ${item ? `<div class="winshow" style="--rc:${RARX[item.r].c}"><div class="big">${itemIcon(item)}</div><div class="rar">${RARX[item.r].n}</div><div class="iname">${item.name}</div></div>`
+             : `<div class="winshow gold"><div class="big">${icoHtml('uiGold', '<i class="coin" aria-label="or"></i>')}</div></div>`}
+      <div class="rew big"><div class="pill"><i>⭐</i>+${xp} XP</div><div class="pill"><i><i class="coin" aria-label="or"></i></i>+${gold}${back ? ` (+${back} repris)` : ''}</div>${pot ? '<div class="pill"><i><img class="poti" src="img/uiPotion.webp" alt="potion"></i>+1</div>' : ''}<div class="pill"><i>${icoHtml('m_' + mat.id, mat.icon)}</i>+${nm}</div>${tro ? `<div class="pill"><i>${tro.icon}</i>+${modeIdx(F.mode.id) >= 2 ? 2 : 1}</div>` : ''}</div>
       ${extra}
-      <div class="rew"><div class="pill"><i>⭐</i>+${xp} XP</div><div class="pill"><i><i class="coin" aria-label="or"></i></i>+${gold}${back ? ` (+${back} repris)` : ''}</div>${pot ? '<div class="pill"><i>🧪</i>+1</div>' : ''}<div class="pill"><i>${icoHtml('m_' + mat.id, mat.icon)}</i>+${nm}</div>${tro ? `<div class="pill"><i>${tro.icon}</i>+${modeIdx(F.mode.id) >= 2 ? 2 : 1}</div>` : ''}</div>
       ${lv ? `<div class="msg">Niveau ${G.lvl} atteint ! Tes statistiques augmentent.</div>` : ''}
-      ${item ? `<div class="note">Butin trouvé :</div>${tipHtml(item, false)}` : ''}
+      ${item ? tipHtml(item, false) : ''}
       ${last ? '' : `<div class="note">Vie actuelle : ${fmt(G.hp)}/${fmt(stats().hp)}${F.status.poison || F.status.burn ? ' · encore sous l’effet d’un mal' : ''}</div>`}
       <div style="display:grid; gap:8px">
         ${item ? `<button class="btn green" type="button" data-mequip="${item.id}"><i>✅</i> Équiper</button>` : ''}
@@ -2607,7 +2635,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 2.6.1';
+  const VERSION = 'Version 2.7';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
