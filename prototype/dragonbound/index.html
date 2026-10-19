@@ -284,6 +284,8 @@ button:focus-visible { outline: 3px solid #ffd76a; outline-offset: 2px; }
 .wdesc { font-size: 13px; color: var(--muted); font-weight: 700; text-align: center; }
 .path { position: relative; display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; align-items: start; padding-top: 4px; }
 .path { row-gap: 10px; }
+.wmap .route { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 1; }
+.wmap .route polyline { fill: none; stroke: #ffe08a; stroke-width: .9; stroke-dasharray: 2 1.6; stroke-linecap: round; vector-effect: none; filter: drop-shadow(0 0 1px #000); opacity: .9; }
 .path .node:not(:nth-child(5n+1))::before { content: ""; position: absolute; z-index: -1; left: -50%; width: 100%; top: 30px; height: 6px; border-radius: 99px; background: repeating-linear-gradient(90deg, #b58a55 0 10px, transparent 10px 16px); }
 .node { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; background: none; border: 0; padding: 0; font: inherit; cursor: pointer; color: var(--ink); }
 .node .disc { width: 54px; height: 54px; border-radius: 50%; display: grid; place-items: center; font-family: var(--font-display); font-weight: 700; font-size: 20px; color: #fff8e6; text-shadow: 0 2px 0 rgba(0,0,0,.35);
@@ -1057,7 +1059,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     { slot: 'casque', name: 'Heaume', icon: '🪖', mats: 8, gold: 60 }, { slot: 'armure', name: 'Cuirasse', icon: '🥋', mats: 12, gold: 90 },
     { slot: 'bottes', name: 'Bottes', icon: '🥾', mats: 6, gold: 45 }, { slot: 'amulette', name: 'Amulette', icon: '📿', mats: 6, gold: 120, trophy: true },
   ];
-  const DIFF = { base: 1.6, world: 0.22, lvl: 0.08, boss: 0.85, mobAtk: 1.25, hp: 1.3, gold: 0.8 };
+  const DIFF = { base: 1.6, world: 0.22, lvl: 0.08, boss: 0.95, mobAtk: 1.8, hp: 0.75, gold: 0.8 };
   const MODES = [
     { id: '', name: 'Normal', mult: 1, rew: 1, cost: 1, medal: '' },
     { id: 'h', name: 'Héroïque', mult: 1.7, rew: 1.8, cost: 1.5, medal: '🔥' },
@@ -1074,10 +1076,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // Weapons: [name, emoji, image key]. Images arrive with batch 2; emoji until then.
   const CLASSES = {
     guerrier: { name: 'Aldric', cls: 'Guerrier', sprite: 'hero', face: 'hero-face', emoji: '🤺', desc: 'Robuste et puissant au corps à corps.',
-      mult: { hp: 1.2, atk: 1.2, def: 1.3, mag: 0.6, mp: 0.9 }, atk: { name: 'Coup d’épée', icon: '🗡️', fx: 'slash' },
+      mult: { hp: 1.2, atk: 1.35, def: 1.3, mag: 0.6, mp: 1.0 }, atk: { name: 'Coup d’épée', icon: '🗡️', fx: 'slash' }, atkTip: 'Frappe la cible et entaille un ennemi voisin (35 %).',
       spells: ['whirl', 'roar', 'bash'], weapons: [['Épée longue', '🗡️', 'wSword'], ['Hache de guerre', '🪓', 'wAxe'], ['Marteau de bataille', '🔨', 'wHammer']], wstat: 'atk' },
     archer: { name: 'Lyra', cls: 'Archère', sprite: 'archer', face: 'archer-face', emoji: '🧝‍♀️', desc: 'Rapide et précise, frappe de loin.',
-      mult: { hp: 1.0, atk: 1.38, def: 0.9, mag: 0.8, mp: 1.1 }, atk: { name: 'Tir', icon: '🏹', fx: 'arrow' },
+      mult: { hp: 1.0, atk: 1.6, def: 0.9, mag: 0.8, mp: 1.1 }, atk: { name: 'Tir', icon: '🏹', fx: 'arrow' },
       spells: ['rain', 'venom', 'pierce'], weapons: [['Arc court', '🏹', 'wShortbow'], ['Arc long elfique', '🏹', 'wElvenbow'], ['Arbalète', '🎯', 'wCrossbow']], wstat: 'atk' },
     mage: { name: 'Orin', cls: 'Mage', sprite: 'mage', face: 'mage-face', emoji: '🧙', desc: 'Fragile mais maître des sorts.',
       mult: { hp: 0.85, atk: 0.7, def: 0.8, mag: 1.45, mp: 1.5 }, atk: { name: 'Bâton', icon: '🪄', fx: 'orb' },
@@ -1086,7 +1088,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       mult: { hp: 1.1, atk: 1.05, def: 1.15, mag: 0.9, mp: 1.1 }, atk: { name: 'Coup de masse', icon: '🔨', fx: 'slash' },
       spells: ['smite', 'aegis', 'consecrate'], weapons: [['Masse bénie', '🔨', 'wHammer'], ['Fléau sacré', '⚔️', 'wFlail'], ['Marteau du jugement', '🔨', 'wHammer']], wstat: 'atk' },
     rogue: { name: 'Nyx', cls: 'Voleuse', sprite: 'rogue', face: 'rogue-face', emoji: '🥷', desc: 'Insaisissable : esquive 12 % des coups, l\u2019Évasion contre-attaque, critiques et assassinats.',
-      mult: { hp: 1.0, atk: 1.35, def: 0.95, mag: 0.7, mp: 1.0 }, atk: { name: 'Coup de dague', icon: '🗡️', fx: 'slash' },
+      mult: { hp: 1.0, atk: 1.65, def: 0.95, mag: 0.7, mp: 1.0 }, atk: { name: 'Coup de dague', icon: '🗡️', fx: 'slash' },
       spells: ['shadow', 'blades', 'assassin'], weapons: [['Dagues jumelles', '🗡️', 'wDaggers'], ['Lames du croc', '🔪', 'wFangs'], ['Dague de l\u2019ombre', '🗡️', 'wShadow']], wstat: 'atk' },
   };
   // 2.4 elements: every blow has an element; monsters have weaknesses (x1.5) and resistances (x0.5); armour can resist.
@@ -1111,8 +1113,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     fire:  { name: 'Boule de feu', icon: '🔥', cls: 'fire', cost: 8, img: null, tip: 'Gros dégâts magiques.' },
     frost: { name: 'Givre', icon: '❄️', cls: 'frost', cost: 7, img: 'spFrost', tip: 'Dégâts et peut geler l’ennemi un tour (pas deux fois de suite).' },
     heal:  { name: 'Soin', icon: '💚', cls: 'heal', cost: 9, img: 'spHeal', tip: 'Rend 25 % de vie et guérit les maux.' },
-    whirl: { name: 'Tourbillon', icon: '🌀', cls: 'sp', cost: 8, img: 'spWhirl', tip: 'Un coup dévastateur.' },
-    roar:  { name: 'Cri de guerre', icon: '📣', cls: 'roar', cost: 6, img: 'spRoar', tip: '+40 % de force pendant 3 tours.' },
+    whirl: { name: 'Tourbillon', icon: '🌀', cls: 'sp', cost: 6, img: 'spWhirl', tip: 'Un coup dévastateur.' },
+    roar:  { name: 'Cri de guerre', icon: '📣', cls: 'roar', cost: 4, img: 'spRoar', tip: '+40 % de force pendant 3 tours.' },
     rain:  { name: 'Pluie', icon: '🎯', cls: 'sp', cost: 8, img: 'spRain', tip: '3 flèches d’affilée.' },
     venom: { name: 'Venin', icon: '🧪', cls: 'venom', cost: 6, img: 'spVenom', tip: 'Empoisonne l’ennemi 3 tours.' },
     smite: { name: 'Châtiment', icon: '🔨', cls: 'sp', cost: 8, img: 'spSmite', tip: 'La lumière frappe l\u2019ennemi et te soigne d\u2019un quart des dégâts.' },
@@ -1508,7 +1510,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         ${w === cur ? `<span class="me" style="${side === 'l' ? 'left:28px' : 'right:28px'}">${face}</span>` : ''}</button>`;
     };
     const far = WORLDS.map((W, w) => W.g >= 8 ? pin(W, w) : '').join(''), pins = WORLDS.map((W, w) => W.g < 8 ? pin(W, w) : '').join('');
-    return `<div class="wmap"><img class="wbg" src="img/worldmap2.webp" alt="Carte des dix royaumes">${far}${pins}</div>
+    return `<div class="wmap"><img class="wbg" src="img/worldmap2.webp" alt="Carte des dix royaumes"><svg class="route" viewBox="0 0 100 100" preserveAspectRatio="none"><polyline points="${MAP_POS.map(p => p.join(',')).join(' ')}"/></svg>${far}${pins}</div>
       <div class="note" style="text-align:center; color:#f6e7c4; margin:-6px 0 4px">Touche un royaume pour voir ses niveaux</div>`;
   }
   function renderAdventure() {
@@ -1668,10 +1670,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const ST_MAX = 100;
   const BLOCK = {
     guerrier: { name: 'Bouclier', icon: '🛡️', cost: 15, tip: 'bloque 75 % des dégâts', img: 'bl_shield' },
-    archer: { name: 'Garde', icon: '🛡️', cost: 12, tip: 'bloque 50 % des dégâts', img: 'bl_shield' },
+    archer: { name: 'Roulade', icon: '💨', cost: 12, tip: '70 % de chance d\u2019esquiver toutes les attaques du tour, sinon -30 %', img: 'bl_roll' },
     mage: { name: 'Barrière', icon: '🔷', cost: 12, tip: 'absorbe des dégâts selon ta magie', img: 'bl_barrier' },
     paladin: { name: 'Rempart', icon: '🌞', cost: 15, tip: 'bloque 65 % des dégâts', img: 'bl_dome' },
-    rogue: { name: 'Garde', icon: '🛡️', cost: 12, tip: 'bloque 50 % des dégâts', img: 'bl_shield' },
+    rogue: { name: 'Esquive', icon: '⚔️', cost: 12, tip: '60 % de chance d\u2019esquiver toutes les attaques du tour et de contre-attaquer, sinon -30 %', img: 'bl_riposte' },
   };
   // 4.1: every hero also has Évasion (dodge every hit of the turn, or take them in full) and Attendre (catch your breath).
   const EVADE = { guerrier: 0.35, paladin: 0.35, mage: 0.45, archer: 0.7, rogue: 0.6 };
@@ -1683,8 +1685,6 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const list = [{ id: 'atk', name: C.atk.name, icon: icoHtml(ATKI[cls], C.atk.icon), cls: '' }]
       .concat(C.spells.map(k => ({ id: k, name: SPELLS[k].name, icon: icoHtml(SPELLS[k].img, SPELLS[k].icon), cls: SPELLS[k].cls, cost: SPELLS[k].cost })))
       .concat([{ id: 'def', name: BLOCK[cls].name, icon: icoHtml(BLOCK[cls].img, BLOCK[cls].icon), cls: 'def basic' },
-        { id: 'evade', name: 'Évasion', icon: icoHtml(cls === 'rogue' ? 'bl_riposte' : 'bl_roll', '💨'), cls: 'def basic' },
-        { id: 'wait', name: 'Attendre', icon: '⏳', cls: 'basic' },
         { id: 'pot', name: 'Potion', icon: icoHtml('uiPotion', '❤️'), cls: 'pot basic', pot: true }]);
     const el = $('skills'); el.style.setProperty('--n', 4); el.classList.add('many'); el.classList.add('two');
     el.innerHTML = list.map(b => `<button class="skill ${b.cls}" type="button" data-skill="${b.id}"><i>${b.icon}</i>${b.name}${b.cost ? `<span class="cnt">${b.cost} 💧</span>` : ''}${stCost(b.id) ? `<span class="scost">${stCost(b.id)} 💪</span>` : ''}${b.pot ? '<span class="cnt" id="potCnt"></span>' : ''}</button>`).join('');
@@ -1705,14 +1705,14 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   const GUARDS = new Set(['skel', 'golem', 'yeti', 'armor', 'croco', 'dknight', 'knight']);
   const roleOf = k => M[k].boss ? '' : GUARDS.has(k) ? 'guard' : M[k].trait === 'regen' ? 'heal' : '';
   const ROLEI = { heal: '💚', guard: '🛡️' };
-  const GS = [1, 0.7, 0.56, 0.47], REW = 0.42, XREW = 0.32, BOSS_HP = 1.65;
+  const GS = [1, 0.7, 0.56, 0.47], REW = 0.3, XREW = 0.32, BOSS_HP = 1.25;
   const VARIANTS = [{ n: 'toxique', tint: '110,230,80', trait: 'poison', el: 'poison' }, { n: 'de feu', tint: '255,110,40', trait: 'burn', el: 'feu' },
     { n: 'de givre', tint: '120,190,255', trait: 'chill', el: 'glace' }, { n: 'du Néant', tint: '175,90,255', trait: null, el: null, mult: 1.2 }];
   const VDESC = { toxique: '☠️ empoisonne', 'de feu': '🔥 brûle', 'de givre': '❄️ gèle ton mana', 'du Néant': '🌑 plus fort et plus résistant' };
   function makeWaves(w, i) {
     const [types, , kind] = WORLDS[w].levels[i], mobs = types.filter(k => !M[k].boss), boss = types.find(k => M[k].boss), pick = () => mobs[Math.floor(Math.random() * mobs.length)];
     const sizes = (w === 0 && i < 2) ? [1, 1, 2] : i < 4 ? [1, 2, 2, 3] : [2, 2, 3, 3], waves = [];
-    for (let k = 0, nw = i >= 5 ? 3 : 2; k < nw; k++) { const n = sizes[Math.floor(Math.random() * sizes.length)]; waves.push(Array.from({ length: n }, pick)); }
+    for (let k = 0, nw = 2; k < nw; k++) { const n = sizes[Math.floor(Math.random() * sizes.length)]; waves.push(Array.from({ length: n }, pick)); }
     if (kind === 'mini') waves.push([pick(), '*' + pick()]);
     if (kind === 'boss') waves.push([pick(), boss]);
     return waves;
@@ -1957,6 +1957,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       else if (C.atk.fx === 'orb') { await castPrep(['#cfe4ff', '#9fd0ff', '#ffffff'], 'rgba(150,200,255,', 170); SFX.ice(); burst(hx + 30, hyC, ['#cfe4ff', '#ffffff'], 6, 0.8); fx.push({ type: 'orb', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(320); }
       else { F.hero.wind = now(); await wait(150); SFX.arrow(); fx.push({ type: 'arrow', t0: now(), x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(320); }
       const r = dmgCalc(C.atk.fx === 'orb' ? Math.max(atk, s.mag * 0.6) : atk, F.foe.def); hitFoe(r.d, r.crit);
+      if (G.cls === 'guerrier') { const nb = alive().filter(o => o !== tgt0 && o !== F.foe).sort((a, b) => Math.abs(a.fx - tgt0.fx) - Math.abs(b.fx - tgt0.fx))[0];
+        if (nb) { F.foe = nb; const p = posOf(nb), rc = dmgCalc(atk * 0.35, nb.def); hitFoe(rc.d, false, false, '#e8f0f8'); burst(p.ex, p.ey - p.fh * 0.5, ['#ffffff', '#c8d2da'], 5, 0.7); } }
       if (C.atk.fx === 'slash') { burst(ex - 10, fy, ['#ffffff', '#ffe08a', '#c8d2da'], 8, 1); fx.push({ type: 'flash', x: ex - 10, y: fy, t0: now(), dur: 160, col: 'rgba(255,255,255,.7)', r: 40 }); }
       else if (C.atk.fx === 'orb') impact(ex, fy, ['#ffffff', '#9fd0ff', '#cfe4ff'], 0.6, false);
       else burst(ex - 6, fy, ['#ffffff', '#e8d9b0'], 6, 0.8);
@@ -1986,7 +1988,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       say(`Soin arcanique : +${heal} PV, tu es guéri de tes maux.`); await wait(600);
     } else if (kind === 'whirl') {
       F.hero.wind = now(); F.hero.spe = now(); await wait(160); SFX.whirl(); await tick(F.hero, 'lunge', 200);
-      const all = alive(), m = all.length > 1 ? 1.45 : 2.0; let tot = 0;
+      const all = alive(), m = all.length > 1 ? 1.7 : 2.2; let tot = 0;
       for (const o of all) { const p = posOf(o); fx.push({ type: 'whirl', x: p.ex, y: p.ey - p.fh * 0.5, t0: now() }); }
       await wait(360);
       for (const o of all) { F.foe = o; const p = posOf(o); const r = dmgCalc(atk * m, o.def); tot += r.d; hitFoe(r.d, r.crit, true, '#e8f0f8'); impact(p.ex, p.ey - p.fh * 0.5, ['#ffffff', '#e8f0f8', '#ffd76a'], 0.9, false); }
@@ -1996,7 +1998,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       floatTxt('Force +40 %', hx, hy - H * 0.56, '#ff8a6a', true); say('Cri de guerre ! Ta force augmente pendant 3 tours.'); await wait(500);
     } else if (kind === 'rain') { F.hero.spe = now();
       let tot = 0;
-      const all = alive(), m = all.length > 1 ? 0.55 : 0.8;
+      const all = alive(), m = all.length > 1 ? 0.7 : 0.9;
       for (let k = 0; k < 3; k++) { SFX.arrow(); for (const o of all) { const p = posOf(o); fx.push({ type: 'rainArrow', t0: now(), x: p.ex + (k - 1) * 18, y: p.ey - p.fh * 0.5 }); } await wait(200);
         for (const o of all) { if (o.hp <= 0) continue; F.foe = o; const p = posOf(o); const r = dmgCalc(atk * m, o.def); tot += r.d; hitFoe(r.d, r.crit); burst(p.ex + (k - 1) * 18, p.ey - p.fh * 0.5, ['#fff1a8', '#ffe08a'], 6, 0.8); } }
       say(all.length > 1 ? `Pluie de flèches : ${tot} dégâts sur ${all.length} ennemis.` : `Pluie de flèches : ${tot} dégâts en 3 tirs.`);
@@ -2025,7 +2027,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       let tot = 0; F.hero.wind = now(); await wait(120);
       for (let k = 0; k < 4; k++) { const a = alive(); if (!a.length) break; const o = k === 0 && tgt0.hp > 0 ? tgt0 : a[Math.floor(Math.random() * a.length)], p = posOf(o), ty = p.ey - p.fh * 0.5;
         SFX.arrow(); fx.push({ type: 'dagger', dur: 240, t0: now(), x0: hx + 30, y0: hyC - 10 + k * 7, x1: p.ex + (k % 2 ? 12 : -12), y1: ty - 14 + k * 9 }); await wait(170);
-        F.foe = o; const r = dmgCalc(atk * 0.62, o.def); tot += r.d; hitFoe(r.d, r.crit, false, '#d8c8ff'); burst(p.ex, ty - 14 + k * 9, ['#ffffff', '#c8a8ff'], 5, 0.7); }
+        F.foe = o; const r = dmgCalc(atk * 0.75, o.def); tot += r.d; hitFoe(r.d, r.crit, false, '#d8c8ff'); burst(p.ex, ty - 14 + k * 9, ['#ffffff', '#c8a8ff'], 5, 0.7); }
       say(`Danse des lames : ${tot} dégâts en 4 lancers.`);
     } else if (kind === 'bash') { F.hero.spe = now();
       F.hero.wind = now(); await wait(140); SFX.clang(); await tick(F.hero, 'lunge', 200); fx.push({ type: 'slash', x: ex, y: fy, t0: now() });
@@ -2044,7 +2046,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       await castPrep(['#fff1a8', '#ffd76a', '#ffffff'], 'rgba(255,220,120,', 260); SFX.launch();
       const all = alive(); for (const o of all) { const p = posOf(o); fx.push({ type: 'beam', x: p.ex, y: p.ey, t0: now(), dur: 700 }); } await wait(260); SFX.boom(); let tot = 0;
       for (const o of all) { F.foe = o; const p = posOf(o); const r = dmgCalc(atk * 0.7 + s.mag * 0.5, o.def * 0.5); tot += r.d; hitFoe(r.d, r.crit, false, '#ffe58a'); rise(p.ex, p.ey - 10, ['#fff1a8', '#ffffff'], 8, 30); }
-      const h = Math.round(s.hp * 0.08); G.hp = Math.min(s.hp, G.hp + h); F.hero.heal = now(); floatTxt(`+${h} ❤️`, hx, hy - H * 0.52, '#8fe07a');
+      const h = Math.round(s.hp * 0.04); G.hp = Math.min(s.hp, G.hp + h); F.hero.heal = now(); floatTxt(`+${h} ❤️`, hx, hy - H * 0.52, '#8fe07a');
       say(`Consécration : ${tot} dégâts sur ${all.length > 1 ? all.length + ' ennemis' : 'l’ennemi'}, +${h} PV.`); await wait(200);
     } else if (kind === 'assassin') { F.hero.spe = now();
       F.hero.wind = now(); await wait(120); SFX.whoosh(); await tick(F.hero, 'lunge', 200); fx.push({ type: 'slash', x: ex, y: fy, t0: now() });
@@ -2059,11 +2061,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       if (mage) F.barrier = Math.round(s.mag * 0.5 + s.def * 0.3);
       floatTxt(`+30 💪 +${m} 💧`, hx, hy - H * 0.5, '#ffe58a', true); say(`Tu reprends ton souffle (+30 endurance, +${m} mana${mage ? `, barrière de ${F.barrier}` : ''}).`); await wait(380);
     } else if (kind === 'def') {
-      const cls = G.cls || 'guerrier'; F.defending = true; F.hero.shield = now(); F.mp = Math.min(s.mp, F.mp + 4);
+      const cls = G.cls || 'guerrier'; F.defending = cls !== 'archer' && cls !== 'rogue'; F.evading = !F.defending; F.hero.shield = now(); F.mp = Math.min(s.mp, F.mp + 4);
       if (cls === 'guerrier') { SFX.clang(); say('Tu lèves ton bouclier ! (bloque 75 % des dégâts)'); }
-      else if (cls === 'archer') { SFX.clang(); say('Tu te mets en garde ! (bloque 50 % des dégâts)'); }
+      else if (cls === 'archer') { SFX.whoosh(); say('Tu te prépares à rouler sur le côté… (70 % d\u2019esquive)'); }
       else if (cls === 'paladin') { SFX.clang(); SFX.heal(); say('Rempart de lumière ! (bloque 65 % des dégâts)'); }
-      else if (cls === 'rogue') { SFX.clang(); say('Tu te mets en garde ! (bloque 50 % des dégâts)'); }
+      else if (cls === 'rogue') { SFX.whoosh(); say('Tu te prépares à esquiver et riposter… (60 %)'); }
       else { SFX.zap(); F.barrier = Math.round(s.mag * 0.9 + s.def * 0.5); say(`Barrière d\u2019énergie : absorbe ${F.barrier} dégâts.`); }
       floatTxt('+4 💧', hx, hy - H * 0.5, '#7ab8ff'); await wait(380);
     } else if (kind === 'mpot') {
@@ -2088,7 +2090,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     await foeTurn();
     if (reap()) { await win(); return; }
     if (G.hp <= 0) { await lose(); return; }
-    F.mp = Math.min(s.mp, F.mp + 1); F.st = Math.min(ST_MAX, F.st + (kind === 'def' ? 18 : kind === 'wait' ? 30 : 7) + (hasLeg('celer') ? 4 : 0)); G.mp = Math.round(F.mp); G.st = Math.round(F.st);
+    F.mp = Math.min(s.mp, F.mp + 1); F.st = Math.min(ST_MAX, F.st + (kind === 'def' ? 20 : kind === 'wait' ? 30 : 9) + (hasLeg('celer') ? 4 : 0)); G.mp = Math.round(F.mp); G.st = Math.round(F.st);
     F.busy = false; updFight();
   }
 
@@ -2161,6 +2163,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         else { const a = Math.min(F.barrier, r.d); F.barrier -= a; r.d -= a; F.hero.block = performance.now(); SFX.zap();
           if (F.barrier <= 0 && a > 0) { SFX.shatter(); shards(hx, hcY, ['#7ab8ff', '#bfe8ff', '#ffffff'], 16); F.hero.broke = performance.now(); } }
       }
+      if (F.evading && !dodged) r.d = Math.max(1, Math.round(r.d * 0.7));
       if (dodged) { r.d = 0; r.evade = true; if (i === 0) { F.hero.roll = performance.now(); SFX.whoosh(); } }
       if (r.d > 0 && !F.defending && F.barrier > 0) { const a = Math.min(F.barrier, r.d); F.barrier -= a; r.d -= a; F.hero.block = performance.now(); SFX.zap(); }
       if (r.d > 0 && !F.defending && G.cls === 'rogue' && Math.random() < 0.12) { r.d = 0; r.evade = true; }
@@ -2670,7 +2673,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (!dead) { const by = ey - size - fly - 16; hpBar(c, ex, by, f.hp, f.hpMax, f.boss ? '#ff5a3c' : '#e8453c', 'foe' + fi, F.foes.length > 3 && !f.boss ? 44 : F.foes.length > 2 && !f.boss ? 52 : F.foes.length > 1 ? 62 : 74);
       const many = F.foes.length > 1, warn = f.charging || f.howl || (ph && (ph.breath || ph.dive || ph.prison)), ic = warn ? '⚠️' : f.st.frozen ? '❄️' : many && f.role ? ROLEI[f.role] : '';
       c.save(); c.textAlign = 'center'; c.font = `${warn ? 20 : 15}px ${EMO}`; if (ic) c.fillText(ic, ex + 34, by + 5 + (warn && !reduce ? Math.sin(now / 120) * 2 : 0));
-      { const a = affOf(f.id), tx = `${a.w.length ? '⬆' + elIco(a.w) : ''}${a.r.length ? ' ⬇' + elIco(a.r) : ''}`; c.font = `11px ${EMO}`; c.globalAlpha = 0.9; c.fillText(tx, ex, by + 22); c.globalAlpha = 1; }
+      { const a = affOf(f.id), pills = [[a.w, 'rgba(40,140,60,.92)', '#9cf0a4'], [a.r, 'rgba(160,40,40,.92)', '#ffb0a8']].filter(p => p[0].length);
+        c.font = `12px ${EMO}`; const ws = pills.map(p => 8 + p[0].length * 15); let x0 = ex - (ws.reduce((q, v) => q + v, 0) + (pills.length - 1) * 4) / 2;
+        pills.forEach((p, q) => { const w = ws[q]; c.fillStyle = p[1]; c.strokeStyle = p[2]; c.lineWidth = 1.5; c.beginPath(); c.roundRect ? c.roundRect(x0, by + 12, w, 17, 8) : c.rect(x0, by + 12, w, 17); c.fill(); c.stroke();
+          c.fillStyle = '#fff'; c.textAlign = 'left'; p[0].forEach((e, m) => c.fillText(ELEM[e].i, x0 + 4 + m * 15, by + 25)); x0 += w + 4; }); c.textAlign = 'center'; }
       if (many && f === F.foe && alive().length > 1) { const yy = by - 14 + (reduce ? 0 : Math.sin(now / 220) * 3); c.fillStyle = '#ffd76a'; c.strokeStyle = 'rgba(40,20,0,.9)'; c.lineWidth = 2; c.beginPath(); c.moveTo(ex - 8, yy - 9); c.lineTo(ex + 8, yy - 9); c.lineTo(ex, yy); c.closePath(); c.fill(); c.stroke(); }
       c.restore(); }
     }
@@ -2864,8 +2870,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     m.hidden = false;
   }
   // 5.0: hold a skill to read what it does
-  const SKD = { atk: () => `Attaque de base sur la cible. Coûte de l\u2019endurance : sans endurance, tes coups font moitié moins mal.`,
-    def: () => `${BLOCK[G.cls || 'guerrier'].name} : ${BLOCK[G.cls || 'guerrier'].tip} ce tour-ci. Rend aussi de l\u2019endurance et 4 de mana.`,
+  const SKD = { atk: () => (CL().atkTip ? CL().atkTip + ' ' : '') + `Attaque de base sur la cible. Coûte de l\u2019endurance : sans endurance, tes coups font moitié moins mal.`,
+    def: () => `${BLOCK[G.cls || 'guerrier'].name} : ${BLOCK[G.cls || 'guerrier'].tip}, pour ce tour. Rend aussi de l\u2019endurance et 4 de mana.`,
     evade: () => `Évasion : ${Math.round(EVADE[G.cls || 'guerrier'] * 100)} % de chance d\u2019esquiver TOUTES les attaques du tour, sinon tu les prends en entier.${G.cls === 'rogue' ? ' Nyx contre-attaque si elle esquive.' : ''}`,
     wait: () => `Attendre : tu passes ton tour pour reprendre 30 d\u2019endurance et du mana.${G.cls === 'mage' ? ' Orin gagne aussi une barrière.' : ''}`,
     pot: () => 'Potions : vie, mana ou endurance. Elles s\u2019achètent à la Boutique.' };
@@ -2917,7 +2923,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 5.0';
+  const VERSION = 'Version 5.1';
   setTimeout(() => toast(`🛠️ ${VERSION}`), 900);
   if (document.body.insertAdjacentHTML) document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;left:6px;bottom:calc(2px + env(safe-area-inset-bottom,0px));z-index:5;font:700 10px system-ui;color:rgba(255,255,255,.55);pointer-events:none">${VERSION}</div>`);
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));

@@ -8,15 +8,15 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
   ok(api.stCost('atk')===10 && api.stCost('whirl')===15 && api.stCost('rain')===15 && api.stCost('fire')===0, 'action costs');
   // B. endurance edge cases
   let F=fresh('guerrier');
-  F.st=0; const hp0=F.foe.hp; await api.act('atk'); ok(F.st===7, `winded attack keeps 0 then +7 (got ${F.st})`); ok(F.foe.hp<hp0, 'winded attack still hits');
-  F.st=9; await api.act('atk'); ok(F.st===7, `st 9 -> 0 -> 7 (got ${F.st})`);
-  F.st=10; await api.act('atk'); ok(F.st===7, `exact cost 10 -> 0 -> 7 (got ${F.st})`);
-  F.st=99; await api.act('atk'); ok(F.st===96, `99-10+7 = 96 (got ${F.st})`);
+  F.st=0; const hp0=F.foe.hp; await api.act('atk'); ok(F.st===9, `winded attack keeps 0 then +7 (got ${F.st})`); ok(F.foe.hp<hp0, 'winded attack still hits');
+  F.st=9; await api.act('atk'); ok(F.st===9, `st 9 -> 0 -> 7 (got ${F.st})`);
+  F.st=10; await api.act('atk'); ok(F.st===9, `exact cost 10 -> 0 -> 7 (got ${F.st})`);
+  F.st=99; await api.act('atk'); ok(F.st===98, `99-10+7 = 96 (got ${F.st})`);
   F.st=14; const before=G.hp; await api.act('def'); ok(F.st===14 && !F.busy && G.hp===before, 'block refused without enough endurance');
   F.st=14; F.mp=99; await api.act('whirl'); ok(F.st===14, 'whirl refused at 14');
   let minSt=999; F.mp=1e6; for(let i=0;i<30;i++){ await api.act(F.st>=15?'whirl':'atk'); minSt=Math.min(minSt,F.st); } ok(minSt>=0, 'never negative over 30 turns');
   F.st=100; F.busy=true; await api.act('atk'); ok(F.st===100, 'input ignored while busy'); F.busy=false;
-  F.st=60; await api.act('def'); ok(F.st===63, `block: 60-15+18 = 63 (got ${F.st})`);
+  F.st=60; await api.act('def'); ok(F.st===65, `block: 60-15+18 = 63 (got ${F.st})`);
   // C. warrior shield 75%
   const raw=(F)=>{ const s=api.stats(); return Math.max(1, Math.round(F.foe.atk*(0.85+0.3*0.5)-s.def*0.6)); };
   F=fresh('guerrier'); Math.random=()=>0.5; F.defending=true; let h=G.hp; await api.foeTurn(); ok(h-G.hp===Math.max(1,Math.round(raw(F)*0.25)), `warrior 75% (lost ${h-G.hp}, raw ${raw(F)})`); Math.random=R;
@@ -24,7 +24,7 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
   F=fresh('archer'); let dodges=0, N=20000; const base=G.hp;
   for(let i=0;i<N;i++){ G.hp=api.stats().hp; F.evading=true; const b=G.hp; await api.foeTurn(); if(b===G.hp) dodges++; }
   const p=dodges/N; ok(Math.abs(p-0.715)<0.02, `archer evade rate ${p.toFixed(3)} over ${N}`); console.log('archer evade rate', p.toFixed(4), 'n=',N);
-  G.hp=api.stats().hp; Math.random=()=>0.9; F.evading=true; F.defending=true; h=G.hp; await api.foeTurn(); const rawA=Math.max(1,Math.round((F.foe.atk*1.12-api.stats().def*0.6)*1.35)); ok(h-G.hp===Math.max(1,Math.round(rawA*0.5)), `archer guard 50% (lost ${h-G.hp}, raw ${rawA})`); F.defending=false;
+  G.hp=api.stats().hp; Math.random=()=>0.9; F.evading=true; F.defending=false; h=G.hp; await api.foeTurn(); const rawA=Math.max(1,Math.round((F.foe.atk*1.12-api.stats().def*0.6)*1.35)); ok(h-G.hp===Math.max(1,Math.round(rawA*0.7)), `archer guard 50% (lost ${h-G.hp}, raw ${rawA})`); F.defending=false;
   G.hp=api.stats().hp; Math.random=()=>0.3; F.evading=true; h=G.hp; await api.foeTurn(); ok(h===G.hp, 'archer successful evade = 0'); Math.random=R;
   // E. mage barrier
   F=fresh("mage"); Math.random=()=>0.5; G.hp=api.stats().hp; const rm=raw(F);

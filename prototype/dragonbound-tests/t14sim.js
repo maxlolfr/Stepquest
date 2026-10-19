@@ -23,7 +23,7 @@ const cls=process.argv[2], RUNS=+process.argv[3]||1, out=[]; const caster=cls===
       if(!k){
       if (G.hp < s.hp*0.35) k = (cls==='mage'&&can('heal')) ? 'heal' : (G.potions>0?'pot':'def');
       else if (chg && cls==='guerrier' && can('bash') && F.st>=12 && F.foes.filter(o=>o.hp>0&&(o.charging||o.howl)).every(o=>!o.boss&&!o.st.stunCd)) { k='bash'; F.foe=F.foes.find(o=>o.hp>0&&(o.charging||o.howl)); }
-      else if (chg||(els.intent && !els.intent.hidden)) k=(cls==='archer'&&!F.foes.some(o=>o.hp>0&&o.boss))?'evade':'def';
+      else if (chg||(els.intent && !els.intent.hidden)) k='def';
       else if (cls==='guerrier') k = many&&can('whirl')?'whirl':(!F.buff&&can('roar'))?'roar':can('whirl')?'whirl':'atk';
       else if (cls==='archer') k = F.foes.some(o=>o.hp>0&&o.role==='guard')&&can('pierce')?'pierce':many&&can('rain')?'rain':(!F.foe.st.poison&&can('venom'))?'venom':can('rain')?'rain':'atk';
       else if (cls==='paladin') k = many&&can('consecrate')&&F.st>=12?'consecrate':(!F.aegis&&can('aegis')&&G.hp<s.hp*0.75)?'aegis':can('smite')?'smite':'atk';
@@ -31,7 +31,7 @@ const cls=process.argv[2], RUNS=+process.argv[3]||1, out=[]; const caster=cls===
       else k = many&&can('fire')?'fire':can('frost')&&!F.foe.st.frozen?'frost':can('fire')?'fire':'atk';
       }
       if(k!=='atk' && k!=='spot' && k!=='mpot' && F.st<stc(k)) k=(k==='def'&&G.potions>0&&G.hp<s.hp*0.5)?'pot':'atk';
-      if(k==='atk' && F.st<10 && !chg) k='wait';
+      
       if(k==='atk' && F.st<10) rec.ex++;
       const hb=G.hp; rec.turns++; await api.act(k); if(k==='def'){ rec.def++; rec.defLoss+=Math.max(0,hb-G.hp)/s.hp; }
     }
