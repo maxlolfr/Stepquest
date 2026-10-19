@@ -40,7 +40,8 @@ img { -webkit-user-drag: none; user-select: none; }
 .pill { display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,.45); border: 2px solid var(--line); border-radius: 99px; padding: 3px 10px 3px 4px; font-size: 14px; }
 .pill img { width: 22px; height: 22px; object-fit: contain; }
 .iconbtn { width: 38px; height: 38px; border-radius: 50%; background: rgba(0,0,0,.5); border: 2px solid var(--line); display: grid; place-items: center; font-size: 18px; flex: none; }
-.chap { margin-top: 14px; border-radius: 18px; overflow: hidden; border: 3px solid var(--line); box-shadow: 0 6px 18px rgba(0,0,0,.5); background: var(--panel); }
+.tabs { display: flex; gap: 6px; margin-top: 12px; } .tabs button { flex: 1; padding: 7px 4px; border-radius: 12px 12px 0 0; background: rgba(0,0,0,.4); border: 2px solid var(--line); border-bottom: 0; font-size: 13px; color: var(--muted); } .tabs button.on { background: var(--panel); color: var(--gold2); border-color: var(--gold); } .tabs button:disabled { opacity: .45; }
+.chap { margin-top: 0; border-radius: 18px; overflow: hidden; border: 3px solid var(--line); box-shadow: 0 6px 18px rgba(0,0,0,.5); background: var(--panel); }
 .chap .ban { position: relative; height: 128px; background-size: cover; background-position: center 60%; }
 .chap .ban::after { content: ""; position: absolute; inset: 0; background: linear-gradient(transparent 30%, rgba(20,13,24,.95)); }
 .chap .ban div { position: absolute; left: 14px; bottom: 10px; z-index: 1; }
@@ -159,7 +160,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 #pop button:disabled { opacity: .4; }
 #pop p { grid-column: 1 / -1; margin: 0; text-align: center; font-size: 13px; color: var(--gold2); }
 .toast { position: fixed; left: 50%; top: calc(var(--safe-t) + 60px); transform: translateX(-50%); z-index: 80; background: rgba(20,12,16,.92); border: 2px solid var(--gold); border-radius: 14px; padding: 8px 14px; font-size: 14px; max-width: 90vw; text-align: center; animation: pop .2s; pointer-events: none; }
-.poti.mana { filter: hue-rotate(205deg) saturate(1.3); } .poti.fea { filter: hue-rotate(-40deg) saturate(1.6) brightness(1.2); }
+.poti.mana { filter: hue-rotate(205deg) saturate(1.3); } .poti.eli { filter: hue-rotate(95deg) saturate(1.4) brightness(1.1); } .poti.fea { filter: hue-rotate(-40deg) saturate(1.6) brightness(1.2); }
 @media (max-height: 700px) and (orientation: portrait) { .acts { min-height: 116px; } .act i { width: 40px; height: 40px; } .act .cost, .act .cnt { top: 26px; } }
 /* Landscape: stage on the left, controls in a column on the right */
 @media (orientation: landscape) and (max-height: 600px) {
@@ -194,8 +195,9 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
     <span class="pill"><img src="../dragonbound/img/uiGold.webp" alt="or"><span id="gold">0</span></span>
     <button class="iconbtn" id="snd" type="button" aria-label="Son">🔊</button>
   </div>
+  <div class="tabs" id="tabs"></div>
   <div class="chap">
-    <div class="ban" style="background-image:url(img/bgc1.webp)"><div><small>CHAPITRE 1</small><b>La Crypte oubliée</b></div></div>
+    <div class="ban" id="ban"><div><small id="chN">CHAPITRE 1</small><b id="chT">La Crypte oubliée</b></div></div>
     <div class="path" id="path"></div>
   </div>
   <h2>Ton équipe <button type="button" id="teamBtn">Changer</button></h2>
@@ -235,7 +237,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Test 0.2 (monde 1)';
+const VERSION = 'Dragonbound II · Test 0.3 (mondes 1 et 2)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -244,7 +246,7 @@ const $ = id => document.getElementById(id);
 const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
 
 // ---------- Images (shared with Dragonbound) ----------
-const POSEM = {"bossBone":[1.017,0.503],"bossBone_prep":[0.922,0.45],"bossBone_atk":[0.808,0.48],"bossBone_spe":[0.943,0.537],"bossBone_laugh":[1.052,0.624],"bossBone_rage":[0.869,0.553],"bossBone_blast":[0.884,0.735],"bossBone_ko":[0.477,0.447],"slime":[1.0,0.493],"slime_atk":[0.897,0.44],"slime_hit":[0.962,0.452],"slime_ko":[0.517,0.538],"rat":[1.0,0.476],"rat_atk":[0.821,0.44],"rat_hit":[1.096,0.431],"rat_ko":[0.59,0.46],"bat":[1.0,0.452],"bat_atk":[0.811,0.444],"bat_hit":[0.965,0.48],"bat_ko":[0.417,0.574],"skel":[1.0,0.397],"skel_atk":[0.978,0.389],"skel_hit":[0.873,0.534],"skel_ko":[0.585,0.482],"hero2":[1.0,0.511],"hero2_prep":[1.139,0.497],"hero2_atk":[0.962,0.329],"hero2_hit":[0.932,0.4],"hero2_def":[0.817,0.451],"hero2_win":[0.964,0.549],"hero2_spe":[1.21,0.356],"hero2_ko":[0.705,0.44],"hero2_cast":[0.937,0.489],"archer":[1.0,0.469],"archer_prep":[1.028,0.438],"archer_atk":[0.987,0.331],"archer_hit":[0.919,0.427],"archer_def":[0.786,0.379],"archer_spe":[0.875,0.332],"archer_win":[1.087,0.576],"archer_ko":[0.753,0.477],"archer_cast":[0.903,0.338],"mage":[1.0,0.397],"mage_prep":[0.961,0.478],"mage_atk":[0.955,0.276],"mage_hit":[0.967,0.531],"mage_def":[0.827,0.473],"mage_spe":[0.932,0.441],"mage_win":[1.083,0.534],"mage_ko":[0.988,0.441],"mage_cast":[1.098,0.4],"paladin":[1.0,0.377],"paladin_prep":[1.093,0.544],"paladin_atk":[0.949,0.336],"paladin_hit":[0.979,0.352],"paladin_def":[0.895,0.421],"paladin_spe":[0.943,0.436],"paladin_win":[1.087,0.453],"paladin_ko":[0.817,0.498],"paladin_cast":[0.994,0.433],"rogue":[1.0,0.537],"rogue_prep":[0.939,0.378],"rogue_atk":[0.906,0.341],"rogue_hit":[0.911,0.581],"rogue_def":[0.844,0.419],"rogue_spe":[0.869,0.516],"rogue_win":[1.025,0.422],"rogue_ko":[0.75,0.439],"rogue_cast":[0.833,0.388]};
+const POSEM = {"bossBone":[1.017,0.503],"bossBone_prep":[0.922,0.45],"bossBone_atk":[0.808,0.48],"bossBone_spe":[0.943,0.537],"bossBone_laugh":[1.052,0.624],"bossBone_rage":[0.869,0.553],"bossBone_blast":[0.884,0.735],"bossBone_ko":[0.477,0.447],"slime":[1.0,0.493],"slime_atk":[0.897,0.44],"slime_hit":[0.962,0.452],"slime_ko":[0.517,0.538],"rat":[1.0,0.476],"rat_atk":[0.821,0.44],"rat_hit":[1.096,0.431],"rat_ko":[0.59,0.46],"bat":[1.0,0.452],"bat_atk":[0.811,0.444],"bat_hit":[0.965,0.48],"bat_ko":[0.417,0.574],"skel":[1.0,0.397],"skel_atk":[0.978,0.389],"skel_hit":[0.873,0.534],"skel_ko":[0.585,0.482],"hero2":[1.0,0.511],"hero2_prep":[1.139,0.497],"hero2_atk":[0.962,0.329],"hero2_hit":[0.932,0.4],"hero2_def":[0.817,0.451],"hero2_win":[0.964,0.549],"hero2_spe":[1.21,0.356],"hero2_ko":[0.705,0.44],"hero2_cast":[0.937,0.489],"archer":[1.0,0.469],"archer_prep":[1.028,0.438],"archer_atk":[0.987,0.331],"archer_hit":[0.919,0.427],"archer_def":[0.786,0.379],"archer_spe":[0.875,0.332],"archer_win":[1.087,0.576],"archer_ko":[0.753,0.477],"archer_cast":[0.903,0.338],"mage":[1.0,0.397],"mage_prep":[0.961,0.478],"mage_atk":[0.955,0.276],"mage_hit":[0.967,0.531],"mage_def":[0.827,0.473],"mage_spe":[0.932,0.441],"mage_win":[1.083,0.534],"mage_ko":[0.988,0.441],"mage_cast":[1.098,0.4],"paladin":[1.0,0.377],"paladin_prep":[1.093,0.544],"paladin_atk":[0.949,0.336],"paladin_hit":[0.979,0.352],"paladin_def":[0.895,0.421],"paladin_spe":[0.943,0.436],"paladin_win":[1.087,0.453],"paladin_ko":[0.817,0.498],"paladin_cast":[0.994,0.433],"rogue":[1.0,0.537],"rogue_prep":[0.939,0.378],"rogue_atk":[0.906,0.341],"rogue_hit":[0.911,0.581],"rogue_def":[0.844,0.419],"rogue_spe":[0.869,0.516],"rogue_win":[1.025,0.422],"rogue_ko":[0.75,0.439],"rogue_cast":[0.833,0.388],"wolf":[1.022,0.438],"wolf_atk":[1.028,0.488],"wolf_hit":[1.006,0.455],"wolf_ko":[0.623,0.463],"spider":[1.024,0.523],"spider_atk":[1.051,0.562],"spider_hit":[1.098,0.555],"spider_ko":[0.889,0.507],"shroom":[1.02,0.502],"shroom_atk":[0.945,0.609],"shroom_hit":[0.991,0.529],"shroom_ko":[0.578,0.542],"goblin":[1.021,0.531],"goblin_atk":[1.042,0.516],"goblin_hit":[1.039,0.522],"goblin_ko":[0.504,0.46],"bossWitch":[1.014,0.482],"bossWitch_prep":[0.953,0.519],"bossWitch_atk":[0.964,0.591],"bossWitch_hit":[1.008,0.473],"bossWitch_spe":[1.03,0.496],"bossWitch_laugh":[1.103,0.572],"bossWitch_rage":[1.105,0.455],"bossWitch_blast":[1.004,0.524],"bossWitch_ko":[0.326,0.473]};
 const IMG = {}, WHITE = {}, TINT = {};
 function load(k, local) {
   if (IMG[k] || SIM) return; const im = new Image(); im.decoding = 'async';
@@ -347,6 +349,11 @@ const MON = {
   rat: { name: 'Rat des égouts', hp: 72, atk: 17, def: 2, xp: 14, gold: 7, h: .18, trait: 'poison', w: ['glace'], r: ['poison'], tip: 'Sa morsure empoisonne.' },
   bat: { name: 'Chauve-souris', hp: 60, atk: 14, def: 1, xp: 14, gold: 6, h: .15, fly: true, trait: 'double', w: ['foudre'], r: [], tip: 'Rapide : frappe deux fois.' },
   skel: { name: 'Squelette', hp: 112, atk: 23, def: 5, xp: 20, gold: 10, h: .25, trait: 'rise', w: ['feu', 'foudre'], r: ['poison'], tip: 'Se relève une fois… sauf s’il brûle.' },
+  wolf: { name: 'Loup gris', hp: 120, atk: 27, def: 6, xp: 22, gold: 10, h: .21, trait: 'howl', w: ['feu'], r: [], tip: 'Hurle, puis mord très fort au tour suivant. Étourdis-le ou défends-toi !' },
+  spider: { name: 'Araignée géante', hp: 105, atk: 26, def: 5, xp: 21, gold: 9, h: .19, trait: 'poison', w: ['feu'], r: ['poison'], tip: 'Son venin empoisonne 3 tours.' },
+  shroom: { name: 'Champignon furieux', hp: 140, atk: 23, def: 8, xp: 21, gold: 9, h: .21, trait: 'regen', w: ['feu'], r: ['poison'], tip: 'Ses spores le soignent à chaque tour.' },
+  goblin: { name: 'Gobelin voleur', hp: 112, atk: 26, def: 6, xp: 23, gold: 18, h: .22, trait: 'steal', w: ['glace'], r: [], tip: 'Vole tes potions ! Tue-le pour les récupérer.' },
+  bossWitch: { name: 'Sylvaine', boss: true, hp: 1500, atk: 52, def: 11, xp: 330, gold: 280, h: .4, w: ['feu'], r: ['poison'], tip: 'Se soigne en frappant et lance une malédiction empoisonnée sur toute l’équipe. À mi-vie, ses ronces blessent ceux qui frappent au corps à corps.' },
   bossBone: { name: 'Roi des Os', boss: true, hp: 560, atk: 30, def: 6, xp: 150, gold: 120, h: .46, w: ['feu'], r: ['poison'], tip: 'Prépare un coup de faux sur toute l’équipe. Défends-toi, ou étourdis-le !' },
 };
 // Elite variants: a colour, a power, double rewards
@@ -357,40 +364,55 @@ const AFFIX = {
   gold: { n: 'Doré', col: '255,205,60', tip: 'rapporte beaucoup d’or' },
 };
 // hz = where the floor starts in the picture (0 top → 1 bottom)
-const LEVELS = [
-  { name: 'Le seuil', bg: 'bgc1', local: true, hz: .575, waves: [['slime'], ['rat'], ['slime', 'rat']], rec: 1, elite: 0 },
-  { name: 'Salle des rites', bg: 'bg6_2', hz: .55, waves: [['bat', 'rat'], ['slime', 'bat'], ['rat', 'slime', 'bat']], rec: 2, elite: .12 },
-  { name: 'L’ossuaire', bg: 'bg0_2', hz: .82, waves: [['skel', 'bat'], ['skel', 'slime', 'rat'], ['bat', 'skel', 'bat']], rec: 3, elite: .2 },
-  { name: 'La chapelle', bg: 'bg0_3', hz: .85, waves: [['skel', 'rat', 'bat'], ['skel', 'skel', 'slime'], ['skel', 'bat', 'skel']], rec: 4, elite: .22 },
-  { name: 'Le trône', bg: 'bg0_4', hz: .74, waves: [['skel', 'bat', 'rat'], ['bossBone', 'skel']], rec: 5, boss: true, elite: .25 },
+const CHAPTERS = [
+  { name: 'La Crypte oubliée', ban: 'img/bgc1.webp', boss: 'bossBone', story: 'in', end: 'out' },
+  { name: 'La Forêt des Murmures', ban: IP + 'bg1_0.webp', boss: 'bossWitch', story: 'in2', end: 'out2' },
 ];
-const RECRUIT = { 0: 'selena', 1: 'orin', 2: 'lyra', 4: 'nyx' }; // clearing level index → who joins
+const LEVELS = [
+  { ch: 0, name: 'Le seuil', bg: 'bgc1', local: true, hz: .575, waves: [['slime'], ['rat'], ['slime', 'rat']], rec: 1, elite: 0 },
+  { ch: 0, name: 'Salle des rites', bg: 'bg6_2', hz: .55, waves: [['bat', 'rat'], ['slime', 'bat'], ['rat', 'slime', 'bat'], ['bat', 'bat', 'slime']], rec: 2, elite: .12 },
+  { ch: 0, name: 'L’ossuaire', bg: 'bg0_2', hz: .82, waves: [['skel', 'bat'], ['skel', 'slime', 'rat'], ['bat', 'skel', 'bat'], ['skel', 'rat', 'slime']], rec: 3, elite: .2 },
+  { ch: 0, name: 'La chapelle', bg: 'bg0_3', hz: .85, waves: [['skel', 'rat', 'bat'], ['skel', 'skel', 'slime'], ['skel', 'bat', 'skel'], ['skel', 'skel', 'bat']], rec: 4, elite: .22 },
+  { ch: 0, name: 'Le trône', bg: 'bg0_4', hz: .74, waves: [['skel', 'bat', 'rat'], ['bossBone', 'skel']], rec: 5, boss: true, elite: .25 },
+  { ch: 1, name: 'L’orée', bg: 'bg1_0', hz: .72, waves: [['wolf', 'spider'], ['spider', 'shroom'], ['wolf', 'goblin', 'spider'], ['shroom', 'wolf', 'spider']], rec: 6, elite: .2 },
+  { ch: 1, name: 'Champignons', bg: 'bg1_1', hz: .72, waves: [['shroom', 'shroom'], ['spider', 'shroom', 'wolf'], ['goblin', 'shroom'], ['shroom', 'spider', 'shroom']], rec: 7, elite: .22 },
+  { ch: 1, name: 'Nid de soie', bg: 'bg1_2', hz: .62, waves: [['spider', 'spider'], ['spider', 'wolf', 'spider'], ['goblin', 'spider', 'spider'], ['wolf', 'spider', 'wolf']], rec: 8, elite: .24 },
+  { ch: 1, name: 'Camp gobelin', bg: 'bg1_3', hz: .6, waves: [['goblin', 'goblin'], ['goblin', 'wolf', 'goblin'], ['shroom', 'goblin', 'spider'], ['goblin', 'goblin', 'wolf']], rec: 9, elite: .26 },
+  { ch: 1, name: 'La hutte', bg: 'bg1_4', hz: .76, waves: [['wolf', 'goblin', 'spider'], ['shroom', 'spider', 'wolf'], ['bossWitch', 'wolf']], rec: 10, boss: true, elite: .28 },
+];
+const RECRUIT = { 0: 'selena', 1: 'orin', 6: 'lyra', 9: 'nyx' }; // clearing level index → who joins
 const STORY = {
   in: [['narr', 'Chapitre 1 · La Crypte oubliée'], ['narr', 'Sous Aube-Claire, les morts s’agitent. Quelqu’un vient de briser leur dernier repos.'],
     ['aldric', 'Des os, des tombes et une odeur de mort. Charmant comité d’accueil.'], ['narr', 'Le Roi des Os garde une relique liée au sceau du Néant.'],
     ['aldric', 'J’y vais seul. Si quelqu’un veut me suivre, qu’il se dépêche.']],
+  in2: [['narr', 'Chapitre 2 · La Forêt des Murmures'], ['narr', 'Les arbres murmurent des noms oubliés. Certains sont ceux de gens encore vivants.'],
+    ['aldric', 'Si les arbres commencent à donner des conseils, je demande un deuxième avis.'], ['narr', 'Sylvaine la Sorcière protège un autel marqué du même œil draconique.'],
+    ['orin', 'Une sorcière dans une forêt. Mon feu va adorer cet endroit.'], ['selena', 'Orin. On ne brûle pas la forêt.']],
+  out2: [['bossWitch', 'Je n’étais qu’un pion... Sa voix venait d’au-delà des chaînes...'], ['aldric', 'Vorthax. Ce nom revient un peu trop souvent à mon goût.'],
+    ['narr', 'Sylvaine laisse tomber un médaillon couvert de symboles des marais.'], ['narr', 'À suivre : Chapitre 3 · Les Mines de Braise.']],
   selena: [['selena', 'Un chevalier seul dans une crypte ? Tu vas avoir besoin de quelqu’un pour te recoudre.'], ['aldric', 'Je refuse rarement une soigneuse.'],
     ['narr', 'Séléna la Paladine rejoint l’équipe ! Elle soigne, protège et relève les alliés.']],
   orin: [['orin', 'Des squelettes ? Ils résistent au poison, mais pas au feu. Vous avez besoin d’un peu de chaleur.'], ['selena', 'Tant que tu ne brûles pas mes cheveux.'],
     ['narr', 'Orin le Mage rejoint l’équipe ! Il frappe tous les ennemis à la fois.']],
-  lyra: [['lyra', 'Trois aventuriers qui foncent dans une crypte sans éclaireur ? Vous avez de la chance que je passais par là.'],
+  lyra: [['lyra', 'Trois aventuriers qui foncent dans une forêt hantée sans éclaireur ? Les araignées, moi, je les vois avant qu’elles vous voient.'],
     ['narr', 'Lyra l’Archère rejoint le groupe ! La réserve s’ouvre : en combat, le bouton Relais échange un héros avec ceux du banc.']],
-  nyx: [['nyx', 'Le Roi des Os me devait une bourse. Je la récupère sur ses restes… et je vous suis, si vous tenez le rythme.'], ['narr', 'Nyx la Voleuse rejoint le groupe !']],
+  nyx: [['nyx', 'Cette sorcière m’avait volé ma dague préférée. Je la récupère… et je vous suis, si vous tenez le rythme.'], ['narr', 'Nyx la Voleuse rejoint le groupe !']],
   out: [['bossBone', 'Ces chaînes... ce dragon... Il m’avait promis un royaume éternel !'], ['aldric', 'Quel dragon ? Parle, ou je fouille tes os un par un.'],
-    ['narr', 'La relique porte une marque : un œil draconique entouré de chaînes noires.'], ['selena', 'Ce symbole... il vient de la Forêt des Murmures.'], ['narr', 'À suivre : Chapitre 2 · La Forêt des Murmures.']],
+    ['narr', 'La relique porte une marque : un œil draconique entouré de chaînes noires.'], ['selena', 'Ce symbole... il vient de la Forêt des Murmures.'], ['narr', 'Le chapitre 2 est ouvert : la Forêt des Murmures.']],
 };
 const ITEMS = {
   pot: { name: 'Potion', short: 'Vie', cls: '', tgt: 'ally', price: 30, tip: 'Rend 50 % de vie à un allié.' },
   eth: { name: 'Éther', short: 'Mana', cls: 'mana', tgt: 'ally', price: 40, tip: 'Rend 50 % de mana à un allié.' },
   fea: { name: 'Plume de phénix', short: 'Phénix', cls: 'fea', tgt: 'dead', price: 90, tip: 'Ramène un allié tombé avec 40 % de sa vie.' },
+  eli: { name: 'Élixir', short: 'Élixir', cls: 'eli', tgt: 'party', price: 110, tip: 'Rend 35 % de vie à toute l’équipe.' },
 };
 
 // ---------- Save ----------
 const SKEY = 'dragonbound2.v2';
 function fresh() { const h = {}; HORDER.forEach(k => { h[k] = { lvl: 1, xp: 0, w: 0, a: 0 }; });
-  return { v: 2, gold: 50, items: { pot: 3, eth: 1, fea: 1 }, h, team: ['aldric'], own: { aldric: 1 }, stars: [0, 0, 0, 0, 0], seen: {}, mute: false }; }
+  return { v: 2, gold: 50, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h, team: ['aldric'], own: { aldric: 1 }, stars: LEVELS.map(() => 0), seen: {}, mute: false, ch: 0 }; }
 let S = fresh();
-try { if (!SIM) { const s = JSON.parse(localStorage.getItem(SKEY)); if (s && s.v === 2) S = Object.assign(fresh(), s); } } catch (e) {}
+try { if (!SIM) { const s = JSON.parse(localStorage.getItem(SKEY)); if (s && s.v === 2) { S = Object.assign(fresh(), s); while (S.stars.length < LEVELS.length) S.stars.push(0); S.items = Object.assign({ pot: 0, eth: 0, fea: 0, eli: 0 }, S.items); } } } catch (e) {}
 const save = () => { if (SIM) return; try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {} };
 const xpNeed = l => Math.round(34 + 20 * l + 5 * l * l);
 function heroStats(id) { const H = HEROES[id], s = S.h[id], L = s.lvl, o = {};
@@ -422,7 +444,7 @@ const persp = v => .8 + .3 * v;
 function mkHero(id, i, n) { const H = HEROES[id], st = heroStats(id);
   return { side: 'h', id, name: H.name, sprite: H.sprite, H, hpMax: st.hp, hp: st.hp, mpMax: st.mp, mp: st.mp, atk: st.atk, mag: st.mag, def: st.def, crit: st.crit,
     slot: i == null ? null : HSLOT[n - 1][i], hsz: H.h, ox: 0, oy: 0, st: {}, pose: 'idle', poseUntil: 0, hitT: -1e9, kb: 0, alpha: 1, deadT: 0, lb: 0, seed: Math.random() * 6 }; }
-function mkFoe(id, i, lvIdx, boss, n, eliteP) { const m = MON[id], k = 1 + .18 * lvIdx, ps = m.boss ? 1 : [.5, .8, 1][Math.min(3, n) - 1], pa = [.6, .88, 1][Math.min(3, n) - 1];
+function mkFoe(id, i, lvIdx, boss, n, eliteP) { const m = MON[id], k = 1 + .18 * lvIdx, ps = m.boss ? 1 : [.5, .68, 1][Math.min(3, n) - 1], pa = [.6, .8, 1][Math.min(3, n) - 1];
   const slot = boss ? BSLOT[i] : FSLOT[n >= 3 || i >= n ? 2 : n - 1][i] || FSLOT[2][i % 3];
   const f = { side: 'f', id, name: m.name, sprite: id, m, boss: !!m.boss, hpMax: Math.round(m.hp * (m.boss ? 1 : k) * ps), atk: Math.round(m.atk * (m.boss ? 1 : k) * pa), mag: 0, def: m.def + Math.floor(lvIdx * .6), crit: .05,
     slot, hsz: m.h * (boss && !m.boss ? .85 : 1), ox: 0, oy: 0, st: {}, pose: 'idle', poseUntil: 0, hitT: -1e9, kb: 0, alpha: 1, deadT: 0, turn: 0, seed: Math.random() * 6, xpM: 1, goldM: 1 };
@@ -474,7 +496,7 @@ async function damage(t, r, opts = {}) {
     if (r.em > 1) txt(p.x - 26, p.y - p.h - 40, `${ELI[opts.el] || ''} Faiblesse !`, '#ffe58a', true); else if (r.em < 1) txt(p.x - 26, p.y - p.h - 40, `${ELI[opts.el] || ''} Résiste`, '#c8d2da');
     (r.crit ? SFX.crit : t.side === 'h' ? SFX.hurt : SFX.hit)();
     if (src) gainLb(src, 4 + d / t.hpMax * 20); gainLb(t, d / t.hpMax * 65);
-    if (t.aff === 'thorns' && opts.melee && src && alive(src)) { const rd = Math.max(1, Math.round(d * .25)), sp = px(src); src.hp = Math.max(0, src.hp - rd); src.hitT = now(); txt(sp.x, sp.y - sp.h - 6, `-${rd} 🌵`, '#a8f070'); if (!alive(src)) await kill(src); } }
+    if ((t.aff === 'thorns' || (t.ph && t.ph.thorns)) && opts.melee && src && alive(src)) { const rd = Math.max(1, Math.round(d * (t.ph && t.ph.thorns ? .3 : .25))), sp = px(src); src.hp = Math.max(0, src.hp - rd); src.hitT = now(); txt(sp.x, sp.y - sp.h - 6, `-${rd} 🌵`, '#a8f070'); if (!alive(src)) await kill(src); } }
   if (t.boss && !t.ph && t.hp > 0 && t.hp <= t.hpMax * .5) t.phPending = true;
   if (t.hp <= 0) await kill(t);
   refresh(); return d;
@@ -486,7 +508,8 @@ async function kill(u) {
     await wait(650); u.hp = Math.round(u.hpMax * .35); u.deadT = 0; setPose(u, 'hit', 300); const p = px(u); sparks(p.x, p.y - p.h * .4, 18, ['#f2ead8', '#c8b890'], 1.2);
     txt(p.x, p.y - p.h - 20, 'Il se relève !', '#f2ead8', true); SFX.clang(); refresh(); return; }
   u.deadT = now(); u.st = {}; setPose(u, 'ko', 1e9); SFX.ko();
-  if (u.side === 'f') { const p = px(u); sparks(p.x, p.y - p.h * .4, 20, ['#b89aff', '#ffffff', '#6a5aa8'], 1.3, -.02); B.kills.push(u); }
+  if (u.side === 'f') { const p = px(u); sparks(p.x, p.y - p.h * .4, 20, ['#b89aff', '#ffffff', '#6a5aa8'], 1.3, -.02); B.kills.push(u);
+    if (u.stolen && u.stolen.length) { u.stolen.forEach(k => S.items[k]++); txt(p.x, p.y - p.h - 30, `Récupéré : ${u.stolen.map(k => ITEMS[k].short).join(', ')} !`, '#ffe08a', true); u.stolen = []; save(); } }
   else { u.lb = 0; txt(px(u).x, px(u).y - 40, 'K.O.', '#ff6a5a', true); }
 }
 
@@ -586,6 +609,7 @@ const ULT = {
 async function useItem(h, k, t) { S.items[k]--; save(); const I = ITEMS[k]; say(`<b>${h.name}</b> utilise ${I.name}${t !== h ? ' sur ' + t.name : ''}.`); setPose(h, 'cast', 600); await wait(250);
   if (k === 'pot') { SFX.heal(); await heal(t, t.hpMax * .5); }
   else if (k === 'eth') { const p = px(t), g = Math.round(t.mpMax * .5); t.mp = Math.min(t.mpMax, t.mp + g); txt(p.x, p.y - p.h - 6, `+${g} 💧`, '#7ab4ff', true); rise(p.x, p.y - p.h * .4, 14, ['#7ab4ff', '#cfe4ff']); SFX.magic(); }
+  else if (k === 'eli') { SFX.heal(); for (const a of livingH()) await heal(a, a.hpMax * .35); }
   else if (k === 'fea') { const p = px(t); rise(p.x, p.y - 20, 30, ['#ffb070', '#ffe58a', '#ffffff']); SFX.buff(); await wait(300); t.hp = Math.round(t.hpMax * .4); t.deadT = 0; t.st = {}; setPose(t, 'win', 600); txt(p.x, p.y - p.h - 10, 'Debout !', '#ffe58a', true); }
   refresh(); await wait(350); }
 async function swapHero(h, n) { const i = B.party.indexOf(h); say(`<b>${h.name}</b> laisse sa place à <b>${n.name}</b> !`); SFX.whoosh();
@@ -601,19 +625,24 @@ async function foeHit(f, t, mult, label) {
   await dashTo(f, t, f.boss ? px(t).h * .2 + px(f).h * .3 : null); const c = center(t);
   if (label) txt(c.x, c.y - 90, label, '#ff8a6a', true);
   slashFx(c.x, c.y, true, '#ff8a6a');
-  await damage(t, calc(f, t, mult), { src: f });
+  const d = await damage(t, calc(f, t, mult), { src: f });
   if (alive(t) && f.m.trait === 'poison' && Math.random() < .55 && !t.st.guard) { t.st.poison = { d: Math.max(3, Math.round(f.atk * .45)), n: 3 }; txt(c.x, c.y - 60, '☠️ Empoisonné', '#a8e070', true); }
-  await wait(160); await dashBack(f); setPose(f, 'idle', 0);
+  if (f.m.trait === 'steal' && Math.random() < .4) { const ks = ['pot', 'eth', 'eli', 'fea'].filter(k => S.items[k] > 0); if (ks.length) { const k = pick(ks); S.items[k]--; (f.stolen = f.stolen || []).push(k); save(); txt(c.x, c.y - 80, `Vole : ${ITEMS[k].name} !`, '#ffb070', true); SFX.coin(); buildActs(); } }
+  await wait(160); await dashBack(f); setPose(f, 'idle', 0); return d;
 }
 async function foeAct(f) {
   if (!livingH().length) return;
   f.turn++;
   if (f.boss) return bossAct(f);
+  if (f.m.trait === 'howl') {
+    if (f.charging) { f.charging = false; const t = pickTarget(f); say(`${f.name} bondit sur ${t.name} !`); await foeHit(f, t, 1.8, 'Morsure !'); return; }
+    if (f.turn % 2 === 1) { f.charging = true; setPose(f, 'atk', 600); SFX.roar(); const p = px(f); ring(p.x, p.y - p.h * .5, '#ff6a4a', 70); say(`${f.name} hurle… <b>il va mordre très fort !</b>`); await wait(650); return; } }
   const t = pickTarget(f); say(`${f.name} attaque ${t.name} !`);
   await foeHit(f, t, 1);
   if (f.m.trait === 'double' && livingH().length) { const t2 = pickTarget(f); await foeHit(f, t2, .8); }
 }
 async function bossAct(f) {
+  if (f.id === 'bossWitch') return witchAct(f);
   const p = px(f);
   if (f.phPending && !f.ph) { f.phPending = false; f.ph = { shield: Math.round(f.hpMax * .16) }; f.ph.max = f.ph.shield; say('Le Roi des Os lève une <b>muraille d’ossements</b> ! (le feu la brise deux fois plus vite)');
     setPose(f, 'laugh', 1400); SFX.roar(); B.shake = { t0: now(), amp: 6 }; sparks(p.x, p.y - p.h * .5, 40, ['#f2ead8', '#c8b890'], 1.6, .1); await wait(800);
@@ -624,6 +653,20 @@ async function bossAct(f) {
     for (const h of livingH()) { const c = center(h); slashFx(c.x, c.y, true, '#c8a8ff'); await damage(h, calc(f, h, 1.45), { src: f }); } await wait(400); return; }
   if (f.turn % (f.ph ? 2 : 3) === 2 % (f.ph ? 2 : 3)) { f.charging = true; setPose(f, 'spe', 1e9); say('Le Roi des Os lève sa faux… <b>Défends-toi ou étourdis-le !</b>'); SFX.roar(); await wait(700); return; }
   const t = pickTarget(f); say(`Le Roi des Os frappe ${t.name} !`); await foeHit(f, t, f.ph ? 1.15 : 1);
+}
+async function witchAct(f) {
+  const p = px(f);
+  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { thorns: true }; say('Sylvaine s’entoure de <b>ronces maudites</b> ! (les coups au corps à corps te blessent)');
+    setPose(f, 'rage', 1400); SFX.roar(); B.shake = { t0: now(), amp: 6 }; sparks(p.x, p.y - p.h * .5, 40, ['#5ac040', '#a8f070', '#2a6a20'], 1.6, .05); await wait(800);
+    if (livingF().length < 3) { const i = B.foes.findIndex(x => !alive(x) && !x.boss); const s = mkFoe('wolf', 1, B.lvIdx, true, 3, 0); s.slot = BSLOT[[1, 2].find(j => !B.foes.some(x => alive(x) && x.slot === BSLOT[j])) || 1]; s.alpha = 0;
+      if (i >= 0) B.foes[i] = s; else B.foes.push(s); say('Un loup accourt à l’appel de Sylvaine !'); await tween(s, { alpha: 1 }, 400); }
+    refresh(); await wait(300); return; }
+  if (f.charging) { f.charging = false; say('<b>Malédiction des ronces !</b>'); setPose(f, 'blast', 900); SFX.roar(); focusCam(f, B.party[0]); B.shake = { t0: now(), amp: 7 }; await wait(250);
+    for (const h of livingH()) { const c = center(h); sparks(c.x, c.y + 20, 14, ['#5ac040', '#a8f070', '#2a6a20'], 1.3); await damage(h, calc(f, h, 1.05), { src: f });
+      if (alive(h) && !h.st.guard) { h.st.poison = { d: Math.round(f.atk * .3), n: 3 }; txt(c.x, c.y - 60, '☠️ Empoisonné', '#a8e070'); } } await wait(400); return; }
+  if (f.turn % (f.ph ? 2 : 3) === 2 % (f.ph ? 2 : 3)) { f.charging = true; setPose(f, 'spe', 1e9); say('Sylvaine prépare une malédiction… <b>Défends-toi ou étourdis-la !</b>'); SFX.magic(); await wait(700); return; }
+  const t = pickTarget(f); say(`Sylvaine draine ${t.name} !`); setPose(f, 'atk', 600); await wait(150); const a = center(f), b = center(t); SFX.magic(); await proj('orb', a, b, 300);
+  const d = await damage(t, calc(f, t, f.ph ? 1.15 : 1), { src: f }); if (d > 0) await heal(f, d * .5);
 }
 async function tickStart(u) {
   const p = px(u);
@@ -652,7 +695,7 @@ function aiHero(h) {
       if (can('smite') && h.mp > h.mpMax * .6) return { k: 'smite', tgt: boss || weakest };
       return { k: 'atk', tgt: weakest };
     case 'aldric':
-      if (boss && boss.charging && !boss.stunCd && can('bash')) return { k: 'bash', tgt: boss };
+      { const ch = fs.find(f => f.charging && !(f.boss && f.stunCd)); if (ch && can('bash')) return { k: 'bash', tgt: ch }; }
       if (hs.length > 1 && !h.st.taunt && can('taunt') && (boss || hs.some(x => x !== h && x.hp < x.hpMax * .55))) return { k: 'taunt' };
       if (fs.length >= 2 && can('whirl')) return { k: 'whirl' };
       if (hs.length === 1 && h.hp < h.hpMax * .35 && fs.length) return { k: 'guard' };
@@ -691,14 +734,14 @@ async function runLevel(i) {
     for (const f of B.foes) { f.ox = VW * .5; f.alpha = 0; }
     $('fWave').textContent = `Vague ${B.wave + 1} / ${L.waves.length}`; refresh();
     const el = B.foes.find(f => f.elite);
-    if (boss) { music('boss1'); say('<b>Le Roi des Os</b> se dresse sur son trône !'); }
+    if (boss) { music('boss1'); say(ws.includes('bossWitch') ? '<b>Sylvaine la Sorcière</b> sort de sa hutte !' : '<b>Le Roi des Os</b> se dresse sur son trône !'); }
     else say(el ? `⭐ Un élite : <b>${el.name}</b> (${el.elite.tip}) !` : B.wave ? 'Une nouvelle vague approche !' : 'Des monstres surgissent !');
     await Promise.all(B.foes.map((f, j) => wait(j * 120).then(() => tween(f, { ox: 0, alpha: 1 }, 520, easeOut))));
     if (boss && !FAST) { const bf = B.foes.find(f => f.boss); setPose(bf, 'laugh', 1200); SFX.roar(); B.shake = { t0: now(), amp: 5 }; await wait(1100); }
     const res = await fightWave();
     if (res !== 'win') return { win: false, fled: res === 'flee', rounds: B.rounds };
     B.rounds.push(B.round);
-    if (B.wave < L.waves.length - 1) { for (const h of livingH()) h.mp = Math.min(h.mpMax, h.mp + Math.round(h.mpMax * .2)); for (const h of B.party) h.st = {}; B.aegis = 0; say('Vague vaincue !'); refresh(); await wait(900); }
+    if (B.wave < L.waves.length - 1) { for (const h of livingH()) h.mp = Math.min(h.mpMax, h.mp + Math.round(h.mpMax * .1)); for (const h of B.party) h.st = {}; B.aegis = 0; say('Vague vaincue !'); refresh(); await wait(900); }
   }
   return { win: true, rounds: B.rounds, alive: livingH().length, size: B.party.length, hpLeft: B.minHp };
 }
@@ -860,6 +903,7 @@ function drawUnit(c, u, t, sel) {
   if (u.st.freeze) c.filter = 'saturate(.3) brightness(1.3) hue-rotate(160deg)';
   if (u.elite && !dead && !reduce) { const g = c.createRadialGradient(p.x, p.y - p.h * .45 - fly, 4, p.x, p.y - p.h * .45 - fly, p.h * .75); g.addColorStop(0, `rgba(${u.elite.col},${.3 + .12 * Math.sin(t / 200)})`); g.addColorStop(1, `rgba(${u.elite.col},0)`); c.fillStyle = g; c.fillRect(p.x - p.h, p.y - p.h * 1.3 - fly, p.h * 2, p.h * 1.6); }
   if (u.charging && !reduce) { const g = c.createRadialGradient(p.x, p.y - p.h * .5, 4, p.x, p.y - p.h * .5, p.h * .7); g.addColorStop(0, `rgba(170,120,255,${.35 + .2 * Math.sin(t / 110)})`); g.addColorStop(1, 'rgba(170,120,255,0)'); c.fillStyle = g; c.fillRect(p.x - p.h, p.y - p.h * 1.3, p.h * 2, p.h * 1.5); }
+  if (u.ph && u.ph.thorns && !reduce) { c.save(); c.globalAlpha = a * (.45 + .15 * Math.sin(t / 200)); c.strokeStyle = '#5ac040'; c.lineWidth = 4; c.setLineDash([4, 9]); c.lineDashOffset = -t / 40; c.beginPath(); c.ellipse(p.x, p.y - p.h * .5, p.h * .52, p.h * .64, 0, 0, 7); c.stroke(); c.restore(); }
   if (u.ph && u.ph.shield > 0) { c.save(); c.globalAlpha = a * .5; c.strokeStyle = '#f2ead8'; c.lineWidth = 3; c.setLineDash([10, 7]); c.beginPath(); c.ellipse(p.x, p.y - p.h * .5, p.h * .5, p.h * .62, 0, 0, 7); c.stroke(); c.restore(); }
   if (u.side === 'h' && u.lb >= 100 && !dead && !reduce) { c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = .35 + .2 * Math.sin(t / 150); const g = c.createRadialGradient(p.x, p.y - p.h * .5, 4, p.x, p.y - p.h * .5, p.h * .65); g.addColorStop(0, 'rgba(255,190,70,.8)'); g.addColorStop(1, 'rgba(255,150,30,0)'); c.fillStyle = g; c.fillRect(p.x - p.h, p.y - p.h * 1.2, p.h * 2, p.h * 1.4); c.restore(); }
   drawSprite(c, u.sprite, pose, p.x + recoil, p.y - fly, p.h, flash, 1 + sq, 1 + br - sq * .6, u.elite ? u.elite.col : null);
@@ -929,9 +973,11 @@ function stars(n) { return [0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">�
 const unlocked = i => i === 0 || S.stars[i - 1] > 0;
 function renderHome() {
   $('gold').textContent = S.gold; $('snd').textContent = muted ? '🔇' : '🔊'; $('ver').innerHTML = `${VERSION}<button type="button" id="replayIntro">Revoir l’intro</button>`;
-  const cur = LEVELS.findIndex((_, i) => unlocked(i) && !S.stars[i]);
-  $('path').innerHTML = LEVELS.map((L, i) => `<button class="node ${L.boss ? 'boss' : ''} ${unlocked(i) ? '' : 'lock'} ${i === cur ? 'cur' : ''}" type="button" data-lv="${i}" aria-label="${L.name}">
-    <div class="disc">${L.boss ? `<img src="${IP}bossBone.webp" alt="">` : unlocked(i) ? i + 1 : '🔒'}</div><div class="stars">${stars(S.stars[i])}</div><div class="nm">${L.name}</div></button>`).join('');
+  const cur = LEVELS.findIndex((_, i) => unlocked(i) && !S.stars[i]), C = CHAPTERS[S.ch];
+  $('tabs').innerHTML = CHAPTERS.map((ch, j) => `<button type="button" data-ch="${j}" class="${j === S.ch ? 'on' : ''}" ${unlocked(LEVELS.findIndex(L => L.ch === j)) ? '' : 'disabled'}>${j + 1}. ${unlocked(LEVELS.findIndex(L => L.ch === j)) ? ch.name : '🔒'}</button>`).join('');
+  $('ban').style.backgroundImage = `url(${C.ban})`; $('chN').textContent = `CHAPITRE ${S.ch + 1}`; $('chT').textContent = C.name;
+  $('path').innerHTML = LEVELS.map((L, i) => L.ch !== S.ch ? '' : `<button class="node ${L.boss ? 'boss' : ''} ${unlocked(i) ? '' : 'lock'} ${i === cur ? 'cur' : ''}" type="button" data-lv="${i}" aria-label="${L.name}">
+    <div class="disc">${L.boss ? `<img src="${IP}${C.boss}.webp" alt="">` : unlocked(i) ? i % 5 + 1 : '🔒'}</div><div class="stars">${stars(S.stars[i])}</div><div class="nm">${L.name}</div></button>`).join('');
   const slots = S.team.map(id => { const H = HEROES[id], s = S.h[id]; return `<div class="pc"><img src="${FP}${H.face}.webp" alt=""><b>${H.name}</b><small>Niv. ${s.lvl}</small><span class="role ${H.role}">${H.roleN}</span><div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>`; });
   while (slots.length < 3) slots.push('<div class="pc empty"><div><span>❔</span>Un allié te rejoindra</div></div>');
   $('party').innerHTML = slots.join('');
@@ -945,15 +991,16 @@ function modal(html, cb) { sheet.innerHTML = html; modalEl.hidden = false; modal
 function closeModal() { modalEl.hidden = true; const cb = modalCb; modalCb = null; if (cb) cb(); }
 function levelSheet(i) {
   const L = LEVELS[i], foes = [...new Set(L.waves.flat())];
-  modal(`<h3>${i + 1}. ${L.name}</h3><p style="text-align:center">${L.waves.length} vagues · niveau conseillé ${L.rec}</p>
+  modal(`<h3>${i % 5 + 1}. ${L.name}</h3><p style="text-align:center">${L.waves.length} vagues · niveau conseillé ${L.rec}</p>
     <div class="foes">${foes.map(k => `<img src="${IP}${k}.webp" alt="${MON[k].name}" title="${MON[k].name}">`).join('')}</div>
     ${foes.map(k => `<p style="font-size:13px;margin:3px 0">• <b>${MON[k].name}</b> : ${MON[k].tip} <span title="faiblesse">${MON[k].w.map(e => ELI[e]).join('')}</span></p>`).join('')}
     ${L.elite ? '<p style="font-size:13px;margin:3px 0">• ⭐ Des <b>élites</b> colorés peuvent apparaître : plus forts, mais double butin.</p>' : ''}
     <button class="btn" type="button" data-play="${i}">⚔️ Combattre</button><button class="btn alt" type="button" data-close="1">Retour</button>`);
 }
 async function playLevel(i) {
+  const ck = CHAPTERS[LEVELS[i].ch].story; if (!S.seen[ck] && LEVELS[i].ch > 0) { modalCb = null; return story(ck, () => playLevel(i)); }
   closeModal(); ac(); $('home').hidden = true; $('fight').hidden = false;
-  $('fName').textContent = `${i + 1}. ${LEVELS[i].name}`; music('fight1'); fx = []; sfx = []; pending = null;
+  $('fName').textContent = `${LEVELS[i].ch + 1}-${i % 5 + 1}. ${LEVELS[i].name}`; music('fight1'); fx = []; sfx = []; pending = null;
   const res = await runLevel(i);
   pending = null; buildActs();
   if (res.fled) return backHome();
@@ -962,7 +1009,7 @@ async function playLevel(i) {
 function backHome() { $('fight').hidden = true; $('home').hidden = false; B = null; renderHome(); music('map1'); }
 function grantXp(xp, bench = .5) { const ups = [];
   for (const id of Object.keys(S.own)) { const s = S.h[id], g = Math.round(xp * (S.team.includes(id) ? 1 : bench)); s.xp += g; let up = 0; while (s.xp >= xpNeed(s.lvl)) { s.xp -= xpNeed(s.lvl); s.lvl++; up++; } if (S.team.includes(id)) ups.push([id, g, up]); } return ups; }
-function rewards(i, kills, win) { let xp = 0, gold = 0; for (const f of kills) { xp += Math.round(MON[f.id].xp * 1.25 * (1 + .15 * i) * f.xpM); gold += Math.round(MON[f.id].gold * (1 + .1 * i) * f.goldM); }
+function rewards(i, kills, win) { let xp = 0, gold = 0; for (const f of kills) { xp += Math.round(MON[f.id].xp * 1.25 * (1 + .08 * i) * f.xpM); gold += Math.round(MON[f.id].gold * (1 + .1 * i) * f.goldM); }
   if (!win) { xp = Math.round(xp * .3); gold = 0; } return { xp, gold }; }
 function recruit(i) { const id = RECRUIT[i]; if (!id || S.own[id]) return null; S.own[id] = 1; const lv = Math.max(...S.team.map(k => S.h[k].lvl)); S.h[id].lvl = Math.max(S.h[id].lvl, lv - 1); if (S.team.length < 3) S.team.push(id); return id; }
 async function victory(i, res) {
@@ -978,14 +1025,15 @@ async function victory(i, res) {
     <p style="text-align:center;margin-top:10px">+${gold} <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"> ${drops.map(k => `· <img class="poti ${ITEMS[k].cls}" src="${IP}uiPotion.webp" style="width:22px;vertical-align:-5px" alt=""> ${ITEMS[k].name}`).join(' ')}</p>
     ${rec ? `<div class="row" style="background:rgba(255,215,106,.5)"><img class="f" src="${FP}${HEROES[rec].face}.webp" alt=""><div class="grow"><b>${HEROES[rec].name} rejoint l’équipe !</b><small>${HEROES[rec].desc}</small></div></div>` : ''}
     <button class="btn" type="button" data-home="1">Continuer</button><button class="btn alt" type="button" data-play="${i}">Rejouer</button>`);
-  modalCb = () => { if (rec) story(rec, LEVELS[i].boss && first ? () => story('out') : null); else if (LEVELS[i].boss && first) story('out'); };
+  const endK = CHAPTERS[LEVELS[i].ch].end, endS = () => { if (CHAPTERS[LEVELS[i].ch + 1]) { S.ch = LEVELS[i].ch + 1; save(); renderHome(); } story(endK); };
+  modalCb = () => { if (rec) story(rec, LEVELS[i].boss && first ? endS : null); else if (LEVELS[i].boss && first) endS(); };
 }
 function defeat(i) { const { xp } = rewards(i, B.kills, false); grantXp(xp); save(); SFX.lose(); say('Ton équipe est tombée…');
   modal(`<h3>Défaite…</h3><p style="text-align:center">Tes héros gardent ${xp} XP de ce combat.</p><p style="font-size:13px">💡 Défends-toi quand le boss lève sa faux, garde l’<b>Ultime</b> pour les moments durs, et améliore tes armes à la <b>Forge</b>. Tu peux aussi rejouer un niveau d’avant pour gagner des niveaux.</p>
     <button class="btn" type="button" data-play="${i}">Réessayer</button><button class="btn alt" type="button" data-home="1">Carte</button>`); }
 let storyNext = null;
 function story(key, cb) { const lines = STORY[key]; let j = 0;
-  const show = () => { const [who, t] = lines[j]; const H = HEROES[who], face = H ? H.face : who === 'bossBone' ? 'bossBone' : null, name = H ? H.name : who === 'bossBone' ? 'Roi des Os' : '';
+  const show = () => { const [who, t] = lines[j]; const H = HEROES[who], face = H ? H.face : MON[who] ? who : null, name = H ? H.name : MON[who] ? MON[who].name : '';
     modal(`<div class="say ${face ? '' : 'narr'}">${face ? `<img src="${H ? FP : IP}${face}.webp" alt="">` : ''}<div class="t">${name ? `<b>${name}</b><br>` : ''}${t}</div></div><button class="btn" type="button" data-next="1">${j < lines.length - 1 ? 'Suite' : 'C’est parti !'}</button>`); };
   storyNext = () => { j++; if (j < lines.length) show(); else { storyNext = null; closeModal(); S.seen[key] = 1; save(); if (cb) cb(); } }; show(); }
 let teamCtl = null;
@@ -1014,6 +1062,7 @@ function helpSheet() { modal(`<h3>Comment jouer</h3>
 document.addEventListener('click', e => {
   const b = e.target.closest('button, [data-pick]'); if (!b) return; const d = b.dataset; ac();
   if (d.close) return closeModal();
+  if (d.ch != null && b.closest('#tabs')) { S.ch = +d.ch; save(); SFX.click(); return renderHome(); }
   if (d.next && storyNext) return storyNext();
   if (d.lv != null && b.classList.contains('node')) { if (!unlocked(+d.lv)) return toast('Termine le niveau précédent d’abord.'); SFX.click(); return levelSheet(+d.lv); }
   if (d.play != null) { modalCb = null; return playLevel(+d.play); }
@@ -1029,7 +1078,7 @@ $('ver').addEventListener('click', e => { if (e.target.id === 'replayIntro') pla
 $('forgeBtn').addEventListener('click', forgeSheet);
 $('shopBtn').addEventListener('click', shopSheet);
 $('helpBtn').addEventListener('click', helpSheet);
-$('storyBtn').addEventListener('click', () => story(S.stars[4] ? 'out' : 'in'));
+$('storyBtn').addEventListener('click', () => { const C = CHAPTERS[S.ch], done = S.stars[LEVELS.findIndex(L => L.ch === S.ch && L.boss)]; story(done ? C.end : C.story); });
 $('snd').addEventListener('click', () => { muted = !muted; S.mute = muted; save(); if (muted) bgm.pause(); else { ac(); music(bgm.dataset.k || 'map1'); } renderHome(); });
 document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused && bgm.dataset.k) bgm.play().catch(() => {}); }, { once: true });
 
