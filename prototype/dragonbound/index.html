@@ -403,6 +403,10 @@ i.coin { display: inline-block; width: 1em; height: 1em; vertical-align: -0.14em
 /* World map */
 .wmap { position: relative; border-radius: 18px; overflow: hidden; border: 4px solid #6e4628; box-shadow: 0 6px 0 #3b2414, 0 10px 20px rgba(0,0,0,.35); }
 .wmap .wbg { display: block; width: 100%; height: auto; }
+.wmap.far { height: 210px; margin-bottom: 10px; background: #2a1c11; }
+.wmap.far .farbg { position: absolute; top: 0; bottom: 0; left: 0; width: 50%; background-size: cover; background-position: center; filter: saturate(.9) brightness(.8); }
+.wmap.far .farbg.r { left: 50%; } .wmap.far::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 40%, rgba(20,10,5,.55)); pointer-events: none; }
+.wmap.far .fartitle { position: absolute; top: 8px; left: 0; right: 0; text-align: center; z-index: 2; font-family: var(--font-display); color: #ffe08a; font-size: 16px; text-shadow: 0 2px 2px #000; }
 .pin { position: absolute; transform: translate(-50%, -50%); background: none; border: 0; padding: 0; cursor: pointer; display: grid; place-items: center; }
 .pin { z-index: 1; } .pin.cur { z-index: 3; }
 .pin .med { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-family: var(--emoji); font-size: 22px; overflow: hidden;
@@ -1359,11 +1363,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
 
   // Path positions of the 8 kingdoms on the painted world map (percent of width / height).
-  const MAP_POS = [[45, 88], [50, 72], [47, 55], [55, 41], [50, 30], [50, 21], [43, 13], [52, 5], [24, 47], [64, 64]];
+  const MAP_POS = [[45, 88], [50, 72], [47, 55], [55, 41], [50, 30], [50, 21], [43, 13], [52, 5], [30, 38], [64, 72]]; // 9 and 10 live on the 'far lands' strip above the main map
   function worldMapHtml() {
     const nl = nextLevel(), cur = nl ? nl[0] : WORLDS.length - 1;
     const C = CL(), face = C.face === 'hero-face' || OPT.has(C.face) ? `<img src="img/${C.face}.webp" alt="">` : C.emoji;
-    const pins = WORLDS.map((W, w) => {
+    const pin = (W, w) => {
       const [x, y] = MAP_POS[w] || [50, 50], open = isOpen(w, 0), done = G.stars[lkey(w, 4)] > 0;
       const st = [0, 1, 2, 3, 4].reduce((a, i) => a + (G.stars[lkey(w, i)] || 0), 0);
       const bossK = W.levels[4][0][W.levels[4][0].length - 1], side = w % 2 ? 'l' : 'r';
@@ -1372,8 +1376,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         <span class="lab">${w + 1}. ${W.name.replace(/^(Les |La |Le |L’)/, '')}${open ? ` · ⭐${st}` : ''}</span>
         <span class="boss ${side} ${done ? 'beaten' : ''}">${thumb(bossK)}</span>
         ${w === cur ? `<span class="me" style="${side === 'l' ? 'left:28px' : 'right:28px'}">${face}</span>` : ''}</button>`;
-    }).join('');
-    return `<div class="wmap"><img class="wbg" src="img/worldmap.webp" alt="Carte des dix royaumes">${pins}</div>
+    };
+    const far = WORLDS.map((W, w) => w >= 8 ? pin(W, w) : '').join(''), pins = WORLDS.map((W, w) => w < 8 ? pin(W, w) : '').join('');
+    return `<div class="wmap far"><div class="farbg" style="background-image:url(img/${OPT.has('bg8_0') ? 'bg8_0' : 'bg0_1'}.webp)"></div><div class="farbg r" style="background-image:url(img/bg9_0.webp)"></div><div class="fartitle">Terres lointaines</div>${far}</div>
+      <div class="wmap"><img class="wbg" src="img/worldmap.webp" alt="Carte des dix royaumes">${pins}</div>
       <div class="note" style="text-align:center; color:#f6e7c4; margin:-6px 0 4px">Touche un royaume pour voir ses niveaux</div>`;
   }
   function renderAdventure() {
@@ -1569,7 +1575,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     F.turn = 0; F.defending = false; F.busy = false; F.foeSt = {};
     $('foeName').textContent = (F.foe.elite ? '⭐ ' : '') + F.foe.name; if (F.foe.elite) { SFX.thump(); floatTxt('⭐ ÉLITE', pos().ex, pos().ey - stageH() * 0.5, '#ffd76a', true); } setMusic(f.boss ? 'boss' : [0, 3, 6, 7, 8].includes(F.w) ? 'dark' : 'fight'); if (f.boss) bossIntro(k);
     $('roomTxt').textContent = `${F.mode.medal}${F.w + 1}-${F.i + 1} · ${F.room + 1}/${F.rooms.length}`;
-    say(f.boss ? `${f.name} se dresse devant toi !` : F.foe.elite ? `Un ${F.foe.name} surgit ! Plus fort, mais il garde un coffre.` : `${f.name} surgit ! ${f.tip || ''}`);
+    say(f.boss ? `${f.name} se dresse devant toi !` : F.foe.elite ? `⭐ ${F.foe.name} surgit ! Plus fort, mais il garde un coffre.` : `${f.name} surgit ! ${f.tip || ''}`);
     $('intent').hidden = true; updFight();
   }
   function say(t) { $('log').innerHTML = t; }
@@ -1646,7 +1652,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function tick(o, key, ms) { o[key] = performance.now(); return wait(ms); }
   const ZOOM = 0.52; // 2.4: smaller characters, wider view; the camera zooms in during actions
   function stageH() { const FH = scv.clientHeight, ct = $('fctrl'), ch = ct ? ct.offsetHeight : 0; return Math.max(240, Math.min(FH, Math.round(FH - ch + 34))); }
-  const pos = () => { const W = scv.clientWidth, H = stageH(); return { W, H, hx: W * 0.25, hy: H * 0.84, ex: W * 0.75, ey: H * 0.84 }; };
+  const pos = () => { const W = scv.clientWidth, H = stageH(); return { W, H, hx: W * 0.25, hy: H * 0.88, ex: W * 0.75, ey: H * 0.88 }; };
 
   // ---------- Boss phases: at half health every boss transforms and gains its own mechanic ----------
   const MELEE = k => (k === 'atk' && CL().atk.fx === 'slash') || k === 'whirl';
@@ -1906,12 +1912,12 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         else { const a = Math.min(F.barrier, r.d); F.barrier -= a; r.d -= a; F.hero.block = performance.now(); SFX.zap();
           if (F.barrier <= 0 && a > 0) { SFX.shatter(); shards(hx, hcY, ['#7ab8ff', '#bfe8ff', '#ffffff'], 16); F.hero.broke = performance.now(); } }
       }
-      if (r.d > 0 && !F.defending && G.cls === 'rogue' && Math.random() < 0.12) { r.d = 0; r.shadow = true; }
+      if (r.d > 0 && !F.defending && G.cls === 'rogue' && Math.random() < 0.12) { r.d = 0; r.evade = true; }
       if (r.d > 0 && F.shadowDodge) { r.d = 0; r.graze = false; F.shadowDodge = false; r.shadow = true; F.shadowed = true; }
       if (r.d > 0 && F.aegis > 0) r.d = Math.max(1, Math.round(r.d * 0.6));
       if (r.d > 0 && hasLeg('epines')) { const t = Math.max(1, Math.round(r.d * 0.2)); f.hp = Math.max(1, f.hp - t); floatTxt(`-${t} 🌵`, ex, ey - H * f.size * ZOOM, '#e8d9b0'); }
       G.hp -= r.d; total += r.d; if (r.d > 0) { F.hero.hit = performance.now(); if (!F.defending) SFX.hurt(); }
-      floatTxt(r.d === 0 ? (r.graze ? 'Raté !' : r.shadow ? 'Dans l\u2019ombre !' : dodged ? 'Esquive !' : 'Absorbé !') : `-${r.d}${r.crit ? ' !' : ''}`, hx + i * 20, hy - H * 0.5 - i * 14, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1 || r.d === 0);
+      floatTxt(r.d === 0 ? (r.graze ? 'Raté !' : r.evade ? 'Esquive !' : r.shadow ? 'Dans l\u2019ombre !' : dodged ? 'Esquive !' : 'Absorbé !') : `-${r.d}${r.crit ? ' !' : ''}`, hx + i * 20, hy - H * 0.5 - i * 14, F.defending ? '#c8d2da' : '#ff6a5a', mult > 1 || r.d === 0);
       if (f.trait === 'drain') f.hp = Math.min(f.hpMax, f.hp + Math.round(r.d * (f.ph && f.id === 'bossVamp' ? 1 : 0.5)));
       if (f.trait === 'chill' && !F.defending) F.mp = Math.max(0, F.mp - 5);
     }
@@ -2186,6 +2192,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
         for (let j = 0; j < 6; j++) { const q = (t / 4200 + j / 6 + hh(i)) % 1, px = x + Math.sin(q * 4 + j) * R + q * R * 2.5, py = y - q * (R * 12 + 40), rr = R * (0.7 + q * 2.4) + 6;
           const g = c.createRadialGradient(px, py, 0, px, py, rr); g.addColorStop(0, `rgba(${rgb},${0.28 * Math.sin(q * Math.PI)})`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g; c.fillRect(px - rr, py - rr, rr * 2, rr * 2); }
       } else if (ty === 'r') { // light shafts slowly breathing
+        const y = Math.min(oy + ny * dh, 0);
         c.globalCompositeOperation = 'lighter';
         for (let j = 0; j < 3; j++) { const a = 0.05 + 0.04 * Math.sin(t / (2200 + j * 500) + j * 2), off = (j - 1) * R * 0.9, len = dh * 0.85;
           const g = c.createLinearGradient(x, y, x + len * 0.3, y + len); g.addColorStop(0, `rgba(${rgb},${a * 2})`); g.addColorStop(1, `rgba(${rgb},0)`); c.fillStyle = g;
@@ -2267,8 +2274,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (bk && ready(bk)) {
       // 2.6: show more of the painting. On a tall phone screen the picture no longer fills the whole height (that cropped ~2/3 of it);
       // it fills ~72 % and the top band of the picture is stretched above it as a sky/ceiling, softly shaded.
-      const im = IMG[bk], iw = im.naturalWidth, ih = im.naturalHeight, sc = Math.max(W / iw, BH * 0.72 / ih) * 1.02, dw = iw * sc, dh = ih * sc;
-      const drift = reduce ? 0 : Math.sin(t / 7000) * Math.min((dw - W) / 2, W * 0.025), ox = (W - dw) / 2 + drift, oy = BH - dh + (reduce ? 0 : (0.5 + 0.5 * Math.sin(t / 5300)) * dh * 0.008);
+      const im = IMG[bk], iw = im.naturalWidth, ih = im.naturalHeight, sc = Math.max(W / iw, H * 0.8 / ih) * 1.02, dw = iw * sc, dh = ih * sc;
+      const drift = reduce ? 0 : Math.sin(t / 7000) * Math.min((dw - W) / 2, W * 0.025), ox = (W - dw) / 2 + drift, oy = H + 8 - dh + (reduce ? 0 : (0.5 + 0.5 * Math.sin(t / 5300)) * dh * 0.006); // picture bottom sits at the bottom of the visible stage: fighters stand on its floor
       if (oy > 0) { const mh = Math.min(ih, (oy + 2) / sc); c.save(); c.translate(0, oy + 1); c.scale(1, -1); c.drawImage(im, 0, 0, iw, mh, ox, 0, dw, mh * sc); c.restore(); // mirrored: seamless at the edge
         const sg = c.createLinearGradient(0, 0, 0, oy + dh * 0.06); sg.addColorStop(0, 'rgba(10,6,16,.7)'); sg.addColorStop(0.75, 'rgba(10,6,16,.25)'); sg.addColorStop(1, 'rgba(10,6,16,0)'); c.fillStyle = sg; c.fillRect(0, 0, W, oy + dh * 0.06); }
       c.drawImage(im, ox, oy, dw, dh); liveBg(c, bk, ox, oy, dw, dh, t);
@@ -2394,10 +2401,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       const k = (now - p.t0) / (p.dur || { txt: 1100, ball: 420, arrow: 320, orb: 320, ice: 380, slash: 320, whirl: 700, rings: 800, rainArrow: 200, cloud: 1000, snow: 1400, runes: 1000 }[p.type] || 700);
       if (k >= 1) return false;
       if (p.type === 'txt') { const pop = k < 0.12 ? 0.5 + (k / 0.12) * 0.8 : k < 0.25 ? 1.3 - (k - 0.12) / 0.13 * 0.3 : 1, sz = (p.sm ? 15 : p.crit ? 36 : p.big ? 30 : 22) * pop;
-        const y = p.y - (1 - Math.pow(1 - k, 3)) * 46, x = p.x + (p.crit && k < 0.3 ? Math.sin(now / 25) * 3 : 0);
+        const y = p.y - (1 - Math.pow(1 - k, 3)) * 46; let x = p.x + (p.crit && k < 0.3 ? Math.sin(now / 25) * 3 : 0);
         c.save(); c.textAlign = 'center'; c.lineJoin = 'round'; c.globalAlpha = 1 - Math.max(0, k - 0.65) / 0.35;
         if (p.crit) { c.font = `400 ${Math.round(13 * pop)}px "Lilita One", system-ui, sans-serif`; c.lineWidth = 4; c.strokeStyle = 'rgba(90,30,0,.9)'; c.strokeText('CRITIQUE !', x, y - sz * 0.85); c.fillStyle = '#ffe58a'; c.fillText('CRITIQUE !', x, y - sz * 0.85); }
-        c.font = `400 ${Math.round(sz)}px "Lilita One", system-ui, sans-serif`; c.lineWidth = p.crit ? 6 : 5; c.strokeStyle = p.crit ? 'rgba(110,30,0,.95)' : 'rgba(30,15,5,.85)';
+        c.font = `400 ${Math.round(sz)}px "Lilita One", system-ui, sans-serif`; { const tw = c.measureText(p.text).width + (p.img ? sz * 1.6 : 0); x = Math.max(tw / 2 + 8, Math.min(W - tw / 2 - 8, x)); } c.lineWidth = p.crit ? 6 : 5; c.strokeStyle = p.crit ? 'rgba(110,30,0,.95)' : 'rgba(30,15,5,.85)';
         c.strokeText(p.text, x, y); c.fillStyle = p.color; c.fillText(p.text, x, y);
         if (p.img && IMG[p.img] && OPT.has(p.img)) { const tw = c.measureText(p.text).width, ds = sz * 1.5; c.drawImage(IMG[p.img], x - tw / 2 - ds - 2, y - ds * 0.78, ds, ds); }
         c.restore(); }
@@ -2600,7 +2607,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 2.6';
+  const VERSION = 'Version 2.6.1';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
