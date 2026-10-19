@@ -71,6 +71,7 @@ jobs:
           cp -r prototype/ile build/web/ile
           cp -r prototype/dragonbound build/web/dragonbound
           cp -r prototype/phaser build/web/phaser
+          cp -r prototype/dragonbound2 build/web/dragonbound2
 
       - uses: actions/upload-pages-artifact@v3
         with:
