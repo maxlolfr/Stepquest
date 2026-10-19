@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Dragonbound Phaser</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0c0a10; overflow: hidden; touch-action: manipulation; }
+  #game { width: 100%; height: 100%; }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<div id="game"></div>
+<script src="phaser.min.js"></script>
+<script>
+const VERSION = 'Prototype Phaser 0.1';
+const W = 720, H = 1280, GROUND = 735;
+const DEBUG = /pose/.test(location.search);
+
+// ---------- Skeletons: n, parent, x, y, rest rot, image, pivot x/y (sheet px), image rot, depth ----------
+const HERO = [
+  ['torso', null, 0, 0, 0, 'h_torso', 140, 330, 0, 5],
+  ['head', 'torso', -21, -318, 0, 'h_head', 200, 300, 0, 7],
+  ['cape', 'torso', -75, -262, 0, 'h_cape', 30, 90, 75, 1],
+  ['uarmB', 'torso', -34, -256, 10, 'h_uarmB', 152, 60, -90, 3],
+  ['farmB', 'uarmB', 0, 120, -20, 'h_farmB', 149, 37, -20, 3],
+  ['shield', 'farmB', 0, 230, 0, 'h_shield', 160, 178, 10, 6.5],
+  ['thighB', 'torso', 25, 10, 15, 'h_thighB', 56, 51, 14, 2],
+  ['shinB', 'thighB', 0, 130, -10, 'h_shinB', 130, 15, 0, 2],
+  ['thighF', 'torso', -15, 15, -12, 'h_thighF', 69, 51, 3, 6],
+  ['shinF', 'thighF', 0, 135, 8, 'h_shinF', 123, 15, 0, 6],
+  ['uarmF', 'torso', -28, -250, -20, 'h_uarmF', 131, 53, -51, 9],
+  ['farmF', 'uarmF', 0, 115, -60, 'h_farmF', 37, 37, 46, 9],
+  ['sword', 'farmF', 0, 215, 0, 'h_sword', 85, 74, 40, 8.8],
+];
+const RAT = [
+  ['body', null, 0, 0, 0, 'r_body', 306, 330, 0, 5],
+  ['tail1', 'body', -270, 80, 95, 'r_t1', 10, 143, 100, 0],
+  ['tail2', 'tail1', 0, 180, -12, 'r_t2', 8, 104, 88, 0],
+  ['tail3', 'tail2', 0, 210, -12, 'r_t3', 5, 55, 85, 0],
+  ['tail4', 'tail3', 0, 110, -10, 'r_t4', 5, 38, 61, 0],
+  ['legB', 'body', -120, -60, 8, 'r_legB', 80, 62, 16, 2],
+  ['fuB', 'body', 40, -110, 6, 'r_fuB', 91, 65, -5, 2],
+  ['flB', 'fuB', 0, 150, 5, 'r_flB', 44, 31, 30, 2],
+  ['head', 'body', 275, -150, 0, 'r_head', 70, 190, 0, 8],
+  ['jaw', 'head', 115, 70, 0, 'r_jaw', 60, 60, 0, 7],
+  ['legF', 'body', -150, -50, 0, 'r_legF', 93, 76, 16, 9],
+  ['fuF', 'body', 76, -100, -8, 'r_fuF', 108, 68, -6, 9],
+  ['flF', 'fuF', 0, 165, 4, 'r_flF', 44, 32, 21, 9],
+];
+const D2R = Math.PI / 180;
+
+class Rig {
+  constructor(scene, def, x, y, scale, flip) {
+    this.scene = scene; this.bx = x; this.by = y; this.scale = scale; this.flip = flip ? -1 : 1;
+    this.c = scene.add.container(x, y).setScale(scale * this.flip, scale);
+    this.root = { x: 0, y: 0, r: 0, sx: 1, sy: 1 };
+    this.bones = {}; this.order = []; this.idleAmt = 1; this.idle = () => ({});
+    for (const [n, p, bx, by, r, img, ox, oy, ir, z] of def) {
+      const b = { n, p, bx, by, r, ir, z, d: { r: 0, x: 0, y: 0 } };
+      const sp = scene.add.image(0, 0, img); sp.setScale(2); sp.setOrigin(ox / (sp.width * 2), oy / (sp.height * 2));
+      b.sp = sp; this.bones[n] = b; this.order.push(b);
+    }
+    [...this.order].sort((a, b) => a.z - b.z).forEach(b => this.c.add(b.sp));
+  }
+  update(t) {
+    const id = this.idle(t), k = this.idleAmt, W = {};
+    for (const b of this.order) {
+      const i = id[b.n] || {}, P = b.p ? W[b.p] : { x: 0, y: 0, a: 0 };
+      const lx = b.bx + b.d.x + (i.x || 0) * k, ly = b.by + b.d.y + (i.y || 0) * k;
+      const c = Math.cos(P.a), s = Math.sin(P.a);
+      const w = { x: P.x + lx * c - ly * s, y: P.y + lx * s + ly * c, a: P.a + (b.r + b.d.r + (i.r || 0) * k) * D2R };
+      W[b.n] = w; b.sp.x = w.x; b.sp.y = w.y; b.sp.rotation = w.a + b.ir * D2R;
+    }
+    this.c.x = this.bx + this.root.x; this.c.y = this.by + this.root.y; this.c.rotation = this.root.r * D2R * this.flip;
+    this.c.scaleX = this.scale * this.flip * this.root.sx; this.c.scaleY = this.scale * this.root.sy;
+  }
+  // tween every bone toward a pose (missing bones go back to rest)
+  pose(target, dur, ease = 'Sine.easeInOut') {
+    const sc = this.scene;
+    for (const b of this.order) { const t = target[b.n] || {}; sc.tweens.killTweensOf(b.d); sc.tweens.add({ targets: b.d, r: t.r || 0, x: t.x || 0, y: t.y || 0, duration: dur, ease }); }
+    const rt = target._ || {}; sc.tweens.killTweensOf(this.root);
+    sc.tweens.add({ targets: this.root, x: rt.x || 0, y: rt.y || 0, r: rt.r || 0, sx: rt.sx || 1, sy: rt.sy || 1, duration: dur, ease });
+    return new Promise(res => sc.time.delayedCall(dur, res));
+  }
+  flash(color, ms = 90) {
+    for (const b of this.order) b.sp.setTintFill(color);
+    this.scene.time.delayedCall(ms, () => { for (const b of this.order) b.sp.clearTint(); });
+  }
+  alpha(a, dur) { return new Promise(res => this.scene.tweens.add({ targets: this.c, alpha: a, duration: dur, onComplete: res })); }
+  // world position of a bone tip, for effects
+  at(n, dx = 0, dy = 0) { const sp = this.bones[n].sp, m = sp.getWorldTransformMatrix(); return { x: m.tx + dx, y: m.ty + dy }; }
+}
+
+class Fight extends Phaser.Scene {
+  constructor() { super('fight'); }
+  preload() {
+    const imgs = 'h_head h_torso h_cape h_uarmB h_farmB h_shield h_thighB h_shinB h_thighF h_shinF h_uarmF h_farmF h_sword r_body r_t1 r_t2 r_t3 r_t4 r_legB r_fuB r_flB r_head r_jaw r_legF r_fuF r_flF bg'.split(' ');
+    imgs.forEach(k => this.load.image(k, 'img/' + k + '.webp'));
+    const g = this.make.graphics({ add: false });
+    g.fillStyle(0xffffff); g.fillCircle(8, 8, 8); g.generateTexture('dot', 16, 16); g.clear();
+    g.fillStyle(0xffffff); g.fillRect(0, 0, 4, 18); g.generateTexture('spark', 4, 18); g.destroy();
+  }
+  create() {
+    const bg = this.add.image(W / 2, 410, 'bg'); bg.setScale(Math.max(W / bg.width, 840 / bg.height));
+    this.add.rectangle(W / 2, 410, W, 840, 0x000000, 0.12);
+    this.shadowH = this.add.ellipse(175, GROUND, 190, 34, 0x000000, 0.4);
+    this.shadowR = this.add.ellipse(555, GROUND, 250, 38, 0x000000, 0.4);
+    this.hero = new Rig(this, HERO, 175, GROUND - 148, 0.34, false);
+    this.rat = new Rig(this, RAT, 565, GROUND - 102, 0.31, true);
+    this.hero.idle = t => { const s = Math.sin(t / 420), s2 = Math.sin(t / 300);
+      return { torso: { y: s * 6, r: s * 1.2 }, head: { r: Math.sin(t / 520) * 2.5 }, cape: { r: s2 * 5 }, uarmF: { r: s * 3 }, farmF: { r: s * 2 }, uarmB: { r: -s * 3 }, thighF: { r: -s * 1 }, thighB: { r: s * 1 }, shinF: { r: s * 1.5 }, shinB: { r: -s * 1.5 } }; };
+    this.rat.idle = t => { const s = Math.sin(t / 360);
+      return { body: { y: s * 8 }, head: { r: Math.sin(t / 470) * 3 }, jaw: { r: 4 + Math.sin(t / 250) * 4 }, tail1: { r: Math.sin(t / 400) * 8 }, tail2: { r: Math.sin(t / 400 - 1) * 10 }, tail3: { r: Math.sin(t / 400 - 2) * 12 }, tail4: { r: Math.sin(t / 400 - 3) * 14 }, fuF: { r: -s * 2 }, legF: { r: s * 2 } }; };
+    this.fx = this.add.particles(0, 0, 'dot', { emitting: false, lifespan: 520, speed: { min: 140, max: 420 }, scale: { start: 0.9, end: 0 }, gravityY: 600, blendMode: 'ADD' });
+    this.sparks = this.add.particles(0, 0, 'spark', { emitting: false, lifespan: 300, speed: { min: 300, max: 700 }, scale: { start: 1.2, end: 0 }, rotate: { onEmit: (p) => Phaser.Math.RadToDeg(Math.atan2(p.velocityY, p.velocityX)) + 90 }, blendMode: 'ADD' });
+    this.trail = this.add.graphics().setBlendMode('ADD');
+    if (DEBUG) { this.add.text(10, 10, VERSION, { fontSize: 22 });
+      if (/rat/.test(location.search)) { this.hero.c.visible = false; this.rat.c.setPosition(330, 500); this.rat.bx = 330; this.rat.by = 500; this.rat.scale = 0.5; this.rat.flip = 1; this.rat.idleAmt = 0;
+        const g = this.add.graphics().setDepth(99); this.events.on('postupdate', () => { g.clear(); for (const b of this.rat.order) { const m = b.sp.getWorldTransformMatrix(); g.fillStyle(0x00ff00).fillCircle(m.tx, m.ty, 5); } }); }
+      return; }
+    this.buildUI(); this.reset();
+  }
+  update(t) { this.hero.update(t); this.rat.update(t);
+    this.shadowH.x = this.hero.c.x; this.shadowR.x = this.rat.c.x - 10;
+    this.shadowH.setScale(1 - Math.min(0.5, -this.hero.root.y / 400)); }
+
+  // ---------- UI ----------
+  bar(x, y, w, col) { const g = this.add.graphics(); return { g, x, y, w, col, set(v, max) { g.clear(); g.fillStyle(0x000000, 0.65).fillRoundedRect(x - 3, y - 3, w + 6, 26, 9); g.fillStyle(0x3a2a2a).fillRoundedRect(x, y, w, 20, 7); g.fillStyle(col).fillRoundedRect(x, y, Math.max(0.001, w * Math.max(0, v) / max), 20, 7); } }; }
+  buildUI() {
+    const st = { fontFamily: 'Georgia, serif', fontSize: 26, color: '#ffe9b0', stroke: '#2a1206', strokeThickness: 6, fontStyle: 'bold' };
+    this.add.text(30, 28, 'Aldric', st); this.add.text(W - 30, 28, 'Rat des égouts', st).setOrigin(1, 0);
+    this.hpH = this.bar(30, 68, 280, 0xd94545); this.mpH = this.bar(30, 100, 280, 0x4a8cff); this.hpR = this.bar(W - 310, 68, 280, 0xd94545);
+    this.hpHt = this.add.text(170, 70, '', { fontSize: 17, color: '#fff', fontStyle: 'bold' }).setOrigin(0.5, 0);
+    this.hpRt = this.add.text(W - 170, 70, '', { fontSize: 17, color: '#fff', fontStyle: 'bold' }).setOrigin(0.5, 0);
+    this.add.text(W - 12, H - 10, VERSION, { fontSize: 15, color: '#8a7a66' }).setOrigin(1, 1);
+    const p = this.add.graphics(); p.fillGradientStyle(0x2a1a10, 0x2a1a10, 0x140c08, 0x140c08, 1).fillRect(0, 840, W, H - 840);
+    p.lineStyle(4, 0xc9a24a).lineBetween(0, 842, W, 842);
+    this.msg = this.add.text(W / 2, 900, '', { fontFamily: 'Georgia, serif', fontSize: 27, color: '#ffe9b0', align: 'center', wordWrap: { width: W - 60 } }).setOrigin(0.5);
+    const B = [['atk', 'Coup d’épée', 0xb5523a], ['whirl', 'Tourbillon · 15 💧', 0x3a6cb5], ['def', 'Bouclier', 0x4a7a4a], ['pot', 'Potion ×2', 0xa83a6a]];
+    this.btns = B.map(([id, label, col], i) => {
+      const x = 190 + (i % 2) * 340, y = 1010 + Math.floor(i / 2) * 130;
+      const c = this.add.container(x, y), g = this.add.graphics();
+      g.fillStyle(0x000000, 0.4).fillRoundedRect(-157, -47, 320, 104, 22); g.fillStyle(col).fillRoundedRect(-160, -52, 320, 104, 22);
+      g.lineStyle(4, 0xe8c66a).strokeRoundedRect(-160, -52, 320, 104, 22);
+      const t = this.add.text(0, 0, label, { fontFamily: 'Georgia, serif', fontSize: 28, color: '#fff', fontStyle: 'bold', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5);
+      c.add([g, t]); c.setSize(320, 104).setInteractive({ useHandCursor: true });
+      c.on('pointerdown', () => { if (!this.busy && c.alpha === 1) { this.tweens.add({ targets: c, scale: 0.93, yoyo: true, duration: 70 }); this.act(id); } });
+      c.id = id; c.t = t; return c;
+    });
+  }
+  refresh() {
+    this.hpH.set(this.H.hp, this.H.max); this.mpH.set(this.H.mp, 40); this.hpR.set(this.R.hp, this.R.max);
+    this.hpHt.setText(`${Math.max(0, this.H.hp)} / ${this.H.max}`); this.hpRt.setText(`${Math.max(0, this.R.hp)} / ${this.R.max}`);
+    for (const b of this.btns) { const off = this.busy || (b.id === 'whirl' && this.H.mp < 15) || (b.id === 'pot' && this.H.pots < 1);
+      b.setAlpha(off ? 0.45 : 1); if (b.id === 'pot') b.t.setText(`Potion ×${this.H.pots}`); }
+  }
+  reset() {
+    this.H = { hp: 120, max: 120, mp: 40, pots: 2, guard: false }; this.R = { hp: 150, max: 150 }; this.busy = false;
+    for (const r of [this.hero, this.rat]) { r.c.alpha = 1; r.idleAmt = 1; r.pose({}, 1); }
+    if (this.endBox) { this.endBox.destroy(); this.endBox = null; }
+    this.say('Un rat géant surgit des égouts !'); this.refresh();
+  }
+  say(t) { this.msg.setText(t); this.msg.setAlpha(0); this.tweens.add({ targets: this.msg, alpha: 1, duration: 200 }); }
+  wait(ms) { return new Promise(r => this.time.delayedCall(ms, r)); }
+  num(x, y, txt, col, big) {
+    const t = this.add.text(x, y, txt, { fontFamily: 'Georgia, serif', fontSize: big ? 64 : 46, color: col, fontStyle: 'bold', stroke: '#1a0a04', strokeThickness: 9 }).setOrigin(0.5).setScale(0.3);
+    this.tweens.add({ targets: t, scale: 1, duration: 260, ease: 'Back.easeOut' });
+    this.tweens.add({ targets: t, y: y - 110, alpha: 0, delay: 520, duration: 600, onComplete: () => t.destroy() });
+  }
+  hitStop(ms) { this.tweens.timeScale = 0.05; this.time.delayedCall(ms, () => { this.tweens.timeScale = 1; }); }
+  slash(x, y, r, a0, a1, col = 0xfff2c0) {
+    const g = this.add.graphics().setBlendMode('ADD'); const o = { k: 0 };
+    this.tweens.add({ targets: o, k: 1, duration: 260, onUpdate: () => { g.clear();
+      for (let i = 0; i < 6; i++) { g.lineStyle(26 - i * 4, col, (1 - o.k) * (0.25 + i * 0.13)); g.beginPath(); g.arc(x, y, r - i * 5, a0 * D2R, (a0 + (a1 - a0) * Math.min(1, o.k * 2.2)) * D2R, a1 < a0); g.strokePath(); } },
+      onComplete: () => g.destroy() });
+  }
+
+  // ---------- Hero actions ----------
+  async act(id) {
+    this.busy = true; this.refresh(); const hero = this.hero, H = this.H;
+    if (id === 'atk') {
+      this.say('Aldric charge !');
+      await hero.pose({ _: { x: 150 }, torso: { r: 10 }, thighF: { r: -25 }, shinF: { r: 15 }, thighB: { r: 25 }, cape: { r: 25 } }, 260, 'Quad.easeIn');
+      await hero.pose({ _: { x: 165 }, torso: { r: -8 }, uarmF: { r: 165 }, farmF: { r: 40 }, head: { r: -6 }, cape: { r: 10 } }, 200, 'Back.easeOut');
+      const sw = hero.pose({ _: { x: 185 }, torso: { r: 14 }, uarmF: { r: -35 }, farmF: { r: 30 }, thighF: { r: -20 }, head: { r: 5 }, cape: { r: 30 } }, 110, 'Cubic.easeOut');
+      this.slash(hero.c.x + 60, hero.c.y - 40, 130, -120, 60);
+      await sw; await this.hurtRat(Phaser.Math.Between(20, 27), 0);
+      await this.wait(160); await hero.pose({}, 380, 'Sine.easeInOut');
+    } else if (id === 'whirl') {
+      H.mp -= 15; this.say('Tourbillon !'); this.refresh();
+      await hero.pose({ _: { y: 20, sy: 0.92 }, torso: { r: 8 }, thighF: { r: -30 }, shinF: { r: 40 }, thighB: { r: 20 }, shinB: { r: 25 } }, 180);
+      await hero.pose({ _: { x: 150, y: -170, r: 0 }, uarmF: { r: -60 }, farmF: { r: 55 }, uarmB: { r: -40 }, thighF: { r: -40 }, shinF: { r: 60 }, thighB: { r: -20 }, shinB: { r: 60 }, cape: { r: 50 } }, 260, 'Quad.easeOut');
+      for (let i = 0; i < 3; i++) {
+        const spin = hero.pose({ _: { x: 165 + i * 12, y: -140 + i * 50, r: 360 * (i + 1) }, uarmF: { r: -60 }, farmF: { r: 55 }, uarmB: { r: -40 }, thighF: { r: -40 }, shinF: { r: 60 }, thighB: { r: -20 }, shinB: { r: 60 }, cape: { r: 60 } }, 230, 'Linear');
+        this.slash(hero.c.x + 20, hero.c.y - 30, 150, i * 120, i * 120 + 300, 0xa8d4ff);
+        await spin; await this.hurtRat(Phaser.Math.Between(10, 14), 1);
+      }
+      hero.root.r = 0; await hero.pose({ _: { x: 0, y: 0 } }, 420, 'Quad.easeInOut');
+    } else if (id === 'def') {
+      H.guard = true; this.say('Aldric lève son bouclier.');
+      await hero.pose({ uarmB: { r: -95 }, farmB: { r: -10 }, torso: { r: -4 }, uarmF: { r: 30 }, _: { x: -10 } }, 260, 'Back.easeOut');
+      const ring = this.add.circle(hero.c.x + 40, hero.c.y - 30, 30, 0x7ab8ff, 0.35).setBlendMode('ADD');
+      this.tweens.add({ targets: ring, scale: 5, alpha: 0, duration: 600, onComplete: () => ring.destroy() });
+      H.mp = Math.min(40, H.mp + 6);
+    } else if (id === 'pot') {
+      H.pots--; const heal = 50; H.hp = Math.min(H.max, H.hp + heal); this.say('Aldric boit une potion.');
+      await hero.pose({ uarmB: { r: -120 }, farmB: { r: -60 }, head: { r: -18 }, torso: { r: -6 } }, 300);
+      this.fx.setParticleTint(0x7ae07a); this.fx.emitParticleAt(hero.c.x, hero.c.y + 60, 30);
+      hero.flash(0x9cff9c, 140); this.num(hero.c.x, hero.c.y - 200, '+' + heal, '#8fe07a'); this.refresh();
+      await this.wait(300); await hero.pose({}, 300);
+    }
+    this.refresh();
+    if (this.R.hp <= 0) return this.ratDies();
+    await this.wait(350); await this.ratTurn();
+  }
+  async hurtRat(dmg, combo) {
+    const rat = this.rat; this.R.hp -= dmg;
+    const p = { x: rat.c.x - 10, y: rat.c.y - 30 };
+    this.hitStop(combo ? 50 : 90); this.cameras.main.shake(combo ? 90 : 160, combo ? 0.006 : 0.012);
+    rat.flash(0xffffff, 80); this.sparks.setParticleTint(0xffe7a0); this.sparks.emitParticleAt(p.x, p.y, 14);
+    this.fx.setParticleTint(0xff5a3a); this.fx.emitParticleAt(p.x, p.y, 10);
+    this.num(p.x + Phaser.Math.Between(-30, 30), p.y - 120 - combo * 30, dmg, '#ffd95a', dmg > 22);
+    this.refresh();
+    await rat.pose({ _: { x: 40, r: -6 }, body: { r: -10 }, head: { r: -20 }, jaw: { r: 20 }, tail1: { r: -20 } }, 90, 'Quad.easeOut');
+    if (this.R.hp > 0) rat.pose({}, 320);
+  }
+
+  // ---------- Rat turn ----------
+  async ratTurn() {
+    const rat = this.rat, hero = this.hero, H = this.H;
+    this.say('Le rat se jette sur toi !');
+    await rat.pose({ _: { x: 30, y: 15, sy: 0.92 }, body: { r: 10 }, head: { r: -10 }, jaw: { r: 10 }, legF: { r: 15 }, fuF: { r: 20 }, tail1: { r: -15 }, tail2: { r: -15 } }, 340, 'Quad.easeOut');
+    await rat.pose({ _: { x: -190, y: -50, sy: 1.05 }, body: { r: -12 }, head: { r: 10 }, jaw: { r: 38 }, fuF: { r: -45 }, flF: { r: -20 }, fuB: { r: -40 }, legF: { r: -25 }, legB: { r: -25 }, tail1: { r: 15 }, tail2: { r: 15 } }, 230, 'Quad.easeIn');
+    await rat.pose({ _: { x: -205, y: 0 }, body: { r: 6 }, head: { r: 18 }, jaw: { r: 0 }, fuF: { r: -20 } }, 80, 'Quad.easeOut');
+    let dmg = Phaser.Math.Between(14, 20); if (H.guard) dmg = Math.round(dmg * 0.35);
+    H.hp -= dmg; this.cameras.main.shake(150, 0.012); this.hitStop(80);
+    hero.flash(H.guard ? 0x9cc8ff : 0xff6a6a, 100);
+    const hp = { x: hero.c.x + 20, y: hero.c.y - 40 };
+    this.fx.setParticleTint(H.guard ? 0x9cc8ff : 0xd02020); this.fx.emitParticleAt(hp.x, hp.y, H.guard ? 8 : 16);
+    this.num(hp.x, hp.y - 140, '-' + dmg, H.guard ? '#9cc8ff' : '#ff6a6a', dmg > 17);
+    hero.pose(H.guard ? { uarmB: { r: -95 }, farmB: { r: -10 }, _: { x: -20 } } : { _: { x: -40, r: -6 }, torso: { r: -14 }, head: { r: -14 }, uarmF: { r: 40 }, cape: { r: 20 } }, 100, 'Quad.easeOut');
+    this.refresh(); await this.wait(260);
+    rat.pose({}, 420, 'Sine.easeInOut'); await hero.pose({}, 380);
+    H.guard = false;
+    if (H.hp <= 0) return this.heroDies();
+    this.busy = false; this.say('À toi !'); this.refresh();
+  }
+  async ratDies() {
+    const rat = this.rat; rat.idleAmt = 0; this.say('Le rat s’effondre !');
+    await rat.pose({ _: { x: 60, y: -40, r: -25 }, head: { r: -30 }, jaw: { r: 40 }, fuF: { r: 40 }, legF: { r: 40 } }, 260, 'Quad.easeOut');
+    await rat.pose({ _: { x: 90, y: 70, r: -90 }, head: { r: -20 }, jaw: { r: 45 }, fuF: { r: 60 }, flF: { r: 30 }, legF: { r: 50 }, legB: { r: 50 }, tail1: { r: 30 } }, 360, 'Bounce.easeOut');
+    this.cameras.main.shake(120, 0.008); await this.wait(400); await rat.alpha(0, 700);
+    this.endScreen('Victoire !');
+  }
+  async heroDies() {
+    const hero = this.hero; hero.idleAmt = 0; this.say('Aldric tombe…');
+    await hero.pose({ _: { x: -30, y: 60, r: -80 }, head: { r: -20 }, uarmF: { r: 60 }, cape: { r: 40 } }, 500, 'Bounce.easeOut');
+    this.endScreen('Défaite…');
+  }
+  endScreen(title) {
+    const c = this.add.container(W / 2, 420), g = this.add.graphics();
+    g.fillStyle(0x140c08, 0.9).fillRoundedRect(-230, -110, 460, 220, 26); g.lineStyle(5, 0xe8c66a).strokeRoundedRect(-230, -110, 460, 220, 26);
+    const t = this.add.text(0, -45, title, { fontFamily: 'Georgia, serif', fontSize: 52, color: '#ffd95a', fontStyle: 'bold', stroke: '#000', strokeThickness: 6 }).setOrigin(0.5);
+    const b = this.add.text(0, 50, '↻ Rejouer', { fontFamily: 'Georgia, serif', fontSize: 34, color: '#fff', backgroundColor: '#b5523a', padding: { x: 26, y: 12 } }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    b.on('pointerdown', () => this.reset());
+    c.add([g, t, b]); c.setScale(0.5).setAlpha(0); this.tweens.add({ targets: c, scale: 1, alpha: 1, duration: 300, ease: 'Back.easeOut' });
+    this.endBox = c;
+  }
+}
+
+window.game = new Phaser.Game({ type: Phaser.AUTO, parent: 'game', backgroundColor: '#0c0a10', width: W, height: H,
+  scale: { mode: Phaser.Scale.FIT, autoCenter: Phaser.Scale.CENTER_BOTH }, scene: Fight });
+</script>
+</body>
+</html>

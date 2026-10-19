@@ -70,6 +70,7 @@ jobs:
         run: |
           cp -r prototype/ile build/web/ile
           cp -r prototype/dragonbound build/web/dragonbound
+          cp -r prototype/phaser build/web/phaser
 
       - uses: actions/upload-pages-artifact@v3
         with:
