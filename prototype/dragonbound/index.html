@@ -870,7 +870,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // 2.5 hero poses (idle / attack / hit / victory), anchored on the torso so switching poses doesn't jump.
   // 3.1 poses for everyone: POSEM[key] = [height ratio to the idle pose, horizontal anchor 0..1 of the body]. Idle = the base image key,
   // other poses are key_atk (attack), key_hit (hurt), key_spe (special / charging), key_def (guard), key_win (victory).
-  const POSEM = { hero2: [1.0, 0.503], hero2_prep: [1.117, 0.456], hero2_atk: [0.796, 0.362], hero2_hit: [0.861, 0.524], hero2_def: [0.733, 0.467], hero2_spe: [0.688, 0.48], hero2_win: [0.935, 0.42], hero2_ko: [0.677, 0.425] };
+  const POSEM = { hero2: [1.0, 0.511], hero2_prep: [1.139, 0.497], hero2_atk: [0.962, 0.329], hero2_hit: [0.932, 0.4], hero2_def: [0.817, 0.451], hero2_win: [0.964, 0.549], hero2_spe: [1.21, 0.356], hero2_ko: [0.705, 0.44], hero2_cast: [0.937, 0.489], archer: [1.0, 0.469], archer_prep: [1.028, 0.438], archer_atk: [0.987, 0.331], archer_hit: [0.919, 0.427], archer_def: [0.786, 0.379], archer_spe: [0.875, 0.332], archer_win: [1.087, 0.576], archer_ko: [0.753, 0.477], archer_cast: [0.903, 0.338], mage: [1.0, 0.397], mage_prep: [0.961, 0.478], mage_atk: [0.955, 0.276], mage_hit: [0.967, 0.531], mage_def: [0.827, 0.473], mage_spe: [0.932, 0.441], mage_win: [1.083, 0.534], mage_ko: [0.988, 0.441], mage_cast: [1.098, 0.4], paladin: [1.0, 0.377], paladin_prep: [1.093, 0.544], paladin_atk: [0.949, 0.336], paladin_hit: [0.979, 0.352], paladin_def: [0.895, 0.421], paladin_spe: [0.943, 0.436], paladin_win: [1.087, 0.453], paladin_ko: [0.817, 0.498], paladin_cast: [0.994, 0.433], rogue: [1.0, 0.537], rogue_prep: [0.939, 0.378], rogue_atk: [0.906, 0.341], rogue_hit: [0.911, 0.581], rogue_def: [0.844, 0.419], rogue_spe: [0.869, 0.516], rogue_win: [1.025, 0.422], rogue_ko: [0.75, 0.439], rogue_cast: [0.833, 0.388] };
   const POSES = {}; const POSE2 = 1;
   function applySkin() { const C = CLASSES.guerrier, v2 = G.skin === 'v2'; C.sprite = v2 ? 'hero2' : 'hero'; C.face = v2 ? 'hero2-face' : 'hero-face'; }
   // filled per class once pose art matching the hero's look exists, e.g. guerrier: { idle: ['hero', 1, 0.5], atk: ['hero_atk', h, anchorX], ... }
@@ -885,7 +885,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (flash > 0 && WHITE[k]) { const a = c.globalAlpha; c.globalAlpha = flash * a; c.drawImage(WHITE[k], x0, y - hh, w, hh); c.globalAlpha = a; }
   }
   function heroDraw(c, pose, x, y, h, flash, sx = 1, sy = 1) {
-    const b = CL().sprite, FB = { idle2: 'idle', prep: 'atk', ko: 'hit', def: 'idle', spe: 'atk' };
+    const b = CL().sprite, FB = { idle2: 'idle', prep: 'atk', ko: 'hit', def: 'idle', spe: 'atk', cast: 'spe' };
     let pz = pose; while (pz !== 'idle' && !poseKey(b, pz)) pz = FB[pz] || 'idle';
     return poseDraw(c, b, pz, x, y, h, flash, CL().emoji, true, sx, sy);
   }
@@ -1845,7 +1845,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       else if (C.atk.fx === 'orb') impact(ex, fy, ['#ffffff', '#9fd0ff', '#cfe4ff'], 0.6, false);
       else burst(ex - 6, fy, ['#ffffff', '#e8d9b0'], 6, 0.8);
       say(r.crit ? `Coup critique ! ${r.d} dégâts.` : `${C.atk.name} : ${r.d} dégâts.`);
-    } else if (kind === 'fire') {
+    } else if (kind === 'fire') { F.hero.spe = now();
       await castPrep(['#ffd76a', '#ff8a3c', '#ff4a2a'], 'rgba(255,150,60,', 320);
       SFX.launch(); SFX.fire(); burst(hx + 30, hyC, ['#fff1a8', '#ffb347', '#ff6a2a'], 10, 1.1); F.hero.lunge = now();
       fx.push({ type: 'ball', t0: now(), dur: 460, x0: hx + 30, y0: hyC, x1: ex, y1: fy }); await wait(460);
@@ -1873,7 +1873,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     } else if (kind === 'roar') {
       await castPrep(['#ffb08a', '#ff6a4a'], 'rgba(255,110,80,', 180); SFX.buff(); F.buff = { turns: 3 }; fx.push({ type: 'rings', x: hx, y: hyC, t0: now() }); rise(hx, hy - 10, ['#ff8a6a', '#ffd76a'], 16, 30);
       floatTxt('Force +40 %', hx, hy - H * 0.56, '#ff8a6a', true); say('Cri de guerre ! Ta force augmente pendant 3 tours.'); await wait(500);
-    } else if (kind === 'rain') {
+    } else if (kind === 'rain') { F.hero.spe = now();
       let tot = 0;
       for (let k = 0; k < 3; k++) { SFX.arrow(); fx.push({ type: 'rainArrow', t0: now(), x: ex + (k - 1) * 18, y: fy }); await wait(200);
         const r = dmgCalc(atk * 0.8, F.foe.def); tot += r.d; hitFoe(r.d, r.crit); burst(ex + (k - 1) * 18, fy, ['#fff1a8', '#ffe08a'], 6, 0.8); }
@@ -1883,7 +1883,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       const r = dmgCalc(atk * 0.8, F.foe.def); hitFoe(r.d, r.crit, false, '#b6f27a');
       F.foeSt.poison = { dmg: Math.max(1, Math.round(atk * 0.4 * elMult(F.foe.id, 'poison'))), turns: 3 }; fx.push({ type: 'cloud', x: ex, y: fy, t0: now() });
       say(`Flèche empoisonnée : ${r.d} dégâts, l’ennemi est empoisonné.`);
-    } else if (kind === 'smite') {
+    } else if (kind === 'smite') { F.hero.spe = now();
       await castPrep(['#fff1a8', '#ffd76a', '#ffffff'], 'rgba(255,220,120,', 240); SFX.launch();
       fx.push({ type: 'beam', x: ex, y: fy + fh * 0.45, t0: now(), dur: 700 }); await wait(260); SFX.boom();
       const r = dmgCalc(atk * 1.25 + s.mag * 0.7, F.foe.def * 0.5); hitFoe(r.d, r.crit, true, '#ffe58a');
@@ -1899,7 +1899,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       await castPrep(['#b08aff', '#6a4aa8'], 'rgba(140,100,220,', 160); SFX.whoosh(); F.shadowCrit = true; F.shadowDodge = true; F.status = {};
       puffs(hx, hyC, ['rgba(80,50,140,.6)', 'rgba(130,90,200,.5)', 'rgba(30,20,50,.6)'], 12, 1.1);
       floatTxt('Dans l\u2019ombre…', hx + 50, hy - H * 0.55, '#c8a8ff', true); say('Pas de l\u2019ombre : tes maux s\u2019effacent, tu esquiveras la prochaine attaque et ton prochain coup sera critique.'); await wait(450);
-    } else if (kind === 'blades') {
+    } else if (kind === 'blades') { F.hero.spe = now();
       let tot = 0; F.hero.wind = now(); await wait(120);
       for (let k = 0; k < 4; k++) { SFX.arrow(); fx.push({ type: 'dagger', dur: 240, t0: now(), x0: hx + 30, y0: hyC - 10 + k * 7, x1: ex + (k % 2 ? 12 : -12), y1: fy - 14 + k * 9 }); await wait(170);
         const r = dmgCalc(atk * 0.62, F.foe.def); tot += r.d; hitFoe(r.d, r.crit, false, '#d8c8ff'); burst(ex, fy - 14 + k * 9, ['#ffffff', '#c8a8ff'], 5, 0.7); }
@@ -2372,7 +2372,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       if (F.hero.lunge && F.hero._dl !== F.hero.lunge) { F.hero._dl = F.hero.lunge; puffs(hx, hy - 4, ['rgba(210,190,160,.35)', 'rgba(180,160,130,.3)'], 4, 0.55); }
       const ant = pulse(F.hero.wind || 0, 160), hsx = 1 + ant * 0.05 - lp * 0.05 + hh * 0.06 - breathe * 0.5, hsy = 1 - ant * 0.05 + lp * 0.05 - hh * 0.06;
       const lunging = F.hero.lunge && F.hero.lunge >= (F.hero.wind || 0) && now - F.hero.lunge < 520;
-      const pose = F.hero.ko ? 'ko' : F.hero.win ? 'win' : (F.hero.hit && now - F.hero.hit < 480) ? 'hit' : F.defending ? 'def' : (cast || (F.hero.spe && now - F.hero.spe < 760)) ? 'spe' : lunging ? 'atk' : (F.hero.wind && now - F.hero.wind < 320) ? 'prep' : 'idle';
+      const pose = F.hero.ko ? 'ko' : F.hero.win ? 'win' : (F.hero.hit && now - F.hero.hit < 480) ? 'hit' : F.defending ? 'def' : (F.hero.spe && now - F.hero.spe < 760) ? 'spe' : cast ? 'cast' : lunging ? 'atk' : (F.hero.wind && now - F.hero.wind < 320) ? 'prep' : 'idle';
       if (lp > 0.25 && !reduce) for (let g = 1; g <= 2; g++) { c.save(); c.globalAlpha = 0.16 / g; heroDraw(c, pose, hx + hl * (1 - g * 0.3), hy - hj * (1 - g * 0.3), hH, 0, hsx, hsy); c.restore(); }
       if (F.shadowDodge) c.globalAlpha = 0.5 + 0.1 * Math.sin(now / 200);
       heroDraw(c, pose, hx + hl, hy - hj, hH, hh * 0.7, hsx, hsy);
@@ -2696,7 +2696,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 3.3';
+  const VERSION = 'Version 3.4';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
