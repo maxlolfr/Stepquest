@@ -870,7 +870,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // 2.5 hero poses (idle / attack / hit / victory), anchored on the torso so switching poses doesn't jump.
   // 3.1 poses for everyone: POSEM[key] = [height ratio to the idle pose, horizontal anchor 0..1 of the body]. Idle = the base image key,
   // other poses are key_atk (attack), key_hit (hurt), key_spe (special / charging), key_def (guard), key_win (victory).
-  const POSEM = { hero2: [1.0, 0.511], hero2_prep: [1.139, 0.497], hero2_atk: [0.962, 0.329], hero2_hit: [0.932, 0.4], hero2_def: [0.817, 0.451], hero2_win: [0.964, 0.549], hero2_spe: [1.21, 0.356], hero2_ko: [0.705, 0.44], hero2_cast: [0.937, 0.489], archer: [1.0, 0.469], archer_prep: [1.028, 0.438], archer_atk: [0.987, 0.331], archer_hit: [0.919, 0.427], archer_def: [0.786, 0.379], archer_spe: [0.875, 0.332], archer_win: [1.087, 0.576], archer_ko: [0.753, 0.477], archer_cast: [0.903, 0.338], mage: [1.0, 0.397], mage_prep: [0.961, 0.478], mage_atk: [0.955, 0.276], mage_hit: [0.967, 0.531], mage_def: [0.827, 0.473], mage_spe: [0.932, 0.441], mage_win: [1.083, 0.534], mage_ko: [0.988, 0.441], mage_cast: [1.098, 0.4], paladin: [1.0, 0.377], paladin_prep: [1.093, 0.544], paladin_atk: [0.949, 0.336], paladin_hit: [0.979, 0.352], paladin_def: [0.895, 0.421], paladin_spe: [0.943, 0.436], paladin_win: [1.087, 0.453], paladin_ko: [0.817, 0.498], paladin_cast: [0.994, 0.433], rogue: [1.0, 0.537], rogue_prep: [0.939, 0.378], rogue_atk: [0.906, 0.341], rogue_hit: [0.911, 0.581], rogue_def: [0.844, 0.419], rogue_spe: [0.869, 0.516], rogue_win: [1.025, 0.422], rogue_ko: [0.75, 0.439], rogue_cast: [0.833, 0.388] };
+  const POSEM = { slime: [1.0, 0.493], slime_atk: [0.897, 0.44], slime_hit: [0.962, 0.452], slime_ko: [0.517, 0.538], rat: [1.0, 0.476], rat_atk: [0.821, 0.44], rat_hit: [1.096, 0.431], rat_ko: [0.59, 0.46], bat: [1.0, 0.452], bat_atk: [0.811, 0.444], bat_hit: [0.965, 0.48], bat_ko: [0.417, 0.574], skel: [1.0, 0.397], skel_atk: [0.978, 0.389], skel_hit: [0.873, 0.534], skel_ko: [0.585, 0.482], hero2: [1.0, 0.511], hero2_prep: [1.139, 0.497], hero2_atk: [0.962, 0.329], hero2_hit: [0.932, 0.4], hero2_def: [0.817, 0.451], hero2_win: [0.964, 0.549], hero2_spe: [1.21, 0.356], hero2_ko: [0.705, 0.44], hero2_cast: [0.937, 0.489], archer: [1.0, 0.469], archer_prep: [1.028, 0.438], archer_atk: [0.987, 0.331], archer_hit: [0.919, 0.427], archer_def: [0.786, 0.379], archer_spe: [0.875, 0.332], archer_win: [1.087, 0.576], archer_ko: [0.753, 0.477], archer_cast: [0.903, 0.338], mage: [1.0, 0.397], mage_prep: [0.961, 0.478], mage_atk: [0.955, 0.276], mage_hit: [0.967, 0.531], mage_def: [0.827, 0.473], mage_spe: [0.932, 0.441], mage_win: [1.083, 0.534], mage_ko: [0.988, 0.441], mage_cast: [1.098, 0.4], paladin: [1.0, 0.377], paladin_prep: [1.093, 0.544], paladin_atk: [0.949, 0.336], paladin_hit: [0.979, 0.352], paladin_def: [0.895, 0.421], paladin_spe: [0.943, 0.436], paladin_win: [1.087, 0.453], paladin_ko: [0.817, 0.498], paladin_cast: [0.994, 0.433], rogue: [1.0, 0.537], rogue_prep: [0.939, 0.378], rogue_atk: [0.906, 0.341], rogue_hit: [0.911, 0.581], rogue_def: [0.844, 0.419], rogue_spe: [0.869, 0.516], rogue_win: [1.025, 0.422], rogue_ko: [0.75, 0.439], rogue_cast: [0.833, 0.388] };
   const POSES = {}; const POSE2 = 1;
   function applySkin() { const C = CLASSES.guerrier, v2 = G.skin === 'v2'; C.sprite = v2 ? 'hero2' : 'hero'; C.face = v2 ? 'hero2-face' : 'hero-face'; }
   // filled per class once pose art matching the hero's look exists, e.g. guerrier: { idle: ['hero', 1, 0.5], atk: ['hero_atk', h, anchorX], ... }
@@ -2432,17 +2432,17 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     }
     const hl2 = pulse(F.hero.heal, 700); if (hl2) for (let i = 0; i < 6; i++) { c.fillStyle = `rgba(143,224,122,${hl2})`; c.font = `16px ${EMO}`; c.fillText('✚', hx - 30 + i * 12, hy - 40 - ((now - F.hero.heal) / 8 + i * 10) % (H * 0.5)); }
     // foe
-    const f = F.foe, fl = pulse(f.anim.lunge, 300) * -54, fh = pulse(f.anim.hit, 300), dead = f.anim.dead ? Math.min(1, (now - f.anim.dead) / 600) : 0;
+    const f = F.foe, fl = pulse(f.anim.lunge, 300) * -54, fh = pulse(f.anim.hit, 300), dead = f.anim.dead ? Math.min(1, (now - f.anim.dead) / (POSEM[f.id + '_ko'] ? 1400 : 600)) : 0;
     const hk = f.anim.hit ? Math.min(1, (now - f.anim.hit) / 320) : 1, recoil = hk < 1 ? Math.pow(1 - hk, 2) * (f.anim.kb || 12) : 0;
     const ph = f.ph; f.flyK = (f.flyK || 0) + (((ph && ph.fly) ? 1 : 0) - (f.flyK || 0)) * 0.06;
-    const size = H * (f.size || .5) * ZOOM, fly = (f.fly ? H * 0.2 + (reduce ? 0 : Math.sin(t / 260) * 6) : 0) + f.flyK * H * 0.22 + (f.flyK > 0.05 && !reduce ? Math.sin(t / 220) * 5 * f.flyK : 0), bobF = reduce ? 0 : Math.sin(t / 380) * 2.5;
+    const size = H * (f.size || .5) * ZOOM, fly = (f.fly && !dead ? H * 0.2 + (reduce ? 0 : Math.sin(t / 260) * 6) : 0) + f.flyK * H * 0.22 + (f.flyK > 0.05 && !reduce ? Math.sin(t / 220) * 5 * f.flyK : 0), bobF = reduce ? 0 : Math.sin(t / 380) * 2.5;
     // phase ground effects (behind the fighters)
     if (ph && f.id === 'bossQueen') { const g = c.createLinearGradient(0, H * 0.72, 0, H); g.addColorStop(0, 'rgba(200,235,255,0)'); g.addColorStop(0.4, 'rgba(200,235,255,.35)'); g.addColorStop(1, 'rgba(230,248,255,.6)'); c.fillStyle = g; c.fillRect(0, H * 0.72, W, H * 0.28);
       c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1.5; for (let j = 0; j < 7; j++) { const x0 = (j * 0.15 + 0.05) * W, y0 = H * (0.86 + (j % 3) * 0.04); c.beginPath(); c.moveTo(x0, y0); c.lineTo(x0 + 18, y0 - 5); c.lineTo(x0 + 30, y0 + 3); c.lineTo(x0 + 46, y0 - 2); c.stroke(); }
       if (!reduce) for (let j = 0; j < 8; j++) { const k = ((t / 1800) + j / 8) % 1; c.fillStyle = `rgba(255,255,255,${Math.sin(k * Math.PI)})`; c.fillRect((j * 53) % W, H * 0.8 + (j * 17) % (H * 0.15), 2, 2); } }
     if (ph && f.id === 'bossHag' && !reduce) for (let j = 0; j < 9; j++) { const k = ((t / 1400) + j / 9) % 1, x = (j * 0.11 + 0.03) * W; c.fillStyle = `rgba(140,220,90,${0.5 * (1 - k)})`; c.beginPath(); c.arc(x, H * 0.95 - k * 26, 3 + k * 6, 0, 7); c.fill(); }
-    c.save(); c.globalAlpha = (1 - dead) * (ph && ph.ghost ? 0.35 + 0.1 * Math.sin(t / 120) : ph && f.id === 'bossVamp' ? 0.82 : 1); c.translate(recoil, dead * 20);
-    if (dead) { c.translate(ex, ey); c.scale(1 - dead * 0.25, 1 - dead * 0.25); c.translate(-ex, -ey); }
+    c.save(); c.globalAlpha = (POSEM[f.id + '_ko'] ? Math.min(1, (1 - dead) * 2.5) : 1 - dead) * (ph && ph.ghost ? 0.35 + 0.1 * Math.sin(t / 120) : ph && f.id === 'bossVamp' ? 0.82 : 1); c.translate(recoil, POSEM[f.id + '_ko'] ? 0 : dead * 20);
+    if (dead && !POSEM[f.id + '_ko']) { c.translate(ex, ey); c.scale(1 - dead * 0.25, 1 - dead * 0.25); c.translate(-ex, -ey); }
     if (recoil) { c.translate(ex, ey); c.rotate(recoil * 0.004); c.translate(-ex, -ey); }
     c.fillStyle = 'rgba(0,0,0,.3)'; c.beginPath(); c.ellipse(ex, ey, size * 0.42, 8, 0, 0, Math.PI * 2); c.fill();
     if (f.charging || f.howl) { const g = c.createRadialGradient(ex, ey - size * 0.5 - fly, 4, ex, ey - size * 0.5 - fly, size * 0.7); g.addColorStop(0, `rgba(255,80,60,${0.35 + 0.2 * Math.sin(now / 120)})`); g.addColorStop(1, 'rgba(255,80,60,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.4 - fly, size * 2, size * 1.6); }
@@ -2450,7 +2450,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (ph && ph.ghost) { const g = c.createRadialGradient(ex, ey - size * 0.5, 4, ex, ey - size * 0.5, size * 0.8); g.addColorStop(0, 'rgba(150,60,255,.35)'); g.addColorStop(1, 'rgba(150,60,255,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.4, size * 2, size * 1.7); }
     if (f.anim.lunge && f._dl !== f.anim.lunge) { f._dl = f.anim.lunge; if (!f.fly) puffs(ex, ey - 4, ['rgba(210,190,160,.35)', 'rgba(180,160,130,.3)'], 4, 0.6); }
     const sq = hk < 1 ? 1 - hk : 0, lf = pulse(f.anim.lunge, 300), fsx = 1 + sq * 0.12 - lf * 0.05, fsy = 1 - sq * 0.1 + lf * 0.06;
-    const fpose = dead ? 'hit' : hk < 0.9 ? 'hit' : pulse(f.anim.lunge, 420) ? 'atk' : (f.charging || f.howl || (f.ph && (f.ph.breath || f.ph.dive || f.ph.prison))) ? 'spe' : 'idle';
+    const fpose = dead ? (POSEM[f.id + '_ko'] ? 'ko' : 'hit') : hk < 0.9 ? 'hit' : pulse(f.anim.lunge, 420) ? 'atk' : (f.charging || f.howl || (f.ph && (f.ph.breath || f.ph.dive || f.ph.prison))) ? 'spe' : 'idle';
     if (lf > 0.3 && !reduce) { c.save(); c.globalAlpha *= 0.18; poseDraw(c, f.id, fpose, ex + fl * 0.6, ey - fly, size, 0, f.emoji, false, fsx, fsy); c.restore(); }
     if (f.elite && !dead) { const g = c.createRadialGradient(ex, ey - size * 0.45 - fly, 4, ex, ey - size * 0.45 - fly, size * 0.75); g.addColorStop(0, `rgba(255,200,80,${0.28 + 0.12 * Math.sin(now / 200)})`); g.addColorStop(1, 'rgba(255,170,40,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.3 - fly, size * 2, size * 1.6); }
     poseDraw(c, f.id, fpose, ex + fl, ey - fly + bobF * 0.3, size + bobF, fh * 0.5, f.emoji, false, fsx, fsy, f.elite ? '255,190,60' : null);
@@ -2695,7 +2695,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 3.5';
+  const VERSION = 'Version 3.6';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
