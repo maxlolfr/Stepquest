@@ -2372,7 +2372,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       if (F.hero.lunge && F.hero._dl !== F.hero.lunge) { F.hero._dl = F.hero.lunge; puffs(hx, hy - 4, ['rgba(210,190,160,.35)', 'rgba(180,160,130,.3)'], 4, 0.55); }
       const ant = pulse(F.hero.wind || 0, 160), hsx = 1 + ant * 0.05 - lp * 0.05 + hh * 0.06 - breathe * 0.5, hsy = 1 - ant * 0.05 + lp * 0.05 - hh * 0.06;
       const lunging = F.hero.lunge && F.hero.lunge >= (F.hero.wind || 0) && now - F.hero.lunge < 520;
-      const pose = F.hero.ko ? 'ko' : F.hero.win ? 'win' : (F.hero.hit && now - F.hero.hit < 480) ? 'hit' : F.defending ? 'def' : (cast || (F.hero.spe && now - F.hero.spe < 760)) ? 'spe' : lunging ? 'atk' : (F.hero.wind && now - F.hero.wind < 320) ? 'prep' : (!reduce && Math.sin(t / 650) > 0.35) ? 'idle2' : 'idle';
+      const pose = F.hero.ko ? 'ko' : F.hero.win ? 'win' : (F.hero.hit && now - F.hero.hit < 480) ? 'hit' : F.defending ? 'def' : (cast || (F.hero.spe && now - F.hero.spe < 760)) ? 'spe' : lunging ? 'atk' : (F.hero.wind && now - F.hero.wind < 320) ? 'prep' : 'idle';
       if (lp > 0.25 && !reduce) for (let g = 1; g <= 2; g++) { c.save(); c.globalAlpha = 0.16 / g; heroDraw(c, pose, hx + hl * (1 - g * 0.3), hy - hj * (1 - g * 0.3), hH, 0, hsx, hsy); c.restore(); }
       if (F.shadowDodge) c.globalAlpha = 0.5 + 0.1 * Math.sin(now / 200);
       heroDraw(c, pose, hx + hl, hy - hj, hH, hh * 0.7, hsx, hsy);
@@ -2696,7 +2696,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 3.2';
+  const VERSION = 'Version 3.2.1';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
