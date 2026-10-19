@@ -259,6 +259,8 @@ body {
 .skill.fire i { background: radial-gradient(circle at 50% 35%, #ff9a3c, #b3361b); }
 .skill.def i { background: radial-gradient(circle at 50% 35%, #e9c75a, #9a7418); }
 .skill.pot i { background: radial-gradient(circle at 50% 35%, #ff7a8a, #a8243a); }
+.skill.mpot i { background: radial-gradient(circle at 50% 35%, #7ab4ff, #2443a8); } .skill.mpot i img { filter: hue-rotate(205deg) saturate(1.3); }
+.skill.spot i { background: radial-gradient(circle at 50% 35%, #ffe07a, #a87a24); } .skill.spot i img { filter: hue-rotate(50deg) saturate(1.6) brightness(1.15); }
 .skill .cnt { position: absolute; top: 44px; right: 6px; background: #2a190c; color: #fff; border-radius: 99px; padding: 0 6px; font-size: 12px; border: 2px solid #a87a45; }
 .skill[disabled] { opacity: .45; cursor: not-allowed; }
 .flee { font: inherit; background: none; border: 0; color: #c8b28c; font-weight: 800; font-size: 13px; cursor: pointer; padding: 4px; }
@@ -1685,9 +1687,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const list = [{ id: 'atk', name: C.atk.name, icon: icoHtml(ATKI[cls], C.atk.icon), cls: '' }]
       .concat(C.spells.map(k => ({ id: k, name: SPELLS[k].name, icon: icoHtml(SPELLS[k].img, SPELLS[k].icon), cls: SPELLS[k].cls, cost: SPELLS[k].cost })))
       .concat([{ id: 'def', name: BLOCK[cls].name, icon: icoHtml(BLOCK[cls].img, BLOCK[cls].icon), cls: 'def basic' },
-        { id: 'pot', name: 'Potion', icon: icoHtml('uiPotion', '❤️'), cls: 'pot basic', pot: true }]);
+        { id: 'pot', name: 'Vie', icon: icoHtml('uiPotion', '❤️'), cls: 'pot basic', pot: 'potCnt' },
+        { id: 'mpot', name: 'Mana', icon: icoHtml('uiPotion', '💧'), cls: 'pot mpot basic', pot: 'mpotCnt' },
+        { id: 'spot', name: 'Endurance', icon: icoHtml('uiPotion', '💪'), cls: 'pot spot basic', pot: 'spotCnt' }]);
     const el = $('skills'); el.style.setProperty('--n', 4); el.classList.add('many'); el.classList.add('two');
-    el.innerHTML = list.map(b => `<button class="skill ${b.cls}" type="button" data-skill="${b.id}"><i>${b.icon}</i>${b.name}${b.cost ? `<span class="cnt">${b.cost} 💧</span>` : ''}${stCost(b.id) ? `<span class="scost">${stCost(b.id)} 💪</span>` : ''}${b.pot ? '<span class="cnt" id="potCnt"></span>' : ''}</button>`).join('');
+    el.innerHTML = list.map(b => `<button class="skill ${b.cls}" type="button" data-skill="${b.id}"><i>${b.icon}</i>${b.name}${b.cost ? `<span class="cnt">${b.cost} 💧</span>` : ''}${stCost(b.id) ? `<span class="scost">${stCost(b.id)} 💪</span>` : ''}${b.pot ? `<span class="cnt" id="${b.pot}"></span>` : ''}</button>`).join('');
   }
 
   function startLevel(w, i) {
@@ -1755,7 +1759,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function updFight() {
     const s = stats();
     $('foeName').textContent = (F.foes.length > 1 ? '🎯 ' : '') + (F.foe.elite && !F.foe.champ ? '⭐ ' : '') + F.foe.name; bar('foeHp', 'foeHpTxt', Math.max(0, F.foe.hp), F.foe.hpMax); bar('meHp', 'meHpTxt', G.hp, s.hp); bar('meMp', 'meMpTxt', F.mp, s.mp); bar('meSt', 'meStTxt', F.st, ST_MAX); $('staBar').classList.toggle('low', F.st < 20);
-    if ($('potCnt')) $('potCnt').textContent = G.potions;
+    if ($('potCnt')) { $('potCnt').textContent = G.potions; $('mpotCnt').textContent = G.mpots; $('spotCnt').textContent = G.spots; }
     const st = [];
     if (F.buff) st.push(`📣 Force +40 % (${F.buff.turns})`);
     if (F.foe.st.poison) st.push(`☠️ Ennemi empoisonné ${F.foe.st.poison.turns}`);
@@ -1771,7 +1775,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (F.shadowDodge) st.push('🌑 Dans l\u2019ombre');
     $('status').innerHTML = st.map(x => `<span>${x}</span>`).join('');
     document.querySelectorAll('#skills .skill').forEach(b => { const id = b.dataset.skill, sp = SPELLS[id];
-      b.disabled = F.busy || (sp && F.mp < sp.cost) || (id !== 'atk' && stCost(id) > F.st) || (id === 'pot' && G.potions < 1 && G.mpots < 1 && G.spots < 1)
+      b.disabled = F.busy || (sp && F.mp < sp.cost) || (id !== 'atk' && stCost(id) > F.st) || (id === 'pot' && (G.potions < 1 || (G.hp >= s.hp && !F.status.poison && !F.status.burn))) || (id === 'mpot' && (G.mpots < 1 || F.mp >= s.mp)) || (id === 'spot' && (G.spots < 1 || F.st >= ST_MAX))
         || (id === 'heal' && G.hp >= s.hp && !F.status.poison && !F.status.burn); });
   }
   function burst(x, y, cols, n, power = 1) {
@@ -2874,13 +2878,15 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     def: () => `${BLOCK[G.cls || 'guerrier'].name} : ${BLOCK[G.cls || 'guerrier'].tip}, pour ce tour. Rend aussi de l\u2019endurance et 4 de mana.`,
     evade: () => `Évasion : ${Math.round(EVADE[G.cls || 'guerrier'] * 100)} % de chance d\u2019esquiver TOUTES les attaques du tour, sinon tu les prends en entier.${G.cls === 'rogue' ? ' Nyx contre-attaque si elle esquive.' : ''}`,
     wait: () => `Attendre : tu passes ton tour pour reprendre 30 d\u2019endurance et du mana.${G.cls === 'mage' ? ' Orin gagne aussi une barrière.' : ''}`,
-    pot: () => 'Potions : vie, mana ou endurance. Elles s\u2019achètent à la Boutique.' };
+    pot: () => 'Potion de vie : rend 45 % de ta vie et soigne poison et brûlure. S\u2019achète à la Boutique.',
+    mpot: () => 'Potion de mana : rend la moitié de ton mana. S\u2019achète à la Boutique.',
+    spot: () => 'Potion d\u2019endurance : remplit ton endurance. S\u2019achète à la Boutique.' };
   let hold = null, held = false;
   $('skills').addEventListener('pointerdown', e => { const b = e.target.closest('[data-skill]'); if (!b) return; held = false; clearTimeout(hold);
     hold = setTimeout(() => { held = true; const id = b.dataset.skill, sp = SPELLS[id]; toast(`<b>${b.textContent.replace(/\d+ [💧💪]/g, '').trim()}</b><br>${sp ? sp.tip + (sp.cost ? ` · ${sp.cost} 💧` : '') : (SKD[id] ? SKD[id]() : '')}${stCost(id) ? ` · ${stCost(id)} 💪` : ''}`); }, 420); });
   ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('skills').addEventListener(ev, () => clearTimeout(hold)));
   $('skills').addEventListener('click', e => { if (held) { held = false; e.stopPropagation(); return; } }, true);
-  $('skills').addEventListener('click', e => { const b = e.target.closest('[data-skill]'); if (!b || b.disabled) return; if (b.dataset.skill === 'pot') { potMenu(); return; } $('potMenu').hidden = true; act(b.dataset.skill); });
+  $('skills').addEventListener('click', e => { const b = e.target.closest('[data-skill]'); if (!b || b.disabled) return; $('potMenu').hidden = true; act(b.dataset.skill); });
   scv.addEventListener('click', e => { if (!F || !F.foes || F.busy || alive().length < 2) return; const r = scv.getBoundingClientRect(), x = (e.clientX - r.left) / r.width;
     let best = null, bd = alive().length > 3 ? 0.08 : 0.16; for (const o of alive()) { const d = Math.abs(o.fx - x); if (d < bd) { bd = d; best = o; } }
     if (best && best !== F.foe) { F.foe = best; SFX.click(); say(`🎯 ${best.name}${best.role ? ` · ${best.role === 'heal' ? '💚 soigne ses alliés' : '🛡️ protège les autres'}` : ''}${best.variant ? ` · ${VDESC[best.variant.n]}` : ''}${best.tip ? ` · ${best.tip}` : ''}`); updFight(); } });
@@ -2923,7 +2929,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 5.1';
+  const VERSION = 'Version 5.2';
   setTimeout(() => toast(`🛠️ ${VERSION}`), 900);
   if (document.body.insertAdjacentHTML) document.body.insertAdjacentHTML('beforeend', `<div style="position:fixed;left:6px;bottom:calc(2px + env(safe-area-inset-bottom,0px));z-index:5;font:700 10px system-ui;color:rgba(255,255,255,.55);pointer-events:none">${VERSION}</div>`);
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
