@@ -863,15 +863,25 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     }
   }
   // 2.5 hero poses (idle / attack / hit / victory), anchored on the torso so switching poses doesn't jump.
-  const POSES = {}; const POSE2 = { idle: ['hero2', 1, 0.356], atk: ['hero2_atk', 1.028, 0.696], hit: ['hero2_hit', 0.96, 0.47], win: ['hero2_win', 1.138, 0.322] };
-  function applySkin() { const C = CLASSES.guerrier, v2 = G.skin === 'v2'; C.sprite = v2 ? 'hero2' : 'hero'; C.face = v2 ? 'hero2-face' : 'hero-face'; if (v2) POSES.guerrier = POSE2; else delete POSES.guerrier; }
+  // 3.1 poses for everyone: POSEM[key] = [height ratio to the idle pose, horizontal anchor 0..1 of the body]. Idle = the base image key,
+  // other poses are key_atk (attack), key_hit (hurt), key_spe (special / charging), key_def (guard), key_win (victory).
+  const POSEM = { hero2: [1, 0.356], hero2_atk: [1.028, 0.696], hero2_hit: [0.96, 0.47], hero2_win: [1.138, 0.322] };
+  const POSES = {}; const POSE2 = 1;
+  function applySkin() { const C = CLASSES.guerrier, v2 = G.skin === 'v2'; C.sprite = v2 ? 'hero2' : 'hero'; C.face = v2 ? 'hero2-face' : 'hero-face'; }
   // filled per class once pose art matching the hero's look exists, e.g. guerrier: { idle: ['hero', 1, 0.5], atk: ['hero_atk', h, anchorX], ... }
+  const poseKey = (base, pose) => { const k = pose === 'idle' ? base : base + '_' + pose; return POSEM[k] && ready(k) ? k : null; };
+  function poseDraw(c, base, pose, x, y, h, flash, emoji, noFlip, sx = 1, sy = 1, tint) {
+    const k = poseKey(base, pose) || (POSEM[base] && ready(base) ? base : null);
+    if (!k) return sprite(c, base, x, y, h, flash, emoji, noFlip, sx, sy, tint);
+    const p = POSEM[k], im = IMG[k], hh = h * p[0] * sy, w = hh * im.naturalWidth / im.naturalHeight * sx, x0 = x - w * p[1];
+    c.drawImage(im, x0, y - hh, w, hh);
+    if (tint && WHITE[k]) { const tk = k + tint; if (!TINT[tk]) { const t = document.createElement('canvas'); t.width = WHITE[k].width; t.height = WHITE[k].height; const x2 = t.getContext('2d'); x2.drawImage(WHITE[k], 0, 0); x2.globalCompositeOperation = 'source-in'; x2.fillStyle = `rgb(${tint})`; x2.fillRect(0, 0, t.width, t.height); TINT[tk] = t; }
+      const a = c.globalAlpha; c.globalAlpha = a * 0.3; c.drawImage(TINT[tk], x0, y - hh, w, hh); c.globalAlpha = a; }
+    if (flash > 0 && WHITE[k]) { const a = c.globalAlpha; c.globalAlpha = flash * a; c.drawImage(WHITE[k], x0, y - hh, w, hh); c.globalAlpha = a; }
+  }
   function heroDraw(c, pose, x, y, h, flash, sx = 1, sy = 1) {
-    const P = POSES[G.cls || 'guerrier'], p = P && (P[pose] && ready(P[pose][0]) ? P[pose] : P.idle);
-    if (!p || !ready(p[0])) return sprite(c, CL().sprite, x, y, h, flash, CL().emoji, true, sx, sy);
-    const im = IMG[p[0]], hh = h * p[1] * sy, w = hh * im.naturalWidth / im.naturalHeight * sx;
-    c.drawImage(im, x - w * p[2], y - hh, w, hh);
-    if (flash > 0 && WHITE[p[0]]) { const a = c.globalAlpha; c.globalAlpha = flash * a; c.drawImage(WHITE[p[0]], x - w * p[2], y - hh, w, hh); c.globalAlpha = a; }
+    const b = CL().sprite, pz = poseKey(b, pose) ? pose : pose === 'def' || pose === 'spe' ? (poseKey(b, 'atk') && pose === 'spe' ? 'atk' : 'idle') : pose;
+    return poseDraw(c, b, pz, x, y, h, flash, CL().emoji, true, sx, sy);
   }
   const thumb = k => (M[k] && M[k].emoji && !ready(k)) ? `<div class="fe">${M[k].emoji}</div>` : `<img src="img/${k}.webp" alt="">`;
 
@@ -943,7 +953,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     // World 9 · Égouts de la Cité
     prat:   { name: 'Rat empoisonné', emoji: '🐀', hp: 520, atk: 120, def: 42, xp: 500, gold: 138, trait: 'poison', tip: 'Sa bave toxique empoisonne.', size: .42 },
     tslime: { name: 'Slime toxique', emoji: '🟢', hp: 540, atk: 116, def: 36, xp: 510, gold: 140, trait: 'regen', tip: 'Il se reforme à chaque tour.', size: .50 },
-    croco:  { name: 'Crocodile des égouts', emoji: '🐊', hp: 640, atk: 128, def: 52, xp: 530, gold: 145, trait: 'howl', tip: 'Il ouvre la gueule, puis mord très fort.', size: .58 },
+    croco:  { name: 'Crocodile des égouts', emoji: '🐊', hp: 600, atk: 124, def: 40, xp: 530, gold: 145, trait: 'howl', tip: 'Il ouvre la gueule, puis mord très fort.', size: .58 },
     thief:  { name: 'Voleur des bas-fonds', emoji: '🥷', hp: 540, atk: 126, def: 44, xp: 520, gold: 160, trait: 'steal', tip: 'Il te vole de l\u2019or : tue-le pour le récupérer.', size: .54 },
     bossRat: { name: 'Reine des Rats', emoji: '🐀', boss: true, hp: 1900, atk: 134, def: 46, xp: 5200, gold: 2400, trait: 'poison', size: .70,
       special: { every: 3, mult: 2.4, warn: 'La Reine appelle sa nuée…', hit: 'Nuée de rats !', poison: 18 } },
@@ -957,25 +967,25 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   };
   const WORLDS = [
     { name: 'La Crypte oubliée', icon: '🏰', theme: 'crypt', lvl: 1, rib: 'p', desc: 'Des os qui craquent dans le noir…',
-      levels: [[['slime'], 5], [['rat', 'bat'], 5], [['skel', 'slime'], 6], [['bat', 'rat', 'skel'], 6], [['skel', 'bossBone'], 8]] },
+      levels: [[['slime', 'rat'], 5], [['rat', 'bat', 'slime'], 5], [['bat', 'skel'], 6], [['skel', 'slime', 'bat'], 6], [['slime', 'skel', 'bossBone'], 8]] },
     { name: 'La Forêt des Murmures', icon: '🌲', theme: 'forest', lvl: 4, rib: '', desc: 'Les arbres chuchotent ton nom…',
-      levels: [[['wolf'], 7], [['spider', 'shroom'], 7], [['goblin', 'wolf'], 8], [['spider', 'shroom', 'goblin'], 8], [['wolf', 'bossWitch'], 10]] },
+      levels: [[['wolf', 'spider'], 7], [['spider', 'shroom', 'wolf'], 7], [['shroom', 'goblin'], 8], [['goblin', 'wolf', 'shroom'], 8], [['wolf', 'goblin', 'bossWitch'], 10]] },
     { name: 'Les Mines de Braise', icon: '🌋', theme: 'mine', lvl: 7, rib: 'r', desc: 'La chaleur monte à chaque pas…',
-      levels: [[['snake'], 9], [['imp', 'scorp'], 9], [['golem', 'snake'], 10], [['imp', 'scorp', 'golem'], 10], [['imp', 'bossDragon'], 12]] },
+      levels: [[['snake', 'imp'], 9], [['imp', 'scorp', 'snake'], 9], [['scorp', 'golem'], 10], [['golem', 'snake', 'scorp'], 10], [['snake', 'golem', 'bossDragon'], 12]] },
     { name: 'Les Marais Hantés', icon: '🌫️', theme: 'swamp', lvl: 10, rib: 'p', desc: 'Un brouillard qui chuchote…',
-      levels: [[['frog'], 12], [['wisp', 'frog'], 12], [['zombie', 'wisp'], 13], [['vine', 'zombie'], 13], [['vine', 'bossHag'], 15]] },
+      levels: [[['frog', 'wisp'], 12], [['wisp', 'zombie', 'frog'], 12], [['zombie', 'vine'], 13], [['vine', 'frog', 'zombie'], 13], [['frog', 'vine', 'bossHag'], 15]] },
     { name: 'Les Pics Gelés', icon: '🏔️', theme: 'ice', lvl: 13, rib: 'b', desc: 'Le vent glacé mord la peau…',
-      levels: [[['harpy'], 14], [['bear', 'harpy'], 14], [['spirit', 'bear'], 15], [['yeti', 'spirit'], 15], [['yeti', 'bossQueen'], 17]] },
+      levels: [[['harpy', 'bear'], 14], [['bear', 'spirit', 'harpy'], 14], [['spirit', 'yeti'], 15], [['yeti', 'harpy', 'spirit'], 15], [['harpy', 'yeti', 'bossQueen'], 17]] },
     { name: 'La Citadelle du Néant', icon: '🏯', theme: 'void', lvl: 16, rib: 'r', desc: 'Là où la lumière s\u2019éteint…',
-      levels: [[['knight'], 16], [['garg', 'knight'], 16], [['warlock', 'garg'], 17], [['demon', 'warlock'], 17], [['demon', 'bossVoid'], 20]] },
+      levels: [[['knight', 'garg'], 16], [['garg', 'warlock', 'knight'], 16], [['warlock', 'demon'], 17], [['demon', 'knight', 'warlock'], 17], [['knight', 'demon', 'bossVoid'], 20]] },
     { name: 'La Nécropole', icon: '⚰️', theme: 'swamp', lvl: 19, rib: 'p', desc: 'Les morts ne dorment plus…',
-      levels: [[['ghoul'], 18], [['banshee', 'ghoul'], 18], [['necro', 'banshee'], 19], [['lich', 'necro'], 19], [['lich', 'bossLich'], 22]] },
+      levels: [[['ghoul', 'banshee'], 18], [['banshee', 'necro', 'ghoul'], 18], [['necro', 'lich'], 19], [['lich', 'ghoul', 'necro'], 19], [['ghoul', 'lich', 'bossLich'], 22]] },
     { name: 'Le Château des Vampires', icon: '🏰', theme: 'void', lvl: 22, rib: 'r', desc: 'Sous la lune de sang…',
-      levels: [[['vbat'], 20], [['werewolf', 'vbat'], 20], [['armor', 'werewolf'], 21], [['vampire', 'armor'], 21], [['vampire', 'bossVamp'], 24]] },
+      levels: [[['vbat', 'werewolf'], 20], [['werewolf', 'armor', 'vbat'], 20], [['armor', 'vampire'], 21], [['vampire', 'vbat', 'armor'], 21], [['vbat', 'vampire', 'bossVamp'], 24]] },
     { name: 'Les Égouts de la Cité', icon: '🐀', theme: 'swamp', lvl: 25, rib: 'p', desc: 'Sous la ville, quelque chose grouille…',
-      levels: [[['prat'], 22], [['tslime', 'prat'], 22], [['croco', 'tslime'], 23], [['thief', 'croco'], 23], [['thief', 'bossRat'], 26]] },
+      levels: [[['prat', 'tslime'], 22], [['tslime', 'croco', 'prat'], 22], [['croco', 'thief'], 23], [['thief', 'prat', 'croco'], 23], [['prat', 'thief', 'bossRat'], 26]] },
     { name: 'La Forteresse du Dragon-Roi', icon: '🐉', theme: 'void', lvl: 28, rib: 'r', desc: 'Là où le dragon fut enchaîné…',
-      levels: [[['drake'], 24], [['dknight', 'drake'], 24], [['dmage', 'dknight'], 25], [['salam', 'dmage'], 25], [['salam', 'bossVort'], 28]] },
+      levels: [[['drake', 'dknight'], 24], [['dknight', 'dmage', 'drake'], 24], [['dmage', 'salam'], 25], [['salam', 'drake', 'dmage'], 25], [['drake', 'salam', 'bossVort'], 28]] },
   ];
   // Crafting materials: one per world, plus a trophy dropped by each boss.
   const MATS = [
@@ -1003,13 +1013,14 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     { id: 'c', name: 'Cauchemar', mult: 3.8, rew: 5, cost: 2.5, medal: '👹' },
   ];
   ['hero', ...Object.keys(M).filter(k => !M[k].noImg)].forEach(loadSprite);
+  Object.keys(POSEM).filter(k => !IMG[k]).forEach(loadSprite);
   const EN_MAX = 50, EN_SEC = 120;
 
   // ---------- Classes & spells ----------
   // Weapons: [name, emoji, image key]. Images arrive with batch 2; emoji until then.
   const CLASSES = {
     guerrier: { name: 'Aldric', cls: 'Guerrier', sprite: 'hero', face: 'hero-face', emoji: '🤺', desc: 'Robuste et puissant au corps à corps.',
-      mult: { hp: 1.2, atk: 1.1, def: 1.3, mag: 0.6, mp: 0.9 }, atk: { name: 'Coup d’épée', icon: '🗡️', fx: 'slash' },
+      mult: { hp: 1.2, atk: 1.2, def: 1.3, mag: 0.6, mp: 0.9 }, atk: { name: 'Coup d’épée', icon: '🗡️', fx: 'slash' },
       spells: ['whirl', 'roar'], weapons: [['Épée longue', '🗡️', 'wSword'], ['Hache de guerre', '🪓', 'wAxe'], ['Marteau de bataille', '🔨', 'wHammer']], wstat: 'atk' },
     archer: { name: 'Lyra', cls: 'Archère', sprite: 'archer', face: 'archer-face', emoji: '🧝‍♀️', desc: 'Rapide et précise, frappe de loin.',
       mult: { hp: 1.0, atk: 1.38, def: 0.9, mag: 0.8, mp: 1.1 }, atk: { name: 'Tir', icon: '🏹', fx: 'arrow' },
@@ -1146,7 +1157,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       if (it.slot === 'arme' && it.k == null && it.cls) it.k = Math.max(0, CLASSES[it.cls].weapons.findIndex(x => x[2] === it.img)); }
     G.v22 = 1; G.hp = null;
   }
-  G.pity = G.pity || 0; applySkin();
+  G.pity = G.pity || 0; if (G.skin == null) G.skin = 'v2'; applySkin();
   for (const it of G.inv) if (it.slot === 'arme' && (it.cls === 'paladin' || it.cls === 'rogue') && !it.img) { const wk = CLASSES[it.cls].weapons[it.k || 0]; if (wk) it.img = it.r === 4 ? (it.cls === 'paladin' ? 'wLegP' : 'wLegR') : wk[2]; }
   // 3.0: mana and endurance are kept between fights; consumables refill them
   if (G.mpots == null) G.mpots = 2; if (G.spots == null) G.spots = 2;
@@ -2354,7 +2365,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       if (cast) { const lean = Math.sin(Math.min(1, cast * 1.4) * Math.PI) * 0.06; c.translate(hx, hy); c.rotate(-lean); c.translate(-hx, -hy); }
       if (F.hero.lunge && F.hero._dl !== F.hero.lunge) { F.hero._dl = F.hero.lunge; puffs(hx, hy - 4, ['rgba(210,190,160,.35)', 'rgba(180,160,130,.3)'], 4, 0.55); }
       const ant = pulse(F.hero.wind || 0, 160), hsx = 1 + ant * 0.05 - lp * 0.05 + hh * 0.06 - breathe * 0.5, hsy = 1 - ant * 0.05 + lp * 0.05 - hh * 0.06;
-      const pose = F.hero.win ? 'win' : (F.hero.hit && now - F.hero.hit < 480) ? 'hit' : ((F.hero.lunge && now - F.hero.lunge < 520) || (F.hero.wind && now - F.hero.wind < 300) || cast) ? 'atk' : 'idle';
+      const pose = F.hero.win ? 'win' : (F.hero.hit && now - F.hero.hit < 480) ? 'hit' : F.defending ? 'def' : cast ? 'spe' : ((F.hero.lunge && now - F.hero.lunge < 520) || (F.hero.wind && now - F.hero.wind < 300)) ? 'atk' : 'idle';
       if (lp > 0.25 && !reduce) for (let g = 1; g <= 2; g++) { c.save(); c.globalAlpha = 0.16 / g; heroDraw(c, pose, hx + hl * (1 - g * 0.3), hy - hj * (1 - g * 0.3), hH, 0, hsx, hsy); c.restore(); }
       if (F.shadowDodge) c.globalAlpha = 0.5 + 0.1 * Math.sin(now / 200);
       heroDraw(c, pose, hx + hl, hy - hj, hH, hh * 0.7, hsx, hsy);
@@ -2433,9 +2444,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (ph && ph.ghost) { const g = c.createRadialGradient(ex, ey - size * 0.5, 4, ex, ey - size * 0.5, size * 0.8); g.addColorStop(0, 'rgba(150,60,255,.35)'); g.addColorStop(1, 'rgba(150,60,255,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.4, size * 2, size * 1.7); }
     if (f.anim.lunge && f._dl !== f.anim.lunge) { f._dl = f.anim.lunge; if (!f.fly) puffs(ex, ey - 4, ['rgba(210,190,160,.35)', 'rgba(180,160,130,.3)'], 4, 0.6); }
     const sq = hk < 1 ? 1 - hk : 0, lf = pulse(f.anim.lunge, 300), fsx = 1 + sq * 0.12 - lf * 0.05, fsy = 1 - sq * 0.1 + lf * 0.06;
-    if (lf > 0.3 && !reduce) { c.save(); c.globalAlpha *= 0.18; sprite(c, f.id, ex + fl * 0.6, ey - fly, size, 0, f.emoji, false, fsx, fsy); c.restore(); }
+    const fpose = dead ? 'hit' : hk < 0.9 ? 'hit' : pulse(f.anim.lunge, 420) ? 'atk' : (f.charging || f.howl || (f.ph && (f.ph.breath || f.ph.dive || f.ph.prison))) ? 'spe' : 'idle';
+    if (lf > 0.3 && !reduce) { c.save(); c.globalAlpha *= 0.18; poseDraw(c, f.id, fpose, ex + fl * 0.6, ey - fly, size, 0, f.emoji, false, fsx, fsy); c.restore(); }
     if (f.elite && !dead) { const g = c.createRadialGradient(ex, ey - size * 0.45 - fly, 4, ex, ey - size * 0.45 - fly, size * 0.75); g.addColorStop(0, `rgba(255,200,80,${0.28 + 0.12 * Math.sin(now / 200)})`); g.addColorStop(1, 'rgba(255,170,40,0)'); c.fillStyle = g; c.fillRect(ex - size, ey - size * 1.3 - fly, size * 2, size * 1.6); }
-    sprite(c, f.id, ex + fl, ey - fly + bobF * 0.3, size + bobF, fh * 0.5, f.emoji, false, fsx, fsy, f.elite ? '255,190,60' : null);
+    poseDraw(c, f.id, fpose, ex + fl, ey - fly + bobF * 0.3, size + bobF, fh * 0.5, f.emoji, false, fsx, fsy, f.elite ? '255,190,60' : null);
     if (ph && ph.stun && !reduce) for (let j = 0; j < 3; j++) { const a = t / 300 + j * 2.1; c.font = `18px ${EMO}`; c.textAlign = 'center'; c.fillText('⭐', ex + Math.cos(a) * size * 0.3, ey - size * 0.95 + Math.sin(a) * 6); }
     if (ph && f.id === 'bossBone' && ph.shield > 0) for (let j = 0; j < 9; j++) { const a = t / 900 + j / 9 * Math.PI * 2, x = ex + Math.cos(a) * size * 0.55, y = ey - size * 0.45 + Math.sin(a) * size * 0.18;
       c.save(); c.translate(x, y); c.rotate(a * 2); c.fillStyle = '#f2ead8'; c.strokeStyle = '#6a5a40'; c.lineWidth = 1.5; c.beginPath(); c.ellipse(0, 0, 9, 3, 0, 0, 7); c.fill(); c.stroke(); c.beginPath(); c.arc(-9, 0, 3, 0, 7); c.arc(9, 0, 3, 0, 7); c.fill(); c.restore(); }
@@ -2677,7 +2689,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 3.0';
+  const VERSION = 'Version 3.1';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
