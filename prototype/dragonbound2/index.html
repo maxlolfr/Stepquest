@@ -171,6 +171,19 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
   .act i { width: 42px; height: 42px; } .act .cost, .act .cnt { top: 28px; }
   #pop { left: auto; right: calc(var(--safe-r) + 8px); width: calc(var(--pw) - 16px); bottom: auto; top: 50%; transform: translateY(-50%); }
 }
+#title { position: fixed; inset: 0; z-index: 60; background: #000 url(img/intro-end.jpg) center / cover no-repeat; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; padding-bottom: calc(var(--safe-b) + 8vh); cursor: pointer; }
+#title[hidden] { display: none; }
+#title::before { content: ""; position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,.15), rgba(0,0,0,.1) 50%, rgba(0,0,0,.75)); }
+#title > * { position: relative; }
+#title img { width: min(70vw, 420px); filter: drop-shadow(0 4px 12px #000); animation: pop .6s cubic-bezier(.2,1.4,.5,1); }
+#title .two { font-family: var(--fd); font-size: 40px; color: var(--gold2); text-shadow: 0 3px 0 #6a3b0a, 0 0 16px rgba(255,180,60,.7); margin-top: -10px; }
+#title p { font-family: var(--fd); font-size: 20px; margin: 18px 0 0; color: #fff; text-shadow: 0 2px 4px #000; animation: blink 1.4s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .35; } }
+#vid { position: fixed; inset: 0; z-index: 70; background: #000; display: grid; place-items: center; }
+#vid[hidden] { display: none; }
+#vid video { width: 100%; height: 100%; object-fit: contain; }
+#vid button { position: absolute; right: calc(var(--safe-r) + 14px); bottom: calc(var(--safe-b) + 14px); padding: 8px 16px; border-radius: 99px; background: rgba(0,0,0,.6); border: 2px solid var(--gold); font-size: 14px; }
+.ver button { color: var(--muted); text-decoration: underline; font-size: 12px; margin-left: 6px; }
 @media (prefers-reduced-motion: reduce) { .node.cur .disc, .card.tgt, .act.ult.ready i, .bar.lb.full i { animation: none; } }
 </style>
 </head>
@@ -214,6 +227,8 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
   </div>
 </div>
 
+<div id="title" hidden><img src="../dragonbound/img/logo.webp" alt="Dragonbound"><span class="two">II</span><p>Touche pour commencer</p></div>
+<div id="vid" hidden><video id="video" playsinline preload="auto" poster="img/intro-end.jpg"></video><button type="button" id="skipVid">Passer ⏭</button></div>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 <audio id="bgm" preload="auto" loop></audio>
 
@@ -913,7 +928,7 @@ function loop(t) {
 function stars(n) { return [0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">★</i>`).join(''); }
 const unlocked = i => i === 0 || S.stars[i - 1] > 0;
 function renderHome() {
-  $('gold').textContent = S.gold; $('snd').textContent = muted ? '🔇' : '🔊'; $('ver').textContent = VERSION;
+  $('gold').textContent = S.gold; $('snd').textContent = muted ? '🔇' : '🔊'; $('ver').innerHTML = `${VERSION}<button type="button" id="replayIntro">Revoir l’intro</button>`;
   const cur = LEVELS.findIndex((_, i) => unlocked(i) && !S.stars[i]);
   $('path').innerHTML = LEVELS.map((L, i) => `<button class="node ${L.boss ? 'boss' : ''} ${unlocked(i) ? '' : 'lock'} ${i === cur ? 'cur' : ''}" type="button" data-lv="${i}" aria-label="${L.name}">
     <div class="disc">${L.boss ? `<img src="${IP}bossBone.webp" alt="">` : unlocked(i) ? i + 1 : '🔒'}</div><div class="stars">${stars(S.stars[i])}</div><div class="nm">${L.name}</div></button>`).join('');
@@ -1010,6 +1025,7 @@ document.addEventListener('click', e => {
   if (d.buy) { const I = ITEMS[d.buy]; if (S.gold < I.price) return; S.gold -= I.price; S.items[d.buy]++; save(); SFX.coin(); shopSheet(); renderHome(); return; }
 });
 $('teamBtn').addEventListener('click', teamSheet);
+$('ver').addEventListener('click', e => { if (e.target.id === 'replayIntro') playIntro(); });
 $('forgeBtn').addEventListener('click', forgeSheet);
 $('shopBtn').addEventListener('click', shopSheet);
 $('helpBtn').addEventListener('click', helpSheet);
@@ -1021,7 +1037,12 @@ document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused 
 muted = !!S.mute;
 if (!SIM) { HORDER.forEach(id => { const im = new Image(); im.src = FP + HEROES[id].face + '.webp'; IMG['face_' + id] = im; }); load('bgc1', true); loadSprite('hero2'); }
 renderHome();
-if (!SIM) { requestAnimationFrame(loop); bgm.dataset.k = 'map1'; bgm.src = AP + 'map1.mp3'; bgm.volume = .4; if (!S.seen.in) story('in', helpSheet); }
+function afterIntro() { if (!S.seen.in) story('in', helpSheet); }
+function playIntro(then) { const v = $('video'), box = $('vid'); bgm.pause(); if (!v.src) v.src = 'intro.mp4'; v.currentTime = 0; v.muted = muted; box.hidden = false;
+  const end = () => { v.pause(); box.hidden = true; v.onended = null; S.seen.vid = 1; save(); if (!muted) music('map1'); if (then) then(); };
+  v.onended = end; $('skipVid').onclick = end; v.play().catch(() => end()); }
+if (!SIM) { requestAnimationFrame(loop); bgm.dataset.k = 'map1'; bgm.src = AP + 'map1.mp3'; bgm.volume = .4;
+  $('title').hidden = false; $('title').addEventListener('click', () => { $('title').hidden = true; ac(); if (!S.seen.vid) playIntro(afterIntro); else { if (!muted) music('map1'); afterIntro(); } }, { once: true }); }
 
 // ---------- Simulator: ?sim plays the chapter on Auto and reports ----------
 async function simCampaign(runs = 1) {
