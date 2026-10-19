@@ -870,7 +870,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // 2.5 hero poses (idle / attack / hit / victory), anchored on the torso so switching poses doesn't jump.
   // 3.1 poses for everyone: POSEM[key] = [height ratio to the idle pose, horizontal anchor 0..1 of the body]. Idle = the base image key,
   // other poses are key_atk (attack), key_hit (hurt), key_spe (special / charging), key_def (guard), key_win (victory).
-  const POSEM = { hero2: [1, 0.356], hero2_atk: [1.028, 0.696], hero2_hit: [0.96, 0.47], hero2_win: [1.138, 0.322] };
+  const POSEM = { hero2: [1.0, 0.475], hero2_idle2: [0.992, 0.228], hero2_prep: [1.043, 0.39], hero2_atk: [0.85, 0.362], hero2_hit: [0.879, 0.554], hero2_def: [0.796, 0.5], hero2_spe: [0.812, 0.506], hero2_win: [0.997, 0.455], hero2_ko: [0.721, 0.529] };
   const POSES = {}; const POSE2 = 1;
   function applySkin() { const C = CLASSES.guerrier, v2 = G.skin === 'v2'; C.sprite = v2 ? 'hero2' : 'hero'; C.face = v2 ? 'hero2-face' : 'hero-face'; }
   // filled per class once pose art matching the hero's look exists, e.g. guerrier: { idle: ['hero', 1, 0.5], atk: ['hero_atk', h, anchorX], ... }
@@ -885,7 +885,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     if (flash > 0 && WHITE[k]) { const a = c.globalAlpha; c.globalAlpha = flash * a; c.drawImage(WHITE[k], x0, y - hh, w, hh); c.globalAlpha = a; }
   }
   function heroDraw(c, pose, x, y, h, flash, sx = 1, sy = 1) {
-    const b = CL().sprite, pz = poseKey(b, pose) ? pose : pose === 'def' || pose === 'spe' ? (poseKey(b, 'atk') && pose === 'spe' ? 'atk' : 'idle') : pose;
+    const b = CL().sprite, FB = { idle2: 'idle', prep: 'atk', ko: 'hit', def: 'idle', spe: 'atk' };
+    let pz = pose; while (pz !== 'idle' && !poseKey(b, pz)) pz = FB[pz] || 'idle';
     return poseDraw(c, b, pz, x, y, h, flash, CL().emoji, true, sx, sy);
   }
   const thumb = k => (M[k] && M[k].emoji && !ready(k)) ? `<div class="fe">${M[k].emoji}</div>` : `<img src="img/${k}.webp" alt="">`;
@@ -1071,7 +1072,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     blades: { name: 'Danse des lames', icon: '🗡️', cls: 'sp', cost: 9, img: 'spBlades', tip: '4 lames lancées d\u2019affilée.' },
   };
   const OPT = new Set(); // optional images that loaded (batch 2)
-  ['archer', 'mage', 'archer-face', 'mage-face', 'paladin', 'rogue', 'paladin-face', 'rogue-face', 'hero2', 'hero2-face', 'hero2_atk', 'hero2_hit', 'hero2_win', 'ic_sword', 'ic_arrow', 'ic_staff', 'ic_mace', 'ic_dagger', 'bl_shield', 'bl_roll', 'bl_barrier', 'bl_dome', 'pRat', 'pVort', 'wLegP', 'wLegR', 'bl_riposte', 'wFlail', 'wDaggers', 'wFangs', 'wShadow', 'spSmite', 'spShield', 'spShadow', 'spBlades', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
+  ['archer', 'mage', 'archer-face', 'mage-face', 'paladin', 'rogue', 'paladin-face', 'rogue-face', 'hero2', 'hero2-face', 'hero2_atk', 'hero2_hit', 'hero2_win', 'hero2_idle2', 'hero2_prep', 'hero2_def', 'hero2_spe', 'hero2_ko', 'ic_sword', 'ic_arrow', 'ic_staff', 'ic_mace', 'ic_dagger', 'bl_shield', 'bl_roll', 'bl_barrier', 'bl_dome', 'pRat', 'pVort', 'wLegP', 'wLegR', 'bl_riposte', 'wFlail', 'wDaggers', 'wFangs', 'wShadow', 'spSmite', 'spShield', 'spShadow', 'spBlades', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
    'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome',
    ...[0, 1, 2, 3, 4, 5, 6, 7, 8, 9].flatMap(n => ['casque', 'armure', 'bottes', 'amulette'].map(sl => `a${n}${sl}`)),
    ...['bone', 'sap', 'ember', 'ooze', 'frost', 'shard', 'soul', 'blood', 'sludge', 'dscale', 't0', 't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9'].map(m => 'm_' + m),
@@ -1867,7 +1868,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       rise(hx, hy - 20, ['#c8f5a8', '#8fe07a', '#ffe08a'], 22); floatTxt(`+${heal} ❤️`, hx, hy - H * 0.52, '#8fe07a', true);
       say(`Soin arcanique : +${heal} PV, tu es guéri de tes maux.`); await wait(600);
     } else if (kind === 'whirl') {
-      F.hero.wind = now(); await wait(160); SFX.whirl(); await tick(F.hero, 'lunge', 200); fx.push({ type: 'whirl', x: ex, y: fy, t0: now() }); await wait(360);
+      F.hero.wind = now(); F.hero.spe = now(); await wait(160); SFX.whirl(); await tick(F.hero, 'lunge', 200); fx.push({ type: 'whirl', x: ex, y: fy, t0: now() }); await wait(360);
       const r = dmgCalc(atk * 2.0, F.foe.def); hitFoe(r.d, r.crit, true, '#e8f0f8'); impact(ex, fy, ['#ffffff', '#e8f0f8', '#ffd76a'], 0.9, false); say(`Tourbillon d’acier ! ${r.d} dégâts.`);
     } else if (kind === 'roar') {
       await castPrep(['#ffb08a', '#ff6a4a'], 'rgba(255,110,80,', 180); SFX.buff(); F.buff = { turns: 3 }; fx.push({ type: 'rings', x: hx, y: hyC, t0: now() }); rise(hx, hy - 10, ['#ff8a6a', '#ffd76a'], 16, 30);
@@ -2110,7 +2111,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     animateWin();
   }
   async function lose() {
-    say('Tu t’effondres…'); SFX.lose(); setMusic('map'); await wait(700);
+    say('Tu t’effondres…'); if (F) F.hero.ko = performance.now(); SFX.lose(); setMusic('map'); await wait(1100);
     G.hp = Math.max(1, Math.round(stats().hp * 0.15)); G.hpAt = Date.now(); save(); render();
     modal('Défaite', 'r', `<div style="font-family:var(--emoji); font-size:46px">💫</div>
       <div class="note">Tu as été ramené au camp, très affaibli (15 % de vie). Tu gardes ce que tu as gagné : ${F.loot.xp} XP et ${F.loot.gold} <i class="coin" aria-label="or"></i>.</div>
@@ -2370,7 +2371,8 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       if (cast) { const lean = Math.sin(Math.min(1, cast * 1.4) * Math.PI) * 0.06; c.translate(hx, hy); c.rotate(-lean); c.translate(-hx, -hy); }
       if (F.hero.lunge && F.hero._dl !== F.hero.lunge) { F.hero._dl = F.hero.lunge; puffs(hx, hy - 4, ['rgba(210,190,160,.35)', 'rgba(180,160,130,.3)'], 4, 0.55); }
       const ant = pulse(F.hero.wind || 0, 160), hsx = 1 + ant * 0.05 - lp * 0.05 + hh * 0.06 - breathe * 0.5, hsy = 1 - ant * 0.05 + lp * 0.05 - hh * 0.06;
-      const pose = F.hero.win ? 'win' : (F.hero.hit && now - F.hero.hit < 480) ? 'hit' : F.defending ? 'def' : cast ? 'spe' : ((F.hero.lunge && now - F.hero.lunge < 520) || (F.hero.wind && now - F.hero.wind < 300)) ? 'atk' : 'idle';
+      const lunging = F.hero.lunge && F.hero.lunge >= (F.hero.wind || 0) && now - F.hero.lunge < 520;
+      const pose = F.hero.ko ? 'ko' : F.hero.win ? 'win' : (F.hero.hit && now - F.hero.hit < 480) ? 'hit' : F.defending ? 'def' : (cast || (F.hero.spe && now - F.hero.spe < 760)) ? 'spe' : lunging ? 'atk' : (F.hero.wind && now - F.hero.wind < 320) ? 'prep' : (!reduce && Math.sin(t / 650) > 0.35) ? 'idle2' : 'idle';
       if (lp > 0.25 && !reduce) for (let g = 1; g <= 2; g++) { c.save(); c.globalAlpha = 0.16 / g; heroDraw(c, pose, hx + hl * (1 - g * 0.3), hy - hj * (1 - g * 0.3), hH, 0, hsx, hsy); c.restore(); }
       if (F.shadowDodge) c.globalAlpha = 0.5 + 0.1 * Math.sin(now / 200);
       heroDraw(c, pose, hx + hl, hy - hj, hH, hh * 0.7, hsx, hsy);
@@ -2694,7 +2696,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 3.1.1';
+  const VERSION = 'Version 3.2';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
