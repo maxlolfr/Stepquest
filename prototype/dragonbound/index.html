@@ -2532,7 +2532,18 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       c.beginPath(); c.moveTo(hx - R * 0.7, hy); c.lineTo(hx - R * 0.8, hy - R * 1.9); c.lineTo(hx - R * 0.1, hy - R * 2.15); c.lineTo(hx + R * 0.75, hy - R * 1.8); c.lineTo(hx + R * 0.7, hy); c.closePath(); c.fill(); c.stroke();
       c.strokeStyle = 'rgba(255,255,255,.6)'; c.beginPath(); c.moveTo(hx - R * 0.4, hy - R * 1.6); c.lineTo(hx - R * 0.1, hy - R); c.lineTo(hx + R * 0.3, hy - R * 1.3); c.stroke(); c.restore(); }
     const shOn = F.defending, sp = F.hero.shield ? Math.min(1, (now - F.hero.shield) / 260) : 1, pop = sp < 1 ? 1 + Math.sin(sp * Math.PI) * 0.25 : 1, bkh = pulse(F.hero.block || 0, 260);
-    if (shOn && cls === 'guerrier') {
+    if (shOn && cls === 'guerrier' && poseKey(CL().sprite, 'def')) {
+      // 4.2: Aldric raises his own black shield (pose art); a dark steel ward glows in front of it, flaring silver on each blocked hit.
+      const cx = hx + W * 0.07, cy = hcY + H * 0.02 * ZOOM, R = H * 0.3 * ZOOM * (sp < 1 ? 0.6 + sp * 0.4 : 1);
+      c.save(); c.globalCompositeOperation = 'lighter';
+      const g = c.createRadialGradient(cx, cy, R * 0.25, cx, cy, R); g.addColorStop(0, 'rgba(120,130,160,0)'); g.addColorStop(0.8, `rgba(150,165,200,${0.12 + bkh * 0.35})`); g.addColorStop(1, 'rgba(150,165,200,0)');
+      c.fillStyle = g; c.beginPath(); c.arc(cx, cy, R, -1.25, 1.25); c.lineTo(cx, cy); c.closePath(); c.fill();
+      c.strokeStyle = `rgba(215,225,245,${0.45 + bkh * 0.5})`; c.lineWidth = 3; c.beginPath(); c.arc(cx, cy, R, -1.1, 1.1); c.stroke();
+      c.strokeStyle = `rgba(90,100,130,${0.6})`; c.lineWidth = 6; c.globalCompositeOperation = 'source-over'; c.beginPath(); c.arc(cx, cy, R + 5, -0.9, 0.9); c.stroke();
+      const sw = ((now / 900) % 1) * 2.2 - 1.1; c.globalCompositeOperation = 'lighter'; c.strokeStyle = 'rgba(255,255,255,.55)'; c.lineWidth = 3; c.beginPath(); c.arc(cx, cy, R, sw - 0.12, sw + 0.12); c.stroke();
+      if (bkh) for (let j = 0; j < 6; j++) { const a = -0.9 + j * 0.36; c.fillStyle = `rgba(255,255,255,${bkh})`; c.beginPath(); c.arc(cx + Math.cos(a) * (R + bkh * 14), cy + Math.sin(a) * (R + bkh * 14), 2.5, 0, 7); c.fill(); }
+      c.restore();
+    } else if (shOn && cls === 'guerrier') {
       // Knight's tower shield: steel rim, royal blue field, golden lion crest, rivets; pops in with a golden ward ring.
       const sx = hx + W * 0.1, sy = hcY + H * 0.04 * ZOOM, S = H * 0.15 * ZOOM * pop * sp, glowA = 0.25 + bkh * 0.6 + (sp < 1 ? (1 - sp) * 0.6 : 0);
       c.save();
@@ -2855,7 +2866,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 4.2';
+  const VERSION = 'Version 4.2.1';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
