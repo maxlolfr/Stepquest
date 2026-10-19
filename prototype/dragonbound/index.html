@@ -809,6 +809,15 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       c.save(); c.globalAlpha = 1; c.fillStyle = "#000"; c.font = `${h * 0.9}px ${EMO}`; c.textAlign = 'center'; c.textBaseline = 'bottom'; if (noFlip) c.fillText(emoji, x, y); else { c.scale(-1, 1); c.fillText(emoji, -x, y); } c.restore();
     }
   }
+  // 2.5 hero poses (idle / attack / hit / victory), anchored on the torso so switching poses doesn't jump.
+  const POSES = { guerrier: { idle: ['hero', 1, 0.348], atk: ['hero_atk', 1.04, 0.533], hit: ['hero_hit', 0.96, 0.471], win: ['hero_win', 1.14, 0.319] } };
+  function heroDraw(c, pose, x, y, h, flash, sx = 1, sy = 1) {
+    const P = POSES[G.cls || 'guerrier'], p = P && (P[pose] && ready(P[pose][0]) ? P[pose] : P.idle);
+    if (!p || !ready(p[0])) return sprite(c, CL().sprite, x, y, h, flash, CL().emoji, true, sx, sy);
+    const im = IMG[p[0]], hh = h * p[1] * sy, w = hh * im.naturalWidth / im.naturalHeight * sx;
+    c.drawImage(im, x - w * p[2], y - hh, w, hh);
+    if (flash > 0 && WHITE[p[0]]) { const a = c.globalAlpha; c.globalAlpha = flash * a; c.drawImage(WHITE[p[0]], x - w * p[2], y - hh, w, hh); c.globalAlpha = a; }
+  }
   const thumb = k => (M[k] && M[k].emoji && !ready(k)) ? `<div class="fe">${M[k].emoji}</div>` : `<img src="img/${k}.webp" alt="">`;
 
   // ---------- Game data ----------
@@ -969,7 +978,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     blades: { name: 'Danse des lames', icon: '🗡️', cls: 'sp', cost: 9, img: 'spBlades', tip: '4 lames lancées d\u2019affilée.' },
   };
   const OPT = new Set(); // optional images that loaded (batch 2)
-  ['archer', 'mage', 'archer-face', 'mage-face', 'paladin', 'rogue', 'paladin-face', 'rogue-face', 'spSmite', 'spShield', 'spShadow', 'spBlades', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
+  ['archer', 'mage', 'archer-face', 'mage-face', 'paladin', 'rogue', 'paladin-face', 'rogue-face', 'hero_atk', 'hero_hit', 'hero_win', 'spSmite', 'spShield', 'spShadow', 'spBlades', 'spWhirl', 'spRoar', 'spRain', 'spVenom', 'spFrost', 'spHeal',
    'wSword', 'wAxe', 'wHammer', 'wShortbow', 'wElvenbow', 'wCrossbow', 'wStaff', 'wScepter', 'wTome',
    ...[0, 1, 2, 3, 4, 5].flatMap(n => ['casque', 'armure', 'bottes', 'amulette'].map(sl => `a${n}${sl}`)),
    ...['bone', 'sap', 'ember', 'ooze', 'frost', 'shard', 't0', 't1', 't2', 't3', 't4', 't5'].map(m => 'm_' + m),
@@ -1921,7 +1930,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   }
 
   async function win() {
-    const f = F.foe; f.anim.dead = performance.now(); say(`${f.name} est vaincu !`); SFX.win();
+    const f = F.foe; f.anim.dead = performance.now(); say(`${f.name} est vaincu !`); SFX.win(); F.hero.win = performance.now();
     { const { H, ex, ey } = pos(), fy = ey - H * (f.size || .5) * ZOOM * 0.5; fx.push({ type: 'flash', x: ex, y: fy, t0: performance.now(), dur: 300, col: 'rgba(255,255,255,.8)', r: 90 });
       puffs(ex, fy, ['rgba(255,255,255,.5)', 'rgba(230,220,255,.45)'], 10, 1.1); rise(ex, fy + 20, ['#ffffff', '#ffe08a', '#d8c8ff'], 18, 30); }
     await wait(700);
@@ -2235,9 +2244,10 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       if (cast) { const lean = Math.sin(Math.min(1, cast * 1.4) * Math.PI) * 0.06; c.translate(hx, hy); c.rotate(-lean); c.translate(-hx, -hy); }
       if (F.hero.lunge && F.hero._dl !== F.hero.lunge) { F.hero._dl = F.hero.lunge; puffs(hx, hy - 4, ['rgba(210,190,160,.35)', 'rgba(180,160,130,.3)'], 4, 0.55); }
       const ant = pulse(F.hero.wind || 0, 160), hsx = 1 + ant * 0.05 - lp * 0.05 + hh * 0.06 - breathe * 0.5, hsy = 1 - ant * 0.05 + lp * 0.05 - hh * 0.06;
-      if (lp > 0.25 && !reduce) for (let g = 1; g <= 2; g++) { c.save(); c.globalAlpha = 0.16 / g; sprite(c, CL().sprite, hx + hl * (1 - g * 0.3), hy - hj * (1 - g * 0.3), hH, 0, CL().emoji, true, hsx, hsy); c.restore(); }
+      const pose = F.hero.win ? 'win' : (F.hero.hit && now - F.hero.hit < 480) ? 'hit' : ((F.hero.lunge && now - F.hero.lunge < 520) || (F.hero.wind && now - F.hero.wind < 300) || cast) ? 'atk' : 'idle';
+      if (lp > 0.25 && !reduce) for (let g = 1; g <= 2; g++) { c.save(); c.globalAlpha = 0.16 / g; heroDraw(c, pose, hx + hl * (1 - g * 0.3), hy - hj * (1 - g * 0.3), hH, 0, hsx, hsy); c.restore(); }
       if (F.shadowDodge) c.globalAlpha = 0.5 + 0.1 * Math.sin(now / 200);
-      sprite(c, CL().sprite, hx + hl, hy - hj, hH, hh * 0.7, CL().emoji, true, hsx, hsy);
+      heroDraw(c, pose, hx + hl, hy - hj, hH, hh * 0.7, hsx, hsy);
       c.restore();
     }
     if (cast) { const gr = 10 + cast * 26, g = c.createRadialGradient(hx + 28, hcY, 1, hx + 28, hcY, gr); g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(0.35, F.hero.cast.col + '0.75)'); g.addColorStop(1, F.hero.cast.col + '0)');
@@ -2248,7 +2258,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
     const shOn = F.defending, sp = F.hero.shield ? Math.min(1, (now - F.hero.shield) / 260) : 1, pop = sp < 1 ? 1 + Math.sin(sp * Math.PI) * 0.25 : 1, bkh = pulse(F.hero.block || 0, 260);
     if (shOn && cls === 'guerrier') {
       // Knight's tower shield: steel rim, royal blue field, golden lion crest, rivets; pops in with a golden ward ring.
-      const sx = hx + W * 0.11, sy = hcY + 8, S = H * 0.18 * ZOOM * pop * sp, glowA = 0.25 + bkh * 0.6 + (sp < 1 ? (1 - sp) * 0.6 : 0);
+      const sx = hx + W * 0.1, sy = hcY + H * 0.06 * ZOOM, S = H * 0.13 * ZOOM * pop * sp, glowA = 0.25 + bkh * 0.6 + (sp < 1 ? (1 - sp) * 0.6 : 0);
       c.save();
       const ring = c.createRadialGradient(sx, sy, S * 0.3, sx, sy, S * 1.25); ring.addColorStop(0, `rgba(255,220,120,${glowA * 0.5})`); ring.addColorStop(0.7, `rgba(255,200,80,${glowA * 0.25})`); ring.addColorStop(1, 'rgba(255,200,80,0)');
       c.globalCompositeOperation = 'lighter'; c.fillStyle = ring; c.beginPath(); c.arc(sx, sy, S * 1.25, 0, 7); c.fill(); c.globalCompositeOperation = 'source-over';
@@ -2258,13 +2268,11 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       body(); const rim = c.createLinearGradient(-40, -46, 40, 56); rim.addColorStop(0, '#ffffff'); rim.addColorStop(0.25, '#c9d3dc'); rim.addColorStop(0.55, '#8a97a3'); rim.addColorStop(0.8, '#d7e0e8'); rim.addColorStop(1, '#6e7a86'); c.fillStyle = rim; c.fill();
       c.shadowColor = 'transparent'; c.lineWidth = 3.5; c.strokeStyle = '#2c3640'; c.stroke();
       c.save(); c.translate(0, 2); c.scale(0.8, 0.8); body(); c.restore();
-      const fld = c.createLinearGradient(0, -40, 0, 48); fld.addColorStop(0, '#3b6fd1'); fld.addColorStop(1, '#1d3a86'); c.fillStyle = fld; c.fill(); c.lineWidth = 2; c.strokeStyle = '#13265a'; c.stroke();
+      const fld = c.createLinearGradient(0, -40, 0, 48); fld.addColorStop(0, '#e2483a'); fld.addColorStop(1, '#9a1e16'); c.fillStyle = fld; c.fill(); c.lineWidth = 2; c.strokeStyle = '#5a120c'; c.stroke();
       // golden cross band
       c.fillStyle = '#f2c14e'; c.strokeStyle = '#8a5a12'; c.lineWidth = 1.5;
-      c.beginPath(); c.rect(-5, -34, 10, 74); c.rect(-30, -12, 60, 10); c.fill(); c.stroke();
+      c.beginPath(); for (let q = 0; q < 10; q++) { const a = -Math.PI / 2 + q * Math.PI / 5, rr = q % 2 ? 9 : 22; c.lineTo(Math.cos(a) * rr, -2 + Math.sin(a) * rr); } c.closePath(); c.fill(); c.stroke();
       // central boss with lion-ish crest
-      const bg = c.createRadialGradient(-3, -9, 2, 0, -7, 14); bg.addColorStop(0, '#fff6c8'); bg.addColorStop(0.5, '#f2c14e'); bg.addColorStop(1, '#a8701a'); c.fillStyle = bg; c.beginPath(); c.arc(0, -7, 13, 0, 7); c.fill(); c.strokeStyle = '#7a4a0e'; c.lineWidth = 2; c.stroke();
-      c.fillStyle = '#7a4a0e'; c.beginPath(); c.moveTo(0, -15); c.lineTo(4, -8); c.lineTo(0, 1); c.lineTo(-4, -8); c.closePath(); c.fill();
       // rivets
       c.fillStyle = '#eef3f7'; for (const [rx, ry] of [[-33, -39], [33, -39], [-35, 0], [35, 0], [-20, 34], [20, 34], [0, 50]]) { c.beginPath(); c.arc(rx, ry, 2.6, 0, 7); c.fill(); c.strokeStyle = '#4a5560'; c.lineWidth = 1; c.stroke(); }
       // glossy sweep
@@ -2542,7 +2550,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 2.4';
+  const VERSION = 'Version 2.5';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
