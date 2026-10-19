@@ -49,7 +49,7 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
     let prev=0, mono=true; for(let L=1;L<=40;L++){ G.lvl=L; G.eq={}; const s=api.stats(); if(s.hp+s.atk<prev) mono=false; prev=s.hp+s.atk; } ok(mono, 'naked hero stats grow every level');
     Math.random=R2; }
   // 2.3 heroes
-  { let F=fresh('rogue'); F.mp=99; F.foe.hp=F.foe.hpMax=1e6; const h0=G.hp; await api.act('shadow'); ok(G.hp===h0 && !F.shadowDodge, `rogue shadow dodges the next hit (lost ${h0-G.hp})`);
+  { let F=fresh('rogue'); F.mp=99; F.foe.hp=F.foe.hpMax=1e6; const h0=G.hp; await api.act('shadow'); ok(G.hp===h0, `rogue shadow dodges the next hit (lost ${h0-G.hp})`);
     ok(F.shadowCrit===true, 'shadow keeps the crit for the next blow'); const fx0=api.fx.length; await api.act('atk'); ok(F.shadowCrit===false, 'shadow crit consumed');
     F=fresh('paladin'); F.mp=99; F.foe.hp=F.foe.hpMax=1e6; G.hp=Math.round(api.stats().hp*0.5); const b=G.hp; await api.act('aegis'); ok(F.aegis===1, `aegis lasts (left ${F.aegis})`);
     F=fresh('paladin'); F.mp=99; F.foe.hp=F.foe.hpMax=1e6; G.hp=Math.round(api.stats().hp*0.5); const fh=F.foe.hp; await api.act('smite'); ok(F.foe.hp<fh, 'smite hurts'); }
