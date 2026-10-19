@@ -2,7 +2,7 @@ global.HEAD=require('fs').readFileSync('t14head.js','utf8'); eval(HEAD);
 const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else {fail++; console.log('FAIL', msg);} };
 (async()=>{
   const G=api.G; G.welcomed=true; G.lvl=10;
-  const fresh=(cls)=>{ G.story={}; for(let w=0;w<8;w++){G.story['in'+w]=1;G.story['out'+w]=1;} api.setHero(cls); G.hp=api.stats().hp; G.energy=99; G.test=true; api.startLevel(0,0); const F=api.F; F.foe.trait=null; F.foe.special=null; F.foe.hp=F.foe.hpMax=1e9; return F; };
+  const fresh=(cls)=>{ G.story={}; for(let w=0;w<8;w++){G.story['in'+w]=1;G.story['out'+w]=1;} api.setHero(cls); G.hp=api.stats().hp; G.energy=99; G.test=true; api.startLevel(0,0); const F=api.F; F.foes=[F.foe]; F.foe.role=''; F.foe.vtrait=null; F.foe.tint=null; F.foe.trait=null; F.foe.special=null; F.foe.hp=F.foe.hpMax=1e9; return F; };
   // A. costs
   for (const [cls,exp] of [['guerrier',15],['archer',12],['mage',12]]) { api.setHero(cls); ok(api.stCost('def')===exp, `def cost ${cls}`); }
   ok(api.stCost('atk')===10 && api.stCost('whirl')===15 && api.stCost('rain')===15 && api.stCost('fire')===0, 'action costs');
@@ -57,5 +57,15 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
   { let F=fresh('mage'); F.mp=3; F.st=40; api.endRun(false); ok(G.mp===3 && G.st===40, `mana/endurance kept after the fight (${G.mp}/${G.st})`);
     G.energy=99; api.startLevel(0,0); F=api.F; ok(F.mp===3 && F.st===40, 'next fight starts with what is left');
     G.mpots=1; await api.act('mpot'); ok(G.mpots===0 && F.mp>3, 'mana potion works'); G.spots=1; F.st=10; await api.act('spot'); ok(G.spots===0 && F.st>=90, `endurance elixir works (${F.st})`); api.endRun(false); }
+
+  // 4.0 waves
+  { const wave=(cls,keys)=>{ const F=fresh(cls); F.rooms[F.room]=keys; api.nextFoe(); for(const o of F.foes){ o.trait=null; o.special=null; o.vtrait=null; } return F; };
+    ok(api.WORLDS[0].levels.length===10 && api.M[api.WORLDS[0].levels[9][0].slice(-1)[0]].boss && api.WORLDS[0].levels[4][2]==='mini', '10 rooms per world, champion in 5, boss in 10');
+    let F=wave('guerrier',['rat','rat','rat']); F.mp=99; for(const o of F.foes){o.hp=o.hpMax=1e6;} await api.act('whirl'); ok(F.foes.every(o=>o.hp<1e6), 'whirl hits the whole wave');
+    F=wave('guerrier',['rat','rat','rat']); for(const o of F.foes){o.hp=o.hpMax=1e6;} const R0=Math.random; Math.random=()=>0.6; const h0=G.hp; await api.foeTurn(); ok(F.foes.every(o=>o.anim.lunge>0) && G.hp<h0, 'every enemy of the wave attacks'); Math.random=R0;
+    F=wave('guerrier',['slime','rat']); const sl=F.foes[0], rt=F.foes[1]; sl.role='heal'; sl.hp=sl.hpMax=1e6; rt.hpMax=1000; rt.hp=100; F.turn=0; await api.foeTurn(); ok(rt.hp>100, `healer mends a hurt ally (${rt.hp})`);
+    F=wave('guerrier',['rat','skel']); F.foes[1].role='guard'; for(const o of F.foes){o.hp=o.hpMax=1e6;} F.foe=F.foes[0]; Math.random=()=>0.1; await api.act('atk'); Math.random=R0; ok(F.foes[1].hp<1e6 && F.foes[0].hp===1e6, 'guard steps in front of a single-target attack');
+    F=wave('guerrier',['rat','rat']); F.foes[0].hp=1; F.foes[1].hp=F.foes[1].hpMax=1e6; F.foe=F.foes[0]; els.modal.hidden=true; await api.act('atk'); ok(F.foes[0].dead && F.foe===F.foes[1] && els.modal.hidden, 'one kill retargets, the wave goes on');
+    F=wave('guerrier',['rat']); F.foes[0].hp=1; els.modal.hidden=true; await api.act('atk'); ok(!els.modal.hidden, 'clearing the wave ends the fight'); els.modal.hidden=true; }
   console.log(`unit tests: ${pass} passed, ${fail} failed`);
 })();

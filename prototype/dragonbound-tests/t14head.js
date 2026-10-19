@@ -18,7 +18,7 @@ global.setInterval=()=>0;
 const wrapped = js.replace("const wait = ms => new Promise(r => setTimeout(r, reduce ? Math.min(ms, 120) : ms));","const wait = ms => Promise.resolve();")
   .replace("if (auto) setTimeout(close, auto);","res();").replace("el.addEventListener('click', nextL); nextL();","res();").replace("const lv = WORLDS[w].levels[i], MD = MODES.find(m => m.id === (modeOpen(w, selMode) ? selMode : ''))","if (globalThis.__sel != null) selMode = globalThis.__sel; const lv = WORLDS[w].levels[i], MD = MODES.find(m => m.id === (modeOpen(w, selMode) ? selMode : ''))")
   .replace("async function chestFx(it, chestKey, chestEmoji) {","async function chestFx(it, chestKey, chestEmoji) { return;")
-  .replace("  function loop(t)", "  globalThis.__api={startLevel, act, foeTurn, nextFoe, endRun, dmgCalc, stCost, BLOCK, ST_MAX, M, get fx(){return fx}, get F(){return F}, get G(){return G}, WORLDS, stats, itemStats, equip, nextLevel, render, setHero, SPELLS, rollItem, makeWeapon, MODES, win, kAt, diceOf, rollRarity, potCost, mpotCost, spotCost, innCost, CL_SPELLS: () => CL().spells};\n  function loop(t)");
+  .replace("  function loop(t)", "  globalThis.__api={startLevel, act, foeTurn, nextFoe, M, endRun, dmgCalc, stCost, BLOCK, ST_MAX, M, get fx(){return fx}, get F(){return F}, get G(){return G}, WORLDS, stats, itemStats, equip, nextLevel, render, setHero, SPELLS, rollItem, makeWeapon, MODES, win, kAt, diceOf, rollRarity, potCost, mpotCost, spotCost, innCost, CL_SPELLS: () => CL().spells};\n  function loop(t)");
 eval(wrapped);
 var api=globalThis.__api;
 el("modal").hidden=true;
