@@ -1200,9 +1200,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
       setTimeout(() => el.addEventListener('click', close), 400); if (auto) setTimeout(close, auto);
     });
   }
-  const TAUNT = { bossBone: 'Tes os rejoindront mon trône !', bossWitch: 'La forêt t\u2019avalera tout entier…', bossDragon: 'Qui ose réveiller le Dragon Écarlate ?',
-    bossHag: 'Mon chaudron a besoin d\u2019un nouvel ingrédient…', bossQueen: 'Ton cœur gèlera avant la fin du combat.', bossVoid: 'Le Néant n\u2019a pas de fin.',
-    bossLich: 'La mort n\u2019est qu\u2019un commencement.', bossVamp: 'Ton sang sera mon festin !', bossRat: 'Mes enfants ont faim… et tu sens bon.', bossVort: 'Mille ans de chaînes. Tu seras mon premier repas.' };
+  const TAUNT = { bossBone: 'Vivant, tu entres chez moi. Mort, tu y resteras. C’est la tradition.', bossWitch: 'La forêt a faim, mon enfant. Et ce soir, elle va goûter ton courage.', bossDragon: 'Je suis la flamme qui dévore les royaumes ! Agenouille-toi devant mon règne !', bossHag: 'Approche, voyageur. Je connais la tombe où ton nom sera gravé.', bossQueen: 'Mon royaume ne connaît ni pitié ni printemps. Tu ne connaîtras que le gel.', bossVoid: 'Je suis le vide entre les étoiles. Ton existence n’est qu’une erreur passagère.', bossLich: 'J’ai vu des empires naître et pourrir. Tu n’es qu’un battement de cœur.', bossVamp: 'Le sang des rois coule dans mes veines. Le tien fera un excellent millésime.', bossRat: 'Mes milliers de sujets dévorent les puissants ! Tu n’es qu’un repas qui parle !', bossVort: 'Enfin, le dernier pion arrive ! Je suis Vorthax, le roi que les dieux n’ont pu tuer !' };
   function bossIntro(k) {
     const f = M[k]; SFX.thump(); setTimeout(SFX.thump, 220); setTimeout(SFX.roar, 300);
     const pk = { bossRat: 'pRat', bossVort: 'pVort' }[k], img = pk && OPT.has(pk) ? `<img class="bimg" src="img/${pk}.webp" alt="" style="border-radius:50%">` : ready(k) ? `<img class="bimg" src="img/${k}.webp" alt="">` : `<div class="bimg" style="font-size:150px;font-family:var(--emoji);display:grid;place-items:center">${f.emoji}</div>`;
@@ -1245,26 +1243,26 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Story, daily quests and achievements (2.0) ----------
   const STORY = {
-    0: { in: [['narr', 'Chapitre 1 · La Crypte oubliée. Sous la vallée, les morts se relèvent.'], ['hero', 'Les os qui marchent… Quelqu’un les commande. Je vais trouver qui.']],
-         out: [['bossBone', 'Mon trône… n’était qu’un début. Le Dragon est réveillé…'], ['hero', 'Le Dragon ? Alors il faut traverser la forêt.']] },
-    1: { in: [['narr', 'Chapitre 2 · La Forêt des Murmures. Les arbres chuchotent ton nom.'], ['hero', 'Une sorcière a ensorcelé la forêt. Restons sur nos gardes.']],
-         out: [['bossWitch', 'Tu crois m’avoir vaincue ? Les Mines de Braise te brûleront !'], ['hero', 'Direction les Mines. Le Dragon nous attend.']] },
-    2: { in: [['narr', 'Chapitre 3 · Les Mines de Braise. La chaleur est écrasante.'], ['hero', 'Ce trésor… c’est l’antre du Dragon Écarlate.']],
-         out: [['bossDragon', 'Grrr… Le sceau du Néant est déjà brisé… tu arrives trop tard…'], ['hero', 'Trop tard ? Alors je vais jusqu’au bout.']] },
-    3: { in: [['narr', 'Chapitre 4 · Les Marais Hantés. La brume étouffe les cris.'], ['hero', 'Ça sent la potion et la vase. Morgane n’est pas loin.']],
-         out: [['bossHag', 'Ma vase… mon chaudron… La Reine te gèlera le cœur !'], ['hero', 'Les Pics Gelés, alors. Couvrons-nous.']] },
-    4: { in: [['narr', 'Chapitre 5 · Les Pics Gelés. Le vent coupe comme une lame.'], ['hero', 'Chaque pas sur la glace pourrait être le dernier.']],
-         out: [['bossQueen', 'Le Seigneur du Néant… il m’a promis l’hiver éternel…'], ['hero', 'Le Néant. C’est lui qui tire les ficelles.']] },
-    5: { in: [['narr', 'Chapitre 6 · La Citadelle du Néant. Le ciel lui-même se déchire.'], ['hero', 'Voilà la source de tout ce chaos.']],
-         out: [['bossVoid', 'Tu ne fermes pas une faille… tu en ouvres d’autres. La Nécropole s’éveille.'], ['hero', 'Encore des morts. Je n’ai pas fini.']] },
-    6: { in: [['narr', 'Chapitre 7 · La Nécropole. Ici, la mort a un roi.'], ['hero', 'Un Roi-Liche… Il faudra le tuer deux fois, je le sens.']],
-         out: [['bossLich', 'Mon phylactère… brisé… Le Comte boira ton sang…'], ['hero', 'Un dernier château. Un dernier combat.']] },
-    7: { in: [['narr', 'Chapitre 8 · Le Château des Vampires. La lune est rouge sang.'], ['hero', 'C’est ici que tout se termine.']],
-         out: [['bossVamp', 'Impossible… un simple mortel…'], ['narr', 'Le Comte est tombé. Mais sous la ville, les égouts grouillent… et au loin, une tour de dragons s’illumine.']] },
-    8: { in: [['narr', 'Chapitre 9 · Les Égouts de la Cité. L’odeur est insoutenable.'], ['hero', 'Des milliers d’yeux rouges dans le noir… Leur reine n’est pas loin.']],
-         out: [['bossRat', 'Couiii… Vorthax… brisera… ses chaînes…'], ['hero', 'Vorthax. Le dragon enchaîné. C’est lui, depuis le début.']] },
-    9: { in: [['narr', 'Chapitre 10 · La Forteresse du Dragon-Roi. Le ciel gronde au-dessus du volcan.'], ['hero', 'Toute cette route pour arriver ici. Finissons-en.']],
-         out: [['bossVort', 'Mes chaînes… à nouveau… Qui es-tu donc… ?'], ['narr', 'Vorthax est de nouveau lié. Les dix royaumes sont libres. Ton nom entre dans la légende : DRAGONBOUND.']] },
+    0: { in: [['narr', 'Chapitre 1 · La Crypte oubliée'], ['narr', 'Sous Aube-Claire, les morts s’agitent. Quelqu’un vient de briser leur dernier repos.'], ['hero', 'Des os, des tombes et une odeur de mort. Charmant comité d’accueil.'], ['narr', 'Le Roi des Os garde une relique liée au sceau du Néant.'], ['hero', 'Alors récupérons-la avant que les morts réclament un droit de vote.']],
+         out: [['bossBone', 'Ces chaînes... ce dragon... Il m’avait promis un royaume éternel !'], ['hero', 'Quel dragon ? Parle, ou je fouille tes os un par un.'], ['narr', 'La relique porte une marque : un œil draconique entouré de chaînes noires.'], ['narr', 'Dans la Forêt des Murmures, une sorcière connaît peut-être ce symbole.']] },
+    1: { in: [['narr', 'Chapitre 2 · La Forêt des Murmures'], ['narr', 'Les arbres murmurent des noms oubliés. Certains sont ceux de gens encore vivants.'], ['hero', 'Si les arbres commencent à donner des conseils, je demande un deuxième avis.'], ['narr', 'Sylvaine la Sorcière protège un autel marqué du même œil draconique.'], ['hero', 'Allons voir si elle est aussi bavarde face à une lame.']],
+         out: [['bossWitch', 'Je n’étais qu’un pion... Sa voix venait d’au-delà des chaînes...'], ['hero', 'Vorthax. Ce nom revient un peu trop souvent à mon goût.'], ['narr', 'Sylvaine laisse tomber un fragment de carte marqué d’une flamme rouge.'], ['narr', 'Aux Mines de Braise, un dragon garde la prochaine pièce du puzzle.']] },
+    2: { in: [['narr', 'Chapitre 3 · Les Mines de Braise'], ['narr', 'La montagne saigne du feu. Les mineurs ont fui, mais quelque chose veille encore.'], ['hero', 'Une mine en feu. Il ne manque plus qu’un effondrement pour compléter la visite.'], ['narr', 'Le Dragon Écarlate ravage ces galeries depuis que la carte a été découverte.'], ['hero', 'Un dragon, donc. Au moins, personne ne pourra prétendre que c’est une taupe.']],
+         out: [['bossDragon', 'Il m’avait promis la liberté... Mais je n’étais qu’une arme entre ses griffes.'], ['hero', 'Les dragons aussi se font manipuler. Ça devient presque gênant.'], ['narr', 'Sous les cendres repose un médaillon couvert de symboles des marais.'], ['narr', 'Morgane des Marais garde la clé d’un ancien passage vers le Néant.']] },
+    3: { in: [['narr', 'Chapitre 4 · Les Marais Hantés'], ['narr', 'Les brumes avalent les chemins. Ici, même les fantômes ont peur de la nuit.'], ['hero', 'Parfait. Un marécage hanté. J’espère au moins que les moustiques sont morts.'], ['narr', 'Morgane commande aux esprits et parle avec une voix qui n’est pas la sienne.'], ['hero', 'Si elle partage son corps avec quelque chose, on va devoir négocier serré.']],
+         out: [['bossHag', 'Sa prison s’effrite... Les pics du nord cachent le prochain verrou...'], ['hero', 'Un verrou de plus. J’espère qu’au bout, il y a une porte et pas un autre monstre.'], ['narr', 'Morgane laisse un sceau de glace, gravé du même œil draconique.'], ['narr', 'La Reine des Glaces garde les anciens écrits au sommet des Pics Gelés.']] },
+    4: { in: [['narr', 'Chapitre 5 · Les Pics Gelés'], ['narr', 'Le vent mord la peau et les sommets étouffent les cris sous des siècles de neige.'], ['hero', 'Je commence à regretter les marais. Au moins, là-bas, l’eau n’était pas solide.'], ['narr', 'La Reine des Glaces protège un manuscrit sur le sceau originel.'], ['hero', 'Alors prenons le manuscrit. La montagne peut garder le reste.']],
+         out: [['bossQueen', 'Le sceau n’a jamais été une serrure... C’était une chaîne forgée pour un roi-dragon.'], ['hero', 'Un roi-dragon enchaîné. Voilà qui explique beaucoup de mauvaises décisions.'], ['narr', 'Le manuscrit révèle que le Seigneur du Néant garde l’accès à la prison.'], ['narr', 'La Citadelle du Néant se dresse là où la lumière cesse d’exister.']] },
+    5: { in: [['narr', 'Chapitre 6 · La Citadelle du Néant'], ['narr', 'Ici, la lumière s’éteint avant même de toucher le sol. Le Néant observe.'], ['hero', 'Je n’aime pas cet endroit. Il a l’air de vouloir effacer jusqu’à mes mauvaises blagues.'], ['narr', 'Le Seigneur du Néant détient le dernier fragment du sceau brisé.'], ['hero', 'Prenons-le. Je préfère affronter les problèmes avant qu’ils apprennent à parler.']],
+         out: [['bossVoid', 'La nécropole... Le Roi-Liche conserve la mémoire du premier pacte...'], ['hero', 'Un pacte avec un dragon-roi. Je parie que les petites lignes étaient terribles.'], ['narr', 'Le fragment révèle un ancien serment liant dix royaumes à la prison de Vorthax.'], ['narr', 'Dans la Nécropole, le Roi-Liche détient les noms des traîtres qui l’ont scellé.']] },
+    6: { in: [['narr', 'Chapitre 7 · La Nécropole'], ['narr', 'Des armées entières reposent ici, figées dans l’instant où le monde les a oubliées.'], ['hero', 'Une armée de morts, un roi immortel. Il ne manque qu’un discours interminable.'], ['narr', 'Le Roi-Liche fut témoin de l’emprisonnement de Vorthax, il y a mille ans.'], ['hero', 'Alors, pour une fois, nous allons écouter un mort au lieu de le faire taire.']],
+         out: [['bossLich', 'Il m’a menti... Vorthax ne veut pas régner sur les morts. Il veut tout dévorer.'], ['hero', 'Enfin quelqu’un qui comprend qu’un tyran n’est jamais un bon patron.'], ['narr', 'Le Roi-Liche révèle que le Comte Vampire possède un fragment de la chaîne originelle.'], ['narr', 'Le Château des Vampires attend derrière un voile de brume écarlate.']] },
+    7: { in: [['narr', 'Chapitre 8 · Le Château des Vampires'], ['narr', 'Des chandeliers brûlent dans des salles désertes. Quelqu’un vous attend depuis longtemps.'], ['hero', 'Des rideaux de velours, des cercueils dorés... Ce vampire soigne son image.'], ['narr', 'Le Comte Vampire a conclu un pacte avec une voix venue de sous le monde.'], ['hero', 'Laisse-moi deviner : promesse de puissance, petites lignes sanglantes.']],
+         out: [['bossVamp', 'Sous la cité... La Reine des Rats connaît les tunnels vers la forteresse...'], ['hero', 'Des rats, des tunnels et une reine. Je sens venir une expérience inoubliable.'], ['narr', 'Le fragment de chaîne indique un passage secret sous la capitale.'], ['narr', 'La Reine des Rats contrôle les égouts et les derniers messagers de Vorthax.']] },
+    8: { in: [['narr', 'Chapitre 9 · Les Égouts de la Cité'], ['narr', 'Sous les rues dorées, les égouts grouillent. Quelque chose y rassemble une armée.'], ['hero', 'Après les dragons et les vampires, voici les rats. L’escalade est remarquable.'], ['narr', 'La Reine des Rats a volé les clés des anciennes portes de la forteresse.'], ['hero', 'Récupérons-les avant qu’elle ne réclame un impôt sur chaque pas.']],
+         out: [['bossRat', 'Prends les clés... Il m’a promis la surface... mais je n’étais qu’un pion...'], ['hero', 'C’est fou comme tout le monde découvre les mensonges au dernier moment.'], ['narr', 'Les clés ouvrent la Forteresse du Dragon-Roi, au-delà des frontières du monde connu.'], ['narr', 'Vorthax le Lié attend depuis mille ans. Cette fois, il compte bien se relever.']] },
+    9: { in: [['narr', 'Chapitre 10 · La Forteresse du Dragon-Roi'], ['narr', 'Au cœur de la forteresse, des chaînes colossales vibrent sous une voûte de pierre noire.'], ['hero', 'Mille ans à attendre. J’espère qu’il a eu le temps de préparer un meilleur discours.'], ['narr', 'Tous les boss n’étaient que ses instruments. Chaque victoire a affaibli un verrou.'], ['hero', 'Alors finissons-en. Pas question de lui offrir un millénaire supplémentaire.']],
+         out: [['bossVort', 'Impossible... Mille ans de plans... réduits à néant par un simple mortel...'], ['hero', 'Tu as manipulé dix royaumes pour finir battu dans ton propre cachot. Quelle carrière.'], ['narr', 'Vorthax s’effondre. Les chaînes se taisent, et le sceau du Néant se referme.'], ['narr', 'Mais dans les profondeurs, une dernière étincelle noire refuse de mourir.'], ['narr', 'Les dix royaumes respirent à nouveau. Pour la première fois depuis mille ans, l’aube est paisible.'], ['hero', 'J’ai connu des promenades plus tranquilles. Mais celle-ci valait chaque pas.'], ['narr', 'Les chroniques retiendront ton nom, celui qui a brisé le cycle de Vorthax le Lié.'], ['hero', 'Garde les couronnes et les statues. Donne-moi juste une nuit sans monstres.']] },
   };
   function storyFx(lines) {
     return new Promise(res => {
@@ -1721,6 +1719,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   // ---------- Boss phases: at half health every boss transforms and gains its own mechanic ----------
   const MELEE = k => (k === 'atk' && CL().atk.fx === 'slash') || k === 'whirl';
   const MAGIC = k => k === 'fire' || k === 'frost' || (k === 'atk' && CL().atk.fx === 'orb');
+  const PQUOTE = { bossBone: 'Mille crânes hurlent mon nom ! Même la mort doit plier le genou !', bossWitch: 'Assez joué ! Les racines de Vorthax vont dévorer jusqu’à ton âme !', bossDragon: 'Vorthax m’a promis le ciel ! Je brûlerai le monde avant de renoncer !', bossHag: 'Vorthax m’a donné mille voix ! Je vais hurler ton âme hors de ton corps !', bossQueen: 'Vorthax m’a promis un monde immobile ! Je vais t’enfermer dans un hiver éternel !', bossVoid: 'Vorthax sera libre ! Et lorsque ses chaînes céderont, même le Néant tremblera !', bossLich: 'J’ai servi la mort mille ans ! Je ne servirai pas un dragon enchaîné !', bossVamp: 'Vorthax m’a promis l’éternité ! Je refuse de finir comme une simple légende !', bossRat: 'Le maître approche ! Vorthax brisera ses chaînes, et mes légions régneront !', bossVort: 'MES CHAÎNES CÈDENT ! À GENOUX ! CE MONDE M’APPARTIENT DEPUIS TOUJOURS !' };
   const PHASES = {
     bossBone:   { name: 'Mur d’os', line: 'Le Roi des Os lève une muraille d’ossements !', tip: 'Brise le bouclier d’os (le feu le brise deux fois plus vite).',
                   enter: f => { f.ph.shield = f.ph.max = Math.round(f.hpMax * 0.16); } },
@@ -1740,7 +1739,7 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
   function phaseBanner(title, sub, k) {
     SFX.thump(); setTimeout(SFX.boom, 200); if (F && !reduce) F.shake = { t0: performance.now(), amp: 6 };
     const pk = { bossRat: 'pRat', bossVort: 'pVort' }[k], img = pk && OPT.has(pk) ? `<img class="bimg" src="img/${pk}.webp" alt="" style="border-radius:50%">` : ready(k) ? `<img class="bimg" src="img/${k}.webp" alt="">` : `<div class="bimg" style="font-size:140px;font-family:var(--emoji);display:grid;place-items:center">${M[k].emoji}</div>`;
-    return celebrate(`<div class="in bossin"><div class="vs">⚠️ ${title} ⚠️</div>${img}<h2>${sub}</h2><div class="sub">${(PHASES[k] && PHASES[k].tip) || ''}</div><div class="tap">Touche pour continuer</div></div>`, 'rgba(160,40,255,.22)', 2600);
+    return celebrate(`<div class="in bossin"><div class="vs">⚠️ ${title} ⚠️</div>${img}<h2>${sub}</h2>${PQUOTE[k] ? `<div class="sub" style="font-style:italic;color:#ffd76a">« ${PQUOTE[k]} »</div>` : ''}<div class="sub">${(PHASES[k] && PHASES[k].tip) || ''}</div><div class="tap">Touche pour continuer</div></div>`, 'rgba(160,40,255,.22)', 2600);
   }
   async function phaseEvents() {
     const f = F.foe; if (!f) return;
@@ -2696,22 +2695,22 @@ body { margin: 0; -webkit-tap-highlight-color: transparent; }
 
   // ---------- Start ----------
   // ---------- Version (Bêta 1.0 = first full build with 8 worlds, Forge and difficulty modes) ----------
-  const VERSION = 'Version 3.4';
+  const VERSION = 'Version 3.5';
   document.querySelectorAll('#v-shop').forEach(v => v.insertAdjacentHTML('beforeend', `<div class="ver">StepQuest Dragonbound · ${VERSION}</div>`));
   // ---------- Intro story: painted slides (dedicated intro art if present, else world backgrounds) ----------
   const INTRO = [
-    { img: ['intro1', 'bg1_0'], txt: 'Il était une fois la vallée d\u2019Aube-Claire, un pays de forêts dorées et de villages paisibles.' },
-    { img: ['intro2', 'bg2_4'], txt: 'Mais une nuit, sous les Mines de Braise, le Dragon Écarlate s\u2019est réveillé…' },
-    { img: ['intro3', 'bg5_4'], txt: 'Son rugissement a brisé le sceau du Néant. Les monstres ont envahi les dix royaumes.' },
-    { img: ['intro4', 'bg0_0'], txt: 'Des cryptes oubliées au château des vampires, les ténèbres se répandent.' },
-    { img: ['intro5', 'bg1_1'], heroes: true, txt: 'Trois jeunes héros se lèvent : Aldric le guerrier, Lyra l\u2019archère et Orin le mage.' },
-    { img: ['intro6', 'bg0_4'], logo: true, txt: 'Ta quête commence maintenant.' },
+    { img: ['intro1', 'bg1_0'], txt: 'La vallée d’Aube-Claire vacille : un dragon s’éveille sous les ruines d’un monde oublié.' },
+    { img: ['intro2', 'bg2_4'], txt: 'Le sceau du Néant se brise, libérant des horreurs sur les dix royaumes.' },
+    { img: ['intro3', 'bg5_4'], txt: 'Derrière chaque invasion se cache une volonté ancienne, patiente et terriblement rusée.' },
+    { img: ['intro4', 'bg0_0'], txt: 'Aldric, guerrier au cœur d’acier, affronte le danger lame au poing.' },
+    { img: ['intro5', 'bg1_1'], heroes: true, txt: 'Lyra, Orin et Séléna maîtrisent flèches, arcanes et lumière sacrée face aux ténèbres.' },
+    { img: ['intro6', 'bg0_4'], logo: true, txt: 'Nyx frappe depuis l’ombre. Choisis ton héros : le destin des royaumes repose sur tes pas.' },
   ];
   function playIntro(done) {
     const el = $('intro'); let k = -1, timer = null;
     const pick = s => s.img.find(n => n.startsWith('bg') ? BG_HAVE.has(n) : OPT.has(n)) || 'bg1_0';
     el.innerHTML = INTRO.map(s => `<div class="pic" style="background-image:url(img/${pick(s)}.webp)"></div>`).join('')
-      + `<div class="heroes"><img src="img/archer.webp" alt=""><img src="img/hero.webp" alt="" style="height:190px"><img src="img/mage.webp" alt="" style="transform:scaleX(-1)"></div>
+      + `<div class="heroes"><img src="img/archer.webp" alt=""><img src="img/hero2.webp" alt="" style="height:190px"><img src="img/mage.webp" alt="" style="transform:scaleX(-1)"></div>
          <img class="logo" src="img/logo.webp" alt="StepQuest Dragonbound"><div class="txt"></div>
          <div class="tapnote">Touche pour continuer</div><div class="dots">${INTRO.map(() => '<i></i>').join('')}</div>
          <button class="btn small skip" type="button" style="width:auto">Passer ⏭</button>`;
