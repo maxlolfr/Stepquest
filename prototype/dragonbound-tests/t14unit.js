@@ -4,19 +4,19 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
   const G=api.G; G.welcomed=true; G.lvl=10;
   const fresh=(cls)=>{ G.story={}; for(let w=0;w<8;w++){G.story['in'+w]=1;G.story['out'+w]=1;} api.setHero(cls); G.hp=api.stats().hp; G.energy=99; G.test=true; api.startLevel(0,0); const F=api.F; F.foe.trait=null; F.foe.special=null; F.foe.hp=F.foe.hpMax=1e9; return F; };
   // A. costs
-  for (const [cls,exp] of [['guerrier',25],['archer',20],['mage',20]]) { api.setHero(cls); ok(api.stCost('def')===exp, `def cost ${cls}`); }
+  for (const [cls,exp] of [['guerrier',15],['archer',12],['mage',12]]) { api.setHero(cls); ok(api.stCost('def')===exp, `def cost ${cls}`); }
   ok(api.stCost('atk')===10 && api.stCost('whirl')===15 && api.stCost('rain')===15 && api.stCost('fire')===0, 'action costs');
   // B. endurance edge cases
   let F=fresh('guerrier');
-  F.st=0; const hp0=F.foe.hp; await api.act('atk'); ok(F.st===12, `winded attack keeps 0 then +12 (got ${F.st})`); ok(F.foe.hp<hp0, 'winded attack still hits');
-  F.st=9; await api.act('atk'); ok(F.st===12, `st 9 -> 0 -> 12 (got ${F.st})`);
-  F.st=10; await api.act('atk'); ok(F.st===12, `exact cost 10 -> 0 -> 12 (got ${F.st})`);
-  F.st=99; await api.act('atk'); ok(F.st===100, `cap at max (got ${F.st})`);
-  F.st=24; const before=G.hp; await api.act('def'); ok(F.st===24 && !F.busy && G.hp===before, 'block refused without enough endurance');
+  F.st=0; const hp0=F.foe.hp; await api.act('atk'); ok(F.st===7, `winded attack keeps 0 then +7 (got ${F.st})`); ok(F.foe.hp<hp0, 'winded attack still hits');
+  F.st=9; await api.act('atk'); ok(F.st===7, `st 9 -> 0 -> 7 (got ${F.st})`);
+  F.st=10; await api.act('atk'); ok(F.st===7, `exact cost 10 -> 0 -> 7 (got ${F.st})`);
+  F.st=99; await api.act('atk'); ok(F.st===96, `99-10+7 = 96 (got ${F.st})`);
+  F.st=14; const before=G.hp; await api.act('def'); ok(F.st===14 && !F.busy && G.hp===before, 'block refused without enough endurance');
   F.st=14; F.mp=99; await api.act('whirl'); ok(F.st===14, 'whirl refused at 14');
   let minSt=999; F.mp=1e6; for(let i=0;i<30;i++){ await api.act(F.st>=15?'whirl':'atk'); minSt=Math.min(minSt,F.st); } ok(minSt>=0, 'never negative over 30 turns');
   F.st=100; F.busy=true; await api.act('atk'); ok(F.st===100, 'input ignored while busy'); F.busy=false;
-  F.st=60; await api.act('def'); ok(F.st===57, `block: 60-25+22 = 57 (got ${F.st})`);
+  F.st=60; await api.act('def'); ok(F.st===63, `block: 60-15+18 = 63 (got ${F.st})`);
   // C. warrior shield 75%
   const raw=(F)=>{ const s=api.stats(); return Math.max(1, Math.round(F.foe.atk*(0.85+0.3*0.5)-s.def*0.6)); };
   F=fresh('guerrier'); Math.random=()=>0.5; F.defending=true; let h=G.hp; await api.foeTurn(); ok(h-G.hp===Math.max(1,Math.round(raw(F)*0.25)), `warrior 75% (lost ${h-G.hp}, raw ${raw(F)})`); Math.random=R;
@@ -53,5 +53,9 @@ const R=Math.random; let pass=0, fail=0; const ok=(c,msg)=>{ if(c){pass++;} else
     ok(F.shadowCrit===true, 'shadow keeps the crit for the next blow'); const fx0=api.fx.length; await api.act('atk'); ok(F.shadowCrit===false, 'shadow crit consumed');
     F=fresh('paladin'); F.mp=99; F.foe.hp=F.foe.hpMax=1e6; G.hp=Math.round(api.stats().hp*0.5); const b=G.hp; await api.act('aegis'); ok(F.aegis===1, `aegis lasts (left ${F.aegis})`);
     F=fresh('paladin'); F.mp=99; F.foe.hp=F.foe.hpMax=1e6; G.hp=Math.round(api.stats().hp*0.5); const fh=F.foe.hp; await api.act('smite'); ok(F.foe.hp<fh, 'smite hurts'); }
+  // 3.0 resources persist between fights
+  { let F=fresh('mage'); F.mp=3; F.st=40; api.endRun(false); ok(G.mp===3 && G.st===40, `mana/endurance kept after the fight (${G.mp}/${G.st})`);
+    G.energy=99; api.startLevel(0,0); F=api.F; ok(F.mp===3 && F.st===40, 'next fight starts with what is left');
+    G.mpots=1; await api.act('mpot'); ok(G.mpots===0 && F.mp>3, 'mana potion works'); G.spots=1; F.st=10; await api.act('spot'); ok(G.spots===0 && F.st>=90, `endurance elixir works (${F.st})`); api.endRun(false); }
   console.log(`unit tests: ${pass} passed, ${fail} failed`);
 })();
