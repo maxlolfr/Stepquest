@@ -246,18 +246,18 @@ const $ = id => document.getElementById(id);
 const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
 
 // ---------- Images (shared with Dragonbound) ----------
-const POSEM = {"bossBone":[1.017,0.503],"bossBone_prep":[0.922,0.45],"bossBone_atk":[0.808,0.48],"bossBone_spe":[0.943,0.537],"bossBone_laugh":[1.052,0.624],"bossBone_rage":[0.869,0.553],"bossBone_blast":[0.884,0.735],"bossBone_ko":[0.477,0.447],"slime":[1.0,0.493],"slime_atk":[0.897,0.44],"slime_hit":[0.962,0.452],"slime_ko":[0.517,0.538],"rat":[1.0,0.476],"rat_atk":[0.821,0.44],"rat_hit":[1.096,0.431],"rat_ko":[0.59,0.46],"bat":[1.0,0.452],"bat_atk":[0.811,0.444],"bat_hit":[0.965,0.48],"bat_ko":[0.417,0.574],"skel":[1.0,0.397],"skel_atk":[0.978,0.389],"skel_hit":[0.873,0.534],"skel_ko":[0.585,0.482],"hero2":[1.0,0.511],"hero2_prep":[1.139,0.497],"hero2_atk":[0.962,0.329],"hero2_hit":[0.932,0.4],"hero2_def":[0.817,0.451],"hero2_win":[0.964,0.549],"hero2_spe":[1.21,0.356],"hero2_ko":[0.705,0.44],"hero2_cast":[0.937,0.489],"archer":[1.0,0.469],"archer_prep":[1.028,0.438],"archer_atk":[0.987,0.331],"archer_hit":[0.919,0.427],"archer_def":[0.786,0.379],"archer_spe":[0.875,0.332],"archer_win":[1.087,0.576],"archer_ko":[0.753,0.477],"archer_cast":[0.903,0.338],"mage":[1.0,0.397],"mage_prep":[0.961,0.478],"mage_atk":[0.955,0.276],"mage_hit":[0.967,0.531],"mage_def":[0.827,0.473],"mage_spe":[0.932,0.441],"mage_win":[1.083,0.534],"mage_ko":[0.988,0.441],"mage_cast":[1.098,0.4],"paladin":[1.0,0.377],"paladin_prep":[1.093,0.544],"paladin_atk":[0.949,0.336],"paladin_hit":[0.979,0.352],"paladin_def":[0.895,0.421],"paladin_spe":[0.943,0.436],"paladin_win":[1.087,0.453],"paladin_ko":[0.817,0.498],"paladin_cast":[0.994,0.433],"rogue":[1.0,0.537],"rogue_prep":[0.939,0.378],"rogue_atk":[0.906,0.341],"rogue_hit":[0.911,0.581],"rogue_def":[0.844,0.419],"rogue_spe":[0.869,0.516],"rogue_win":[1.025,0.422],"rogue_ko":[0.75,0.439],"rogue_cast":[0.833,0.388],"wolf":[1.022,0.438],"wolf_atk":[1.028,0.488],"wolf_hit":[1.006,0.455],"wolf_ko":[0.623,0.463],"spider":[1.024,0.523],"spider_atk":[1.051,0.562],"spider_hit":[1.098,0.555],"spider_ko":[0.889,0.507],"shroom":[1.02,0.502],"shroom_atk":[0.945,0.609],"shroom_hit":[0.991,0.529],"shroom_ko":[0.578,0.542],"goblin":[1.021,0.531],"goblin_atk":[1.042,0.516],"goblin_hit":[1.039,0.522],"goblin_ko":[0.504,0.46],"bossWitch":[1.014,0.482],"bossWitch_prep":[0.953,0.519],"bossWitch_atk":[0.964,0.591],"bossWitch_hit":[1.008,0.473],"bossWitch_spe":[1.03,0.496],"bossWitch_laugh":[1.103,0.572],"bossWitch_rage":[1.105,0.455],"bossWitch_blast":[1.004,0.524],"bossWitch_ko":[0.326,0.473]};
+const POSEM = {"bossBone":[1.017,0.503],"bossBone_prep":[0.922,0.45],"bossBone_atk":[0.808,0.48],"bossBone_spe":[0.943,0.537],"bossBone_laugh":[1.052,0.624],"bossBone_rage":[0.869,0.553],"bossBone_blast":[0.884,0.735],"bossBone_ko":[0.477,0.447],"slime":[1.0,0.493],"slime_atk":[0.897,0.44],"slime_hit":[0.962,0.452],"slime_ko":[0.517,0.538],"rat":[1.0,0.476],"rat_atk":[0.821,0.44],"rat_hit":[1.096,0.431],"rat_ko":[0.59,0.46],"bat":[1.0,0.452],"bat_atk":[0.811,0.444],"bat_hit":[0.965,0.48],"bat_ko":[0.417,0.574],"skel":[1.0,0.397],"skel_atk":[0.978,0.389],"skel_hit":[0.873,0.534],"skel_ko":[0.585,0.482],"hero2":[1.0,0.511],"hero2_prep":[1.139,0.497],"hero2_atk":[0.962,0.329],"hero2_hit":[0.932,0.4],"hero2_def":[0.817,0.451],"hero2_win":[0.964,0.549],"hero2_spe":[1.21,0.356],"hero2_ko":[0.705,0.44],"hero2_cast":[0.937,0.489],"archer":[1.0,0.469],"archer_prep":[1.028,0.438],"archer_atk":[0.987,0.331],"archer_hit":[0.919,0.427],"archer_def":[0.786,0.379],"archer_spe":[0.875,0.332],"archer_win":[1.087,0.576],"archer_ko":[0.753,0.477],"archer_cast":[0.903,0.338],"mage":[1.0,0.397],"mage_prep":[0.961,0.478],"mage_atk":[0.955,0.276],"mage_hit":[0.967,0.531],"mage_def":[0.827,0.473],"mage_spe":[0.932,0.441],"mage_win":[1.083,0.534],"mage_ko":[0.988,0.441],"mage_cast":[1.098,0.4],"paladin":[1.0,0.377],"paladin_prep":[1.093,0.544],"paladin_atk":[0.949,0.336],"paladin_hit":[0.979,0.352],"paladin_def":[0.895,0.421],"paladin_spe":[0.943,0.436],"paladin_win":[1.087,0.453],"paladin_ko":[0.817,0.498],"paladin_cast":[0.994,0.433],"rogue":[1.0,0.537],"rogue_prep":[0.939,0.378],"rogue_atk":[0.906,0.341],"rogue_hit":[0.911,0.581],"rogue_def":[0.844,0.419],"rogue_spe":[0.869,0.516],"rogue_win":[1.025,0.422],"rogue_ko":[0.75,0.439],"rogue_cast":[0.833,0.388],"wolf":[1.022,0.438],"wolf_atk":[1.028,0.488],"wolf_hit":[1.006,0.455],"wolf_ko":[0.623,0.463],"spider":[1.024,0.523],"spider_atk":[1.051,0.562],"spider_hit":[1.098,0.555],"spider_ko":[0.889,0.507],"shroom":[1.02,0.502],"shroom_atk":[0.945,0.609],"shroom_hit":[0.991,0.529],"shroom_ko":[0.578,0.542],"goblin":[1.021,0.531],"goblin_atk":[1.042,0.516],"goblin_hit":[1.039,0.522],"goblin_ko":[0.504,0.46],"bossWitch":[1.014,0.482],"bossWitch_prep":[0.953,0.519],"bossWitch_atk":[0.964,0.591],"bossWitch_hit":[1.008,0.473],"bossWitch_spe":[1.03,0.496],"bossWitch_laugh":[1.103,0.572],"bossWitch_rage":[1.105,0.455],"bossWitch_blast":[1.004,0.524],"bossWitch_ko":[0.326,0.473],"ald":[1.0,0.55],"ald_idle2":[1.013,0.58],"ald_prep":[1.042,0.62],"ald_atk":[0.912,0.5],"ald_hit":[0.919,0.38],"ald_def":[0.87,0.5],"ald_spe":[0.958,0.52],"ald_cast":[0.971,0.55],"ald_win":[1.016,0.5],"ald_ko":[0.453,0.5],"ald_run":[0.902,0.62],"ald_kneel":[0.717,0.6]};
 const IMG = {}, WHITE = {}, TINT = {};
 function load(k, local) {
   if (IMG[k] || SIM) return; const im = new Image(); im.decoding = 'async';
   im.onload = () => { if (!POSEM[k]) return; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
     const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; };
-  im.src = (local ? FP : IP) + k + '.webp'; IMG[k] = im;
+  im.src = (local || k.startsWith('ald') ? FP : IP) + k + '.webp'; IMG[k] = im;
 }
 const ready = k => IMG[k] && IMG[k].complete && IMG[k].naturalWidth > 0;
 function loadSprite(b) { load(b); for (const k in POSEM) if (k.startsWith(b + '_')) load(k); }
 function tinted(k, col) { const tk = k + '|' + col; if (!TINT[tk] && WHITE[k]) { const t = document.createElement('canvas'); t.width = WHITE[k].width; t.height = WHITE[k].height; const x = t.getContext('2d'); x.drawImage(WHITE[k], 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = `rgb(${col})`; x.fillRect(0, 0, t.width, t.height); TINT[tk] = t; } return TINT[tk]; }
-const FB = { prep: 'atk', spe: 'atk', cast: 'spe', def: 'idle', win: 'idle', hit: 'idle', ko: 'hit', laugh: 'idle', rage: 'spe', blast: 'atk' };
+const FB = { prep: 'atk', spe: 'atk', cast: 'spe', def: 'idle', win: 'idle', hit: 'idle', ko: 'hit', laugh: 'idle', rage: 'spe', blast: 'atk', run: 'atk', kneel: 'idle' };
 function drawSprite(c, base, pose, x, y, h, flash, sx = 1, sy = 1, tint) {
   let p = pose, k = p === 'idle' ? base : base + '_' + p, n = 0;
   while (!(POSEM[k] && ready(k)) && n++ < 6) { p = FB[p] || 'idle'; k = p === 'idle' ? base : base + '_' + p; }
@@ -302,7 +302,7 @@ function music(k) { if (SIM) return; const src = AP + k + '.mp3'; if (bgm.datase
 
 // ---------- Heroes, skills, monsters ----------
 const HEROES = {
-  aldric: { name: 'Aldric', cls: 'Guerrier', role: 'tank', roleN: 'Tank', sprite: 'hero2', face: 'hero2-face', melee: true, fx: 'slash', h: .25,
+  aldric: { name: 'Aldric', cls: 'Chevalier', role: 'tank', roleN: 'Tank', sprite: 'ald', face: 'ald-face', melee: true, fx: 'slash', h: .26,
     base: { hp: 140, mp: 30, atk: 15, mag: 4, def: 9, crit: .06 }, gr: { hp: 15, mp: 2, atk: 2.2, mag: .4, def: 1.5 },
     atk: { name: 'Coup d’épée', img: 'ic_sword' }, skills: ['taunt', 'whirl', 'bash'], desc: 'Attire les coups et protège l’équipe.',
     ult: { name: 'Lame de l’Aube', tip: 'Une lame de lumière géante frappe tous les ennemis, puis Aldric les provoque.' } },
@@ -397,7 +397,7 @@ const STORY = {
   lyra: [['lyra', 'Trois aventuriers qui foncent dans une forêt hantée sans éclaireur ? Les araignées, moi, je les vois avant qu’elles vous voient.'],
     ['narr', 'Lyra l’Archère rejoint le groupe ! La réserve s’ouvre : en combat, le bouton Relais échange un héros avec ceux du banc.']],
   nyx: [['nyx', 'Cette sorcière m’avait volé ma dague préférée. Je la récupère… et je vous suis, si vous tenez le rythme.'], ['narr', 'Nyx la Voleuse rejoint le groupe !']],
-  out: [['bossBone', 'Ces chaînes... ce dragon... Il m’avait promis un royaume éternel !'], ['aldric', 'Quel dragon ? Parle, ou je fouille tes os un par un.'],
+  out: [['bossBone', 'Ces chaînes... ce dragon... Il m’avait promis un royaume éternel !'], ['bossBone', 'Et toi... tu portes Sa marque. L’œil... Il te réclamera, chevalier.'], ['aldric', 'Cette marque, je l’ai depuis l’enfance. Quel dragon ? Parle, ou je fouille tes os un par un.'],
     ['narr', 'La relique porte une marque : un œil draconique entouré de chaînes noires.'], ['selena', 'Ce symbole... il vient de la Forêt des Murmures.'], ['narr', 'Le chapitre 2 est ouvert : la Forêt des Murmures.']],
 };
 const ITEMS = {
@@ -519,7 +519,7 @@ function focusCam(a, b) { if (FAST) return; const pa = px(a), pb = b ? px(b) : p
 function resetCam() { if (B) B.cam.tz = 1; }
 async function dashTo(u, t, gap) { const a = px(u), b = px(t), dir = u.side === 'h' ? -1 : 1;
   const dx = b.x + dir * (gap || (b.h * .35 + a.h * .25)) - a.x + u.ox, dy = b.y - a.y + u.oy + 2; SFX.whoosh();
-  setPose(u, 'prep', 200); await wait(150); setPose(u, 'atk', 700); await tween(u, { ox: dx, oy: dy }, 200, easeIn); }
+  setPose(u, 'prep', 200); await wait(150); setPose(u, POSEM[u.sprite + '_run'] ? 'run' : 'atk', 700); await tween(u, { ox: dx, oy: dy }, 200, easeIn); setPose(u, 'atk', 450); }
 async function dashBack(u) { await tween(u, { ox: 0, oy: 0 }, 260, easeIO); }
 const center = u => { const p = px(u); return { x: p.x, y: p.y - p.h * .5 }; };
 async function heroAct(h, a) {
@@ -588,9 +588,9 @@ const SKILL = {
 async function ultIntro(h) { say(`<b>${h.name}</b> : ${h.H.ult.name} !`); SFX.ult(); setPose(h, 'spe', 1400);
   if (FAST) return; sfx.push({ t: 'ult', h, t0: now(), dur: 1150 }); const p = px(h); rise(p.x, p.y - p.h * .4, 30, ['#ffe08a', '#ffb02e', '#ffffff']); ring(p.x, p.y - p.h * .5, '#ffb02e', 120, 700); await wait(1050); }
 const ULT = {
-  async aldric(h) { const fs = livingF(); focusCam(h, fs[0]); setPose(h, 'atk', 900); for (const f of fs) { const c = center(f); slashFx(c.x, c.y, false, '#ffe8a0', true); }
+  async aldric(h) { const fs = livingF(); focusCam(h, fs[0]); setPose(h, 'atk', 900); setPose(h, 'spe', 900); for (const f of fs) { const c = center(f); slashFx(c.x, c.y, false, '#ffb347', true); }
     B.shake = { t0: now(), amp: 9 }; SFX.slash(); SFX.crit(); await wait(180);
-    for (const f of fs) if (alive(f)) await damage(f, calc(h, f, 2.0), { col: '#ffe8a0', src: h });
+    for (const f of fs) if (alive(f)) await damage(f, calc(h, f, 2.0), { col: '#ffb347', cols: ['#ffb347', '#ff7a2a', '#ffe8a0'], src: h });
     h.st.taunt = 2; await wait(300); },
   async selena(h) { setPose(h, 'cast', 1200); if (!FAST) sfx.push({ t: 'flash', col: '255,240,190', t0: now(), dur: 700 }); SFX.heal(); await wait(300);
     for (const a of B.party) { const p = px(a); rise(p.x, p.y - 30, 24, ['#ffe58a', '#ffffff', '#fff1a8']);
@@ -896,7 +896,7 @@ function drawUnit(c, u, t, sel) {
   c.save(); c.globalAlpha = a * (fly ? .25 : .45); c.fillStyle = '#000'; c.beginPath(); c.ellipse(p.x, p.y, p.h * (u.boss ? .42 : .3), p.h * .07, 0, 0, 7); c.fill(); c.restore();
   if (B.turn === u && !dead) { c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = `rgba(255,210,90,${.6 + .3 * Math.sin(t / 200)})`; c.lineWidth = 3; c.beginPath(); c.ellipse(p.x, p.y, p.h * .34, p.h * .09, 0, 0, 7); c.stroke(); c.restore(); }
   if (sel && sel.ts.includes(u)) { const col = u.side === 'f' ? '255,90,70' : '120,230,120'; c.save(); c.strokeStyle = `rgba(${col},${.6 + .35 * Math.sin(t / 150)})`; c.lineWidth = 3; c.beginPath(); c.ellipse(p.x, p.y, p.h * .38, p.h * .1, 0, 0, 7); c.stroke(); c.restore(); }
-  const pose = dead ? 'ko' : n < u.poseUntil ? u.pose : u.st.guard || u.st.taunt ? 'def' : u.charging ? 'spe' : 'idle';
+  const pose = dead ? 'ko' : n < u.poseUntil ? u.pose : u.st.guard || u.st.taunt ? 'def' : u.charging ? 'spe' : u.side === 'h' && u.hp < u.hpMax * .25 && POSEM[u.sprite + '_kneel'] ? 'kneel' : 'idle';
   const hk = Math.min(1, (n - u.hitT) / 300), recoil = hk < 1 ? Math.pow(1 - hk, 2) * u.kb * (u.side === 'h' ? -1 : 1) : 0;
   const flash = n - u.hitT < 110 ? .95 : hk < 1 ? (1 - hk) * .35 : 0, br = dead ? 0 : bob * .012, sq = hk < 1 ? (1 - hk) * .08 : 0;
   c.save(); c.globalAlpha = a;
@@ -1084,7 +1084,7 @@ document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused 
 
 // ---------- Boot ----------
 muted = !!S.mute;
-if (!SIM) { HORDER.forEach(id => { const im = new Image(); im.src = FP + HEROES[id].face + '.webp'; IMG['face_' + id] = im; }); load('bgc1', true); loadSprite('hero2'); }
+if (!SIM) { HORDER.forEach(id => { const im = new Image(); im.src = FP + HEROES[id].face + '.webp'; IMG['face_' + id] = im; }); load('bgc1', true); loadSprite('ald'); }
 renderHome();
 function afterIntro() { if (!S.seen.in) story('in', helpSheet); }
 function playIntro(then) { const v = $('video'), box = $('vid'); bgm.pause(); if (!v.src) v.src = 'intro.mp4'; v.currentTime = 0; v.muted = muted; box.hidden = false;
