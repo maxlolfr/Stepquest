@@ -18,7 +18,7 @@ const cls=process.argv[2], RUNS=+process.argv[3]||1, out=[];
       const s=api.stats(), can=id=>F.mp>=api.SPELLS[id].cost, stc=id=>api.stCost(id);
       let k;
       if (G.hp < s.hp*0.35) k = (cls==='mage'&&can('heal')) ? 'heal' : (G.potions>0?'pot':'def');
-      else if (F.foe.charging||F.foe.howl) k='def';
+      else if (F.foe.charging||F.foe.howl||(els.intent && !els.intent.hidden)) k='def';
       else if (cls==='guerrier') k = (!F.buff&&can('roar'))?'roar':can('whirl')?'whirl':'atk';
       else if (cls==='archer') k = (!F.foeSt.poison&&can('venom'))?'venom':can('rain')?'rain':'atk';
       else if (cls==='paladin') k = (!F.aegis&&can('aegis')&&G.hp<s.hp*0.75)?'aegis':can('smite')?'smite':'atk';
@@ -30,7 +30,7 @@ const cls=process.argv[2], RUNS=+process.argv[3]||1, out=[];
     }
     close(); return res;
   };
-  while(api.nextLevel() && attempts<500){ attempts++; let [w,i]=api.nextLevel(); if(grind){grind=false; if(i>0)i--; else if(w>0){w--;i=4;}}
+  while(api.nextLevel() && attempts<900){ attempts++; let [w,i]=api.nextLevel(); if(grind){grind=false; if(i>0)i--; else if(w>0){w--;i=4;}}
     const r=await playLevel(w,i,''); if(r==='lose') grind=true;
     while(G.potions<3 && G.gold>=20+2*G.lvl){ G.gold-=20+2*G.lvl; G.potions++; } }
   // heroic pass on every boss after the campaign
