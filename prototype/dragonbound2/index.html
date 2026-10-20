@@ -285,7 +285,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Test 0.8 (chapitres 1 à 6)';
+const VERSION = 'Dragonbound II · Test 0.8.1 (chapitres 1 à 6)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -1286,7 +1286,7 @@ const unlocked = i => i === 0 || S.stars[i - 1] > 0;
 function enUi() { enTick(); $('en').textContent = `${S.en}/${EN_MAX}`; $('enT').textContent = S.en < EN_MAX ? enNext() : ''; }
 setInterval(() => { if (!SIM && !$('home').hidden) enUi(); }, 1000);
 function renderHome() {
-  enUi(); $('gold').textContent = S.gold; $('snd').textContent = muted ? '🔇' : '🔊'; $('ver').innerHTML = `${VERSION}<button type="button" id="replayIntro">Revoir l’intro</button>`;
+  enUi(); $('gold').textContent = S.gold; $('snd').textContent = muted ? '🔇' : '🔊'; $('ver').innerHTML = `${VERSION}<button type="button" id="replayIntro">Revoir l’intro</button><button type="button" id="adminBtn">⚙️ Test</button>`;
   const cur = LEVELS.findIndex((_, i) => unlocked(i) && !S.stars[i]), C = CHAPTERS[S.ch];
   $('tabs').innerHTML = CHAPTERS.map((ch, j) => `<button type="button" data-ch="${j}" class="${j === S.ch ? 'on' : ''}" ${unlocked(LEVELS.findIndex(L => L.ch === j)) ? '' : 'disabled'}>${j + 1}. ${unlocked(LEVELS.findIndex(L => L.ch === j)) ? ch.name : '🔒'}</button>`).join('');
   $('ban').style.backgroundImage = `url(${C.ban})`; $('chN').textContent = `CHAPITRE ${S.ch + 1}`; $('chT').textContent = C.name;
@@ -1448,6 +1448,23 @@ function energySheet(need) { enTick(); const free = S.day !== today();
     <p style="font-size:13px">• Un niveau coûte 5 ⚡, un boss 8 ⚡.<br>• Un niveau gagné avec 3 étoiles rend 2 ⚡.<br>• Les niveaux déjà terminés se rejouent <b>gratuitement</b> en entraînement.</p>
     <button class="btn" type="button" data-enfree="1" ${free && S.en < EN_MAX ? '' : 'disabled'}>${free ? '🎁 Recharge gratuite du jour' : '🎁 Recharge gratuite : revient demain'}</button>
     <button class="btn alt" type="button" disabled>💎 Boutique d’énergie · bientôt</button><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
+// ---------- Test menu (prototype only): reset, jump to a chapter, refill ----------
+function adminSheet() { modal(`<h3>⚙️ Menu test</h3><p style="text-align:center;font-size:13px">Pour tester le jeu. Disparaîtra dans la version commerciale.</p>
+  <button class="btn red" type="button" data-adm="reset">🔄 Recommencer à zéro</button>
+  <p style="text-align:center;font-size:13px;margin:10px 0 4px"><b>Aller au début d’un chapitre</b> (héros et niveaux adaptés)</p>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${CHAPTERS.map((c, j) => `<button class="btn alt" type="button" data-adm="ch${j}" style="padding:8px 4px;font-size:15px;margin:0">Ch. ${j + 1}</button>`).join('')}</div>
+  <button class="btn alt" type="button" data-adm="en">⚡ Énergie pleine</button><button class="btn alt" type="button" data-adm="gold">💰 +1 000 or</button>
+  <button class="btn alt" type="button" data-adm="all">🔓 Tout débloquer (héros niv. 25)</button><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
+function admin(k) {
+  if (k === 'reset') { if (!confirm('Effacer la sauvegarde et recommencer au début ?')) return; try { localStorage.removeItem(SKEY); } catch (e) {} location.reload(); return; }
+  if (k === 'en') { S.en = EN_MAX; S.enT = Date.now(); toast('⚡ Énergie pleine'); }
+  if (k === 'gold') { S.gold += 1000; toast('💰 +1 000 or'); }
+  const goCh = (ch, lvl) => { const n = ch * 5; S.stars = LEVELS.map((_, i) => i < n ? 1 : 0); S.own = { aldric: 1 }; Object.entries(RECRUIT).forEach(([i, id]) => { if (+i < n) S.own[id] = 1; });
+    S.team = HORDER.filter(id => S.own[id]).slice(0, 3); for (const id of HORDER) { S.h[id].lvl = lvl; S.h[id].xp = 0; S.h[id].sk = {}; } S.ch = Math.min(ch, CHAPTERS.length - 1);
+    CHAPTERS.forEach((c, j) => { if (j <= ch) { S.seen[c.story] = j < ch ? 1 : 0; } }); S.en = EN_MAX; S.enT = Date.now(); };
+  if (k === 'all') { goCh(CHAPTERS.length, 25); S.ch = 0; S.stars = LEVELS.map(() => 1); toast('🔓 Tout est débloqué'); }
+  else if (k.startsWith('ch')) { const ch = +k.slice(2); goCh(ch, ch ? LEVELS[ch * 5].rec : 1); toast(`Début du chapitre ${ch + 1}`); }
+  save(); closeModal(); renderHome(); }
 function shopSheet() {
   modal(`<h3>Boutique</h3>${Object.entries(ITEMS).map(([k, I]) => `<div class="row"><img class="f poti ${I.cls}" src="${IP}uiPotion.webp" alt="" style="border:0;border-radius:0;object-fit:contain;background:none"><div class="grow"><b>${I.name}</b> ×${S.items[k]}<small>${I.tip}</small></div><button type="button" data-buy="${k}" ${S.gold >= I.price ? '' : 'disabled'}>${I.price}<img src="${IP}uiGold.webp" alt=""></button></div>`).join('')}
     <p style="text-align:center;margin-top:10px"><b>${S.gold}</b> <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"></p><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
@@ -1464,6 +1481,7 @@ function helpSheet() { modal(`<h3>Comment jouer</h3>
 document.addEventListener('click', e => {
   const b = e.target.closest('button, [data-pick], [data-hsheet]'); if (!b) return; const d = b.dataset; ac();
   if (d.close) return closeModal();
+  if (d.adm) return admin(d.adm);
   if (d.enfree) { if (S.day !== today()) { S.day = today(); S.en = EN_MAX; S.enT = Date.now(); save(); SFX.win(); toast('⚡ Énergie rechargée !'); renderHome(); } return energySheet(); }
   if (d.train != null) { modalCb = null; return playLevel(+d.train, true); }
   if (d.ctr) { ctrSel = ctrSel === d.ctr ? null : d.ctr; SFX.click(); return levelSheet(+d.ctrlv, true); }
@@ -1490,7 +1508,7 @@ document.addEventListener('click', e => {
 });
 $('teamBtn').addEventListener('click', teamSheet);
 $('enBtn').addEventListener('click', () => { SFX.click(); energySheet(); });
-$('ver').addEventListener('click', e => { if (e.target.id === 'replayIntro') playIntro(); });
+$('ver').addEventListener('click', e => { if (e.target.id === 'replayIntro') playIntro(); if (e.target.id === 'adminBtn') adminSheet(); });
 $('forgeBtn').addEventListener('click', forgeSheet);
 $('shopBtn').addEventListener('click', shopSheet);
 $('helpBtn').addEventListener('click', helpSheet);
