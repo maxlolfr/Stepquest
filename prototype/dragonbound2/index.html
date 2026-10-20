@@ -307,7 +307,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Test 0.9.5 (chapitres 1 à 6)';
+const VERSION = 'Dragonbound II · Test 0.9.6 (chapitres 1 à 6)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -341,12 +341,12 @@ function drawSprite(c, base, pose, x, y, h, flash, sx = 1, sy = 1, tint) {
 // ---------- Sound ----------
 let AC = null, muted = false; const SMP = {};
 function ac() { if (SIM) return null; if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); ['sword', 'clang', 'impact', 'ring'].forEach(k => fetch(AP + 's_' + k + '.mp3').then(r => r.arrayBuffer()).then(b => AC.decodeAudioData(b)).then(d => { SMP[k] = d; }).catch(() => {}));
-      SAMPLES.forEach(k => fetch('audio/' + k + '.mp3').then(r => r.arrayBuffer()).then(b => AC.decodeAudioData(b)).then(d => { SMP[k] = d; }).catch(() => {})); } catch (e) {} } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+      SAMPLES.forEach(k => fetch('audio/' + k + '.mp3').then(r => r.arrayBuffer()).then(b => AC.decodeAudioData(b)).then(d => { SMP[k] = d; }).catch(() => {})); } catch (e) {} } if (AC && AC.state !== 'running') AC.resume().catch(() => {}); return AC; }
 function tone(f, d, type = 'sine', v = .15, f2, delay = 0) { if (muted || FAST || !AC) return; const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
   g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + .02); }
 function noise(d, v = .2, fq = 1200, delay = 0) { if (muted || FAST || !AC) return; const t = AC.currentTime + delay, n = AC.sampleRate * d, b = AC.createBuffer(1, n, AC.sampleRate), a = b.getChannelData(0); for (let i = 0; i < n; i++) a[i] = (Math.random() * 2 - 1) * (1 - i / n);
   const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(); s.buffer = b; f.type = 'bandpass'; f.frequency.value = fq; g.gain.value = v; s.connect(f).connect(g).connect(AC.destination); s.start(t); }
-function smp(k, v = .7, rate = 1) { if (muted || FAST || !AC || !SMP[k]) return false; const s = AC.createBufferSource(), g = AC.createGain(); s.buffer = SMP[k]; s.playbackRate.value = rate; g.gain.value = v; s.connect(g).connect(AC.destination); s.start(); return true; }
+function smp(k, v = .7, rate = 1) { if (AC && AC.state !== 'running') AC.resume().catch(() => {}); if (muted || FAST || !AC || !SMP[k]) return false; const s = AC.createBufferSource(), g = AC.createGain(); s.buffer = SMP[k]; s.playbackRate.value = rate; g.gain.value = v; s.connect(g).connect(AC.destination); s.start(); return true; }
 // recorded sound effects (audio/), one per hero weapon and spell; the synth versions stay as a fallback while they load
 const SAMPLES = ['ald_sword', 'ald_shield', 'sel_mace', 'sel_heal', 'ori_fire', 'ori_ice', 'ori_bolt', 'lyr_arrow', 'nyx_dagger', 'crit', 'ult', 'hero_hurt', 'foe_die', 'boss_roar', 'chest', 'poison', 'ui_click', 'levelup'];
 const WEAPON = { aldric: 'ald_sword', selena: 'sel_mace', nyx: 'nyx_dagger', lyra: 'lyr_arrow' };
@@ -380,7 +380,7 @@ const SFX = {
 const bgm = $('bgm');
 // m_* tracks are local (audio/): title/map theme, one theme per chapter, Nightmare/Hell theme, victory and defeat stingers
 const CH_MUSIC = ['m_crypt', 'm_forest', 'm_mines', 'm_swamp', 'm_ice', 'm_vampire'];
-function stinger(k) { if (SIM || muted) return; bgm.pause(); bgm.dataset.k = ''; const a = new Audio('audio/' + k + '.mp3'); a.volume = .65; a.play().catch(() => {}); }
+function stinger(k) { if (SIM || muted) return; bgm.pause(); bgm.dataset.k = ''; const a = new Audio('audio/' + k + '.mp3'); a.volume = .65; a.play().catch(() => {}); a.onplay = a.onended = () => ac(); }
 function music(k) { if (SIM) return; const src = (k.startsWith('m_') ? 'audio/' : AP) + k + '.mp3'; if (bgm.dataset.k === k) { if (!muted && bgm.paused) bgm.play().catch(() => {}); return; } bgm.dataset.k = k; bgm.src = src; bgm.volume = .4; if (!muted) bgm.play().catch(() => {}); }
 
 // ---------- Heroes, skills, monsters ----------
@@ -741,7 +741,7 @@ function calc(a, t, pow, stat = 'atk', el = 'phys', forceCrit) {
   let d = a[stat] * pow * (a.rk || 1) * 40 / (40 + t.def) * rnd(.9, 1.1);
   if (a.aff === 'enrage') d *= 1 + (1 - a.hp / a.hpMax) * .8;
   let em = elMult(t, el); if (em > 1 && t.st.mark) em = 1.75; d *= em;
-  if (a.side === 'h') { d *= a.boost || 1; if (t.st.mark) d *= 1.2;
+  if (a.side === 'h') { d *= (a.boost || 1) * (B.round > 20 ? 1 + .15 * (B.round - 20) : 1); if (t.st.mark) d *= 1.2;
     if (a.pw.has('venin') && t.st.poison) d *= 1.35; if (a.pw.has('chasse') && t.st.mark) d *= 1.3; if (a.pw.has('bourreau') && t.hp < t.hpMax * .35) d *= 1.3; }
   let crit = forceCrit || Math.random() < a.crit || a.st.nextCrit; if (crit) d *= 1.6;
   if (t.side === 'h') { if (t.st.guard) d *= .5; if (B.aegis > 0) d *= .65; if (t.st.taunt) d *= .8; }
@@ -1020,7 +1020,7 @@ async function tickStart(u) {
   if (u.st.mark && --u.st.mark <= 0) u.st.mark = 0;
   if (u.st.poison) { const d = u.st.poison.d; u.hp = Math.max(0, u.hp - d); u.hitT = now(); txt(p.x, p.y - p.h - 6, `-${d} ☠️`, '#b6f27a'); if (--u.st.poison.n <= 0) u.st.poison = 0; refresh(); if (u.hp <= 0) { await kill(u); return false; } await wait(300); }
   if (u.st.burn) { const d = u.st.burn.d; u.hp = Math.max(0, u.hp - d); u.hitT = now(); txt(p.x, p.y - p.h - 6, `-${d} 🔥`, '#ffb347'); sparks(p.x, p.y - p.h * .4, 8, ['#ffb347', '#ff6a2a'], .8, -.03); if (--u.st.burn.n <= 0) u.st.burn = 0; refresh(); if (u.hp <= 0) { await kill(u); return false; } await wait(300); }
-  if (u.side === 'f' && (u.m.trait === 'regen' || u.aff === 'regen') && u.hp < u.hpMax) { await heal(u, u.hpMax * (u.aff === 'regen' ? .1 : .08)); await wait(200); }
+  if (u.side === 'f' && (u.m.trait === 'regen' || u.aff === 'regen') && u.hp < u.hpMax && B.round < 16) { if (u.st.poison || u.st.burn) txt(p.x, p.y - p.h - 24, 'Régénération bloquée', '#c8d2da'); else { await heal(u, u.hpMax * (u.aff === 'regen' ? .1 : .08) * (B.round > 10 ? .4 : 1)); await wait(200); } }
   if (u.st.stun) { u.st.stun = 0; txt(p.x, p.y - p.h - 10, '💫 Étourdi', '#ffe08a', true); await wait(500); return false; }
   if (u.st.freeze) { u.st.freeze = 0; txt(p.x, p.y - p.h - 10, '❄️ Gelé', '#bfe8ff', true); await wait(500); return false; }
   return true;
@@ -1031,7 +1031,7 @@ function aiHero(h) {
   const fs = livingF(), hs = livingH(), dead = B.party.filter(x => !alive(x)), can = k => h.mp >= SK[k].cost && h.H.skills.includes(k);
   const weakest = fs.reduce((a, b) => a.hp < b.hp ? a : b), boss = fs.find(f => f.boss), hurt = hs.filter(x => x.hp < x.hpMax * .5).sort((a, b) => a.hp / a.hpMax - b.hp / b.hpMax);
   const healer = hs.some(x => x.id === 'selena');
-  if (h.lb >= 100) { const ok = h.id === 'selena' ? (dead.length || hurt.length >= 2) : h.id === 'nyx' ? true : (fs.length >= 2 || boss); if (ok) return { k: 'ult', tgt: boss || weakest }; }
+  if (h.lb >= 100) { const ok = h.id === 'selena' ? (dead.length || hurt.length >= 2 || (hs.length === 1 && h.hp < h.hpMax * .5)) : true; if (ok) return { k: 'ult', tgt: boss || weakest }; }
   if (h.id !== 'aldric' && fs.some(f => f.charging && f.prison === h)) return { k: 'guard' };
   if (h.hp < h.hpMax * .3 && !healer && S.items.pot > 0) return { k: 'item', item: 'pot', tgt: h };
   if (dead.length && !hs.some(x => x.id === 'selena' && x !== h && x.mp >= 18) && S.items.fea > 0 && h.id !== 'selena') return { k: 'item', item: 'fea', tgt: dead[0] };
@@ -1141,6 +1141,7 @@ async function fightWave() {
     if (B.toxic) { refresh(); if (!livingH().length) return 'lose'; }
     if (B.aegis) B.aegis--;
     for (const h of livingH()) h.mp = Math.min(h.mpMax, h.mp + 2);
+    if (B.round === 21) say('<b>Les monstres s’épuisent</b> : tes coups font de plus en plus mal !');
     if (B.round > 60) return 'lose';
   }
 }
@@ -1212,7 +1213,7 @@ cv.addEventListener('click', e => { if (!pending || !pending.sel) return; const 
   const c = B.cam, wx = (x - VW / 2) / c.z + c.x, wy = (y - VH / 2) / c.z + c.y; let best = null, bd = 1e9;
   for (const u of pending.sel.ts) { const p = px(u), d = Math.hypot(p.x - wx, (p.y - p.h * .45) - wy); if (d < bd) { bd = d; best = u; } }
   if (best && bd < VH * .3) pickUnit(best); });
-$('spdBtn').addEventListener('click', () => { S.spd = (S.spd || 1) % 3 + 1; save(); spdUi(); });
+$('spdBtn').addEventListener('click', () => { S.spd = [1, 2, 3, 5][([1, 2, 3, 5].indexOf(S.spd || 1) + 1) % 4]; save(); spdUi(); });
 function spdUi() { $('spdBtn').textContent = '×' + (S.spd || 1); $('spdBtn').classList.toggle('on', (S.spd || 1) > 1); }
 $('autoBtn').addEventListener('click', () => { if (!B) return; B.auto = !B.auto; autoPref = B.auto; refresh(); if (B.auto && pending) finish(aiHero(pending.h)); });
 $('fleeBtn').addEventListener('click', () => { if (!B) return; modal(`<h3>Quitter le combat ?</h3><p>Tu ne gagnes rien en fuyant.</p><button class="btn red" type="button" data-flee="1">Fuir</button><button class="btn alt" type="button" data-close="1">Continuer</button>`); });
@@ -1650,6 +1651,8 @@ $('helpBtn').addEventListener('click', helpSheet);
 $('heroesBtn').addEventListener('click', () => heroSheet(S.team[0], 'eq'));
 $('storyBtn').addEventListener('click', () => { const C = CHAPTERS[S.ch], done = S.stars[LEVELS.findIndex(L => L.ch === S.ch && L.boss)]; story(done ? C.end : C.story); });
 $('snd').addEventListener('click', () => { muted = !muted; S.mute = muted; save(); if (muted) bgm.pause(); else { ac(); music(bgm.dataset.k || 'm_theme'); } renderHome(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) ac(); });
+bgm.addEventListener('play', () => ac());
 document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused && bgm.dataset.k) bgm.play().catch(() => {}); }, { once: true });
 
 // ---------- Boot ----------
