@@ -185,6 +185,39 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 #vid video { width: 100%; height: 100%; object-fit: contain; }
 #vid button { position: absolute; right: calc(var(--safe-r) + 14px); bottom: calc(var(--safe-b) + 14px); padding: 8px 16px; border-radius: 99px; background: rgba(0,0,0,.6); border: 2px solid var(--gold); font-size: 14px; }
 .ver button { color: var(--muted); text-decoration: underline; font-size: 12px; margin-left: 6px; }
+#spdBtn { padding: 6px 10px; border-radius: 99px; background: rgba(0,0,0,.55); border: 2px solid var(--line); font-size: 13px; min-width: 44px; }
+#spdBtn.on { background: linear-gradient(#6aa8ff, #2f5fa8); border-color: #10305a; }
+.menu .wide { grid-column: 1 / -1; justify-content: center; position: relative; }
+.dot { position: absolute; top: -6px; right: -6px; min-width: 22px; height: 22px; border-radius: 99px; background: #e0413b; border: 2px solid #fff; font: 900 12px var(--fb); display: grid; place-items: center; padding: 0 5px; color: #fff; }
+.pc { cursor: pointer; } .pc .dot { top: 4px; right: 4px; }
+.item { display: flex; gap: 10px; align-items: center; padding: 8px; border-radius: 12px; background: rgba(255,255,255,.5); margin-top: 8px; border: 2px solid var(--rc, #a7a29a); box-shadow: inset 0 0 18px rgba(var(--rg, 167,162,154), .25); }
+.item > img { width: 56px; height: 56px; object-fit: contain; flex: none; border-radius: 10px; background: radial-gradient(circle, rgba(var(--rg, 167,162,154), .45), transparent 70%); }
+.item .grow { flex: 1; min-width: 0; } .item b { display: block; color: var(--rc); text-shadow: 0 1px 0 rgba(0,0,0,.25); }
+.item small { display: block; font-size: 11.5px; color: #6a4a2a; } .item .st { font-size: 12.5px; color: #2a1a0e; }
+.item .up { color: #2f7a3a; } .item .down { color: #b53a2c; }
+.item .btns { display: flex; flex-direction: column; gap: 4px; flex: none; }
+.item .btns button { padding: 6px 9px; border-radius: 10px; background: linear-gradient(#5cb85c, #2f7a3a); border: 2px solid #1e4a22; color: #fff; font-weight: 900; font-size: 12.5px; }
+.item .btns button.sell { background: linear-gradient(#f2b632, #c07a12); border-color: #6a3b0a; color: #2a1406; }
+.item.eq { outline: 3px solid #2f7a3a; }
+.chestbox { display: grid; place-items: center; min-height: 230px; }
+.chestbox img { width: 170px; height: 170px; object-fit: contain; animation: shake .8s ease-in-out infinite; filter: drop-shadow(0 0 22px rgba(var(--rg), .9)); }
+@keyframes shake { 0%,100% { transform: rotate(0) scale(1); } 20% { transform: rotate(-7deg) scale(1.04); } 40% { transform: rotate(7deg) scale(1.06); } 60% { transform: rotate(-9deg) scale(1.08); } 80% { transform: rotate(9deg) scale(1.08); } }
+.reveal { text-align: center; animation: pop .35s cubic-bezier(.2,1.6,.5,1); }
+.reveal > img { width: 120px; height: 120px; object-fit: contain; filter: drop-shadow(0 0 20px rgba(var(--rg), 1)); }
+.reveal h4 { font-family: var(--fd); font-weight: 400; font-size: 24px; margin: 4px 0; color: var(--rc); text-shadow: 0 2px 0 rgba(0,0,0,.25); }
+.hs-top { display: flex; align-items: center; gap: 10px; } .hs-top img { width: 72px; height: 72px; border-radius: 50%; border: 3px solid var(--gold); object-fit: cover; background: #3a2a30; }
+.hs-top .grow { flex: 1; } .hs-nav { font-size: 26px; padding: 0 6px; color: #6a2a0a; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; margin: 8px 0; font-size: 13px; } .stats span { background: rgba(255,255,255,.45); border-radius: 8px; padding: 4px 6px; }
+.slots { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.slots div { background: rgba(0,0,0,.08); border: 2px dashed #b08a5a; border-radius: 12px; min-height: 76px; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; text-align: center; padding: 4px; }
+.slots div.on { border-style: solid; border-color: var(--rc); background: radial-gradient(circle, rgba(var(--rg), .35), transparent 75%); }
+.slots img { width: 44px; height: 44px; object-fit: contain; }
+.skrow { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 10px; background: rgba(255,255,255,.45); margin-top: 6px; font-size: 13px; }
+.skrow i { font-style: normal; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: #3a2418; overflow: hidden; flex: none; } .skrow i img { width: 100%; height: 100%; object-fit: cover; }
+.skrow .grow { flex: 1; } .skrow small { display: block; color: #6a4a2a; font-size: 11px; }
+.pips { letter-spacing: 1px; color: #c07a12; } .skrow button { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(#5cb85c, #2f7a3a); border: 2px solid #1e4a22; color: #fff; font-size: 20px; font-weight: 900; flex: none; } .skrow button:disabled { filter: grayscale(1); opacity: .4; }
+.tabsx { display: flex; gap: 6px; margin-top: 10px; } .tabsx button { flex: 1; padding: 6px; border-radius: 10px; background: rgba(0,0,0,.1); border: 2px solid #b08a5a; font-size: 13px; } .tabsx button.on { background: #6a2a0a; color: #fff; border-color: #6a2a0a; }
+@media (prefers-reduced-motion: reduce) { .chestbox img { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .node.cur .disc, .card.tgt, .act.ult.ready i, .bar.lb.full i { animation: none; } }
 </style>
 </head>
@@ -204,6 +237,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
   <div class="party" id="party"></div>
   <div class="bench" id="bench"></div>
   <div class="menu">
+    <button class="big wide" type="button" id="heroesBtn"><img src="../dragonbound/img/wSword.webp" alt="">Héros &amp; équipement<span class="dot" id="heroDot" hidden></span></button>
     <button class="big" type="button" id="forgeBtn"><img src="../dragonbound/img/ic_sword.webp" alt="">Forge</button>
     <button class="big" type="button" id="shopBtn"><img src="../dragonbound/img/uiPotion.webp" alt="">Boutique</button>
     <button class="big" type="button" id="storyBtn"><img src="../dragonbound/img/uiScroll.webp" alt="">Histoire</button>
@@ -217,6 +251,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
     <div class="ftop">
       <button class="iconbtn" id="fleeBtn" type="button" aria-label="Fuir">🏳️</button>
       <div class="ftitle"><b id="fName"></b><span id="fWave"></span></div>
+      <button id="spdBtn" type="button" aria-label="Vitesse">×1</button>
       <button id="autoBtn" type="button">Auto</button>
     </div>
     <canvas id="cv"></canvas>
@@ -237,7 +272,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Test 0.3.1 (mondes 1 et 2, nouveaux héros)';
+const VERSION = 'Dragonbound II · Test 0.4 (coffres, équipement, compétences)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -353,8 +388,8 @@ const MON = {
   spider: { name: 'Araignée géante', hp: 105, atk: 26, def: 5, xp: 21, gold: 9, h: .19, trait: 'poison', w: ['feu'], r: ['poison'], tip: 'Son venin empoisonne 3 tours.' },
   shroom: { name: 'Champignon furieux', hp: 140, atk: 23, def: 8, xp: 21, gold: 9, h: .21, trait: 'regen', w: ['feu'], r: ['poison'], tip: 'Ses spores le soignent à chaque tour.' },
   goblin: { name: 'Gobelin voleur', hp: 112, atk: 26, def: 6, xp: 23, gold: 18, h: .22, trait: 'steal', w: ['glace'], r: [], tip: 'Vole tes potions ! Tue-le pour les récupérer.' },
-  bossWitch: { name: 'Sylvaine', boss: true, hp: 1500, atk: 52, def: 11, xp: 330, gold: 280, h: .4, w: ['feu'], r: ['poison'], tip: 'Se soigne en frappant et lance une malédiction empoisonnée sur toute l’équipe. À mi-vie, ses ronces blessent ceux qui frappent au corps à corps.' },
-  bossBone: { name: 'Roi des Os', boss: true, hp: 560, atk: 30, def: 6, xp: 150, gold: 120, h: .46, w: ['feu'], r: ['poison'], tip: 'Prépare un coup de faux sur toute l’équipe. Défends-toi, ou étourdis-le !' },
+  bossWitch: { name: 'Sylvaine', boss: true, hp: 2100, atk: 60, def: 11, xp: 330, gold: 280, h: .4, w: ['feu'], r: ['poison'], tip: 'Se soigne en frappant et lance une malédiction empoisonnée sur toute l’équipe. À mi-vie, ses ronces blessent ceux qui frappent au corps à corps.' },
+  bossBone: { name: 'Roi des Os', boss: true, hp: 760, atk: 33, def: 6, xp: 150, gold: 120, h: .46, w: ['feu'], r: ['poison'], tip: 'Prépare un coup de faux sur toute l’équipe. Défends-toi, ou étourdis-le !' },
 };
 // Elite variants: a colour, a power, double rewards
 const AFFIX = {
@@ -407,10 +442,50 @@ const ITEMS = {
   eli: { name: 'Élixir', short: 'Élixir', cls: 'eli', tgt: 'party', price: 110, tip: 'Rend 35 % de vie à toute l’équipe.' },
 };
 
+// ---------- Equipment ----------
+const RAR = [{ n: 'Commun', c: '#8a847a', g: '167,162,154', m: 1 }, { n: 'Peu commun', c: '#2f8a2f', g: '76,174,76', m: 1.25 }, { n: 'Rare', c: '#2a6ac0', g: '61,139,224', m: 1.55 },
+  { n: 'Épique', c: '#8a3ac0', g: '155,89,208', m: 1.9 }, { n: 'Légendaire', c: '#d0700a', g: '240,140,26', m: 2.4 }];
+const WPN = { aldric: [['wSword', 'Épée longue'], ['wAxe', 'Hache de guerre'], ['wAxe', 'Hache du bourreau'], ['wSword', 'Épée runique'], ['wLegG', 'Lame de l’Aube']],
+  selena: [['wHammer', 'Masse bénie'], ['wFlail', 'Fléau sacré'], ['wFlail', 'Fléau du zénith'], ['wHammer', 'Marteau du jugement'], ['wLegP', 'Soleil divin']],
+  orin: [['wStaff', 'Bâton de chêne'], ['wScepter', 'Sceptre de cristal'], ['wTome', 'Grimoire des arcanes'], ['wScepter', 'Sceptre des astres'], ['wLegM', 'Bâton du Néant']],
+  lyra: [['wShortbow', 'Arc court'], ['wElvenbow', 'Arc elfique'], ['wCrossbow', 'Arbalète de chasse'], ['wElvenbow', 'Arc des étoiles'], ['wLegA', 'Arc de givre']],
+  nyx: [['wDaggers', 'Dagues jumelles'], ['wFangs', 'Lames du croc'], ['wShadow', 'Dague de l’ombre'], ['wFangs', 'Crocs du serpent'], ['wLegR', 'Lames du vide']] };
+const ARMN = ['Armure d’os', 'Armure sylvestre', 'Armure de braise', 'Armure des marais', 'Armure de givre'], JEWN = ['Amulette des morts', 'Talisman sylvestre', 'Pendentif de braise', 'Amulette des marais', 'Pendentif de givre'];
+const SLOTN = { w: 'Arme', a: 'Armure', j: 'Bijou' };
+const STN = { atk: ['⚔️', 'Attaque'], mag: ['✨', 'Magie'], hp: ['❤️', 'Vie'], def: ['🛡️', 'Défense'], mp: ['💧', 'Mana'], crit: ['🎯', 'Critique'], lb: ['🌟', 'Ultime'] };
+const fmtSt = (k, v) => `${STN[k][0]} +${k === 'crit' ? Math.round(v * 100) + ' %' : k === 'lb' ? v + ' %' : v}`;
+function makeItem(slot, r, t, hero) {
+  const m = RAR[r].m, ch = Math.min(4, Math.floor((t - 1) / 5)), it = { id: S.nid++, slot, r, t, st: {}, isNew: 1 };
+  if (slot === 'w') { const [img, name] = WPN[hero][r]; Object.assign(it, { hero, img, name });
+    const v = Math.round((2 + 1.1 * t) * m); if (hero === 'orin') it.st.mag = v; else if (hero === 'selena') { it.st.atk = Math.round(v * .75); it.st.mag = Math.round(v * .6); } else it.st.atk = v;
+    if (r === 4) it.st.crit = .08; }
+  else if (slot === 'a') { Object.assign(it, { img: `a${ch}armure`, name: ARMN[ch] }); it.st.hp = Math.round((8 + 5 * t) * m); it.st.def = Math.round((1 + .45 * t) * m); if (r === 4) it.st.lb = 20; }
+  else { Object.assign(it, { img: `a${ch}amulette`, name: JEWN[ch] }); const opts = ['crit', 'mp', 'hp', 'lb'], add = k => { it.st[k] = k === 'crit' ? +((.02 + .006 * t) * m).toFixed(3) : k === 'mp' ? Math.round((4 + 2 * t) * m) : k === 'hp' ? Math.round((6 + 4 * t) * m) : Math.round(8 * m); };
+    const a = pick(opts); add(a); if (r >= 3) add(pick(opts.filter(x => x !== a))); }
+  return it;
+}
+const itemById = id => S.inv.find(x => x.id === id);
+const itemScore = it => it ? Object.entries(it.st).reduce((a, [k, v]) => a + v * { atk: 2.2, mag: 2.2, hp: .35, def: 2, mp: .5, crit: 300, lb: 1.2 }[k], 0) : 0;
+const canWear = (it, id) => it.slot !== 'w' || it.hero === id;
+const sellPrice = it => Math.round(12 * it.t * RAR[it.r].m);
+const wornBy = it => Object.keys(S.h).find(id => (S.h[id].eq || {})[it.slot] === it.id);
+function rollRarity(boss, elite) { const w = boss ? [5, 30, 38, 20, 7] : elite ? [25, 35, 25, 12, 3] : [55, 28, 12, 4, 1]; let x = Math.random() * 100; for (let r = 0; r < 5; r++) { x -= w[r]; if (x < 0) return r; } return 0; }
+function rollLoot(i, boss, elites) { const out = [], n = 1 + (boss ? 1 : 0) + (elites && Math.random() < .5 ? 1 : 0), owned = Object.keys(S.own);
+  for (let k = 0; k < n; k++) { const r = rollRarity(boss && k === 0, elites > 0 && k === n - 1), x = Math.random(), slot = x < .45 ? 'w' : x < .75 ? 'a' : 'j';
+    const hero = Math.random() < .7 ? pick(S.team) : pick(owned); const it = makeItem(slot, r, i + 1, hero); S.inv.push(it); out.push(it); }
+  return out; }
+function equip(id, it) { const s = S.h[id]; (s.eq = s.eq || {})[it.slot] = it.id; for (const o of Object.keys(S.h)) if (o !== id && (S.h[o].eq || {})[it.slot] === it.id) delete S.h[o].eq[it.slot]; it.isNew = 0; }
+function autoEquip() { for (const id of Object.keys(S.own)) for (const sl of ['w', 'a', 'j']) { const cur = itemById((S.h[id].eq || {})[sl]); let best = cur;
+  for (const it of S.inv) if (it.slot === sl && canWear(it, id) && (!wornBy(it) || wornBy(it) === id) && itemScore(it) > itemScore(best)) best = it; if (best && best !== cur) equip(id, best); } }
+// skill ranks: 1 point per level, rank 1..5, +12 % power per rank (Ultime +15 %)
+const rankOf = (id, k) => ((S.h[id].sk || {})[k]) || 1;
+const ptsLeft = id => (S.h[id].lvl - 1) - Object.values(S.h[id].sk || {}).reduce((a, r) => a + r - 1, 0);
+const rkMult = (id, k) => 1 + (k === 'ult' ? .15 : .12) * (rankOf(id, k) - 1);
+
 // ---------- Save ----------
 const SKEY = 'dragonbound2.v2';
 function fresh() { const h = {}; HORDER.forEach(k => { h[k] = { lvl: 1, xp: 0, w: 0, a: 0 }; });
-  return { v: 2, gold: 50, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h, team: ['aldric'], own: { aldric: 1 }, stars: LEVELS.map(() => 0), seen: {}, mute: false, ch: 0 }; }
+  return { v: 2, gold: 50, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h, team: ['aldric'], own: { aldric: 1 }, stars: LEVELS.map(() => 0), seen: {}, mute: false, ch: 0, inv: [], nid: 1, spd: 1 }; }
 let S = fresh();
 try { if (!SIM) { const s = JSON.parse(localStorage.getItem(SKEY)); if (s && s.v === 2) { S = Object.assign(fresh(), s); while (S.stars.length < LEVELS.length) S.stars.push(0); S.items = Object.assign({ pot: 0, eth: 0, fea: 0, eli: 0 }, S.items); } } } catch (e) {}
 const save = () => { if (SIM) return; try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {} };
@@ -418,7 +493,9 @@ const xpNeed = l => Math.round(34 + 20 * l + 5 * l * l);
 function heroStats(id) { const H = HEROES[id], s = S.h[id], L = s.lvl, o = {};
   for (const k of ['hp', 'mp', 'atk', 'mag', 'def']) o[k] = H.base[k] + H.gr[k] * (L - 1);
   o.atk *= 1 + .1 * s.w; o.mag *= 1 + .1 * s.w; o.hp *= 1 + .1 * s.a; o.def *= 1 + .1 * s.a;
-  for (const k in o) o[k] = Math.round(o[k]); o.crit = H.base.crit; return o; }
+  o.crit = H.base.crit; o.lbm = 1;
+  for (const sl of ['w', 'a', 'j']) { const it = itemById((s.eq || {})[sl]); if (it) for (const [k, v] of Object.entries(it.st)) { if (k === 'lb') o.lbm += v / 100; else o[k] = (o[k] || 0) + v; } }
+  for (const k of ['hp', 'mp', 'atk', 'mag', 'def']) o[k] = Math.round(o[k]); return o; }
 
 // ---------- Clock, tweens, waits ----------
 let clock = 0, last = 0, hsUntil = 0; const TW = [], WT = [];
@@ -443,8 +520,8 @@ const BSLOT = [[.66, .66], [.9, .15], [.92, .95]];
 const persp = v => .8 + .3 * v;
 function mkHero(id, i, n) { const H = HEROES[id], st = heroStats(id);
   return { side: 'h', id, name: H.name, sprite: H.sprite, H, hpMax: st.hp, hp: st.hp, mpMax: st.mp, mp: st.mp, atk: st.atk, mag: st.mag, def: st.def, crit: st.crit,
-    slot: i == null ? null : HSLOT[n - 1][i], hsz: H.h, ox: 0, oy: 0, st: {}, pose: 'idle', poseUntil: 0, hitT: -1e9, kb: 0, alpha: 1, deadT: 0, lb: 0, seed: Math.random() * 6 }; }
-function mkFoe(id, i, lvIdx, boss, n, eliteP) { const m = MON[id], k = 1 + .18 * lvIdx, ps = m.boss ? 1 : [.5, .68, 1][Math.min(3, n) - 1], pa = [.6, .8, 1][Math.min(3, n) - 1];
+    lbm: st.lbm, slot: i == null ? null : HSLOT[n - 1][i], hsz: H.h, ox: 0, oy: 0, st: {}, pose: 'idle', poseUntil: 0, hitT: -1e9, kb: 0, alpha: 1, deadT: 0, lb: 0, seed: Math.random() * 6 }; }
+function mkFoe(id, i, lvIdx, boss, n, eliteP) { const m = MON[id], k = 1 + .25 * lvIdx, ps = m.boss ? 1 : [.5, .68, 1][Math.min(3, n) - 1], pa = [.6, .8, 1][Math.min(3, n) - 1];
   const slot = boss ? BSLOT[i] : FSLOT[n >= 3 || i >= n ? 2 : n - 1][i] || FSLOT[2][i % 3];
   const f = { side: 'f', id, name: m.name, sprite: id, m, boss: !!m.boss, hpMax: Math.round(m.hp * (m.boss ? 1 : k) * ps), atk: Math.round(m.atk * (m.boss ? 1 : k) * pa), mag: 0, def: m.def + Math.floor(lvIdx * .6), crit: .05,
     slot, hsz: m.h * (boss && !m.boss ? .85 : 1), ox: 0, oy: 0, st: {}, pose: 'idle', poseUntil: 0, hitT: -1e9, kb: 0, alpha: 1, deadT: 0, turn: 0, seed: Math.random() * 6, xpM: 1, goldM: 1 };
@@ -454,7 +531,7 @@ const alive = u => u.hp > 0;
 const livingH = () => B.party.filter(alive), livingF = () => B.foes.filter(alive);
 function px(u) { const v = u.slot ? u.slot[1] : .5; return { x: (u.slot ? u.slot[0] : .2) * VW + u.ox, y: GY + (VH - GY) * (.12 + .84 * v) + u.oy, h: VH * u.hsz * persp(v), v }; }
 function setPose(u, p, ms) { u.pose = p; u.poseUntil = now() + (FAST ? 0 : ms); }
-const gainLb = (u, n) => { if (u.side === 'h' && alive(u)) u.lb = Math.min(100, (u.lb || 0) + n); };
+const gainLb = (u, n) => { if (u.side === 'h' && alive(u)) u.lb = Math.min(100, (u.lb || 0) + n * (u.lbm || 1)); };
 
 // ---------- Effects ----------
 let fx = [], sfx = []; // world-space and screen-space effects
@@ -475,7 +552,7 @@ function snowFx(x, y) { if (FAST) return; for (let i = 0; i < 18; i++) fx.push({
 // ---------- Combat maths ----------
 function elMult(t, el) { if (t.side !== 'f' || !el) return 1; if (t.m.w.includes(el)) return 1.5; if (t.m.r.includes(el)) return .5; return 1; }
 function calc(a, t, pow, stat = 'atk', el = 'phys', forceCrit) {
-  let d = a[stat] * pow * 40 / (40 + t.def) * rnd(.9, 1.1);
+  let d = a[stat] * pow * (a.rk || 1) * 40 / (40 + t.def) * rnd(.9, 1.1);
   if (a.aff === 'enrage') d *= 1 + (1 - a.hp / a.hpMax) * .8;
   const em = elMult(t, el); d *= em;
   let crit = forceCrit || Math.random() < a.crit || a.st.nextCrit; if (crit) d *= 1.6;
@@ -531,8 +608,9 @@ async function heroAct(h, a) {
   else if (k === 'guard') { h.st.guard = 1; h.mp = Math.min(h.mpMax, h.mp + Math.round(h.mpMax * .15)); gainLb(h, 6); setPose(h, 'def', 700); const p = px(h); ring(p.x, p.y - p.h * .5, '#bfe0ff', 60); SFX.clang(); say(`<b>${h.name}</b> se met en garde.`); await wait(450); }
   else if (k === 'item') await useItem(h, a.item, t);
   else if (k === 'swap') await swapHero(h, a.sub);
-  else if (k === 'ult') { h.lb = 0; await ultIntro(h); await ULT[h.id](h, t); }
-  else { await SKILL[k](h, t, sk); if (sk.cls === 'heal') gainLb(h, 10); }
+  else if (k === 'ult') { h.lb = 0; h.rk = rkMult(h.id, 'ult'); await ultIntro(h); await ULT[h.id](h, t); }
+  else { h.rk = rkMult(h.id, k); await SKILL[k](h, t, sk); if (sk.cls === 'heal') gainLb(h, 10); }
+  h.rk = 1;
   h.st.nextCrit = k === 'shadow' ? 1 : 0;
   resetCam(); B.acting = null; refresh();
 }
@@ -553,7 +631,7 @@ const SKILL = {
   async bash(h, t, sk) { say(`<b>${h.name}</b> charge au bouclier !`); focusCam(h, t); await dashTo(h, t); SFX.clang(); const c = center(t); slashFx(c.x, c.y, false, '#ffd76a');
     await damage(t, calc(h, t, sk.pow), { src: h, melee: true }); if (alive(t)) { if (t.boss && t.stunCd > 0) txt(c.x, c.y - 70, 'Résiste à l’étourdissement', '#c8d2da'); else { t.st.stun = 1; if (t.boss) t.stunCd = 5; if (t.charging) { t.charging = false; txt(c.x, c.y - 90, 'Attaque annulée !', '#ffe08a', true); } txt(c.x, c.y - 70, '💫 Étourdi', '#ffe08a', true); } }
     await wait(240); await dashBack(h); },
-  async heal(h, t) { say(`<b>${h.name}</b> soigne ${t.name}.`); setPose(h, 'cast', 700); SFX.heal(); await wait(250); t.st.poison = 0; t.st.burn = 0; await heal(t, t.hpMax * .26 + h.mag * 1.2); await wait(350); },
+  async heal(h, t) { say(`<b>${h.name}</b> soigne ${t.name}.`); setPose(h, 'cast', 700); SFX.heal(); await wait(250); t.st.poison = 0; t.st.burn = 0; await heal(t, (t.hpMax * .26 + h.mag * 1.2) * (h.rk || 1)); await wait(350); },
   async aegis(h) { say(`<b>${h.name}</b> invoque l’Égide sacrée !`); setPose(h, 'def', 900); SFX.buff(); for (const a of livingH()) { const p = px(a); ring(p.x, p.y - p.h * .5, '#ffe58a', 80, 600); rise(p.x, p.y - p.h * .4, 8, ['#ffe58a', '#ffffff']); }
     B.aegis = 2; await wait(650); },
   async smite(h, t, sk) { say(`<b>${h.name}</b> : Châtiment !`); focusCam(h, t); setPose(h, 'spe', 800); await wait(200); const c = center(t); boltFx(c.x, px(t).y); SFX.bolt(); await wait(90);
@@ -569,7 +647,7 @@ const SKILL = {
       if (alive(f) && !f.boss && Math.random() < .22) { f.st.freeze = 1; const c = center(f); txt(c.x, c.y - 70, '❄️ Gelé', '#bfe8ff', true); } }
     await wait(260); },
   async focus(h) { say(`<b>${h.name}</b> médite.`); setPose(h, 'cast', 900); SFX.magic(); const p = px(h); rise(p.x, p.y - p.h * .4, 20, ['#7ab4ff', '#cfe4ff', '#ffffff']); ring(p.x, p.y - p.h * .5, '#7ab4ff', 70);
-    const g = Math.round(h.mpMax * .45); h.mp = Math.min(h.mpMax, h.mp + g); txt(p.x, p.y - p.h - 6, `+${g} 💧`, '#7ab4ff', true);
+    const g = Math.round(h.mpMax * .45 * (h.rk || 1)); h.mp = Math.min(h.mpMax, h.mp + g); txt(p.x, p.y - p.h - 6, `+${g} 💧`, '#7ab4ff', true);
     for (const a of livingH()) if (a !== h) a.mp = Math.min(a.mpMax, a.mp + Math.round(a.mpMax * .12)); gainLb(h, 8); refresh(); await wait(500); },
   async rain(h, _t, sk) { say(`<b>${h.name}</b> : Pluie de flèches !`); setPose(h, 'spe', 900); for (let i = 0; i < sk.hits; i++) { const fs = livingF(); if (!fs.length) break; const t = pick(fs); const a = center(h), b = center(t); SFX.whoosh();
       await proj('arrow', { x: a.x + 20, y: a.y - 30 }, b, 200); await damage(t, calc(h, t, sk.pow), { src: h }); } await wait(220); },
@@ -595,7 +673,7 @@ const ULT = {
   async selena(h) { setPose(h, 'cast', 1200); if (!FAST) sfx.push({ t: 'flash', col: '255,240,190', t0: now(), dur: 700 }); SFX.heal(); await wait(300);
     for (const a of B.party) { const p = px(a); rise(p.x, p.y - 30, 24, ['#ffe58a', '#ffffff', '#fff1a8']);
       if (!alive(a)) { a.hp = Math.round(a.hpMax * .35); a.deadT = 0; a.st = {}; setPose(a, 'win', 700); txt(p.x, p.y - p.h - 10, 'Debout !', '#ffe58a', true); }
-      else { a.st.poison = 0; a.st.burn = 0; await heal(a, a.hpMax * .55); } }
+      else { a.st.poison = 0; a.st.burn = 0; await heal(a, a.hpMax * .55 * (h.rk || 1)); } }
     B.aegis = 2; refresh(); await wait(500); },
   async orin(h) { setPose(h, 'cast', 2000); SFX.fire(); for (let i = 0; i < 6; i++) { const fs = livingF(); if (!fs.length) break; const t = pick(fs), b = center(t);
       await proj('meteor', { x: b.x + rnd(-80, 40), y: -40 }, b, 300); B.shake = { t0: now(), amp: 6 }; SFX.fire();
@@ -845,6 +923,8 @@ cv.addEventListener('click', e => { if (!pending || !pending.sel) return; const 
   const c = B.cam, wx = (x - VW / 2) / c.z + c.x, wy = (y - VH / 2) / c.z + c.y; let best = null, bd = 1e9;
   for (const u of pending.sel.ts) { const p = px(u), d = Math.hypot(p.x - wx, (p.y - p.h * .45) - wy); if (d < bd) { bd = d; best = u; } }
   if (best && bd < VH * .3) pickUnit(best); });
+$('spdBtn').addEventListener('click', () => { S.spd = (S.spd || 1) % 3 + 1; save(); spdUi(); });
+function spdUi() { $('spdBtn').textContent = '×' + (S.spd || 1); $('spdBtn').classList.toggle('on', (S.spd || 1) > 1); }
 $('autoBtn').addEventListener('click', () => { if (!B) return; B.auto = !B.auto; autoPref = B.auto; refresh(); if (B.auto && pending) finish(aiHero(pending.h)); });
 $('fleeBtn').addEventListener('click', () => { if (!B) return; modal(`<h3>Quitter le combat ?</h3><p>Tu ne gagnes rien en fuyant.</p><button class="btn red" type="button" data-flee="1">Fuir</button><button class="btn alt" type="button" data-close="1">Continuer</button>`); });
 function toast(h) { const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = h; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
@@ -964,7 +1044,7 @@ function drawScreenFx(c) {
 }
 function loop(t) {
   const dt = Math.min(50, t - (last || t)); last = t;
-  if (performance.now() >= hsUntil) clock += dt;
+  if (performance.now() >= hsUntil) clock += dt * (B ? S.spd || 1 : 1);
   stepTime(); draw(t); requestAnimationFrame(loop);
 }
 
@@ -978,12 +1058,13 @@ function renderHome() {
   $('ban').style.backgroundImage = `url(${C.ban})`; $('chN').textContent = `CHAPITRE ${S.ch + 1}`; $('chT').textContent = C.name;
   $('path').innerHTML = LEVELS.map((L, i) => L.ch !== S.ch ? '' : `<button class="node ${L.boss ? 'boss' : ''} ${unlocked(i) ? '' : 'lock'} ${i === cur ? 'cur' : ''}" type="button" data-lv="${i}" aria-label="${L.name}">
     <div class="disc">${L.boss ? `<img src="${IP}${C.boss}.webp" alt="">` : unlocked(i) ? i % 5 + 1 : '🔒'}</div><div class="stars">${stars(S.stars[i])}</div><div class="nm">${L.name}</div></button>`).join('');
-  const slots = S.team.map(id => { const H = HEROES[id], s = S.h[id]; return `<div class="pc"><img src="${FP}${H.face}.webp" alt=""><b>${H.name}</b><small>Niv. ${s.lvl}</small><span class="role ${H.role}">${H.roleN}</span><div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>`; });
+  const slots = S.team.map(id => { const H = HEROES[id], s = S.h[id], pts = ptsLeft(id); return `<div class="pc" data-hsheet="${id}" role="button" tabindex="0">${pts ? `<span class="dot">${pts}</span>` : ''}<img src="${FP}${H.face}.webp" alt=""><b>${H.name}</b><small>Niv. ${s.lvl}</small><span class="role ${H.role}">${H.roleN}</span><div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>`; });
   while (slots.length < 3) slots.push('<div class="pc empty"><div><span>❔</span>Un allié te rejoindra</div></div>');
   $('party').innerHTML = slots.join('');
   const bench = Object.keys(S.own).filter(id => !S.team.includes(id));
   $('bench').innerHTML = bench.length ? `Réserve : ${bench.map(id => `<img src="${FP}${HEROES[id].face}.webp" alt="${HEROES[id].name}" title="${HEROES[id].name}">`).join('')}` : '';
   $('teamBtn').hidden = Object.keys(S.own).length < 2;
+  const nNew = S.inv.filter(it => it.isNew).length + Object.keys(S.own).reduce((a, id) => a + ptsLeft(id), 0); $('heroDot').hidden = !nNew; $('heroDot').textContent = nNew;
 }
 const modalEl = $('modal'), sheet = $('sheet');
 let modalCb = null;
@@ -998,6 +1079,7 @@ function levelSheet(i) {
     <button class="btn" type="button" data-play="${i}">⚔️ Combattre</button><button class="btn alt" type="button" data-close="1">Retour</button>`);
 }
 async function playLevel(i) {
+  spdUi();
   const ck = CHAPTERS[LEVELS[i].ch].story; if (!S.seen[ck] && LEVELS[i].ch > 0) { modalCb = null; return story(ck, () => playLevel(i)); }
   closeModal(); ac(); $('home').hidden = true; $('fight').hidden = false;
   $('fName').textContent = `${LEVELS[i].ch + 1}-${i % 5 + 1}. ${LEVELS[i].name}`; music('fight1'); fx = []; sfx = []; pending = null;
@@ -1018,11 +1100,14 @@ async function victory(i, res) {
   const { xp, gold } = rewards(i, B.kills, true); S.gold += gold; const ups = grantXp(xp);
   const drops = []; if (Math.random() < .4 || first) { const k = Math.random() < .6 ? 'pot' : 'eth'; S.items[k]++; drops.push(k); } if (B.kills.some(f => f.elite)) { S.items.pot++; drops.push('pot'); } if (LEVELS[i].boss && first) { S.items.fea++; drops.push('fea'); }
   const rec = first ? recruit(i) : null;
+  const loot = rollLoot(i, LEVELS[i].boss, B.kills.filter(f => f.elite).length);
   save(); await wait(900);
+  await openChests(loot);
   modal(`<h3>Victoire !</h3><p style="text-align:center;font-size:30px;color:#c07a12;letter-spacing:4px">${'★'.repeat(st)}<span style="opacity:.25">${'★'.repeat(3 - st)}</span></p>
     <p style="text-align:center;font-size:13px">${st === 3 ? 'Toute l’équipe est debout !' : 'Garde tout le monde en vie pour 3 étoiles.'}</p>
     ${ups.map(([id, g, up]) => { const H = HEROES[id], s = S.h[id]; return `<div class="row"><img class="f" src="${FP}${H.face}.webp" alt=""><div class="grow"><b>${H.name}</b> +${g} XP ${up ? `<span class="lvup">· Niveau ${s.lvl} !</span>` : ''}<div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div></div>`; }).join('')}
     <p style="text-align:center;margin-top:10px">+${gold} <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"> ${drops.map(k => `· <img class="poti ${ITEMS[k].cls}" src="${IP}uiPotion.webp" style="width:22px;vertical-align:-5px" alt=""> ${ITEMS[k].name}`).join(' ')}</p>
+    <p style="text-align:center;font-size:13px;margin-top:8px">🎁 ${loot.length} objet${loot.length > 1 ? 's' : ''} ajouté${loot.length > 1 ? 's' : ''} à ton sac · <b>Héros &amp; équipement</b> sur la carte</p>
     ${rec ? `<div class="row" style="background:rgba(255,215,106,.5)"><img class="f" src="${FP}${HEROES[rec].face}.webp" alt=""><div class="grow"><b>${HEROES[rec].name} rejoint l’équipe !</b><small>${HEROES[rec].desc}</small></div></div>` : ''}
     <button class="btn" type="button" data-home="1">Continuer</button><button class="btn alt" type="button" data-play="${i}">Rejouer</button>`);
   const endK = CHAPTERS[LEVELS[i].ch].end, endS = () => { if (CHAPTERS[LEVELS[i].ch + 1]) { S.ch = LEVELS[i].ch + 1; save(); renderHome(); } story(endK); };
@@ -1032,6 +1117,42 @@ function defeat(i) { const { xp } = rewards(i, B.kills, false); grantXp(xp); sav
   modal(`<h3>Défaite…</h3><p style="text-align:center">Tes héros gardent ${xp} XP de ce combat.</p><p style="font-size:13px">💡 Défends-toi quand le boss lève sa faux, garde l’<b>Ultime</b> pour les moments durs, et améliore tes armes à la <b>Forge</b>. Tu peux aussi rejouer un niveau d’avant pour gagner des niveaux.</p>
     <button class="btn" type="button" data-play="${i}">Réessayer</button><button class="btn alt" type="button" data-home="1">Carte</button>`); }
 let storyNext = null;
+// ---------- Chests ----------
+const rcss = it => `--rc:${RAR[it.r].c};--rg:${RAR[it.r].g}`;
+function itemHtml(it, id, btns = '') { const cur = id ? itemById((S.h[id].eq || {})[it.slot]) : null, diff = cur && cur !== it ? itemScore(it) - itemScore(cur) : null, w = wornBy(it);
+  return `<div class="item ${w ? 'eq' : ''}" style="${rcss(it)}"><img src="${IP}${it.img}.webp" alt=""><div class="grow"><b>${it.name}</b><small>${RAR[it.r].n} · ${SLOTN[it.slot]} niv. ${it.t}${it.hero ? ' · ' + HEROES[it.hero].name : ''}${w ? ` · porté par ${HEROES[w].name}` : ''}</small>
+    <div class="st">${Object.entries(it.st).map(([k, v]) => fmtSt(k, v)).join(' · ')} ${diff != null ? `<span class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '▲' : '▼'}</span>` : ''}</div></div>${btns ? `<div class="btns">${btns}</div>` : ''}</div>`; }
+function bestWearer(it) { const ids = (it.slot === 'w' ? [it.hero] : S.team).filter(id => S.own[id]); let best = null, gain = -1e9;
+  for (const id of ids) { const g = itemScore(it) - itemScore(itemById((S.h[id].eq || {})[it.slot])); if (g > gain) { gain = g; best = id; } } return [best, gain]; }
+let chestNext = null;
+function openChests(items) { if (SIM || !items.length) return Promise.resolve(); return new Promise(done => { let j = 0;
+  const show = () => { const it = items[j], ck = it.r >= 4 ? 'uiChest3' : it.r >= 2 ? 'uiChest2' : 'uiChest1';
+    modal(`<h3>Coffre ${items.length > 1 ? `${j + 1} / ${items.length}` : ''}</h3><div class="chestbox" style="${rcss(it)}"><img src="${IP}${ck}.webp" alt="coffre"></div><p style="text-align:center">Touche le coffre pour l’ouvrir</p>`);
+    SFX.click(); const box = sheet.querySelector('.chestbox'); let opened = false;
+    const open = () => { if (opened) return; opened = true; SFX[it.r >= 3 ? 'win' : 'coin'](); const [who, gain] = bestWearer(it);
+      modal(`<div class="reveal" style="${rcss(it)}"><img src="${IP}${it.img}.webp" alt=""><h4>${it.name}</h4><p style="margin:0">${RAR[it.r].n} · ${SLOTN[it.slot]}${it.hero ? ' de ' + HEROES[it.hero].name : ''}</p>
+        <p style="font-size:15px">${Object.entries(it.st).map(([k, v]) => fmtSt(k, v)).join(' · ')}</p></div>
+        ${who && S.own[who] ? `<button class="btn" type="button" data-cequip="${who}">Équiper sur ${HEROES[who].name} ${gain > 0 ? '▲' : ''}</button>` : ''}
+        <button class="btn alt" type="button" data-cnext="1">${j < items.length - 1 ? 'Coffre suivant' : 'Garder dans le sac'}</button>`); };
+    box.addEventListener('click', open); setTimeout(open, 1600);
+    chestNext = eq => { if (eq) { equip(eq, it); save(); SFX.buff(); } j++; if (j < items.length) show(); else { chestNext = null; done(); } }; };
+  show(); }); }
+// ---------- Hero sheet: stats, equipment, skills, bag ----------
+let hsCtl = { id: 'aldric', tab: 'eq' };
+function heroSheet(id, tab) { if (id) hsCtl.id = id; if (tab) hsCtl.tab = tab; const ids = HORDER.filter(k => S.own[k]); id = hsCtl.id; const H = HEROES[id], s = S.h[id], st = heroStats(id), pts = ptsLeft(id), eq = s.eq || {};
+  const slots = ['w', 'a', 'j'].map(sl => { const it = itemById(eq[sl]); return it ? `<div class="on" style="${rcss(it)}"><img src="${IP}${it.img}.webp" alt="">${it.name}</div>` : `<div>${SLOTN[sl]}<br>vide</div>`; }).join('');
+  const sks = H.skills.concat('ult').map(k => { const S2 = k === 'ult' ? { name: H.ult.name, img: null, ic: '🌟', tip: H.ult.tip } : SK[k], r = rankOf(id, k);
+    return `<div class="skrow"><i>${icon(S2.img, S2.ic)}</i><div class="grow"><b>${S2.name}</b> <span class="pips">${'◆'.repeat(r)}${'◇'.repeat(5 - r)}</span><small>${k === 'ult' ? 'Ultime · ' : ''}+${Math.round((rkMult(id, k) - 1) * 100)} % de puissance</small></div><button type="button" data-skup="${k}" ${pts > 0 && r < 5 ? '' : 'disabled'} aria-label="Améliorer">+</button></div>`; }).join('');
+  const bag = S.inv.filter(it => canWear(it, id)).sort((a, b) => (b.slot === 'w') - (a.slot === 'w') || b.r - a.r || b.t - a.t);
+  const list = bag.map(it => itemHtml(it, id, `${(eq[it.slot] === it.id) ? '' : `<button type="button" data-iequip="${it.id}">Équiper</button>`}${wornBy(it) ? '' : `<button type="button" class="sell" data-isell="${it.id}">${sellPrice(it)} or</button>`}`)).join('') || '<p style="text-align:center">Aucun objet pour ce héros. Les coffres tombent à la fin de chaque niveau.</p>';
+  bag.forEach(it => { it.isNew = 0; });
+  modal(`<div class="hs-top">${ids.length > 1 ? '<button class="hs-nav" type="button" data-hnav="-1">‹</button>' : ''}<img src="${FP}${H.face}.webp" alt=""><div class="grow"><b style="font-family:var(--fd);font-size:22px;font-weight:400">${H.name}</b> · ${H.cls}<br>Niveau ${s.lvl}<div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>${ids.length > 1 ? '<button class="hs-nav" type="button" data-hnav="1">›</button>' : ''}</div>
+    <div class="stats"><span>❤️ ${st.hp}</span><span>💧 ${st.mp}</span><span>⚔️ ${st.atk}</span><span>✨ ${st.mag}</span><span>🛡️ ${st.def}</span><span>🎯 ${Math.round(st.crit * 100)} %</span></div>
+    <div class="slots">${slots}</div>
+    <div class="tabsx"><button type="button" data-htab="eq" class="${hsCtl.tab === 'eq' ? 'on' : ''}">Sac (${bag.length})</button><button type="button" data-htab="sk" class="${hsCtl.tab === 'sk' ? 'on' : ''}">Compétences${pts ? ` (${pts})` : ''}</button></div>
+    ${hsCtl.tab === 'sk' ? `<p style="text-align:center;font-size:13px">Points à dépenser : <b>${pts}</b> · 1 point par niveau gagné</p>${sks}` : `<button class="btn" type="button" data-autoeq="1" style="padding:8px;font-size:16px">Équiper le meilleur pour tous</button>${list}`}
+    <button class="btn alt" type="button" data-close="1">Fermer</button>`);
+  save(); renderHome(); }
 function story(key, cb) { const lines = STORY[key]; let j = 0;
   const show = () => { const [who, t] = lines[j]; const H = HEROES[who], face = H ? H.face : MON[who] ? who : null, name = H ? H.name : MON[who] ? MON[who].name : '';
     modal(`<div class="say ${face ? '' : 'narr'}">${face ? `<img src="${H ? FP : IP}${face}.webp" alt="">` : ''}<div class="t">${name ? `<b>${name}</b><br>` : ''}${t}</div></div><button class="btn" type="button" data-next="1">${j < lines.length - 1 ? 'Suite' : 'C’est parti !'}</button>`); };
@@ -1060,8 +1181,17 @@ function helpSheet() { modal(`<h3>Comment jouer</h3>
   <p>• Le jeu marche aussi téléphone tourné. Le bouton <b>Auto</b> joue à ta place.</p><button class="btn" type="button" data-close="1">Compris</button>`); }
 
 document.addEventListener('click', e => {
-  const b = e.target.closest('button, [data-pick]'); if (!b) return; const d = b.dataset; ac();
+  const b = e.target.closest('button, [data-pick], [data-hsheet]'); if (!b) return; const d = b.dataset; ac();
   if (d.close) return closeModal();
+  if (d.cnext && chestNext) return chestNext(null);
+  if (d.cequip && chestNext) return chestNext(d.cequip);
+  if (d.hsheet) { SFX.click(); return heroSheet(d.hsheet, 'eq'); }
+  if (d.htab) return heroSheet(null, d.htab);
+  if (d.hnav) { const ids = HORDER.filter(k => S.own[k]), i = ids.indexOf(hsCtl.id); return heroSheet(ids[(i + +d.hnav + ids.length) % ids.length]); }
+  if (d.skup) { const sk = (S.h[hsCtl.id].sk = S.h[hsCtl.id].sk || {}); if (ptsLeft(hsCtl.id) > 0 && (sk[d.skup] || 1) < 5) { sk[d.skup] = (sk[d.skup] || 1) + 1; SFX.buff(); } return heroSheet(); }
+  if (d.iequip) { const it = itemById(+d.iequip); if (it) { equip(hsCtl.id, it); SFX.buff(); } return heroSheet(); }
+  if (d.isell) { const it = itemById(+d.isell); if (it && !wornBy(it)) { S.inv = S.inv.filter(x => x !== it); S.gold += sellPrice(it); SFX.coin(); } return heroSheet(); }
+  if (d.autoeq) { autoEquip(); SFX.buff(); return heroSheet(); }
   if (d.ch != null && b.closest('#tabs')) { S.ch = +d.ch; save(); SFX.click(); return renderHome(); }
   if (d.next && storyNext) return storyNext();
   if (d.lv != null && b.classList.contains('node')) { if (!unlocked(+d.lv)) return toast('Termine le niveau précédent d’abord.'); SFX.click(); return levelSheet(+d.lv); }
@@ -1078,6 +1208,7 @@ $('ver').addEventListener('click', e => { if (e.target.id === 'replayIntro') pla
 $('forgeBtn').addEventListener('click', forgeSheet);
 $('shopBtn').addEventListener('click', shopSheet);
 $('helpBtn').addEventListener('click', helpSheet);
+$('heroesBtn').addEventListener('click', () => heroSheet(S.team[0], 'eq'));
 $('storyBtn').addEventListener('click', () => { const C = CHAPTERS[S.ch], done = S.stars[LEVELS.findIndex(L => L.ch === S.ch && L.boss)]; story(done ? C.end : C.story); });
 $('snd').addEventListener('click', () => { muted = !muted; S.mute = muted; save(); if (muted) bgm.pause(); else { ac(); music(bgm.dataset.k || 'map1'); } renderHome(); });
 document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused && bgm.dataset.k) bgm.play().catch(() => {}); }, { once: true });
@@ -1101,7 +1232,7 @@ async function simCampaign(runs = 1) {
     for (let i = 0; i < LEVELS.length; i++) {
       let tries = 0, res;
       do { tries++; if (tries > 1 && tries % 2 === 0) autoShop(); res = await runLevel(i);
-        if (res.win) { S.stars[i] = Math.max(S.stars[i], 1); const { xp, gold } = rewards(i, B.kills, true); S.gold += gold; grantXp(xp); if (Math.random() < .4) S.items[Math.random() < .6 ? 'pot' : 'eth']++; recruit(i); }
+        if (res.win) { S.stars[i] = Math.max(S.stars[i], 1); const { xp, gold } = rewards(i, B.kills, true); S.gold += gold; grantXp(xp); rollLoot(i, LEVELS[i].boss, B.kills.filter(f => f.elite).length); autoEquip(); simSkills(); if (Math.random() < .4) S.items[Math.random() < .6 ? 'pot' : 'eth']++; recruit(i); }
         else { const { xp } = rewards(i, B.kills, false); grantXp(xp); }
       } while (!res.win && tries < 40);
       log.push({ lv: i + 1, tries, rounds: res.rounds, alive: res.alive, lvl: S.team.map(id => S.h[id].lvl).join('/'), gold: S.gold, pots: S.items.pot, hp: res.hpLeft });
@@ -1111,6 +1242,7 @@ async function simCampaign(runs = 1) {
   }
   return out;
 }
+function simSkills() { for (const id of Object.keys(S.own)) { const s = S.h[id], ks = HEROES[id].skills.concat('ult'); s.sk = s.sk || {}; let g = 50; while (ptsLeft(id) > 0 && g--) { const k = pick(ks); if ((s.sk[k] || 1) < 5) s.sk[k] = (s.sk[k] || 1) + 1; } } }
 function autoShop() { for (const id of S.team) for (const k of ['w', 'a']) { const c = upCost(S.h[id][k]); if (S.gold >= c + 60) { S.gold -= c; S.h[id][k]++; } } while (S.gold >= 60 && S.items.pot < 3) { S.gold -= 30; S.items.pot++; } }
 window.__db2 = { simCampaign, get B() { return B; }, get S() { return S; }, set S(v) { S = v; }, runLevel, HEROES, MON, SK, LEVELS, setFast: v => { FAST = v; } };
 })();
