@@ -279,7 +279,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Test 0.6 (chapitres 1 à 5)';
+const VERSION = 'Dragonbound II · Test 0.7 (chapitres 1 à 5)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -429,11 +429,11 @@ const CHAPTERS = [
   { name: 'Les Pics Gelés', ban: IP + 'bg4_0.webp', boss: 'bossQueen', story: 'in5', end: 'out5' },
 ];
 const LEVELS = [
-  { ch: 0, name: 'Le seuil', bg: 'bgc1', local: true, hz: .575, waves: [['slime'], ['rat'], ['slime', 'rat']], rec: 1, elite: 0 },
-  { ch: 0, name: 'Salle des rites', bg: 'bg6_2', hz: .55, waves: [['bat', 'rat'], ['slime', 'bat'], ['rat', 'slime', 'bat'], ['bat', 'bat', 'slime']], rec: 2, elite: .12 },
-  { ch: 0, name: 'L’ossuaire', bg: 'bg0_2', hz: .82, waves: [['skel', 'bat'], ['skel', 'slime', 'rat'], ['bat', 'skel', 'bat'], ['skel', 'rat', 'slime']], rec: 3, elite: .2 },
-  { ch: 0, name: 'La chapelle', bg: 'bg0_3', hz: .85, waves: [['skel', 'rat', 'bat'], ['skel', 'skel', 'slime'], ['skel', 'bat', 'skel'], ['skel', 'skel', 'bat']], rec: 4, elite: .22 },
-  { ch: 0, name: 'Le trône', bg: 'bg0_4', hz: .74, waves: [['skel', 'bat', 'rat'], ['bossBone', 'skel']], rec: 5, boss: true, elite: .25 },
+  { ch: 0, goal: 'Repousser les créatures sorties du sanctuaire d’Aube-Claire.', name: 'Le seuil', bg: 'bgc1', local: true, hz: .575, waves: [['slime'], ['rat'], ['slime', 'rat']], rec: 1, elite: 0 },
+  { ch: 0, goal: 'Trouver d’où vient la magie qui réveille la crypte.', name: 'Salle des rites', bg: 'bg6_2', hz: .55, waves: [['bat', 'rat'], ['slime', 'bat'], ['rat', 'slime', 'bat'], ['bat', 'bat', 'slime']], rec: 2, elite: .12 },
+  { ch: 0, goal: 'Comprendre pourquoi les morts se relèvent.', name: 'L’ossuaire', bg: 'bg0_2', hz: .82, waves: [['skel', 'bat'], ['skel', 'slime', 'rat'], ['bat', 'skel', 'bat'], ['skel', 'rat', 'slime']], rec: 3, elite: .2 },
+  { ch: 0, goal: 'Atteindre la chapelle scellée et ce qu’elle cache.', name: 'La chapelle', bg: 'bg0_3', hz: .85, waves: [['skel', 'rat', 'bat'], ['skel', 'skel', 'slime'], ['skel', 'bat', 'skel'], ['skel', 'skel', 'bat']], rec: 4, elite: .22 },
+  { ch: 0, goal: 'Affronter le Roi des Os avant qu’il ouvre le sceau.', name: 'Le trône', bg: 'bg0_4', hz: .74, waves: [['skel', 'bat', 'rat'], ['bossBone', 'skel']], rec: 5, boss: true, elite: .25 },
   { ch: 1, name: 'L’orée', bg: 'bg1_0', hz: .72, waves: [['wolf', 'spider'], ['spider', 'shroom'], ['wolf', 'goblin', 'spider'], ['shroom', 'wolf', 'spider']], rec: 6, elite: .2 },
   { ch: 1, name: 'Champignons', bg: 'bg1_1', hz: .72, waves: [['shroom', 'shroom'], ['spider', 'shroom', 'wolf'], ['goblin', 'shroom'], ['shroom', 'spider', 'shroom']], rec: 7, elite: .22 },
   { ch: 1, name: 'Nid de soie', bg: 'bg1_2', hz: .62, waves: [['spider', 'spider'], ['spider', 'wolf', 'spider'], ['goblin', 'spider', 'spider'], ['wolf', 'spider', 'wolf']], rec: 8, elite: .24 },
@@ -457,9 +457,9 @@ const LEVELS = [
 ];
 const RECRUIT = { 0: 'selena', 1: 'orin', 6: 'lyra', 9: 'nyx' }; // clearing level index → who joins
 const STORY = {
-  in: [['narr', 'Chapitre 1 · La Crypte oubliée'], ['narr', 'Sous Aube-Claire, les morts s’agitent. Quelqu’un vient de briser leur dernier repos.'],
-    ['aldric', 'Des os, des tombes et une odeur de mort. Charmant comité d’accueil.'], ['narr', 'Le Roi des Os garde une relique liée au sceau du Néant.'],
-    ['aldric', 'J’y vais seul. Si quelqu’un veut me suivre, qu’il se dépêche.']],
+  in: [['narr', 'Chapitre 1 · La Crypte oubliée'], ['narr', 'Aube-Claire, un village paisible au pied du vieux sanctuaire. Cette nuit, le soleil ne s’est pas levé.'],
+    ['narr', 'Des créatures sortent de la crypte, sous le sanctuaire. Les villageois fuient.'], ['aldric', 'Des gluants et des rats. Pour une invasion, ça manque d’ambition.'],
+    ['aldric', 'Mais quelque chose les pousse dehors. Je descends voir quoi.']],
   in2: [['narr', 'Chapitre 2 · La Forêt des Murmures'], ['narr', 'Les arbres murmurent des noms oubliés. Certains sont ceux de gens encore vivants.'],
     ['aldric', 'Si les arbres commencent à donner des conseils, je demande un deuxième avis.'], ['narr', 'Sylvaine la Sorcière protège un autel marqué du même œil draconique.'],
     ['orin', 'Une sorcière dans une forêt. Mon feu va adorer cet endroit.'], ['selena', 'Orin. On ne brûle pas la forêt.']],
@@ -478,15 +478,26 @@ const STORY = {
     ['narr', 'La Reine des Glaces protège un manuscrit sur le sceau originel.'], ['selena', 'Alors prenons le manuscrit. La montagne peut garder le reste.']],
   out5: [['bossQueen', 'Le sceau n’a jamais été une serrure... C’était une chaîne forgée pour un roi-dragon.'], ['bossQueen', 'Et la dernière chaîne, chevalier... c’est toi. Ta marque est le verrou.'],
     ['aldric', '...Moi ? Alors c’est pour ça qu’il m’appelle depuis le début.'], ['narr', 'Le manuscrit mène à la Citadelle du Néant, où Vorthax attend sa liberté.'], ['narr', 'Fin du chapitre 5. La suite de l’aventure arrive bientôt !']],
-  selena: [['selena', 'Un chevalier seul dans une crypte ? Tu vas avoir besoin de quelqu’un pour te recoudre.'], ['aldric', 'Je refuse rarement une soigneuse.'],
-    ['narr', 'Séléna la Paladine rejoint l’équipe ! Elle soigne, protège et relève les alliés.']],
-  orin: [['orin', 'Des squelettes ? Ils résistent au poison, mais pas au feu. Vous avez besoin d’un peu de chaleur.'], ['selena', 'Tant que tu ne brûles pas mes cheveux.'],
-    ['narr', 'Orin le Mage rejoint l’équipe ! Il frappe tous les ennemis à la fois.']],
+  selena: [['selena', 'Tu es le chevalier qui fonce seul dans les cryptes ? Je suis Séléna, gardienne du sanctuaire.'], ['selena', 'Si tu descends, je viens. Ces morts étaient sous ma protection.'],
+    ['aldric', 'Je refuse rarement une soigneuse. Surtout une qui frappe avec une masse.'], ['narr', 'Séléna la Paladine rejoint l’équipe ! Ses soins en trop deviennent un bouclier, et elle retient un allié au bord de la mort.']],
+  orin: [['orin', 'Enfin ! Trois jours attaché à ce pilier. Vous n’auriez pas un peu d’eau ? Et un peu de feu ?'], ['orin', 'Orin, mage de la Tour d’Ambre. J’étudiais le sceau du Néant quand ils m’ont capturé.'],
+    ['selena', 'Les squelettes résistent au poison, mais pas au feu. Tu tombes bien.'], ['narr', 'Orin le Mage rejoint l’équipe ! Tous les trois sorts, sa magie explose en Surcharge.']],
   lyra: [['lyra', 'Trois aventuriers qui foncent dans une forêt hantée sans éclaireur ? Les araignées, moi, je les vois avant qu’elles vous voient.'],
     ['narr', 'Lyra l’Archère rejoint le groupe ! La réserve s’ouvre : en combat, le bouton Relais échange un héros avec ceux du banc.']],
   nyx: [['nyx', 'Cette sorcière m’avait volé ma dague préférée. Je la récupère… et je vous suis, si vous tenez le rythme.'], ['narr', 'Nyx la Voleuse rejoint le groupe !']],
-  out: [['bossBone', 'Ces chaînes... ce dragon... Il m’avait promis un royaume éternel !'], ['bossBone', 'Et toi... tu portes Sa marque. L’œil... Il te réclamera, chevalier.'], ['aldric', 'Cette marque, je l’ai depuis l’enfance. Quel dragon ? Parle, ou je fouille tes os un par un.'],
-    ['narr', 'La relique porte une marque : un œil draconique entouré de chaînes noires.'], ['selena', 'Ce symbole... il vient de la Forêt des Murmures.'], ['narr', 'Le chapitre 2 est ouvert : la Forêt des Murmures.']],
+  out: [['bossBone', 'Tu arrives trop tard... et pourtant pile à l’heure... dernier gardien.'], ['aldric', 'Gardien de quoi ? Je ne garde que mes affaires, et encore.'],
+    ['bossBone', 'Tu crois que le dragon veut s’échapper ? Imbécile... Depuis mille ans, il tient la porte fermée.'], ['bossBone', 'Ce qui pousse derrière, ce n’est pas lui.'],
+    ['narr', 'Le Roi des Os s’effondre. Sous le trône, le sceau se fissure dans un grondement.'], ['narr', 'Une voix monte des profondeurs. Elle prononce un nom : « Ardaël ».'],
+    ['aldric', '...Ardaël. Personne ne m’a jamais appelé comme ça. Alors pourquoi ce nom me semble familier ?'],
+    ['selena', 'Le même œil enchaîné est gravé sur la relique. Il vient de la Forêt des Murmures.'], ['narr', 'Le chapitre 2 est ouvert : la Forêt des Murmures.']],
+  v0: [['narr', 'Le seuil est dégagé. Sur la porte du sanctuaire, un symbole noir vient d’apparaître : un œil enchaîné.'],
+    ['aldric', 'Ils ne sont pas venus piller le village. Ils fuyaient quelque chose... ou cherchaient quelque chose, en dessous.']],
+  v1: [['narr', 'Au centre de la salle, un cercle rituel encore chaud. Des morceaux du sceau gisent au sol.'], ['orin', 'Regardez les éclats : ils sont tombés vers l’extérieur.'],
+    ['orin', 'Le sceau n’a pas été brisé de dehors. Quelqu’un, ou quelque chose, l’a ouvert de l’intérieur.']],
+  v2: [['narr', 'Dans l’ossuaire, les os s’assemblent seuls, tous tournés vers la même porte.'], ['selena', 'Quand j’ai soigné Aldric, la corruption a reculé... puis elle s’est approchée de ma lumière.'],
+    ['selena', 'Comme si elle la reconnaissait.'], ['orin', 'Ça, ce n’est jamais bon signe.']],
+  v3: [['narr', 'La chapelle est couverte de fresques : un chevalier marqué d’un œil de dragon enchaîne une ombre immense.'], ['narr', 'En dessous, une inscription : « Quand le dernier gardien descendra, la porte répondra. »'],
+    ['aldric', 'Ma marque me brûle. Ce chevalier porte la même.'], ['selena', 'Alors le Roi des Os t’attendait. Toi.']],
 };
 const ITEMS = {
   pot: { name: 'Potion', short: 'Vie', cls: '', tgt: 'ally', price: 30, tip: 'Rend 50 % de vie à un allié.' },
@@ -1239,7 +1250,7 @@ function ctrHtml(i) { return `<p style="text-align:center;font-size:13px;margin:
   return `<button type="button" class="ctr ${ctrSel === k ? 'on' : ''}" data-ctr="${k}" data-ctrlv="${i}" ${ok ? '' : 'disabled'}><i>${C.ic}</i><span><b>${C.n}</b><small>${ok ? C.d : 'Débloqué quand Séléna ou Orin te rejoint.'}</small></span>${done ? '<span class="done">✓</span>' : ''}</button>`; }).join('')}</div>`; }
 function levelSheet(i, keep) { if (!keep) ctrSel = null;
   const L = LEVELS[i], foes = [...new Set(L.waves.flat())];
-  modal(`<h3>${i % 5 + 1}. ${L.name}</h3><p style="text-align:center">${L.waves.length} vagues · niveau conseillé ${L.rec}</p>
+  modal(`<h3>${i % 5 + 1}. ${L.name}</h3><p style="text-align:center">${L.waves.length} vagues · niveau conseillé ${L.rec}</p>${L.goal ? `<p style="text-align:center;font-size:14px;margin:4px 0">🎯 <b>Objectif</b> : ${L.goal}</p>` : ''}
     <div class="foes">${foes.map(k => `<img src="${IP}${k}.webp" alt="${MON[k].name}" title="${MON[k].name}">`).join('')}</div>
     ${foes.map(k => `<p style="font-size:13px;margin:3px 0">• <b>${MON[k].name}</b> : ${MON[k].tip} <span title="faiblesse">${MON[k].w.map(e => ELI[e]).join('')}</span></p>`).join('')}
     ${L.elite ? '<p style="font-size:13px;margin:3px 0">• ⭐ Des <b>élites</b> colorés peuvent apparaître : plus forts, mais double butin.</p>' : ''}
@@ -1285,7 +1296,9 @@ async function victory(i, res) {
     ${rec ? `<div class="row" style="background:rgba(255,215,106,.5)"><img class="f" src="${FP}${HEROES[rec].face}.webp" alt=""><div class="grow"><b>${HEROES[rec].name} rejoint l’équipe !</b><small>${HEROES[rec].desc}</small></div></div>` : ''}
     <button class="btn" type="button" data-home="1">Continuer</button><button class="btn alt" type="button" data-play="${i}">Rejouer</button>`);
   const endK = CHAPTERS[LEVELS[i].ch].end, endS = () => { if (CHAPTERS[LEVELS[i].ch + 1]) { S.ch = LEVELS[i].ch + 1; save(); renderHome(); } story(endK); };
-  modalCb = () => { if (rec) story(rec, LEVELS[i].boss && first ? endS : null); else if (LEVELS[i].boss && first) endS(); };
+  const q = []; if (first && STORY['v' + i]) q.push('v' + i); if (rec) q.push(rec);
+  const run = () => { const k = q.shift(); if (k) story(k, run); else if (LEVELS[i].boss && first) endS(); };
+  modalCb = run;
 }
 function defeat(i) { const { xp } = rewards(i, B.kills, false); grantXp(xp); save(); SFX.lose(); say('Ton équipe est tombée…');
   modal(`<h3>Défaite…</h3><p style="text-align:center">Tes héros gardent ${xp} XP de ce combat.</p><p style="font-size:13px">💡 Défends-toi quand le boss lève sa faux, garde l’<b>Ultime</b> pour les moments durs, et améliore tes armes à la <b>Forge</b>. Tu peux aussi rejouer un niveau d’avant pour gagner des niveaux.</p>
@@ -1405,8 +1418,9 @@ document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused 
 muted = !!S.mute;
 if (!SIM) { HORDER.forEach(id => { const im = new Image(); im.src = FP + HEROES[id].face + '.webp'; IMG['face_' + id] = im; }); load('bgc1', true); loadSprite('ald'); }
 renderHome();
-function afterIntro() { if (!S.seen.in) { S.seen.n06 = 1; return story('in', helpSheet); } if (!S.seen.n06) { S.seen.n06 = 1; save(); newsSheet(); } }
-function newsSheet() { modal(`<h3>Nouveautés · Test 0.6</h3>
+function afterIntro() { if (!S.seen.in) { S.seen.n07 = 1; return story('in', helpSheet); } if (!S.seen.n07) { S.seen.n07 = 1; save(); newsSheet(); } }
+function newsSheet() { modal(`<h3>Nouveautés · Test 0.7</h3>
+  <p>• <b>Chapitre 1 réécrit</b> : un objectif par niveau, une scène après chaque victoire, et une révélation finale sur Aldric.</p>
   <p>• <b>Un style par héros</b> : Aldric accumule la Rage 🔥 en encaissant, Séléna transforme ses soins en trop en bouclier 💠 et retient un allié au bord de la mort, Orin déclenche une Surcharge ⚡ tous les 3 sorts, Lyra marque 🎯 ses cibles, Nyx les couvre d’ombres 🌑 avant de les exécuter.</p>
   <p>• <b>Combos</b> : Choc thermique (Feu sur un gelé), Embrasement (Feu sur une cible marquée), Brise-glace (Charge sur un gelé), poison qui s’accumule.</p>
   <p>• <b>Attaques annoncées</b> : un ⚠️ montre ce que l’ennemi prépare et qui il vise.</p>
