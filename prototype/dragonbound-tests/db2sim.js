@@ -13,12 +13,12 @@ srv.listen(0, async () => {
   pg.on('pageerror', e => errs.push(e.message));
   await pg.goto(`http://127.0.0.1:${port}/${file}?sim`);
   await pg.waitForFunction(() => window.__db2, null, { timeout: 15000 }).catch(e => { console.log('ERREURS:', errs); throw e; });
-  const upto = +process.argv[4] || 99;
-  const out = await pg.evaluate(([n, u]) => window.__db2.simCampaign(n, u), [runs, upto]);
+  const upto = +process.argv[4] || 99, tier = +process.argv[5] || 0, tch = +process.argv[6] || 0;
+  const out = await pg.evaluate(([n, u, t, c]) => window.__db2.simCampaign(n, u, t, c), [runs, upto, tier, tch]);
   const L = out[0].length, rows = [];
   for (let i = 0; i < L; i++) { const r = out.map(o => o[i]), avg = f => (r.reduce((a, x) => a + f(x), 0) / r.length);
     const rd = r.flatMap(x => x.rounds || []);
-    rows.push(`${String(i + 1).padStart(2)}  essais ${avg(x => x.tries).toFixed(1).padStart(4)}  tours/vague ${(rd.reduce((a, b) => a + b, 0) / Math.max(1, rd.length)).toFixed(1).padStart(4)}  max ${Math.max(...rd)}  niv ${r[0].lvl}  pv-min ${avg(x => x.hp || 0).toFixed(0)}%`); }
+    rows.push(`${String(r[0].lv).padStart(2)}  essais ${avg(x => x.tries).toFixed(1).padStart(4)}  tours/vague ${(rd.reduce((a, b) => a + b, 0) / Math.max(1, rd.length)).toFixed(1).padStart(4)}  max ${Math.max(...rd)}  niv ${r[0].lvl}  pv-min ${avg(x => x.hp || 0).toFixed(0)}%`); }
   console.log(rows.join('\n'));
   if (errs.length) { console.log('ERREURS:', errs); process.exitCode = 1; }
   await b.close(); srv.close();
