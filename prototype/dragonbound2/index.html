@@ -310,7 +310,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.0.1 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.0.2 (10 chapitres)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -501,7 +501,7 @@ function makeElite(f, champ) { const ks = Object.keys(AFFIX).filter(k => AFFIX[k
   f.name = `${champ ? 'Champion · ' : ''}${f.m.name} ${AFFIX[a].n.toLowerCase()}`; if (a === 'armor') f.shield = Math.round(f.hpMax * .3); }
 // hz = where the floor starts in the picture (0 top → 1 bottom)
 const CHAPTERS = [
-  { name: 'La Crypte oubliée', ban: 'img/bgc1.webp', boss: 'bossBone', story: 'in', end: 'out' },
+  { name: 'La Crypte oubliée', ban: 'img/bg_c1_1.webp', boss: 'bossBone', story: 'in', end: 'out' },
   { name: 'La Forêt des Murmures', ban: FP + 'bg_c2_1.webp', boss: 'bossWitch', story: 'in2', end: 'out2' },
   { name: 'Les Mines de Braise', ban: IP + 'bg2_0.webp', boss: 'bossDragon', story: 'in3', end: 'out3' },
   { name: 'Les Marais Hantés', ban: IP + 'bg3_0.webp', boss: 'bossHag', story: 'in4', end: 'out4' },
@@ -513,11 +513,11 @@ const CHAPTERS = [
   { name: 'La Forteresse du Dragon-Roi', ban: IP + 'bg9_0.webp', boss: 'bossVort', story: 'in10', end: 'out10' },
 ];
 const LEVELS = [
-  { ch: 0, goal: 'Repousser les créatures sorties du sanctuaire d’Aube-Claire.', name: 'Le seuil', bg: 'bgc1', local: true, hz: .575, waves: [['slime'], ['rat'], ['slime', 'rat']], rec: 1, elite: 0 },
+  { ch: 0, goal: 'Repousser les créatures sorties du sanctuaire d’Aube-Claire.', name: 'Le seuil', bg: 'bg_c1_1', local: true, hz: 0.5, waves: [['slime'], ['rat'], ['slime', 'rat']], rec: 1, elite: 0 },
   { ch: 0, goal: 'Trouver d’où vient la magie qui réveille la crypte.', name: 'Salle des rites', bg: 'bg_c1_2', local: true, hz: 0.5, waves: [['bat', 'rat'], ['slime', 'bat'], ['rat', 'slime'], ['bat', 'bat']], rec: 2, elite: 0 },
   { ch: 0, goal: 'Comprendre pourquoi les morts se relèvent.', name: 'L’ossuaire', bg: 'bg0_2', hz: .82, waves: [['skel'], ['skel', 'rat'], ['bat', 'skel'], ['skel', 'slime']], rec: 3, elite: .15, champ: true },
-  { ch: 0, goal: 'Atteindre la chapelle scellée et ce qu’elle cache.', name: 'La chapelle', bg: 'bg0_3', hz: .85, waves: [['skel', 'rat'], ['skel', 'skel'], ['skel', 'bat'], ['skel', 'skel']], rec: 4, elite: .2 },
-  { ch: 0, goal: 'Affronter le Roi des Os avant qu’il ouvre le sceau.', name: 'Le trône', bg: 'bg0_4', hz: .74, waves: [['skel', 'bat'], ['bossBone']], rec: 5, boss: true, elite: .2 },
+  { ch: 0, goal: 'Atteindre la chapelle scellée et ce qu’elle cache.', name: 'La chapelle', bg: 'bg_c1_4', local: true, hz: 0.5, waves: [['skel', 'rat'], ['skel', 'skel'], ['skel', 'bat'], ['skel', 'skel']], rec: 4, elite: .2 },
+  { ch: 0, goal: 'Affronter le Roi des Os avant qu’il ouvre le sceau.', name: 'Le trône', bg: 'bg_c1_5', local: true, hz: 0.47, waves: [['skel', 'bat'], ['bossBone']], rec: 5, boss: true, elite: .2 },
   { ch: 1, name: 'L’orée', bg: 'bg_c2_1', local: true, hz: 0.48, waves: [['wolf', 'spider'], ['spider', 'shroom'], ['wolf', 'goblin', 'spider'], ['shroom', 'wolf', 'spider']], rec: 6, elite: .2 },
   { ch: 1, name: 'Champignons', bg: 'bg_c2_2', local: true, hz: 0.54, waves: [['shroom', 'shroom'], ['spider', 'shroom', 'wolf'], ['goblin', 'shroom'], ['shroom', 'spider', 'shroom']], rec: 7, elite: .22 },
   { ch: 1, name: 'Nid de soie', bg: 'bg_c2_3', local: true, hz: 0.5, waves: [['spider', 'spider'], ['spider', 'wolf', 'spider'], ['goblin', 'spider', 'spider'], ['wolf', 'spider', 'wolf']], rec: 8, elite: .24, champ: true },
@@ -1812,7 +1812,7 @@ document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused 
 
 // ---------- Boot ----------
 muted = !!S.mute;
-if (!SIM) { HORDER.forEach(id => { const im = new Image(); im.src = FP + HEROES[id].face + '.webp'; IMG['face_' + id] = im; }); load('bgc1', true); loadSprite('ald'); }
+if (!SIM) { HORDER.forEach(id => { const im = new Image(); im.src = FP + HEROES[id].face + '.webp'; IMG['face_' + id] = im; }); load('bg_c1_1', true); loadSprite('ald'); }
 renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.n10 = 1; return story('in', helpSheet); } if (!S.seen.n10) { S.seen.n10 = 1; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 function newsSheet(cb) { modal(`<h3>Version 1.0</h3>
