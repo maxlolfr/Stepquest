@@ -521,8 +521,15 @@ function rollLoot(i, boss, elites) { const out = [], n = 1 + (boss ? 1 : 0) + (e
     const hero = Math.random() < .7 ? pick(S.team) : pick(owned); const it = makeItem(slot, r, i + 1, hero); S.inv.push(it); out.push(it); }
   return out; }
 function equip(id, it) { const s = S.h[id]; (s.eq = s.eq || {})[it.slot] = it.id; for (const o of Object.keys(S.h)) if (o !== id && (S.h[o].eq || {})[it.slot] === it.id) delete S.h[o].eq[it.slot]; it.isNew = 0; }
-function autoEquip() { for (const id of Object.keys(S.own)) for (const sl of ['w', 'a', 'j']) { const cur = itemById((S.h[id].eq || {})[sl]); let best = cur;
-  for (const it of S.inv) if (it.slot === sl && canWear(it, id) && (!wornBy(it) || wornBy(it) === id) && itemScore(it) > itemScore(best)) best = it; if (best && best !== cur) equip(id, best); } }
+// gives each slot's best items to the team first (biggest gain first), then the reserve; returns how many items changed hands
+function autoEquip() { let n = 0; const heroes = S.team.concat(Object.keys(S.own).filter(id => !S.team.includes(id)));
+  for (const sl of ['w', 'a', 'j']) {
+    const pool = S.inv.filter(it => it.slot === sl).sort((a, b) => itemScore(b) - itemScore(a)), taken = new Set(), plan = {};
+    for (const it of pool) { let best = null, bs = -1;
+      for (const id of heroes) { if (plan[id] || !canWear(it, id)) continue; const sc = itemScore(it) + (S.team.includes(id) ? 1000 : 0); if (sc > bs) { bs = sc; best = id; } }
+      if (best) { plan[best] = it; taken.add(it.id); } }
+    for (const id of heroes) { const it = plan[id], cur = (S.h[id].eq || {})[sl]; if (it && it.id !== cur) { equip(id, it); n++; } } }
+  return n; }
 // skill ranks: 1 point per level, rank 1..5, +12 % power per rank (Ultime +15 %)
 const rankOf = (id, k) => ((S.h[id].sk || {})[k]) || 1;
 const ptsLeft = id => Math.floor((S.h[id].lvl - 1) / 2) - Object.values(S.h[id].sk || {}).reduce((a, r) => a + r - 1, 0);
@@ -1291,7 +1298,7 @@ document.addEventListener('click', e => {
   if (d.skup) { const sk = (S.h[hsCtl.id].sk = S.h[hsCtl.id].sk || {}); if (ptsLeft(hsCtl.id) > 0 && (sk[d.skup] || 1) < 5) { sk[d.skup] = (sk[d.skup] || 1) + 1; SFX.buff(); } return heroSheet(); }
   if (d.iequip) { const it = itemById(+d.iequip); if (it) { equip(hsCtl.id, it); SFX.buff(); } return heroSheet(); }
   if (d.isell) { const it = itemById(+d.isell); if (it && !wornBy(it)) { S.inv = S.inv.filter(x => x !== it); S.gold += sellPrice(it); SFX.coin(); } return heroSheet(); }
-  if (d.autoeq) { autoEquip(); SFX.buff(); return heroSheet(); }
+  if (d.autoeq) { const n = autoEquip(); SFX[n ? 'buff' : 'click'](); toast(n ? `✅ ${n} objet${n > 1 ? 's' : ''} équipé${n > 1 ? 's' : ''} sur ton équipe` : 'Tes héros portent déjà leur meilleur équipement.'); return heroSheet(); }
   if (d.ch != null && b.closest('#tabs')) { S.ch = +d.ch; save(); SFX.click(); return renderHome(); }
   if (d.next && storyNext) return storyNext();
   if (d.lv != null && b.classList.contains('node')) { if (!unlocked(+d.lv)) return toast('Termine le niveau précédent d’abord.'); SFX.click(); return levelSheet(+d.lv); }
