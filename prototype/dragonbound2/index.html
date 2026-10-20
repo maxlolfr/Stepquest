@@ -307,7 +307,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Test 0.9 (chapitres 1 à 6)';
+const VERSION = 'Dragonbound II · Test 0.9.5 (chapitres 1 à 6)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -340,35 +340,48 @@ function drawSprite(c, base, pose, x, y, h, flash, sx = 1, sy = 1, tint) {
 
 // ---------- Sound ----------
 let AC = null, muted = false; const SMP = {};
-function ac() { if (SIM) return null; if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); ['sword', 'clang', 'impact', 'ring'].forEach(k => fetch(AP + 's_' + k + '.mp3').then(r => r.arrayBuffer()).then(b => AC.decodeAudioData(b)).then(d => { SMP[k] = d; }).catch(() => {})); } catch (e) {} } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
+function ac() { if (SIM) return null; if (!AC) { try { AC = new (window.AudioContext || window.webkitAudioContext)(); ['sword', 'clang', 'impact', 'ring'].forEach(k => fetch(AP + 's_' + k + '.mp3').then(r => r.arrayBuffer()).then(b => AC.decodeAudioData(b)).then(d => { SMP[k] = d; }).catch(() => {}));
+      SAMPLES.forEach(k => fetch('audio/' + k + '.mp3').then(r => r.arrayBuffer()).then(b => AC.decodeAudioData(b)).then(d => { SMP[k] = d; }).catch(() => {})); } catch (e) {} } if (AC && AC.state === 'suspended') AC.resume(); return AC; }
 function tone(f, d, type = 'sine', v = .15, f2, delay = 0) { if (muted || FAST || !AC) return; const t = AC.currentTime + delay, o = AC.createOscillator(), g = AC.createGain(); o.type = type; o.frequency.setValueAtTime(f, t); if (f2) o.frequency.exponentialRampToValueAtTime(f2, t + d);
   g.gain.setValueAtTime(v, t); g.gain.exponentialRampToValueAtTime(.001, t + d); o.connect(g).connect(AC.destination); o.start(t); o.stop(t + d + .02); }
 function noise(d, v = .2, fq = 1200, delay = 0) { if (muted || FAST || !AC) return; const t = AC.currentTime + delay, n = AC.sampleRate * d, b = AC.createBuffer(1, n, AC.sampleRate), a = b.getChannelData(0); for (let i = 0; i < n; i++) a[i] = (Math.random() * 2 - 1) * (1 - i / n);
   const s = AC.createBufferSource(), f = AC.createBiquadFilter(), g = AC.createGain(); s.buffer = b; f.type = 'bandpass'; f.frequency.value = fq; g.gain.value = v; s.connect(f).connect(g).connect(AC.destination); s.start(t); }
 function smp(k, v = .7, rate = 1) { if (muted || FAST || !AC || !SMP[k]) return false; const s = AC.createBufferSource(), g = AC.createGain(); s.buffer = SMP[k]; s.playbackRate.value = rate; g.gain.value = v; s.connect(g).connect(AC.destination); s.start(); return true; }
+// recorded sound effects (audio/), one per hero weapon and spell; the synth versions stay as a fallback while they load
+const SAMPLES = ['ald_sword', 'ald_shield', 'sel_mace', 'sel_heal', 'ori_fire', 'ori_ice', 'ori_bolt', 'lyr_arrow', 'nyx_dagger', 'crit', 'ult', 'hero_hurt', 'foe_die', 'boss_roar', 'chest', 'poison', 'ui_click', 'levelup'];
+const WEAPON = { aldric: 'ald_sword', selena: 'sel_mace', nyx: 'nyx_dagger', lyra: 'lyr_arrow' };
 const SFX = {
   slash: () => { if (!smp('sword', .55, rnd(.95, 1.1))) noise(.18, .25, 2400); },
-  hit: () => { smp('impact', .55, rnd(.9, 1.1)) || noise(.12, .3, 500); tone(110, .12, 'square', .06, 60); },
-  crit: () => { smp('impact', .8, .85) || noise(.2, .4, 400); tone(880, .25, 'triangle', .1, 1320); },
-  clang: () => { smp('clang', .5) || tone(600, .2, 'square', .06, 300); },
+  atk: h => { if (!smp(WEAPON[h.id], .85, rnd(.95, 1.05))) (h.H.fx === 'orb' ? SFX.magic : h.H.fx === 'arrow' ? SFX.whoosh : SFX.slash)(); },
+  arrow: () => { smp('lyr_arrow', .7, rnd(.92, 1.08)) || noise(.2, .18, 1600); },
+  dagger: () => { smp('nyx_dagger', .6, rnd(.95, 1.15)) || noise(.2, .18, 1600); },
+  hit: () => { smp('impact', .45, rnd(.9, 1.1)) || noise(.12, .3, 500); },
+  crit: () => { smp('crit', .9) || smp('impact', .8, .85) || noise(.2, .4, 400); },
+  clang: () => { smp('ald_shield', .8) || smp('clang', .5) || tone(600, .2, 'square', .06, 300); },
+  poison: () => { smp('poison', .7) || noise(.3, .15, 900); },
+  chest: () => { smp('chest', .8) || SFX.coin(); },
+  levelup: () => { smp('levelup', .8) || SFX.buff(); },
   magic: () => { tone(300, .35, 'sawtooth', .05, 900); tone(600, .4, 'sine', .06, 1400, .05); },
-  fire: () => { noise(.45, .3, 700); tone(180, .4, 'sawtooth', .05, 90); },
-  ice: () => { tone(1400, .3, 'triangle', .06, 2400); noise(.3, .12, 5000, .05); },
-  bolt: () => { noise(.3, .45, 3000); tone(90, .3, 'square', .08, 40, .02); },
-  heal: () => { [523, 659, 784, 1046].forEach((f, i) => tone(f, .3, 'sine', .07, null, i * .07)); },
+  fire: () => { smp('ori_fire', .85, rnd(.95, 1.05)) || (noise(.45, .3, 700), tone(180, .4, 'sawtooth', .05, 90)); },
+  ice: () => { smp('ori_ice', .85) || (tone(1400, .3, 'triangle', .06, 2400), noise(.3, .12, 5000, .05)); },
+  bolt: () => { smp('ori_bolt', .85) || (noise(.3, .45, 3000), tone(90, .3, 'square', .08, 40, .02)); },
+  heal: () => { smp('sel_heal', .7) || [523, 659, 784, 1046].forEach((f, i) => tone(f, .3, 'sine', .07, null, i * .07)); },
   buff: () => { smp('ring', .4) || [392, 523, 659].forEach((f, i) => tone(f, .3, 'triangle', .07, null, i * .08)); },
-  hurt: () => { noise(.15, .25, 300); tone(200, .15, 'square', .05, 90); },
+  hurt: () => { smp('hero_hurt', .8, rnd(.92, 1.08)) || (noise(.15, .25, 300), tone(200, .15, 'square', .05, 90)); },
   whoosh: () => noise(.2, .18, 1600),
   coin: () => { tone(988, .08, 'square', .05); tone(1319, .2, 'square', .05, null, .07); },
   win: () => { [523, 659, 784, 1046, 784, 1046].forEach((f, i) => tone(f, .25, 'triangle', .09, null, i * .12)); },
   lose: () => { [392, 330, 262, 196].forEach((f, i) => tone(f, .35, 'triangle', .08, null, i * .18)); },
-  ko: () => tone(300, .5, 'sawtooth', .06, 60),
-  click: () => tone(660, .05, 'square', .03),
-  roar: () => { noise(.5, .3, 250); tone(90, .5, 'sawtooth', .08, 60); },
-  ult: () => { smp('ring', .6, .8); [262, 330, 392, 523, 659, 784].forEach((f, i) => tone(f, .4, 'sawtooth', .05, null, i * .05)); noise(.8, .2, 900, .2); },
+  ko: () => { smp('foe_die', .75, rnd(.9, 1.1)) || tone(300, .5, 'sawtooth', .06, 60); },
+  click: () => { smp('ui_click', .6) || tone(660, .05, 'square', .03); },
+  roar: () => { smp('boss_roar', .8, rnd(.95, 1.05)) || (noise(.5, .3, 250), tone(90, .5, 'sawtooth', .08, 60)); },
+  ult: () => { smp('ult', .9) || (smp('ring', .6, .8), [262, 330, 392, 523, 659, 784].forEach((f, i) => tone(f, .4, 'sawtooth', .05, null, i * .05))); },
 };
 const bgm = $('bgm');
-function music(k) { if (SIM) return; const src = AP + k + '.mp3'; if (bgm.dataset.k === k) { if (!muted && bgm.paused) bgm.play().catch(() => {}); return; } bgm.dataset.k = k; bgm.src = src; bgm.volume = .4; if (!muted) bgm.play().catch(() => {}); }
+// m_* tracks are local (audio/): title/map theme, one theme per chapter, Nightmare/Hell theme, victory and defeat stingers
+const CH_MUSIC = ['m_crypt', 'm_forest', 'm_mines', 'm_swamp', 'm_ice', 'm_vampire'];
+function stinger(k) { if (SIM || muted) return; bgm.pause(); bgm.dataset.k = ''; const a = new Audio('audio/' + k + '.mp3'); a.volume = .65; a.play().catch(() => {}); }
+function music(k) { if (SIM) return; const src = (k.startsWith('m_') ? 'audio/' : AP) + k + '.mp3'; if (bgm.dataset.k === k) { if (!muted && bgm.paused) bgm.play().catch(() => {}); return; } bgm.dataset.k = k; bgm.src = src; bgm.volume = .4; if (!muted) bgm.play().catch(() => {}); }
 
 // ---------- Heroes, skills, monsters ----------
 const HEROES = {
@@ -806,15 +819,15 @@ async function heroAct(h, a) {
 }
 async function basicAtk(h, t) {
   focusCam(h, t);
-  if (h.H.melee) { await dashTo(h, t); const c = center(t); slashFx(c.x, c.y, false, h.id === 'nyx' ? '#c8a0ff' : h.id === 'aldric' ? '#ffd08a' : h.id === 'selena' ? '#fff0a8' : null); SFX.slash(); await damage(t, calc(h, t, 1), { src: h, melee: true }); await wait(220); await dashBack(h); }
-  else { setPose(h, h.id === 'orin' ? 'prep' : 'atk', 500); await wait(120); const a = center(h), b = center(t); SFX[h.H.fx === 'arrow' ? 'whoosh' : 'magic'](); await proj(h.H.fx, { x: a.x + 30, y: a.y }, b, 260); await damage(t, calc(h, t, 1, h.H.fx === 'orb' ? 'mag' : 'atk', 'phys'), { src: h }); await wait(250); }
+  if (h.H.melee) { await dashTo(h, t); const c = center(t); slashFx(c.x, c.y, false, h.id === 'nyx' ? '#c8a0ff' : h.id === 'aldric' ? '#ffd08a' : h.id === 'selena' ? '#fff0a8' : null); SFX.atk(h); await damage(t, calc(h, t, 1), { src: h, melee: true }); await wait(220); await dashBack(h); }
+  else { setPose(h, h.id === 'orin' ? 'prep' : 'atk', 500); await wait(120); const a = center(h), b = center(t); SFX.atk(h); await proj(h.H.fx, { x: a.x + 30, y: a.y }, b, 260); await damage(t, calc(h, t, 1, h.H.fx === 'orb' ? 'mag' : 'atk', 'phys'), { src: h }); await wait(250); }
 }
 const SKILL = {
   async taunt(h) { say(`<b>${h.name}</b> provoque les ennemis !`); setPose(h, 'spe', 800); SFX.roar(); const p = px(h); ring(p.x, p.y - p.h * .5, '#ff6a4a', 110, 600); ring(p.x, p.y - p.h * .5, '#ffb04a', 70, 500);
     h.st.taunt = 2; h.rage = Math.min(5, (h.rage || 0) + 2); gainLb(h, 8); await wait(650); },
   async whirl(h, _t, sk) { say(`<b>${h.name}</b> : Tourbillon !`); const fs = livingF(); focusCam(h, fs[0]);
     const mid = { slot: [fs.reduce((s, f) => s + f.slot[0], 0) / fs.length, fs.reduce((s, f) => s + f.slot[1], 0) / fs.length], ox: 0, oy: 0, hsz: .2 };
-    await dashTo(h, mid, VW * .14); setPose(h, 'spe', 900); SFX.whoosh();
+    await dashTo(h, mid, VW * .14); setPose(h, 'spe', 900); SFX.atk(h);
     for (const f of fs) { const c = center(f); slashFx(c.x, c.y, Math.random() < .5, '#a8d4ff'); }
     for (const f of fs) if (alive(f)) await damage(f, calc(h, f, sk.pow), { col: '#bfe0ff', src: h, melee: true });
     await wait(260); await dashBack(h); },
@@ -844,17 +857,17 @@ const SKILL = {
   async focus(h) { say(`<b>${h.name}</b> médite.`); setPose(h, 'cast', 900); SFX.magic(); const p = px(h); rise(p.x, p.y - p.h * .4, 20, ['#7ab4ff', '#cfe4ff', '#ffffff']); ring(p.x, p.y - p.h * .5, '#7ab4ff', 70);
     const g = Math.round(h.mpMax * .45 * (h.rk || 1)); h.mp = Math.min(h.mpMax, h.mp + g); txt(p.x, p.y - p.h - 6, `+${g} 💧`, '#7ab4ff', true);
     for (const a of livingH()) if (a !== h) a.mp = Math.min(a.mpMax, a.mp + Math.round(a.mpMax * .12)); h.charge = Math.min(3, (h.charge || 0) + 1); gainLb(h, 8); refresh(); await wait(500); },
-  async rain(h, _t, sk) { say(`<b>${h.name}</b> : Pluie de flèches !`); setPose(h, 'spe', 900); for (let i = 0; i < sk.hits; i++) { const fs = livingF(); if (!fs.length) break; const t = pick(fs); const a = center(h), b = center(t); SFX.whoosh();
+  async rain(h, _t, sk) { say(`<b>${h.name}</b> : Pluie de flèches !`); setPose(h, 'spe', 900); for (let i = 0; i < sk.hits; i++) { const fs = livingF(); if (!fs.length) break; const t = pick(fs); const a = center(h), b = center(t); SFX.arrow();
       await proj('arrow', { x: a.x + 20, y: a.y - 30 }, b, 200); await damage(t, calc(h, t, sk.pow), { src: h }); } await wait(220); },
-  async venom(h, t, sk) { say(`<b>${h.name}</b> : Flèche venimeuse !`); setPose(h, 'atk', 600); await wait(100); const a = center(h), b = center(t); SFX.whoosh(); await proj('venom', { x: a.x + 30, y: a.y }, b, 260);
+  async venom(h, t, sk) { say(`<b>${h.name}</b> : Flèche venimeuse !`); setPose(h, 'atk', 600); await wait(100); const a = center(h), b = center(t); SFX.arrow(); await proj('venom', { x: a.x + 30, y: a.y }, b, 260);
     await damage(t, calc(h, t, sk.pow, 'atk', 'poison'), { el: 'poison', col: '#a8e070', cols: ['#a8e070', '#6ac040', '#e0ffb0'], src: h });
-    if (alive(t)) { if (t.m.r.includes('poison')) txt(b.x, b.y - 60, 'Immunisé au poison', '#c8d2da'); else if (t.st.poison) { t.st.poison = { d: t.st.poison.d + Math.round(h.atk * .4), n: 3 }; txt(b.x, b.y - 60, '☠️ Le poison s’accumule !', '#a8e070', true); } else { t.st.poison = { d: Math.round(h.atk * .6), n: 3 }; txt(b.x, b.y - 60, '☠️ Empoisonné', '#a8e070', true); } } await wait(240); },
-  async aimed(h, t, sk) { say(`<b>${h.name}</b> vise…`); setPose(h, 'prep', 500); await wait(350); setPose(h, 'atk', 400); const a = center(h), b = center(t); SFX.whoosh(); await proj('arrow', { x: a.x + 30, y: a.y }, b, 160);
+    if (alive(t)) { if (t.m.r.includes('poison')) txt(b.x, b.y - 60, 'Immunisé au poison', '#c8d2da'); else if (t.st.poison) { t.st.poison = { d: t.st.poison.d + Math.round(h.atk * .4), n: 3 }; txt(b.x, b.y - 60, '☠️ Le poison s’accumule !', '#a8e070', true); SFX.poison(); } else { t.st.poison = { d: Math.round(h.atk * .6), n: 3 }; txt(b.x, b.y - 60, '☠️ Empoisonné', '#a8e070', true); SFX.poison(); } } await wait(240); },
+  async aimed(h, t, sk) { say(`<b>${h.name}</b> vise…`); setPose(h, 'prep', 500); await wait(350); setPose(h, 'atk', 400); const a = center(h), b = center(t); SFX.arrow(); await proj('arrow', { x: a.x + 30, y: a.y }, b, 160);
     await damage(t, calc(h, t, sk.pow, 'atk', 'phys', true), { src: h }); markFoe(t, 3); await wait(240); },
-  async blades(h, _t, sk) { say(`<b>${h.name}</b> : Danse des lames !`); setPose(h, 'spe', 900); for (let i = 0; i < sk.hits; i++) { const fs = livingF(); if (!fs.length) break; const t = pick(fs); const a = center(h), b = center(t); SFX.whoosh();
+  async blades(h, _t, sk) { say(`<b>${h.name}</b> : Danse des lames !`); setPose(h, 'spe', 900); for (let i = 0; i < sk.hits; i++) { const fs = livingF(); if (!fs.length) break; const t = pick(fs); const a = center(h), b = center(t); SFX.dagger();
       await proj('dagger', { x: a.x + 20, y: a.y }, b, 170); await damage(t, calc(h, t, sk.pow), { src: h }); } await wait(220); },
   async shadow(h) { say(`<b>${h.name}</b> se fond dans l’ombre.`); setPose(h, 'def', 800); SFX.whoosh(); const p = px(h); sparks(p.x, p.y - p.h * .5, 18, ['#3a2a5a', '#6a5aa8', '#1a1020'], 1, -.03); h.st.dodge = 1; await wait(500); },
-  async assassin(h, t, sk) { const m = t.st.sh || 0, ex = t.hp < t.hpMax * (.35 + .05 * m); t.st.sh = 0; h.boost = (h.boost || 1) * (1 + .3 * m); say(`<b>${h.name}</b> : Assassinat${ex ? ' !!' : '…'}${m ? ` (🌑×${m})` : ''}`); focusCam(h, t); await dashTo(h, t); const c = center(t); slashFx(c.x, c.y, true, ex ? '#ff5a5a' : null); SFX.slash();
+  async assassin(h, t, sk) { const m = t.st.sh || 0, ex = t.hp < t.hpMax * (.35 + .05 * m); t.st.sh = 0; h.boost = (h.boost || 1) * (1 + .3 * m); say(`<b>${h.name}</b> : Assassinat${ex ? ' !!' : '…'}${m ? ` (🌑×${m})` : ''}`); focusCam(h, t); await dashTo(h, t); const c = center(t); slashFx(c.x, c.y, true, ex ? '#ff5a5a' : null); SFX.dagger();
     await damage(t, calc(h, t, sk.pow * (ex ? 3 : 1)), { col: ex ? '#ff5a5a' : null, src: h, melee: true }); await wait(220); await dashBack(h); },
 };
 // ---------- Ultimates ----------
@@ -874,9 +887,9 @@ const ULT = {
       await proj('meteor', { x: b.x + rnd(-80, 40), y: -40 }, b, 300); B.shake = { t0: now(), amp: 6 }; SFX.fire();
       await damage(t, calc(h, t, 1.15, 'mag', 'feu'), { el: 'feu', col: '#ffb347', cols: ['#ffb347', '#ff6a2a', '#ffd76a'], src: h });
       if (alive(t) && Math.random() < .5 && !t.m.r.includes('feu')) t.st.burn = { d: Math.round(h.mag * .45), n: 3 }; } await wait(300); },
-  async lyra(h) { setPose(h, 'spe', 2000); for (let i = 0; i < 9; i++) { const fs = livingF(); if (!fs.length) break; const t = pick(fs), a = center(h), b = center(t); SFX.whoosh();
+  async lyra(h) { setPose(h, 'spe', 2000); for (let i = 0; i < 9; i++) { const fs = livingF(); if (!fs.length) break; const t = pick(fs), a = center(h), b = center(t); SFX.arrow();
       await proj('arrow', { x: a.x + 20, y: a.y - 40 }, b, 140); await damage(t, calc(h, t, .6, 'atk', 'phys', Math.random() < .45), { src: h }); } await wait(250); },
-  async nyx(h, t) { if (!alive(t)) t = livingF()[0]; focusCam(h, t); await dashTo(h, t); for (let i = 0; i < 6; i++) { if (!alive(t)) break; const c = center(t); slashFx(c.x, c.y, i % 2 === 0, '#c8a0ff'); SFX.slash();
+  async nyx(h, t) { if (!alive(t)) t = livingF()[0]; focusCam(h, t); await dashTo(h, t); for (let i = 0; i < 6; i++) { if (!alive(t)) break; const c = center(t); slashFx(c.x, c.y, i % 2 === 0, '#c8a0ff'); SFX.dagger();
       await damage(t, calc(h, t, .55, 'atk', 'phys', true), { src: h, melee: true, col: '#c8a0ff' }); await wait(60); } await wait(200); await dashBack(h); },
 };
 async function useItem(h, k, t) { S.items[k]--; save(); const I = ITEMS[k]; say(`<b>${h.name}</b> utilise ${I.name}${t !== h ? ' sur ' + t.name : ''}.`); setPose(h, 'cast', 600); await wait(250);
@@ -899,7 +912,7 @@ async function foeHit(f, t, mult, label) {
   if (label) txt(c.x, c.y - 90, label, '#ff8a6a', true);
   slashFx(c.x, c.y, true, '#ff8a6a');
   const d = await damage(t, calc(f, t, mult), { src: f });
-  if (alive(t) && f.m.trait === 'poison' && Math.random() < .55 && !t.st.guard) { t.st.poison = { d: Math.max(3, Math.round(f.atk * .45)), n: 3 }; txt(c.x, c.y - 60, '☠️ Empoisonné', '#a8e070', true); }
+  if (alive(t) && f.m.trait === 'poison' && Math.random() < .55 && !t.st.guard) { t.st.poison = { d: Math.max(3, Math.round(f.atk * .45)), n: 3 }; txt(c.x, c.y - 60, '☠️ Empoisonné', '#a8e070', true); SFX.poison(); }
   if (alive(t) && f.m.trait === 'chill' && t.mp > 0) { const l = Math.round(t.mpMax * .3); t.mp = Math.max(0, t.mp - l); txt(c.x, c.y - 60, `-${l} 💧 gelé`, '#bfe8ff'); refresh(); }
   if (alive(t) && f.m.trait === 'burn' && Math.random() < .55 && !t.st.guard) { t.st.burn = { d: Math.max(3, Math.round(f.atk * .4)), n: 3 }; txt(c.x, c.y - 60, '🔥 En feu', '#ffb347', true); }
   if (d > 0 && (f.m.trait === 'drain' || f.aff === 'vamp') && alive(f)) { const g = Math.round(d * .5); f.hp = Math.min(f.hpMax, f.hp + g); const fp = px(f); txt(fp.x, fp.y - fp.h - 6, `+${g}`, '#ff6a8a'); }
@@ -1086,7 +1099,7 @@ async function runLevel(i, train, tier = 0) {
     $('fWave').textContent = `Vague ${B.wave + 1} / ${L.waves.length}`; refresh();
     const el = B.foes.find(f => f.elite);
     if (el && el.champ) SFX.roar();
-    if (boss) { music('boss1'); say(ws.includes('bossVamp') ? '<b>Le Comte Vampire</b> descend de son trône de velours…' : ws.includes('bossQueen') ? '<b>La Reine des Glaces</b> se lève de son trône !' : ws.includes('bossHag') ? '<b>Morgane</b> sort de sa cabane en ricanant !' : ws.includes('bossDragon') ? '<b>Le Dragon Écarlate</b> se réveille sur son trésor !' : ws.includes('bossWitch') ? '<b>Sylvaine la Sorcière</b> sort de sa hutte !' : '<b>Le Roi des Os</b> se dresse sur son trône !'); }
+    if (boss) { music(B.tier >= 3 ? 'm_nightmare' : 'boss1'); say(ws.includes('bossVamp') ? '<b>Le Comte Vampire</b> descend de son trône de velours…' : ws.includes('bossQueen') ? '<b>La Reine des Glaces</b> se lève de son trône !' : ws.includes('bossHag') ? '<b>Morgane</b> sort de sa cabane en ricanant !' : ws.includes('bossDragon') ? '<b>Le Dragon Écarlate</b> se réveille sur son trésor !' : ws.includes('bossWitch') ? '<b>Sylvaine la Sorcière</b> sort de sa hutte !' : '<b>Le Roi des Os</b> se dresse sur son trône !'); }
     else say(el ? `${el.champ ? '👑 Un champion' : '⭐ Un élite'} : <b>${el.name}</b> (${el.elite.tip}) !` : B.wave ? 'Une nouvelle vague approche !' : 'Des monstres surgissent !');
     await Promise.all(B.foes.map((f, j) => wait(j * 120).then(() => tween(f, { ox: 0, alpha: 1 }, 520, easeOut))));
     if (boss && !FAST) { const bf = B.foes.find(f => f.boss); setPose(bf, 'laugh', 1200); SFX.roar(); B.shake = { t0: now(), amp: 5 }; await wait(1100); }
@@ -1388,20 +1401,20 @@ async function playLevel(i, train) {
   const ck = CHAPTERS[LEVELS[i].ch].story; if (!S.seen[ck] && LEVELS[i].ch > 0) { modalCb = null; return story(ck, () => playLevel(i)); }
   if (!train && !SIM) { if (S.en >= EN_MAX) S.enT = Date.now(); S.en -= enCost(i); save(); }
   closeModal(); ac(); $('home').hidden = true; $('fight').hidden = false; toast(`💡 ${pick(TIPS)}`);
-  $('fName').textContent = `${tier ? DIFF[tier].ic + ' ' : ''}${LEVELS[i].ch + 1}-${i % 5 + 1}. ${LEVELS[i].name}`; music('fight1'); fx = []; sfx = []; pending = null;
+  $('fName').textContent = `${tier ? DIFF[tier].ic + ' ' : ''}${LEVELS[i].ch + 1}-${i % 5 + 1}. ${LEVELS[i].name}`; music(tier >= 3 ? 'm_nightmare' : CH_MUSIC[LEVELS[i].ch] || 'fight1'); fx = []; sfx = []; pending = null;
   const res = await runLevel(i, train, tier);
   pending = null; buildActs();
   if (res.fled) return backHome();
   if (res.win) await victory(i, res); else defeat(i);
 }
-function backHome() { $('fight').hidden = true; $('home').hidden = false; B = null; renderHome(); music('map1'); }
+function backHome() { $('fight').hidden = true; $('home').hidden = false; B = null; renderHome(); music('m_theme'); }
 function grantXp(xp, bench = .5) { const ups = [];
   for (const id of Object.keys(S.own)) { const s = S.h[id], g = Math.round(xp * (S.team.includes(id) ? 1 : bench)); s.xp += g; let up = 0; while (s.xp >= xpNeed(s.lvl)) { s.xp -= xpNeed(s.lvl); s.lvl++; up++; } if (S.team.includes(id)) ups.push([id, g, up]); } return ups; }
 function rewards(i, kills, win) { let xp = 0, gold = 0; for (const f of kills) { xp += Math.round(MON[f.id].xp * 1.25 * (1 + .08 * i) * f.xpM); gold += Math.round(MON[f.id].gold * (1 + .1 * i) * f.goldM); }
   if (!win) { xp = Math.round(xp * .3); gold = 0; } return { xp, gold }; }
 function recruit(i) { const id = RECRUIT[i]; if (!id || S.own[id]) return null; S.own[id] = 1; const lv = Math.max(...S.team.map(k => S.h[k].lvl)); S.h[id].lvl = Math.max(S.h[id].lvl, lv - 1); if (S.team.length < 3) S.team.push(id); return id; }
 async function victory(i, res) {
-  for (const h of B.party) if (alive(h)) setPose(h, 'win', 1e9); SFX.win(); say('<b>Victoire !</b>');
+  for (const h of B.party) if (alive(h)) setPose(h, 'win', 1e9); stinger('m_victory'); say('<b>Victoire !</b>');
   const train = B.train, t = B.tier || 0, ST = starsArr(t), st = Math.round(res.alive / res.size * 3), first = !ST[i], ei = i + DIFF[t].eff, wasOpen = tierOpen(t + 1, LEVELS[i].ch); if (!train) ST[i] = Math.max(ST[i] || 0, st);
   const newTier = !train && t < DIFF.length - 1 && !wasOpen && tierOpen(t + 1, LEVELS[i].ch);
   let { xp, gold } = rewards(i, B.kills, true); xp = Math.round(xp * DIFF[t].xg); gold = Math.round(gold * DIFF[t].xg); if (train) { xp = Math.round(xp * .5); gold = Math.round(gold * .3); } S.gold += gold; const ups = grantXp(xp);
@@ -1420,6 +1433,7 @@ async function victory(i, res) {
   trCheck();
   if (newTier) { SFX.win(); toast(`${DIFF[t + 1].ic} <b>${DIFF[t + 1].n}</b> débloqué pour ce chapitre !`); }
   await openChests(loot);
+  if (ups.some(u => u[2])) setTimeout(SFX.levelup, 300);
   const nIt = train ? 0 : 1 + loot.length + (cFirst ? 1 : 0) + (legend ? 1 : 0);
   modal(`<h3>${train ? 'Entraînement réussi' : 'Victoire !'}</h3>${train ? '' : `<p style="text-align:center;font-size:30px;color:#c07a12;letter-spacing:4px">${'★'.repeat(st)}<span style="opacity:.25">${'★'.repeat(3 - st)}</span></p>
     <p style="text-align:center;font-size:13px">${st === 3 ? `Toute l’équipe est debout !${enBack ? ` +${enBack} ⚡` : ''}` : 'Garde tout le monde en vie pour 3 étoiles (et +2 ⚡).'}</p>`}
@@ -1433,7 +1447,7 @@ async function victory(i, res) {
   const run = () => { const k = q.shift(); if (!k) return; if (k === endK && CHAPTERS[LEVELS[i].ch + 1]) { S.ch = LEVELS[i].ch + 1; save(); renderHome(); } story(k, run); };
   modalCb = run;
 }
-function defeat(i) { const { xp } = rewards(i, B.kills, false); grantXp(xp); save(); SFX.lose(); say('Ton équipe est tombée…');
+function defeat(i) { const { xp } = rewards(i, B.kills, false); grantXp(xp); save(); stinger('m_defeat'); say('Ton équipe est tombée…');
   modal(`<h3>Défaite…</h3><p style="text-align:center">Tes héros gardent ${xp} XP de ce combat.</p><p style="font-size:13px">💡 Défends-toi quand le boss lève sa faux, garde l’<b>Ultime</b> pour les moments durs, et améliore tes armes à la <b>Forge</b>. Tu peux aussi rejouer un niveau d’avant pour gagner des niveaux.</p>
     <button class="btn" type="button" data-${B.train ? 'train' : 'play'}="${i}">Réessayer${B.train ? '' : ` · ${enCost(i)} ⚡`}</button><button class="btn alt" type="button" data-home="1">Carte</button>`); }
 let storyNext = null;
@@ -1446,7 +1460,7 @@ function bestWearer(it) { const ids = (it.slot === 'w' ? [it.hero] : S.team).fil
   for (const id of ids) { const g = itemScore(it) - itemScore(itemById((S.h[id].eq || {})[it.slot])); if (g > gain) { gain = g; best = id; } } return [best, gain]; }
 let chestNext = null, pickNext = null;
 function lootChoice(cands, title) { if (SIM) { const it = cands.reduce((a, b) => bestWearer(b)[1] > bestWearer(a)[1] ? b : a); S.inv.push(it); return Promise.resolve(it); }
-  return new Promise(done => { SFX.coin();
+  return new Promise(done => { SFX.chest();
     const faces = it => (it.slot === 'w' ? [it.hero] : S.team.concat(Object.keys(S.own).filter(id => !S.team.includes(id)))).filter(id => S.own[id]).map(id => {
       const g = Math.round(itemScore(it) - itemScore(itemById((S.h[id].eq || {})[it.slot])));
       return `<button type="button" class="eqf" data-lpick="${cands.indexOf(it)}:${id}"><img src="${FP}${HEROES[id].face}.webp" alt="${HEROES[id].name}"><span class="${g >= 0 ? 'up' : 'down'}">${g >= 0 ? '▲' : '▼'}${Math.abs(g)}</span></button>`; }).join('');
@@ -1459,7 +1473,7 @@ function openChests(items) { if (SIM || !items.length) return Promise.resolve();
   const show = () => { const it = items[j], ck = it.r >= 4 ? 'uiChest3' : it.r >= 2 ? 'uiChest2' : 'uiChest1';
     modal(`<h3>Coffre ${items.length > 1 ? `${j + 1} / ${items.length}` : ''}</h3><div class="chestbox" style="${rcss(it)}"><img src="${IP}${ck}.webp" alt="coffre"></div><p style="text-align:center">Touche le coffre pour l’ouvrir</p>`);
     SFX.click(); const box = sheet.querySelector('.chestbox'); let opened = false;
-    const open = () => { if (opened) return; opened = true; SFX[it.r >= 3 ? 'win' : 'coin'](); const [who, gain] = bestWearer(it);
+    const open = () => { if (opened) return; opened = true; SFX.chest(); if (it.r >= 3) SFX.levelup(); const [who, gain] = bestWearer(it);
       modal(`<div class="reveal" style="${rcss(it)}"><img src="${IP}${it.img}.webp" alt=""><h4>${it.name}</h4><p style="margin:0">${RAR[it.r].n} · ${SLOTN[it.slot]}${it.hero ? ' de ' + HEROES[it.hero].name : ''}</p>
         <p style="font-size:15px">${Object.entries(it.st).map(([k, v]) => fmtSt(k, v)).join(' · ')}</p>${pwHtml(it)}</div>
         ${who && S.own[who] ? `<button class="btn" type="button" data-cequip="${who}">Équiper sur ${HEROES[who].name} ${gain > 0 ? '▲' : ''}</button>` : ''}
@@ -1635,7 +1649,7 @@ $('shopBtn').addEventListener('click', shopSheet);
 $('helpBtn').addEventListener('click', helpSheet);
 $('heroesBtn').addEventListener('click', () => heroSheet(S.team[0], 'eq'));
 $('storyBtn').addEventListener('click', () => { const C = CHAPTERS[S.ch], done = S.stars[LEVELS.findIndex(L => L.ch === S.ch && L.boss)]; story(done ? C.end : C.story); });
-$('snd').addEventListener('click', () => { muted = !muted; S.mute = muted; save(); if (muted) bgm.pause(); else { ac(); music(bgm.dataset.k || 'map1'); } renderHome(); });
+$('snd').addEventListener('click', () => { muted = !muted; S.mute = muted; save(); if (muted) bgm.pause(); else { ac(); music(bgm.dataset.k || 'm_theme'); } renderHome(); });
 document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused && bgm.dataset.k) bgm.play().catch(() => {}); }, { once: true });
 
 // ---------- Boot ----------
@@ -1664,10 +1678,10 @@ function newsOld() { modal(`<h3>Nouveautés · Test 0.8</h3>
   <p>• <b>Butin à choix</b> : 1 objet parmi 3, avec des pouvoirs spéciaux ✦.</p>
   <p>• <b>Contrats</b> : un défi facultatif avant chaque niveau.</p><button class="btn" type="button" data-close="1">À l’aventure !</button>`); }
 function playIntro(then) { const v = $('video'), box = $('vid'); bgm.pause(); if (!v.src) v.src = 'intro.mp4'; v.currentTime = 0; v.muted = muted; box.hidden = false;
-  const end = () => { v.pause(); box.hidden = true; v.onended = null; S.seen.vid = 1; save(); if (!muted) music('map1'); if (then) then(); };
+  const end = () => { v.pause(); box.hidden = true; v.onended = null; S.seen.vid = 1; save(); if (!muted) music('m_theme'); if (then) then(); };
   v.onended = end; $('skipVid').onclick = end; v.play().catch(() => end()); }
-if (!SIM) { requestAnimationFrame(loop); bgm.dataset.k = 'map1'; bgm.src = AP + 'map1.mp3'; bgm.volume = .4;
-  $('title').hidden = false; $('title').addEventListener('click', () => { $('title').hidden = true; ac(); if (!S.seen.vid) playIntro(afterIntro); else { if (!muted) music('map1'); afterIntro(); } }, { once: true }); }
+if (!SIM) { requestAnimationFrame(loop); bgm.dataset.k = 'm_theme'; bgm.src = 'audio/m_theme.mp3'; bgm.volume = .4;
+  $('title').hidden = false; $('title').addEventListener('click', () => { $('title').hidden = true; ac(); if (!S.seen.vid) playIntro(afterIntro); else { if (!muted) music('m_theme'); afterIntro(); } }, { once: true }); }
 
 // ---------- Simulator: ?sim plays the chapter on Auto and reports ----------
 async function simCampaign(runs = 1, upto = 99, tier = 0, tch = 0) {
