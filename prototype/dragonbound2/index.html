@@ -272,7 +272,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Test 0.4 (coffres, équipement, compétences)';
+const VERSION = 'Dragonbound II · Test 0.5 (chapitres 1 à 5)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -281,7 +281,7 @@ const $ = id => document.getElementById(id);
 const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
 
 // ---------- Images (shared with Dragonbound) ----------
-const POSEM = {"bossBone":[1.017,0.503],"bossBone_prep":[0.922,0.45],"bossBone_atk":[0.808,0.48],"bossBone_spe":[0.943,0.537],"bossBone_laugh":[1.052,0.624],"bossBone_rage":[0.869,0.553],"bossBone_blast":[0.884,0.735],"bossBone_ko":[0.477,0.447],"slime":[1.0,0.493],"slime_atk":[0.897,0.44],"slime_hit":[0.962,0.452],"slime_ko":[0.517,0.538],"rat":[1.0,0.476],"rat_atk":[0.821,0.44],"rat_hit":[1.096,0.431],"rat_ko":[0.59,0.46],"bat":[1.0,0.452],"bat_atk":[0.811,0.444],"bat_hit":[0.965,0.48],"bat_ko":[0.417,0.574],"skel":[1.0,0.397],"skel_atk":[0.978,0.389],"skel_hit":[0.873,0.534],"skel_ko":[0.585,0.482],"hero2":[1.0,0.511],"hero2_prep":[1.139,0.497],"hero2_atk":[0.962,0.329],"hero2_hit":[0.932,0.4],"hero2_def":[0.817,0.451],"hero2_win":[0.964,0.549],"hero2_spe":[1.21,0.356],"hero2_ko":[0.705,0.44],"hero2_cast":[0.937,0.489],"archer":[1.0,0.469],"archer_prep":[1.028,0.438],"archer_atk":[0.987,0.331],"archer_hit":[0.919,0.427],"archer_def":[0.786,0.379],"archer_spe":[0.875,0.332],"archer_win":[1.087,0.576],"archer_ko":[0.753,0.477],"archer_cast":[0.903,0.338],"mage":[1.0,0.397],"mage_prep":[0.961,0.478],"mage_atk":[0.955,0.276],"mage_hit":[0.967,0.531],"mage_def":[0.827,0.473],"mage_spe":[0.932,0.441],"mage_win":[1.083,0.534],"mage_ko":[0.988,0.441],"mage_cast":[1.098,0.4],"paladin":[1.0,0.377],"paladin_prep":[1.093,0.544],"paladin_atk":[0.949,0.336],"paladin_hit":[0.979,0.352],"paladin_def":[0.895,0.421],"paladin_spe":[0.943,0.436],"paladin_win":[1.087,0.453],"paladin_ko":[0.817,0.498],"paladin_cast":[0.994,0.433],"rogue":[1.0,0.537],"rogue_prep":[0.939,0.378],"rogue_atk":[0.906,0.341],"rogue_hit":[0.911,0.581],"rogue_def":[0.844,0.419],"rogue_spe":[0.869,0.516],"rogue_win":[1.025,0.422],"rogue_ko":[0.75,0.439],"rogue_cast":[0.833,0.388],"wolf":[1.022,0.438],"wolf_atk":[1.028,0.488],"wolf_hit":[1.006,0.455],"wolf_ko":[0.623,0.463],"spider":[1.024,0.523],"spider_atk":[1.051,0.562],"spider_hit":[1.098,0.555],"spider_ko":[0.889,0.507],"shroom":[1.02,0.502],"shroom_atk":[0.945,0.609],"shroom_hit":[0.991,0.529],"shroom_ko":[0.578,0.542],"goblin":[1.021,0.531],"goblin_atk":[1.042,0.516],"goblin_hit":[1.039,0.522],"goblin_ko":[0.504,0.46],"bossWitch":[1.014,0.482],"bossWitch_prep":[0.953,0.519],"bossWitch_atk":[0.964,0.591],"bossWitch_hit":[1.008,0.473],"bossWitch_spe":[1.03,0.496],"bossWitch_laugh":[1.103,0.572],"bossWitch_rage":[1.105,0.455],"bossWitch_blast":[1.004,0.524],"bossWitch_ko":[0.326,0.473],"ald":[1.0,0.55],"ald_idle2":[1.013,0.58],"ald_prep":[1.042,0.62],"ald_atk":[0.912,0.5],"ald_hit":[0.919,0.38],"ald_def":[0.87,0.5],"ald_spe":[0.958,0.52],"ald_cast":[0.971,0.55],"ald_win":[1.016,0.5],"ald_ko":[0.453,0.5],"ald_run":[0.902,0.62],"ald_kneel":[0.717,0.6],"lyr":[1.0,0.4],"lyr_idle2":[1.003,0.4],"lyr_prep":[0.977,0.5],"lyr_atk":[1.066,0.38],"lyr_hit":[0.937,0.5],"lyr_def":[0.884,0.5],"lyr_spe":[1.136,0.42],"lyr_cast":[0.95,0.42],"lyr_win":[1.079,0.42],"lyr_ko":[0.54,0.5],"lyr_run":[0.98,0.5],"lyr_kneel":[0.772,0.5],"nyx":[1.0,0.52],"nyx_idle2":[1.13,0.55],"nyx_prep":[1.16,0.45],"nyx_atk":[1.023,0.55],"nyx_hit":[1.046,0.5],"nyx_def":[0.901,0.45],"nyx_spe":[1.073,0.5],"nyx_cast":[0.989,0.42],"nyx_win":[1.176,0.5],"nyx_ko":[0.782,0.5],"nyx_run":[1.019,0.55],"nyx_kneel":[0.927,0.5],"sel":[1.0,0.49],"sel_idle2":[1.002,0.5],"sel_prep":[0.967,0.55],"sel_atk":[1.071,0.42],"sel_hit":[0.955,0.45],"sel_def":[0.943,0.4],"sel_spe":[0.96,0.48],"sel_cast":[1.088,0.5],"sel_win":[1.064,0.5],"sel_ko":[0.443,0.5],"sel_run":[0.945,0.46],"sel_kneel":[0.824,0.5],"ori":[1.0,0.423],"ori_idle2":[1.0,0.423],"ori_prep":[0.972,0.43],"ori_atk":[0.956,0.38],"ori_hit":[0.956,0.45],"ori_def":[0.99,0.44],"ori_spe":[0.968,0.46],"ori_cast":[1.006,0.55],"ori_win":[1.119,0.48],"ori_ko":[0.41,0.47],"ori_run":[0.968,0.47],"ori_kneel":[0.947,0.43]};
+const POSEM = {"bossBone":[1.017,0.503],"bossBone_prep":[0.922,0.45],"bossBone_atk":[0.808,0.48],"bossBone_spe":[0.943,0.537],"bossBone_laugh":[1.052,0.624],"bossBone_rage":[0.869,0.553],"bossBone_blast":[0.884,0.735],"bossBone_ko":[0.477,0.447],"slime":[1.0,0.493],"slime_atk":[0.897,0.44],"slime_hit":[0.962,0.452],"slime_ko":[0.517,0.538],"rat":[1.0,0.476],"rat_atk":[0.821,0.44],"rat_hit":[1.096,0.431],"rat_ko":[0.59,0.46],"bat":[1.0,0.452],"bat_atk":[0.811,0.444],"bat_hit":[0.965,0.48],"bat_ko":[0.417,0.574],"skel":[1.0,0.397],"skel_atk":[0.978,0.389],"skel_hit":[0.873,0.534],"skel_ko":[0.585,0.482],"hero2":[1.0,0.511],"hero2_prep":[1.139,0.497],"hero2_atk":[0.962,0.329],"hero2_hit":[0.932,0.4],"hero2_def":[0.817,0.451],"hero2_win":[0.964,0.549],"hero2_spe":[1.21,0.356],"hero2_ko":[0.705,0.44],"hero2_cast":[0.937,0.489],"archer":[1.0,0.469],"archer_prep":[1.028,0.438],"archer_atk":[0.987,0.331],"archer_hit":[0.919,0.427],"archer_def":[0.786,0.379],"archer_spe":[0.875,0.332],"archer_win":[1.087,0.576],"archer_ko":[0.753,0.477],"archer_cast":[0.903,0.338],"mage":[1.0,0.397],"mage_prep":[0.961,0.478],"mage_atk":[0.955,0.276],"mage_hit":[0.967,0.531],"mage_def":[0.827,0.473],"mage_spe":[0.932,0.441],"mage_win":[1.083,0.534],"mage_ko":[0.988,0.441],"mage_cast":[1.098,0.4],"paladin":[1.0,0.377],"paladin_prep":[1.093,0.544],"paladin_atk":[0.949,0.336],"paladin_hit":[0.979,0.352],"paladin_def":[0.895,0.421],"paladin_spe":[0.943,0.436],"paladin_win":[1.087,0.453],"paladin_ko":[0.817,0.498],"paladin_cast":[0.994,0.433],"rogue":[1.0,0.537],"rogue_prep":[0.939,0.378],"rogue_atk":[0.906,0.341],"rogue_hit":[0.911,0.581],"rogue_def":[0.844,0.419],"rogue_spe":[0.869,0.516],"rogue_win":[1.025,0.422],"rogue_ko":[0.75,0.439],"rogue_cast":[0.833,0.388],"wolf":[1.022,0.438],"wolf_atk":[1.028,0.488],"wolf_hit":[1.006,0.455],"wolf_ko":[0.623,0.463],"spider":[1.024,0.523],"spider_atk":[1.051,0.562],"spider_hit":[1.098,0.555],"spider_ko":[0.889,0.507],"shroom":[1.02,0.502],"shroom_atk":[0.945,0.609],"shroom_hit":[0.991,0.529],"shroom_ko":[0.578,0.542],"goblin":[1.021,0.531],"goblin_atk":[1.042,0.516],"goblin_hit":[1.039,0.522],"goblin_ko":[0.504,0.46],"bossWitch":[1.014,0.482],"bossWitch_prep":[0.953,0.519],"bossWitch_atk":[0.964,0.591],"bossWitch_hit":[1.008,0.473],"bossWitch_spe":[1.03,0.496],"bossWitch_laugh":[1.103,0.572],"bossWitch_rage":[1.105,0.455],"bossWitch_blast":[1.004,0.524],"bossWitch_ko":[0.326,0.473],"ald":[1.0,0.55],"ald_idle2":[1.013,0.58],"ald_prep":[1.042,0.62],"ald_atk":[0.912,0.5],"ald_hit":[0.919,0.38],"ald_def":[0.87,0.5],"ald_spe":[0.958,0.52],"ald_cast":[0.971,0.55],"ald_win":[1.016,0.5],"ald_ko":[0.453,0.5],"ald_run":[0.902,0.62],"ald_kneel":[0.717,0.6],"lyr":[1.0,0.4],"lyr_idle2":[1.003,0.4],"lyr_prep":[0.977,0.5],"lyr_atk":[1.066,0.38],"lyr_hit":[0.937,0.5],"lyr_def":[0.884,0.5],"lyr_spe":[1.136,0.42],"lyr_cast":[0.95,0.42],"lyr_win":[1.079,0.42],"lyr_ko":[0.54,0.5],"lyr_run":[0.98,0.5],"lyr_kneel":[0.772,0.5],"nyx":[1.0,0.52],"nyx_idle2":[1.13,0.55],"nyx_prep":[1.16,0.45],"nyx_atk":[1.023,0.55],"nyx_hit":[1.046,0.5],"nyx_def":[0.901,0.45],"nyx_spe":[1.073,0.5],"nyx_cast":[0.989,0.42],"nyx_win":[1.176,0.5],"nyx_ko":[0.782,0.5],"nyx_run":[1.019,0.55],"nyx_kneel":[0.927,0.5],"sel":[1.0,0.49],"sel_idle2":[1.002,0.5],"sel_prep":[0.967,0.55],"sel_atk":[1.071,0.42],"sel_hit":[0.955,0.45],"sel_def":[0.943,0.4],"sel_spe":[0.96,0.48],"sel_cast":[1.088,0.5],"sel_win":[1.064,0.5],"sel_ko":[0.443,0.5],"sel_run":[0.945,0.46],"sel_kneel":[0.824,0.5],"ori":[1.0,0.423],"ori_idle2":[1.0,0.423],"ori_prep":[0.972,0.43],"ori_atk":[0.956,0.38],"ori_hit":[0.956,0.45],"ori_def":[0.99,0.44],"ori_spe":[0.968,0.46],"ori_cast":[1.006,0.55],"ori_win":[1.119,0.48],"ori_ko":[0.41,0.47],"ori_run":[0.968,0.47],"ori_kneel":[0.947,0.43],"snake":[1.023,0.475],"snake_atk":[1.076,0.545],"snake_hit":[1.076,0.609],"snake_ko":[0.64,0.499],"imp":[1.023,0.453],"imp_atk":[0.948,0.624],"imp_hit":[0.897,0.576],"imp_ko":[0.545,0.455],"scorp":[1.022,0.57],"scorp_atk":[1.052,0.587],"scorp_hit":[1.059,0.553],"scorp_ko":[0.926,0.561],"golem":[1.017,0.53],"golem_atk":[1.01,0.579],"golem_hit":[1.01,0.532],"golem_ko":[0.537,0.53],"bossDragon":[1.019,0.513],"bossDragon_prep":[1.153,0.486],"bossDragon_atk":[1.169,0.526],"bossDragon_hit":[1.228,0.468],"bossDragon_blast":[1.208,0.594],"bossDragon_fly":[1.569,0.488],"bossDragon_dive":[1.275,0.457],"bossDragon_stun":[0.869,0.605],"bossDragon_ko":[0.958,0.529],"frog":[1.023,0.476],"frog_atk":[0.923,0.571],"frog_hit":[1.042,0.528],"frog_ko":[0.502,0.521],"wisp":[1.021,0.528],"wisp_atk":[0.784,0.474],"wisp_hit":[0.814,0.514],"wisp_ko":[0.452,0.428],"zombie":[1.019,0.475],"zombie_atk":[0.984,0.612],"zombie_hit":[1.052,0.492],"zombie_ko":[0.356,0.484],"vine":[1.021,0.503],"vine_atk":[1.078,0.523],"vine_hit":[1.101,0.495],"vine_ko":[0.561,0.511],"harpy":[1.023,0.527],"harpy_atk":[1.125,0.419],"harpy_hit":[1.125,0.451],"harpy_ko":[0.736,0.543],"bear":[1.017,0.521],"bear_atk":[0.929,0.626],"bear_hit":[0.853,0.54],"bear_ko":[0.661,0.53],"spirit":[1.013,0.391],"spirit_atk":[0.763,0.487],"spirit_hit":[0.865,0.512],"spirit_ko":[0.365,0.516],"yeti":[1.02,0.496],"yeti_atk":[1.061,0.441],"yeti_hit":[0.89,0.448],"yeti_ko":[0.602,0.57],"bossHag":[1.014,0.574],"bossHag_atk":[0.921,0.644],"bossHag_hit":[1.002,0.526],"bossHag_spe":[1.002,0.425],"bossHag_heal":[1.055,0.56],"bossHag_laugh":[1.069,0.612],"bossHag_rage":[0.935,0.516],"bossHag_ko":[0.484,0.423],"bossQueen":[1.015,0.442],"bossQueen_prep":[0.958,0.574],"bossQueen_atk":[0.93,0.571],"bossQueen_hit":[0.951,0.706],"bossQueen_freeze":[0.953,0.535],"bossQueen_spe":[1.235,0.543],"bossQueen_blast":[1.006,0.521],"bossQueen_rage":[1.004,0.413],"bossQueen_ko":[0.408,0.502]};
 const IMG = {}, WHITE = {}, TINT = {};
 function load(k, local) {
   if (IMG[k] || SIM) return; const im = new Image(); im.decoding = 'async';
@@ -292,7 +292,7 @@ function load(k, local) {
 const ready = k => IMG[k] && IMG[k].complete && IMG[k].naturalWidth > 0;
 function loadSprite(b) { load(b); for (const k in POSEM) if (k.startsWith(b + '_')) load(k); }
 function tinted(k, col) { const tk = k + '|' + col; if (!TINT[tk] && WHITE[k]) { const t = document.createElement('canvas'); t.width = WHITE[k].width; t.height = WHITE[k].height; const x = t.getContext('2d'); x.drawImage(WHITE[k], 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = `rgb(${col})`; x.fillRect(0, 0, t.width, t.height); TINT[tk] = t; } return TINT[tk]; }
-const FB = { prep: 'atk', spe: 'atk', cast: 'spe', def: 'idle', win: 'idle', hit: 'idle', ko: 'hit', laugh: 'idle', rage: 'spe', blast: 'atk', run: 'atk', kneel: 'idle' };
+const FB = { prep: 'atk', spe: 'atk', cast: 'spe', def: 'idle', win: 'idle', hit: 'idle', ko: 'hit', laugh: 'idle', rage: 'spe', blast: 'atk', run: 'atk', kneel: 'idle', heal: 'spe', freeze: 'spe', fly: 'idle', dive: 'atk', stun: 'hit' };
 function drawSprite(c, base, pose, x, y, h, flash, sx = 1, sy = 1, tint) {
   let p = pose, k = p === 'idle' ? base : base + '_' + p, n = 0;
   while (!(POSEM[k] && ready(k)) && n++ < 6) { p = FB[p] || 'idle'; k = p === 'idle' ? base : base + '_' + p; }
@@ -388,8 +388,23 @@ const MON = {
   spider: { name: 'Araignée géante', hp: 105, atk: 26, def: 5, xp: 21, gold: 9, h: .19, trait: 'poison', w: ['feu'], r: ['poison'], tip: 'Son venin empoisonne 3 tours.' },
   shroom: { name: 'Champignon furieux', hp: 140, atk: 23, def: 8, xp: 21, gold: 9, h: .21, trait: 'regen', w: ['feu'], r: ['poison'], tip: 'Ses spores le soignent à chaque tour.' },
   goblin: { name: 'Gobelin voleur', hp: 112, atk: 26, def: 6, xp: 23, gold: 18, h: .22, trait: 'steal', w: ['glace'], r: [], tip: 'Vole tes potions ! Tue-le pour les récupérer.' },
-  bossWitch: { name: 'Sylvaine', boss: true, hp: 2100, atk: 60, def: 11, xp: 330, gold: 280, h: .4, w: ['feu'], r: ['poison'], tip: 'Se soigne en frappant et lance une malédiction empoisonnée sur toute l’équipe. À mi-vie, ses ronces blessent ceux qui frappent au corps à corps.' },
-  bossBone: { name: 'Roi des Os', boss: true, hp: 760, atk: 33, def: 6, xp: 150, gold: 120, h: .46, w: ['feu'], r: ['poison'], tip: 'Prépare un coup de faux sur toute l’équipe. Défends-toi, ou étourdis-le !' },
+  bossWitch: { name: 'Sylvaine', boss: true, hp: 2500, atk: 66, def: 13, xp: 330, gold: 280, h: .4, w: ['feu'], r: ['poison'], tip: 'Se soigne en frappant et lance une malédiction empoisonnée sur toute l’équipe. À mi-vie, ses ronces blessent ceux qui frappent au corps à corps.' },
+  snake: { name: 'Serpent des cendres', hp: 105, atk: 22, def: 7, xp: 24, gold: 11, h: .2, trait: 'double', w: ['glace'], r: ['feu'], tip: 'Rapide : il frappe deux fois.' },
+  imp: { name: 'Diablotin', hp: 95, atk: 26, def: 6, xp: 24, gold: 12, h: .2, trait: 'burn', w: ['glace'], r: ['feu'], tip: 'Il t’enflamme : brûlure pendant 3 tours.' },
+  scorp: { name: 'Scorpion de braise', hp: 118, atk: 24, def: 11, xp: 25, gold: 12, h: .19, trait: 'poison', w: ['glace'], r: ['feu', 'poison'], tip: 'Carapace épaisse, son dard empoisonne.' },
+  golem: { name: 'Golem de lave', hp: 190, atk: 30, def: 14, xp: 32, gold: 15, h: .3, trait: 'slow', w: ['glace'], r: ['feu', 'poison'], tip: 'Lent : il charge un tour, puis frappe très fort.' },
+  bossDragon: { name: 'Dragon Écarlate', boss: true, hp: 2800, atk: 100, def: 15, xp: 520, gold: 450, h: .34, w: ['glace'], r: ['feu'], tip: 'Souffle de feu sur toute l’équipe. À mi-vie, il s’envole : l’épée ne l’atteint presque plus. Après un piqué, il s’écrase, étourdi et vulnérable.' },
+  frog: { name: 'Crapaud toxique', hp: 120, atk: 22, def: 8, xp: 26, gold: 13, h: .18, trait: 'poison', w: ['glace'], r: ['poison'], tip: 'Sa langue gluante empoisonne.' },
+  wisp: { name: 'Feu follet', hp: 95, atk: 25, def: 6, xp: 26, gold: 13, h: .16, fly: true, trait: 'evade', w: ['foudre'], r: ['feu', 'poison'], tip: 'Insaisissable : esquive un coup sur quatre.' },
+  zombie: { name: 'Noyé des marais', hp: 160, atk: 24, def: 10, xp: 28, gold: 14, h: .24, trait: 'regen', w: ['feu'], r: ['poison'], tip: 'Il se recompose à chaque tour.' },
+  vine: { name: 'Liane carnivore', hp: 135, atk: 21, def: 9, xp: 27, gold: 13, h: .23, trait: 'double', w: ['feu'], r: ['poison'], tip: 'Ses lianes frappent deux fois.' },
+  bossHag: { name: 'Morgane', boss: true, hp: 3900, atk: 116, def: 17, xp: 700, gold: 650, h: .42, w: ['foudre'], r: ['poison'], tip: 'Son chaudron empoisonne toute l’équipe et elle se soigne. À mi-vie, le marais devient toxique : il ronge chaque héros qui ne se défend pas.' },
+  harpy: { name: 'Harpie des cimes', hp: 115, atk: 27, def: 8, xp: 29, gold: 15, h: .19, fly: true, trait: 'double', w: ['feu', 'foudre'], r: ['glace'], tip: 'Elle fond sur toi deux fois.' },
+  bear: { name: 'Ours de givre', hp: 175, atk: 30, def: 12, xp: 31, gold: 15, h: .25, trait: 'howl', w: ['feu', 'foudre'], r: ['glace'], tip: 'Il rugit, puis frappe très fort.' },
+  spirit: { name: 'Esprit de glace', hp: 120, atk: 28, def: 9, xp: 30, gold: 15, h: .19, fly: true, trait: 'chill', w: ['feu'], r: ['glace', 'poison'], tip: 'Son toucher glacé vide ton mana.' },
+  yeti: { name: 'Yéti', hp: 220, atk: 34, def: 14, xp: 34, gold: 17, h: .31, trait: 'slow', w: ['feu'], r: ['glace'], tip: 'Énorme et lent : il charge, puis frappe très fort.' },
+  bossQueen: { name: 'Reine des Glaces', boss: true, hp: 6200, atk: 128, def: 20, xp: 900, gold: 850, h: .42, w: ['feu'], r: ['glace'], tip: 'Sa Prison de glace gèle un héros (Défends-toi !) et son blizzard frappe toute l’équipe. À mi-vie, l’hiver éternel vide votre mana.' },
+  bossBone: { name: 'Roi des Os', boss: true, hp: 1000, atk: 43, def: 10, xp: 150, gold: 120, h: .46, w: ['feu'], r: ['poison'], tip: 'Prépare un coup de faux sur toute l’équipe. Défends-toi, ou étourdis-le !' },
 };
 // Elite variants: a colour, a power, double rewards
 const AFFIX = {
@@ -402,6 +417,9 @@ const AFFIX = {
 const CHAPTERS = [
   { name: 'La Crypte oubliée', ban: 'img/bgc1.webp', boss: 'bossBone', story: 'in', end: 'out' },
   { name: 'La Forêt des Murmures', ban: IP + 'bg1_0.webp', boss: 'bossWitch', story: 'in2', end: 'out2' },
+  { name: 'Les Mines de Braise', ban: IP + 'bg2_0.webp', boss: 'bossDragon', story: 'in3', end: 'out3' },
+  { name: 'Les Marais Hantés', ban: IP + 'bg3_0.webp', boss: 'bossHag', story: 'in4', end: 'out4' },
+  { name: 'Les Pics Gelés', ban: IP + 'bg4_0.webp', boss: 'bossQueen', story: 'in5', end: 'out5' },
 ];
 const LEVELS = [
   { ch: 0, name: 'Le seuil', bg: 'bgc1', local: true, hz: .575, waves: [['slime'], ['rat'], ['slime', 'rat']], rec: 1, elite: 0 },
@@ -414,6 +432,21 @@ const LEVELS = [
   { ch: 1, name: 'Nid de soie', bg: 'bg1_2', hz: .62, waves: [['spider', 'spider'], ['spider', 'wolf', 'spider'], ['goblin', 'spider', 'spider'], ['wolf', 'spider', 'wolf']], rec: 8, elite: .24 },
   { ch: 1, name: 'Camp gobelin', bg: 'bg1_3', hz: .6, waves: [['goblin', 'goblin'], ['goblin', 'wolf', 'goblin'], ['shroom', 'goblin', 'spider'], ['goblin', 'goblin', 'wolf']], rec: 9, elite: .26 },
   { ch: 1, name: 'La hutte', bg: 'bg1_4', hz: .76, waves: [['wolf', 'goblin', 'spider'], ['shroom', 'spider', 'wolf'], ['bossWitch', 'wolf']], rec: 10, boss: true, elite: .28 },
+  { ch: 2, name: 'L’entrée', bg: 'bg2_0', hz: .72, waves: [['snake', 'imp'], ['imp', 'scorp'], ['snake', 'imp', 'scorp'], ['golem', 'imp']], rec: 11, elite: .26 },
+  { ch: 2, name: 'Cristaux', bg: 'bg2_1', hz: .75, waves: [['scorp', 'scorp'], ['snake', 'golem'], ['imp', 'scorp', 'snake'], ['scorp', 'imp', 'imp']], rec: 12, elite: .28 },
+  { ch: 2, name: 'Pont de lave', bg: 'bg2_2', hz: .8, waves: [['imp', 'imp'], ['golem', 'snake'], ['imp', 'golem', 'imp'], ['snake', 'scorp', 'golem']], rec: 13, elite: .3 },
+  { ch: 2, name: 'La forge', bg: 'bg2_3', hz: .62, waves: [['golem', 'imp'], ['scorp', 'golem', 'snake'], ['imp', 'imp', 'golem'], ['golem', 'golem']], rec: 14, elite: .3 },
+  { ch: 2, name: 'Le trésor', bg: 'bg2_4', hz: .68, waves: [['golem', 'imp', 'snake'], ['scorp', 'golem', 'imp'], ['bossDragon', 'imp']], rec: 15, boss: true, elite: .32 },
+  { ch: 3, name: 'Le ponton', bg: 'bg3_0', hz: .72, waves: [['frog', 'wisp'], ['wisp', 'zombie'], ['frog', 'vine', 'wisp'], ['zombie', 'frog', 'frog']], rec: 16, elite: .3 },
+  { ch: 3, name: 'Le village noyé', bg: 'bg3_1', hz: .72, waves: [['zombie', 'zombie'], ['wisp', 'vine', 'frog'], ['zombie', 'wisp', 'wisp'], ['vine', 'zombie', 'frog']], rec: 17, elite: .3 },
+  { ch: 3, name: 'Le cimetière', bg: 'bg3_2', hz: .75, waves: [['wisp', 'wisp'], ['zombie', 'vine', 'zombie'], ['frog', 'wisp', 'zombie'], ['zombie', 'zombie', 'wisp']], rec: 18, elite: .32 },
+  { ch: 3, name: 'Les lianes', bg: 'bg3_3', hz: .8, waves: [['vine', 'vine'], ['vine', 'frog', 'vine'], ['zombie', 'vine', 'wisp'], ['vine', 'vine', 'zombie']], rec: 19, elite: .32 },
+  { ch: 3, name: 'La cabane', bg: 'bg3_4', hz: .78, waves: [['zombie', 'vine', 'frog'], ['wisp', 'zombie', 'vine'], ['bossHag', 'zombie']], rec: 20, boss: true, elite: .34 },
+  { ch: 4, name: 'Le col', bg: 'bg4_0', hz: .7, waves: [['harpy', 'bear'], ['spirit', 'harpy'], ['bear', 'spirit', 'harpy'], ['yeti', 'harpy']], rec: 21, elite: .32 },
+  { ch: 4, name: 'Le pont suspendu', bg: 'bg4_1', hz: .78, waves: [['harpy', 'harpy'], ['bear', 'spirit'], ['harpy', 'yeti', 'spirit'], ['spirit', 'bear', 'harpy']], rec: 22, elite: .34 },
+  { ch: 4, name: 'La grotte de glace', bg: 'bg4_2', hz: .82, waves: [['spirit', 'spirit'], ['yeti', 'spirit'], ['bear', 'spirit', 'bear'], ['yeti', 'spirit', 'harpy']], rec: 23, elite: .34 },
+  { ch: 4, name: 'Les neiges', bg: 'bg4_3', hz: .7, waves: [['yeti', 'harpy'], ['bear', 'bear'], ['yeti', 'spirit', 'harpy'], ['yeti', 'yeti']], rec: 24, elite: .36 },
+  { ch: 4, name: 'Le palais', bg: 'bg4_4', hz: .82, waves: [['bear', 'spirit', 'harpy'], ['yeti', 'spirit', 'bear'], ['bossQueen', 'spirit']], rec: 25, boss: true, elite: .36 },
 ];
 const RECRUIT = { 0: 'selena', 1: 'orin', 6: 'lyra', 9: 'nyx' }; // clearing level index → who joins
 const STORY = {
@@ -424,7 +457,20 @@ const STORY = {
     ['aldric', 'Si les arbres commencent à donner des conseils, je demande un deuxième avis.'], ['narr', 'Sylvaine la Sorcière protège un autel marqué du même œil draconique.'],
     ['orin', 'Une sorcière dans une forêt. Mon feu va adorer cet endroit.'], ['selena', 'Orin. On ne brûle pas la forêt.']],
   out2: [['bossWitch', 'Je n’étais qu’un pion... Sa voix venait d’au-delà des chaînes...'], ['aldric', 'Vorthax. Ce nom revient un peu trop souvent à mon goût.'],
-    ['narr', 'Sylvaine laisse tomber un médaillon couvert de symboles des marais.'], ['narr', 'À suivre : Chapitre 3 · Les Mines de Braise.']],
+    ['narr', 'Sylvaine laisse tomber une carte gravée de flammes : l’entrée des Mines de Braise.'], ['narr', 'Le chapitre 3 est ouvert : les Mines de Braise.']],
+  in3: [['narr', 'Chapitre 3 · Les Mines de Braise'], ['narr', 'La montagne saigne du feu. Les mineurs ont fui, mais quelque chose veille encore.'],
+    ['aldric', 'Une mine en feu. Il ne manque plus qu’un effondrement pour compléter la visite.'], ['narr', 'Le Dragon Écarlate ravage ces galeries depuis que la carte a été découverte.'],
+    ['nyx', 'Un dragon qui dort sur un trésor. Je prends le trésor, vous prenez le dragon ?'], ['aldric', 'Ma marque brûle depuis qu’on est entrés. Il me sent.']],
+  out3: [['bossDragon', 'Il m’avait promis la liberté... Mais je n’étais qu’une arme entre ses griffes.'], ['bossDragon', 'Chevalier marqué... Vorthax t’attend. Il t’a toujours attendu.'],
+    ['aldric', 'Les dragons aussi se font manipuler. Ça devient presque gênant.'], ['narr', 'Sous les cendres repose un médaillon couvert de symboles des marais.'], ['narr', 'Le chapitre 4 est ouvert : les Marais Hantés.']],
+  in4: [['narr', 'Chapitre 4 · Les Marais Hantés'], ['narr', 'Les brumes avalent les chemins. Ici, même les fantômes ont peur de la nuit.'], ['lyra', 'Parfait. Un marécage hanté. J’espère au moins que les moustiques sont morts.'],
+    ['narr', 'Morgane commande aux esprits et parle avec une voix qui n’est pas la sienne.'], ['aldric', 'Si elle partage son corps avec quelque chose, on va devoir négocier serré.']],
+  out4: [['bossHag', 'Sa prison s’effrite... Les pics du nord cachent le prochain verrou...'], ['aldric', 'Un verrou de plus. J’espère qu’au bout, il y a une porte et pas un autre monstre.'],
+    ['narr', 'Morgane laisse un sceau de glace, gravé du même œil draconique.'], ['narr', 'Le chapitre 5 est ouvert : les Pics Gelés.']],
+  in5: [['narr', 'Chapitre 5 · Les Pics Gelés'], ['narr', 'Le vent mord la peau et les sommets étouffent les cris sous des siècles de neige.'], ['orin', 'Je commence à regretter les marais. Au moins, là-bas, l’eau n’était pas solide.'],
+    ['narr', 'La Reine des Glaces protège un manuscrit sur le sceau originel.'], ['selena', 'Alors prenons le manuscrit. La montagne peut garder le reste.']],
+  out5: [['bossQueen', 'Le sceau n’a jamais été une serrure... C’était une chaîne forgée pour un roi-dragon.'], ['bossQueen', 'Et la dernière chaîne, chevalier... c’est toi. Ta marque est le verrou.'],
+    ['aldric', '...Moi ? Alors c’est pour ça qu’il m’appelle depuis le début.'], ['narr', 'Le manuscrit mène à la Citadelle du Néant, où Vorthax attend sa liberté.'], ['narr', 'Fin du chapitre 5. La suite de l’aventure arrive bientôt !']],
   selena: [['selena', 'Un chevalier seul dans une crypte ? Tu vas avoir besoin de quelqu’un pour te recoudre.'], ['aldric', 'Je refuse rarement une soigneuse.'],
     ['narr', 'Séléna la Paladine rejoint l’équipe ! Elle soigne, protège et relève les alliés.']],
   orin: [['orin', 'Des squelettes ? Ils résistent au poison, mais pas au feu. Vous avez besoin d’un peu de chaleur.'], ['selena', 'Tant que tu ne brûles pas mes cheveux.'],
@@ -479,8 +525,8 @@ function autoEquip() { for (const id of Object.keys(S.own)) for (const sl of ['w
   for (const it of S.inv) if (it.slot === sl && canWear(it, id) && (!wornBy(it) || wornBy(it) === id) && itemScore(it) > itemScore(best)) best = it; if (best && best !== cur) equip(id, best); } }
 // skill ranks: 1 point per level, rank 1..5, +12 % power per rank (Ultime +15 %)
 const rankOf = (id, k) => ((S.h[id].sk || {})[k]) || 1;
-const ptsLeft = id => (S.h[id].lvl - 1) - Object.values(S.h[id].sk || {}).reduce((a, r) => a + r - 1, 0);
-const rkMult = (id, k) => 1 + (k === 'ult' ? .15 : .12) * (rankOf(id, k) - 1);
+const ptsLeft = id => Math.floor((S.h[id].lvl - 1) / 2) - Object.values(S.h[id].sk || {}).reduce((a, r) => a + r - 1, 0);
+const rkMult = (id, k) => 1 + (k === 'ult' ? .12 : .1) * (rankOf(id, k) - 1);
 
 // ---------- Save ----------
 const SKEY = 'dragonbound2.v2';
@@ -489,7 +535,7 @@ function fresh() { const h = {}; HORDER.forEach(k => { h[k] = { lvl: 1, xp: 0, w
 let S = fresh();
 try { if (!SIM) { const s = JSON.parse(localStorage.getItem(SKEY)); if (s && s.v === 2) { S = Object.assign(fresh(), s); while (S.stars.length < LEVELS.length) S.stars.push(0); S.items = Object.assign({ pot: 0, eth: 0, fea: 0, eli: 0 }, S.items); } } } catch (e) {}
 const save = () => { if (SIM) return; try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {} };
-const xpNeed = l => Math.round(34 + 20 * l + 5 * l * l);
+const xpNeed = l => Math.round(40 + 24 * l + 6.5 * l * l);
 function heroStats(id) { const H = HEROES[id], s = S.h[id], L = s.lvl, o = {};
   for (const k of ['hp', 'mp', 'atk', 'mag', 'def']) o[k] = H.base[k] + H.gr[k] * (L - 1);
   o.atk *= 1 + .1 * s.w; o.mag *= 1 + .1 * s.w; o.hp *= 1 + .1 * s.a; o.def *= 1 + .1 * s.a;
@@ -562,8 +608,10 @@ function calc(a, t, pow, stat = 'atk', el = 'phys', forceCrit) {
 async function damage(t, r, opts = {}) {
   const p = px(t), hy = p.y - p.h * .5, src = opts.src;
   if (t.side === 'h' && t.st.dodge) { t.st.dodge = 0; txt(p.x, p.y - p.h - 10, 'Esquive !', '#c8d2da', true); SFX.whoosh(); if (!FAST) { await tween(t, { ox: -30 }, 120); tween(t, { ox: 0 }, 200); } return 0; }
-  if (t.aff === 'ghost' && Math.random() < .25) { txt(p.x, p.y - p.h - 10, 'Esquive !', '#bcd0ff', true); SFX.whoosh(); return 0; }
+  if ((t.aff === 'ghost' || (t.m && t.m.trait === 'evade')) && Math.random() < .25) { txt(p.x, p.y - p.h - 10, 'Esquive !', '#bcd0ff', true); SFX.whoosh(); return 0; }
   let d = r.d;
+  if (t.ph && t.ph.fly && opts.melee) { d = Math.max(1, Math.round(d * .4)); txt(p.x, p.y - p.h - 40, 'Hors de portée…', '#c8d2da'); }
+  if (t.ph && t.ph.down) d = Math.round(d * 1.5);
   if (t.ph && t.ph.shield > 0) { const sd = Math.round(d * (opts.el === 'feu' ? 2 : 1)); const ab = Math.min(t.ph.shield, sd); t.ph.shield -= ab; d = Math.max(0, d - Math.round(ab / (opts.el === 'feu' ? 2 : 1)));
     txt(p.x + 30, p.y - p.h - 26, `-${ab} 🦴`, '#f2ead8'); if (t.ph.shield <= 0) { txt(p.x, p.y - p.h - 50, 'Mur brisé !', '#ffe08a', true); sparks(p.x, hy, 24, ['#f2ead8', '#c8b890'], 1.5, .12); SFX.clang(); } }
   t.hp = Math.max(0, t.hp - d); t.hitT = now(); t.kb = r.crit ? 24 : 14; if (alive(t) || t.side === 'h') setPose(t, 'hit', 320);
@@ -705,6 +753,8 @@ async function foeHit(f, t, mult, label) {
   slashFx(c.x, c.y, true, '#ff8a6a');
   const d = await damage(t, calc(f, t, mult), { src: f });
   if (alive(t) && f.m.trait === 'poison' && Math.random() < .55 && !t.st.guard) { t.st.poison = { d: Math.max(3, Math.round(f.atk * .45)), n: 3 }; txt(c.x, c.y - 60, '☠️ Empoisonné', '#a8e070', true); }
+  if (alive(t) && f.m.trait === 'chill' && t.mp > 0) { const l = Math.round(t.mpMax * .3); t.mp = Math.max(0, t.mp - l); txt(c.x, c.y - 60, `-${l} 💧 gelé`, '#bfe8ff'); refresh(); }
+  if (alive(t) && f.m.trait === 'burn' && Math.random() < .55 && !t.st.guard) { t.st.burn = { d: Math.max(3, Math.round(f.atk * .4)), n: 3 }; txt(c.x, c.y - 60, '🔥 En feu', '#ffb347', true); }
   if (f.m.trait === 'steal' && Math.random() < .4) { const ks = ['pot', 'eth', 'eli', 'fea'].filter(k => S.items[k] > 0); if (ks.length) { const k = pick(ks); S.items[k]--; (f.stolen = f.stolen || []).push(k); save(); txt(c.x, c.y - 80, `Vole : ${ITEMS[k].name} !`, '#ffb070', true); SFX.coin(); buildActs(); } }
   await wait(160); await dashBack(f); setPose(f, 'idle', 0); return d;
 }
@@ -712,6 +762,9 @@ async function foeAct(f) {
   if (!livingH().length) return;
   f.turn++;
   if (f.boss) return bossAct(f);
+  if (f.m.trait === 'slow') {
+    if (f.charging) { f.charging = false; const t = pickTarget(f); say(`${f.name} écrase ${t.name} !`); B.shake = { t0: now(), amp: 7 }; await foeHit(f, t, 1.7, 'Écrasement !'); return; }
+    f.charging = true; setPose(f, 'atk', 600); const p = px(f); sparks(p.x, p.y - p.h * .5, 16, ['#ff8a3c', '#ffd76a'], 1.2, -.02); say(`${f.name} accumule de la lave… <b>gros coup au prochain tour !</b>`); SFX.roar(); await wait(600); return; }
   if (f.m.trait === 'howl') {
     if (f.charging) { f.charging = false; const t = pickTarget(f); say(`${f.name} bondit sur ${t.name} !`); await foeHit(f, t, 1.8, 'Morsure !'); return; }
     if (f.turn % 2 === 1) { f.charging = true; setPose(f, 'atk', 600); SFX.roar(); const p = px(f); ring(p.x, p.y - p.h * .5, '#ff6a4a', 70); say(`${f.name} hurle… <b>il va mordre très fort !</b>`); await wait(650); return; } }
@@ -721,6 +774,9 @@ async function foeAct(f) {
 }
 async function bossAct(f) {
   if (f.id === 'bossWitch') return witchAct(f);
+  if (f.id === 'bossDragon') return dragonAct(f);
+  if (f.id === 'bossHag') return hagAct(f);
+  if (f.id === 'bossQueen') return queenAct(f);
   const p = px(f);
   if (f.phPending && !f.ph) { f.phPending = false; f.ph = { shield: Math.round(f.hpMax * .16) }; f.ph.max = f.ph.shield; say('Le Roi des Os lève une <b>muraille d’ossements</b> ! (le feu la brise deux fois plus vite)');
     setPose(f, 'laugh', 1400); SFX.roar(); B.shake = { t0: now(), amp: 6 }; sparks(p.x, p.y - p.h * .5, 40, ['#f2ead8', '#c8b890'], 1.6, .1); await wait(800);
@@ -728,9 +784,49 @@ async function bossAct(f) {
       if (i >= 0) B.foes[i] = s; else B.foes.push(s); say('Un squelette surgit du sol !'); await tween(s, { alpha: 1 }, 400); }
     refresh(); await wait(300); return; }
   if (f.charging) { f.charging = false; say('<b>Coup de faux !</b>'); setPose(f, 'blast', 900); SFX.roar(); focusCam(f, B.party[0]); B.shake = { t0: now(), amp: 8 }; await wait(250);
-    for (const h of livingH()) { const c = center(h); slashFx(c.x, c.y, true, '#c8a8ff'); await damage(h, calc(f, h, 1.45), { src: f }); } await wait(400); return; }
+    for (const h of livingH()) { const c = center(h); slashFx(c.x, c.y, true, '#c8a8ff'); await damage(h, calc(f, h, 1.6), { src: f }); } await wait(400); return; }
   if (f.turn % (f.ph ? 2 : 3) === 2 % (f.ph ? 2 : 3)) { f.charging = true; setPose(f, 'spe', 1e9); say('Le Roi des Os lève sa faux… <b>Défends-toi ou étourdis-le !</b>'); SFX.roar(); await wait(700); return; }
   const t = pickTarget(f); say(`Le Roi des Os frappe ${t.name} !`); await foeHit(f, t, f.ph ? 1.15 : 1);
+}
+function summon(id, f) { if (livingF().length >= 3) return null; const i = B.foes.findIndex(x => !alive(x) && !x.boss); const s = mkFoe(id, 1, B.lvIdx, true, 3, 0);
+  s.slot = BSLOT[[1, 2].find(j => !B.foes.some(x => alive(x) && x.slot === BSLOT[j])) || 1]; s.alpha = 0; if (i >= 0) B.foes[i] = s; else B.foes.push(s); tween(s, { alpha: 1 }, 400); return s; }
+async function hagAct(f) {
+  const p = px(f);
+  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { toxic: true }; B.toxic = Math.round(f.atk * .12); say('Morgane renverse son chaudron : <b>le marais devient toxique !</b> (la Défense protège)'); setPose(f, 'rage', 1400); SFX.roar(); B.shake = { t0: now(), amp: 6 };
+    sparks(p.x, p.y - p.h * .3, 40, ['#8ad040', '#c8f070', '#3a6a20'], 1.6, .05); await wait(800); if (summon('zombie', f)) say('Un noyé sort de la vase !'); refresh(); await wait(400); return; }
+  if (f.charging) { f.charging = false; say('<b>Chaudron empoisonné !</b>'); setPose(f, 'spe', 900); SFX.magic(); B.shake = { t0: now(), amp: 6 }; await wait(250);
+    for (const h of livingH()) { const c = center(h); sparks(c.x, c.y + 10, 14, ['#8ad040', '#c8f070'], 1.2); await damage(h, calc(f, h, 1.0), { src: f }); if (alive(h) && !h.st.guard) { h.st.poison = { d: Math.round(f.atk * .3), n: 3 }; txt(c.x, c.y - 60, '☠️ Empoisonné', '#a8e070'); } } await wait(350); return; }
+  if (f.turn % 4 === 3 && f.hp < f.hpMax * .9) { say('Morgane boit une potion noire et se soigne !'); setPose(f, 'heal', 900); SFX.heal(); await heal(f, f.hpMax * .07); for (const o of livingF()) if (o !== f) await heal(o, o.hpMax * .2); await wait(400); return; }
+  if (f.turn % 3 === 2) { f.charging = true; setPose(f, 'laugh', 1e9); say('Morgane fait bouillir son chaudron… <b>Défends-toi ou étourdis-la !</b>'); SFX.magic(); await wait(700); return; }
+  const t = pickTarget(f); say(`Morgane maudit ${t.name} !`); setPose(f, 'atk', 600); await wait(150); SFX.magic(); await proj('venom', center(f), center(t), 300); await damage(t, calc(f, t, f.ph ? 1.15 : 1), { src: f });
+}
+async function queenAct(f) {
+  const p = px(f);
+  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { winter: true }; say('<b>Hiver éternel !</b> Le froid vide votre mana à chaque tour.'); setPose(f, 'rage', 1400); SFX.ice(); B.shake = { t0: now(), amp: 6 };
+    for (let i = 0; i < 4; i++) snowFx(rnd(0, VW), VH * .4); await wait(800); if (summon('spirit', f)) say('Un esprit de glace apparaît !'); refresh(); await wait(400); return; }
+  if (f.ph) for (const h of livingH()) { const l = Math.round(h.mpMax * .1); h.mp = Math.max(0, h.mp - l); }
+  if (f.charging) { f.charging = false; const t = f.prison; say(`<b>Prison de glace</b> sur ${t.name} !`); setPose(f, 'freeze', 900); SFX.ice(); await wait(250);
+    if (alive(t)) { const c = center(t); snowFx(c.x, c.y); await damage(t, calc(f, t, 1.3), { src: f }); if (alive(t)) { if (t.st.guard) txt(c.x, c.y - 70, 'Protégé !', '#bfe0ff', true); else { t.st.freeze = 1; txt(c.x, c.y - 70, '🧊 Gelé', '#bfe8ff', true); } } } await wait(350); return; }
+  if (f.turn % 3 === 2) { f.charging = true; f.prison = pickTarget(f); setPose(f, 'prep', 1e9); say(`La Reine vise ${f.prison.name}… <b>${f.prison.name} doit se défendre, ou étourdis la Reine !</b>`); SFX.ice(); await wait(700); return; }
+  if (f.turn % 3 === 1) { say('<b>Blizzard royal !</b>'); setPose(f, 'blast', 900); SFX.ice(); await wait(250); for (const h of livingH()) { const c = center(h); snowFx(c.x, c.y); await damage(h, calc(f, h, .75), { src: f }); } await wait(300); return; }
+  const t = pickTarget(f); say(`La Reine frappe ${t.name} !`); setPose(f, 'atk', 600); await wait(150); SFX.ice(); await proj('orb', center(f), center(t), 300); await damage(t, calc(f, t, f.ph ? 1.2 : 1), { src: f });
+}
+async function dragonAct(f) {
+  const p = px(f), ph = f.ph;
+  if (f.phPending && !ph) { f.phPending = false; f.ph = { fly: true, t: 0 }; say('Le Dragon Écarlate <b>s’envole</b> ! (l’épée ne l’atteint presque plus)'); setPose(f, 'fly', 1200); SFX.roar(); B.shake = { t0: now(), amp: 7 };
+    sparks(p.x, p.y - p.h * .3, 40, ['#ff8a3c', '#ffd76a', '#ffffff'], 1.8, .05); await wait(900); refresh(); return; }
+  if (ph) { ph.t++;
+    if (ph.down) { ph.down = false; ph.fly = true; say('Le dragon reprend son envol !'); setPose(f, 'fly', 900); SFX.roar(); await wait(700); return; }
+    if (ph.t % 2 === 1) { say('<b>Pluie de flammes !</b>'); setPose(f, 'blast', 900); SFX.fire(); await wait(250);
+      for (const h of livingH()) { const c = center(h); await proj('fire', { x: p.x, y: p.y - p.h * 1.2 }, c, 300); await damage(h, calc(f, h, .7), { src: f }); if (alive(h) && Math.random() < .5 && !h.st.guard) h.st.burn = { d: Math.round(f.atk * .25), n: 3 }; }
+      await wait(300); return; }
+    const t = pickTarget(f); say(`<b>Piqué enflammé</b> sur ${t.name} !`); setPose(f, 'dive', 900); SFX.roar(); await foeHit(f, t, 1.8, 'Piqué !');
+    ph.fly = false; ph.down = true; B.shake = { t0: now(), amp: 9 }; setPose(f, 'stun', 1e9); say('Le dragon s’écrase au sol : <b>il est étourdi et vulnérable !</b>'); sparks(p.x, p.y, 30, ['#c8b090', '#8a7050'], 1.5, .1); await wait(700); return; }
+  if (f.charging) { f.charging = false; say('<b>Souffle de feu !</b>'); setPose(f, 'blast', 1000); SFX.fire(); focusCam(f, B.party[0]); B.shake = { t0: now(), amp: 8 }; await wait(250);
+    for (const h of livingH()) { const c = center(h); sparks(c.x, c.y, 18, ['#ffb347', '#ff6a2a', '#ffd76a'], 1.5); await damage(h, calc(f, h, 1.25), { src: f });
+      if (alive(h) && !h.st.guard) { h.st.burn = { d: Math.round(f.atk * .3), n: 3 }; txt(c.x, c.y - 60, '🔥 En feu', '#ffb347'); } } await wait(400); return; }
+  if (f.turn % 3 === 2) { f.charging = true; setPose(f, 'prep', 1e9); say('Le dragon inspire profondément… <b>Défends-toi ou étourdis-le !</b>'); SFX.roar(); await wait(700); return; }
+  const t = pickTarget(f); say(`Le dragon griffe ${t.name} !`); await foeHit(f, t, 1);
 }
 async function witchAct(f) {
   const p = px(f);
@@ -762,6 +858,7 @@ function aiHero(h) {
   const weakest = fs.reduce((a, b) => a.hp < b.hp ? a : b), boss = fs.find(f => f.boss), hurt = hs.filter(x => x.hp < x.hpMax * .5).sort((a, b) => a.hp / a.hpMax - b.hp / b.hpMax);
   const healer = hs.some(x => x.id === 'selena');
   if (h.lb >= 100) { const ok = h.id === 'selena' ? (dead.length || hurt.length >= 2) : h.id === 'nyx' ? true : (fs.length >= 2 || boss); if (ok) return { k: 'ult', tgt: boss || weakest }; }
+  if (h.id !== 'aldric' && fs.some(f => f.charging && f.prison === h)) return { k: 'guard' };
   if (h.hp < h.hpMax * .3 && !healer && S.items.pot > 0) return { k: 'item', item: 'pot', tgt: h };
   if (dead.length && !hs.some(x => x.id === 'selena' && x !== h && x.mp >= 18) && S.items.fea > 0 && h.id !== 'selena') return { k: 'item', item: 'fea', tgt: dead[0] };
   switch (h.id) {
@@ -807,12 +904,13 @@ async function runLevel(i) {
   if (!SIM) { load(L.bg, L.local); S.team.concat(B.bench.map(b => b.id)).forEach(id => loadSprite(HEROES[id].sprite)); L.waves.flat().forEach(loadSprite); }
   for (B.wave = 0; B.wave < L.waves.length; B.wave++) {
     const ws = L.waves[B.wave], boss = ws.some(k => MON[k].boss), wn = boss ? 3 : Math.max(n, ws.length);
-    B.foes = ws.map((k, j) => mkFoe(k, j, i, boss, ws.length > n ? ws.length : n, L.elite)); B.round = 0;
+    B.foes = ws.map((k, j) => mkFoe(k, j, i, boss, ws.length > n ? ws.length : n, L.elite)); B.round = 0; B.toxic = 0;
+    for (const f of B.foes) if (f.id === 'bossDragon') f.slot = [.72, .6];
     if (!boss) B.foes.forEach((f, j) => { f.slot = FSLOT[ws.length - 1][j]; });
     for (const f of B.foes) { f.ox = VW * .5; f.alpha = 0; }
     $('fWave').textContent = `Vague ${B.wave + 1} / ${L.waves.length}`; refresh();
     const el = B.foes.find(f => f.elite);
-    if (boss) { music('boss1'); say(ws.includes('bossWitch') ? '<b>Sylvaine la Sorcière</b> sort de sa hutte !' : '<b>Le Roi des Os</b> se dresse sur son trône !'); }
+    if (boss) { music('boss1'); say(ws.includes('bossQueen') ? '<b>La Reine des Glaces</b> se lève de son trône !' : ws.includes('bossHag') ? '<b>Morgane</b> sort de sa cabane en ricanant !' : ws.includes('bossDragon') ? '<b>Le Dragon Écarlate</b> se réveille sur son trésor !' : ws.includes('bossWitch') ? '<b>Sylvaine la Sorcière</b> sort de sa hutte !' : '<b>Le Roi des Os</b> se dresse sur son trône !'); }
     else say(el ? `⭐ Un élite : <b>${el.name}</b> (${el.elite.tip}) !` : B.wave ? 'Une nouvelle vague approche !' : 'Des monstres surgissent !');
     await Promise.all(B.foes.map((f, j) => wait(j * 120).then(() => tween(f, { ox: 0, alpha: 1 }, 520, easeOut))));
     if (boss && !FAST) { const bf = B.foes.find(f => f.boss); setPose(bf, 'laugh', 1200); SFX.roar(); B.shake = { t0: now(), amp: 5 }; await wait(1100); }
@@ -850,6 +948,8 @@ async function fightWave() {
     }
     if (!livingH().length) return 'lose';
     if (!livingF().length) { await wait(500); return 'win'; }
+    if (B.toxic) for (const h of livingH()) if (!h.st.guard) { const p = px(h); h.hp = Math.max(0, h.hp - B.toxic); h.hitT = now(); txt(p.x, p.y - p.h - 6, `-${B.toxic} ☠️`, '#a8e070'); if (!alive(h)) await kill(h); }
+    if (B.toxic) { refresh(); if (!livingH().length) return 'lose'; }
     if (B.aegis) B.aegis--;
     for (const h of livingH()) h.mp = Math.min(h.mpMax, h.mp + 2);
     if (B.round > 60) return 'lose';
@@ -972,11 +1072,11 @@ function drawUnit(c, u, t, sel) {
   const p = px(u), dead = !alive(u), n = now();
   if (dead && u.side === 'f' && u.deadT && n - u.deadT > 1300) return;
   const a = u.alpha * (dead ? (u.side === 'h' ? .6 : Math.max(0, 1 - (n - u.deadT) / 1300)) : 1); if (a <= 0) return;
-  const bob = reduce || dead ? 0 : Math.sin(t / (u.side === 'h' ? 520 : 430) + u.seed), fly = u.m && u.m.fly && !dead ? p.h * .55 + bob * 6 : 0;
+  const bob = reduce || dead ? 0 : Math.sin(t / (u.side === 'h' ? 520 : 430) + u.seed), fly = (u.m && u.m.fly && !dead ? p.h * .55 + bob * 6 : 0) + (u.ph && u.ph.fly && !dead ? p.h * .25 + bob * 10 : 0);
   c.save(); c.globalAlpha = a * (fly ? .25 : .45); c.fillStyle = '#000'; c.beginPath(); c.ellipse(p.x, p.y, p.h * (u.boss ? .42 : .3), p.h * .07, 0, 0, 7); c.fill(); c.restore();
   if (B.turn === u && !dead) { c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = `rgba(255,210,90,${.6 + .3 * Math.sin(t / 200)})`; c.lineWidth = 3; c.beginPath(); c.ellipse(p.x, p.y, p.h * .34, p.h * .09, 0, 0, 7); c.stroke(); c.restore(); }
   if (sel && sel.ts.includes(u)) { const col = u.side === 'f' ? '255,90,70' : '120,230,120'; c.save(); c.strokeStyle = `rgba(${col},${.6 + .35 * Math.sin(t / 150)})`; c.lineWidth = 3; c.beginPath(); c.ellipse(p.x, p.y, p.h * .38, p.h * .1, 0, 0, 7); c.stroke(); c.restore(); }
-  const pose = dead ? 'ko' : n < u.poseUntil ? u.pose : u.st.guard || u.st.taunt ? 'def' : u.charging ? 'spe' : u.side === 'h' && u.hp < u.hpMax * .25 && POSEM[u.sprite + '_kneel'] ? 'kneel' : 'idle';
+  const pose = dead ? 'ko' : n < u.poseUntil ? u.pose : u.ph && u.ph.down ? 'stun' : u.ph && u.ph.fly ? 'fly' : u.st.guard || u.st.taunt ? 'def' : u.charging ? (u.id === 'bossDragon' ? 'prep' : 'spe') : u.side === 'h' && u.hp < u.hpMax * .25 && POSEM[u.sprite + '_kneel'] ? 'kneel' : 'idle';
   const hk = Math.min(1, (n - u.hitT) / 300), recoil = hk < 1 ? Math.pow(1 - hk, 2) * u.kb * (u.side === 'h' ? -1 : 1) : 0;
   const flash = n - u.hitT < 110 ? .95 : hk < 1 ? (1 - hk) * .35 : 0, br = dead ? 0 : bob * .012, sq = hk < 1 ? (1 - hk) * .08 : 0;
   c.save(); c.globalAlpha = a;
@@ -1150,7 +1250,7 @@ function heroSheet(id, tab) { if (id) hsCtl.id = id; if (tab) hsCtl.tab = tab; c
     <div class="stats"><span>❤️ ${st.hp}</span><span>💧 ${st.mp}</span><span>⚔️ ${st.atk}</span><span>✨ ${st.mag}</span><span>🛡️ ${st.def}</span><span>🎯 ${Math.round(st.crit * 100)} %</span></div>
     <div class="slots">${slots}</div>
     <div class="tabsx"><button type="button" data-htab="eq" class="${hsCtl.tab === 'eq' ? 'on' : ''}">Sac (${bag.length})</button><button type="button" data-htab="sk" class="${hsCtl.tab === 'sk' ? 'on' : ''}">Compétences${pts ? ` (${pts})` : ''}</button></div>
-    ${hsCtl.tab === 'sk' ? `<p style="text-align:center;font-size:13px">Points à dépenser : <b>${pts}</b> · 1 point par niveau gagné</p>${sks}` : `<button class="btn" type="button" data-autoeq="1" style="padding:8px;font-size:16px">Équiper le meilleur pour tous</button>${list}`}
+    ${hsCtl.tab === 'sk' ? `<p style="text-align:center;font-size:13px">Points à dépenser : <b>${pts}</b> · 1 point tous les 2 niveaux</p>${sks}` : `<button class="btn" type="button" data-autoeq="1" style="padding:8px;font-size:16px">Équiper le meilleur pour tous</button>${list}`}
     <button class="btn alt" type="button" data-close="1">Fermer</button>`);
   save(); renderHome(); }
 function story(key, cb) { const lines = STORY[key]; let j = 0;
