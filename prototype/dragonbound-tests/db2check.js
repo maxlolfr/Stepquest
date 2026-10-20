@@ -6,7 +6,7 @@ const MIME = { '.html': 'text/html', '.webp': 'image/webp', '.jpg': 'image/jpeg'
 const srv = http.createServer((q, r) => { const p = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': MIME[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); });
 const res = [], ok = (name, cond, extra = '') => res.push(`${cond ? '✅' : '❌'} ${name}${extra ? ' — ' + extra : ''}`);
 const base = over => Object.assign({ v: 2, gold: 100, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h: Object.fromEntries(['aldric', 'selena', 'orin', 'lyra', 'nyx'].map(k => [k, { lvl: 3, xp: 0, w: 0, a: 0 }])),
-  team: ['aldric'], own: { aldric: 1 }, stars: Array(30).fill(0), seen: { in: 1, vid: 1, n09: 1 }, mute: true, ch: 0, inv: [], nid: 1, spd: 3 }, over);
+  team: ['aldric'], own: { aldric: 1 }, stars: Array(30).fill(0), seen: { in: 1, vid: 1, n09: 1, n10: 1 }, mute: true, ch: 0, inv: [], nid: 1, spd: 3 }, over);
 srv.listen(0, async () => {
   const url = `http://127.0.0.1:${srv.address().port}/dragonbound2/index.html`, b = await chromium.launch(), errs = [];
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
@@ -52,8 +52,8 @@ srv.listen(0, async () => {
   // 7. chapter 1 boss → victory → Séléna joins
   await load(base({ stars: [1, 1, 1, 1, 0].concat(Array(25).fill(0)), h: Object.fromEntries(['aldric', 'selena', 'orin', 'lyra', 'nyx'].map(k => [k, { lvl: 14, xp: 0, w: 3, a: 3 }])) })); await closeAll();
   await pg.click('.node[data-lv="4"]'); await pg.waitForTimeout(200); await pg.click('[data-play]'); await pg.waitForSelector('#autoBtn', { state: 'visible' }); await pg.waitForTimeout(1200); await pg.click('#autoBtn');
-  let phase2 = false; for (let t = 0; t < 360 && !(await pg.$('[data-lpick]')); t++) { await pg.waitForTimeout(500); if (!phase2) phase2 = await pg.evaluate(() => { const B = window.__db2.B; return !!(B && B.foes.some(f => f.boss && f.ph)); }); }
-  for (let t = 0; t < 80; t++) { const x = await pg.$('#modal:not([hidden]) .eqf.bag') || await pg.$('#modal:not([hidden]) [data-cnext]') || await pg.$('#modal:not([hidden]) [data-home]') || await pg.$('#modal:not([hidden]) [data-next]'); if (!x) { await pg.waitForTimeout(500); continue; } await x.click(); await pg.waitForTimeout(350); }
+  let phase2 = false; for (let t = 0; t < 360 && !(await pg.$('[data-chpick]')); t++) { await pg.waitForTimeout(500); if (!phase2) phase2 = await pg.evaluate(() => { const B = window.__db2.B; return !!(B && B.foes.some(f => f.boss && f.ph)); }); }
+  for (let t = 0; t < 80; t++) { const x = await pg.$('#modal:not([hidden]) [data-chpick]') || await pg.$('#modal:not([hidden]) [data-chequip=""]') || await pg.$('#modal:not([hidden]) .eqf.bag') || await pg.$('#modal:not([hidden]) [data-cnext]') || await pg.$('#modal:not([hidden]) [data-home]') || await pg.$('#modal:not([hidden]) [data-next]'); if (!x) { await pg.waitForTimeout(500); continue; } await x.click(); await pg.waitForTimeout(350); }
   s = await S(); await pg.screenshot({ path: `${OUT}/c6-fin.png` });
   ok('Boss du chapitre 1 : 2e phase, victoire, Séléna rejoint, chapitre 2 ouvert', phase2 && s.own.selena === 1 && s.stars[4] > 0 && s.ch === 1, `phase 2 ${phase2} · Séléna ${!!s.own.selena} · chapitre ${s.ch + 1} · trésor ${s.inv.some(it => it.r === 4)}`);
   ok('Aucune erreur JavaScript', !errs.length, errs.join(' | '));
