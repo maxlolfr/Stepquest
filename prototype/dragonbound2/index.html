@@ -318,7 +318,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.1 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.1.1 (10 chapitres)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -1264,7 +1264,10 @@ async function runLevel(i, train, tier = 0) {
     const res = await fightWave();
     if (res !== 'win') return { win: false, fled: res === 'flee', rounds: B.rounds };
     B.rounds.push(B.round);
-    if (B.wave < L.waves.length - 1) { for (const h of livingH()) h.mp = Math.min(h.mpMax, h.mp + Math.round(h.mpMax * .1)); for (const h of B.party) h.st = {}; B.aegis = 0; say('Vague vaincue !'); refresh(); await wait(900); }
+    if (B.wave < L.waves.length - 1) { for (const h of B.party) h.st = {}; B.aegis = 0; say('Vague vaincue ! Ton équipe reprend son souffle 💚');
+      // 1.1.1: pause between waves (no camp yet): the living recover 40 % HP and 25 % mana, the fallen get back up at 30 %
+      for (const h of B.party) { h.mp = Math.min(h.mpMax, h.mp + Math.round(h.mpMax * .25)); if (!alive(h)) { h.hp = Math.round(h.hpMax * .3); h.deadT = 0; setPose(h, 'win', 600); if (!FAST) { const p = px(h); txt(p.x, p.y - p.h - 10, 'Debout !', '#ffe58a', true); } } else if (h.hp < h.hpMax) await heal(h, h.hpMax * .4); }
+      if (!FAST) SFX.heal(); refresh(); await wait(900); }
   }
   return { win: true, rounds: B.rounds, alive: livingH().length, size: B.party.length, hpLeft: B.minHp };
 }
@@ -1880,6 +1883,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.1.1', t: 'Version 1.1.1', d: `<p>• <b>Soin entre les vagues</b> : après chaque vague gagnée, tes héros reprennent leur souffle : +40 % de vie, +25 % de mana, et les héros tombés se relèvent avec 30 % de vie.</p>` },
   { v: '1.1', t: 'Version 1.1', d: `<p>• <b>Comparaison d’équipement</b> : chaque nouvel objet montre les vraies stats du héros, avant et après (vert = mieux, rouge = moins bien), son pouvoir et les héros qui peuvent le porter. Tu choisis : Équiper, Garder ou Vendre. Rien ne change sans ton accord.</p>
   <p>• Dans le sac : bouton <b>Comparer</b> et badge ★ Meilleur pour chaque emplacement.</p>
   <p>• <b>Énergie maximale : 60</b> ⚡ (coûts et recharge inchangés).</p>
