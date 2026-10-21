@@ -6,7 +6,7 @@ const MIME = { '.html': 'text/html', '.webp': 'image/webp', '.jpg': 'image/jpeg'
 const srv = http.createServer((q, r) => { const p = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': MIME[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); });
 const res = [], ok = (name, cond, extra = '') => res.push(`${cond ? '✅' : '❌'} ${name}${extra ? ' — ' + extra : ''}`);
 const base = over => Object.assign({ v: 2, gold: 100, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h: Object.fromEntries(['aldric', 'selena', 'orin', 'lyra', 'nyx'].map(k => [k, { lvl: 3, xp: 0, w: 0, a: 0 }])),
-  team: ['aldric'], own: { aldric: 1 }, stars: Array(30).fill(0), seen: { in: 1, vid: 1, n09: 1, n10: 1 }, mute: true, ch: 0, inv: [], nid: 1, spd: 3 }, over);
+  team: ['aldric'], own: { aldric: 1 }, stars: Array(30).fill(0), seen: { in: 1, vid: 1, n09: 1, n10: 1, ver: '1.1' }, mute: true, ch: 0, inv: [], nid: 1, spd: 3 }, over);
 srv.listen(0, async () => {
   const url = `http://127.0.0.1:${srv.address().port}/dragonbound2/index.html`, b = await chromium.launch(), errs = [];
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
@@ -16,7 +16,7 @@ srv.listen(0, async () => {
   const closeAll = async () => { for (let i = 0; i < 30 && await pg.$('#modal:not([hidden]) [data-next], #modal:not([hidden]) [data-close]'); i++) { const n = await pg.$('#modal:not([hidden]) [data-next]') || await pg.$('#modal:not([hidden]) [data-close]'); await n.click(); await pg.waitForTimeout(120); } };
   // 1. new player
   await load(null); await closeAll(); let s = await S();
-  ok('Nouveau joueur : sauvegarde créée, Aldric seul, 30 énergie', s && s.team.join() === 'aldric' && s.en === 30, s && `équipe ${s.team} · énergie ${s.en}`);
+  ok('Nouveau joueur : sauvegarde créée, Aldric seul, 60 énergie', s && s.team.join() === 'aldric' && s.en === 60, s && `équipe ${s.team} · énergie ${s.en}`);
   await pg.screenshot({ path: `${OUT}/c1-accueil.png` });
   // 2. old 0.8 save (no tiers, trophies, gems, login)
   const old = base({ stars: [3, 2, 0].concat(Array(27).fill(0)), en: 12, enT: Date.now(), day: '', ctr: {} }); await load(old); await closeAll(); s = await S();
@@ -39,7 +39,7 @@ srv.listen(0, async () => {
   // 5. energy wall + gem refill
   await load(base({ en: 3, enT: Date.now(), gem: 20 })); await closeAll(); await pg.click('.node[data-lv="0"]'); await pg.waitForTimeout(200); await pg.click('[data-play]'); await pg.waitForTimeout(300);
   const wall = await pg.$('[data-gemen]'); await pg.screenshot({ path: `${OUT}/c4-energie.png` }); if (wall) await pg.click('[data-gemen]'); await pg.waitForTimeout(300); s = await S();
-  ok('Énergie insuffisante → écran d’énergie, recharge avec 15 gemmes', !!wall && s.en === 30 && s.gem === 5, `énergie ${s.en} · gemmes ${s.gem}`);
+  ok('Énergie insuffisante → écran d’énergie, recharge avec 15 gemmes', !!wall && s.en === 60 && s.gem === 5, `énergie ${s.en} · gemmes ${s.gem}`);
   // 6. tiers: 3 stars on chapter 1 opens Difficile
   await load(base({ stars: [3, 3, 3, 3, 3].concat(Array(25).fill(0)), team: ['aldric', 'selena'], own: { aldric: 1, selena: 1 } })); await closeAll();
   const tierBtn = await pg.$('#tiers [data-tier="1"]:not([disabled])'), locked = await pg.$('#tiers [data-tier="2"][disabled]'); await pg.screenshot({ path: `${OUT}/c5-difficultes.png` });
@@ -53,7 +53,7 @@ srv.listen(0, async () => {
   await load(base({ stars: [1, 1, 1, 1, 0].concat(Array(25).fill(0)), h: Object.fromEntries(['aldric', 'selena', 'orin', 'lyra', 'nyx'].map(k => [k, { lvl: 14, xp: 0, w: 3, a: 3 }])) })); await closeAll();
   await pg.click('.node[data-lv="4"]'); await pg.waitForTimeout(200); await pg.click('[data-play]'); await pg.waitForSelector('#autoBtn', { state: 'visible' }); await pg.waitForTimeout(1200); await pg.click('#autoBtn');
   let phase2 = false; for (let t = 0; t < 360 && !(await pg.$('[data-chpick]')); t++) { await pg.waitForTimeout(500); if (!phase2) phase2 = await pg.evaluate(() => { const B = window.__db2.B; return !!(B && B.foes.some(f => f.boss && f.ph)); }); }
-  for (let t = 0; t < 80; t++) { const x = await pg.$('#modal:not([hidden]) [data-chpick]') || await pg.$('#modal:not([hidden]) [data-chequip=""]') || await pg.$('#modal:not([hidden]) .eqf.bag') || await pg.$('#modal:not([hidden]) [data-cnext]') || await pg.$('#modal:not([hidden]) [data-home]') || await pg.$('#modal:not([hidden]) [data-next]'); if (!x) { await pg.waitForTimeout(500); continue; } await x.click(); await pg.waitForTimeout(350); }
+  for (let t = 0; t < 80; t++) { const x = await pg.$('#modal:not([hidden]) [data-chpick]') || await pg.$('#modal:not([hidden]) [data-dkeep]') || await pg.$('#modal:not([hidden]) [data-lpick]') || await pg.$('#modal:not([hidden]) [data-cnext]') || await pg.$('#modal:not([hidden]) [data-home]') || await pg.$('#modal:not([hidden]) [data-next]'); if (!x) { await pg.waitForTimeout(500); continue; } await x.click(); await pg.waitForTimeout(350); }
   s = await S(); await pg.screenshot({ path: `${OUT}/c6-fin.png` });
   ok('Boss du chapitre 1 : 2e phase, victoire, Séléna rejoint, chapitre 2 ouvert', phase2 && s.own.selena === 1 && s.stars[4] > 0 && s.ch === 1, `phase 2 ${phase2} · Séléna ${!!s.own.selena} · chapitre ${s.ch + 1} · trésor ${s.inv.some(it => it.r === 4)}`);
   ok('Aucune erreur JavaScript', !errs.length, errs.join(' | '));
