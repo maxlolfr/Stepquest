@@ -205,6 +205,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 .item .up { color: #2f7a3a; } .item .down { color: #b53a2c; }
 .item .btns small { font-size: 11px; text-align: center; font-weight: 800; } .bestb { font-size: 11px; font-weight: 900; color: #8a5a00; background: #ffe9a8; border: 1.5px solid #c99a2a; border-radius: 8px; padding: 1px 5px; text-align: center; }
 .vol { display: grid; grid-template-columns: 118px 1fr 46px; white-space: nowrap; align-items: center; gap: 8px; margin: 10px 0; font-weight: 800; } .vol input { width: 100%; accent-color: #c07a12; } .vol b { text-align: right; font-size: 13px; }
+.routes { display: flex; gap: 6px; justify-content: center; } .routes button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 12px; border: 2px solid #8a6a3a; background: #f3e6cc; font: 700 12px system-ui; color: #2a1a0e; font-size: 20px; } .routes button span { font-size: 11.5px; } .routes button.on { outline: 3px solid #f2b632; background: #fff3c8; }
 details.hist { border: 2px solid rgba(0,0,0,.12); border-radius: 12px; padding: 4px 10px; margin: 6px 0; background: rgba(255,255,255,.3); } details.hist summary { font-family: var(--fd); font-size: 18px; cursor: pointer; }
 table.cmp { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 4px 0; } table.cmp th { font-size: 11.5px; opacity: .75; font-weight: 700; } table.cmp td, table.cmp th { padding: 3px 4px; text-align: right; border-bottom: 1px solid rgba(0,0,0,.08); } table.cmp td:first-child { text-align: left; }
 table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b53a2c; font-weight: 900; } .cmpcur { font-size: 12.5px; text-align: center; margin: 6px 0 2px; } .cmppw { font-size: 12px; display: grid; gap: 2px; margin: 4px 0; }
@@ -319,7 +320,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.1.3 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.2 (10 chapitres)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -394,7 +395,7 @@ const SFX = {
 };
 const bgm = $('bgm');
 // m_* tracks are local (audio/): title/map theme, one theme per chapter, Nightmare/Hell theme, victory and defeat stingers
-const CH_MUSIC = ['m_crypt', 'm_forest', 'm_mines', 'm_swamp', 'm_ice', 'm_vampire', 'm_crypt', 'm_swamp', 'm_nightmare', 'm_nightmare'];
+const CH_MUSIC = ['m_crypt', 'm_forest', 'm_mines', 'm_swamp', 'm_ice', 'm_vampire', 'm_necro', 'm_sewers', 'm_void', 'm_vorthax'];
 function stinger(k) { if (SIM || muted) return; bgm.pause(); bgm.dataset.k = ''; const a = new Audio('audio/' + k + '.mp3'); a.volume = Math.min(1, .9 * VOL.m); a.play().catch(() => {}); a.onplay = a.onended = () => ac(); }
 function music(k) { if (SIM) return; const src = (k.startsWith('m_') ? 'audio/' : AP) + k + '.mp3'; if (bgm.dataset.k === k) { if (!muted && bgm.paused) bgm.play().catch(() => {}); return; } bgm.dataset.k = k; bgm.src = src; bgm.volume = MUSV(); if (!muted) bgm.play().catch(() => {}); }
 
@@ -667,12 +668,21 @@ const ITEMS = {
 // ---------- Equipment ----------
 const RAR = [{ n: 'Commun', c: '#8a847a', g: '167,162,154', m: 1 }, { n: 'Peu commun', c: '#2f8a2f', g: '76,174,76', m: 1.25 }, { n: 'Rare', c: '#2a6ac0', g: '61,139,224', m: 1.55 },
   { n: 'Épique', c: '#8a3ac0', g: '155,89,208', m: 1.9 }, { n: 'Légendaire', c: '#d0700a', g: '240,140,26', m: 2.4 }];
-const WPN = { aldric: [['wSword', 'Épée longue'], ['wAxe', 'Hache de guerre'], ['wAxe', 'Hache du bourreau'], ['wSword', 'Épée runique'], ['wLegG', 'Lame de l’Aube']],
-  selena: [['wHammer', 'Masse bénie'], ['wFlail', 'Fléau sacré'], ['wFlail', 'Fléau du zénith'], ['wHammer', 'Marteau du jugement'], ['wLegP', 'Soleil divin']],
-  orin: [['wStaff', 'Bâton de chêne'], ['wScepter', 'Sceptre de cristal'], ['wTome', 'Grimoire des arcanes'], ['wScepter', 'Sceptre des astres'], ['wLegM', 'Bâton du Néant']],
-  lyra: [['wShortbow', 'Arc court'], ['wElvenbow', 'Arc elfique'], ['wCrossbow', 'Arbalète de chasse'], ['wElvenbow', 'Arc des étoiles'], ['wLegA', 'Arc de givre']],
-  nyx: [['wDaggers', 'Dagues jumelles'], ['wFangs', 'Lames du croc'], ['wShadow', 'Dague de l’ombre'], ['wFangs', 'Crocs du serpent'], ['wLegR', 'Lames du vide']] };
-const ARMN = ['Armure d’os', 'Armure sylvestre', 'Armure de braise', 'Armure des marais', 'Armure de givre'], JEWN = ['Amulette des morts', 'Talisman sylvestre', 'Pendentif de braise', 'Amulette des marais', 'Pendentif de givre'];
+const WPN = { aldric: ['Épée de fer', 'Hachette', 'Épée ailée', 'Hache runique', 'Lame solaire'], selena: ['Masse d’armes', 'Fléau', 'Masse ailée', 'Fléau béni', 'Marteau solaire'],
+  orin: ['Bâton de chêne', 'Bâton d’améthyste', 'Sceptre de saphir', 'Sceptre de rubis', 'Bâton du Néant'], lyra: ['Arc simple', 'Arc recourbé', 'Arc composite', 'Arbalète légère', 'Arc de givre'],
+  nyx: ['Dagues de fer', 'Dagues courbes', 'Lames du serpent', 'Cimeterres runiques', 'Lames du vide'] };
+const ARMN = ['Armure d’os', 'Armure sylvestre', 'Armure de braise', 'Armure des marais', 'Armure de givre', 'Armure du Comte', 'Plastron du nécromancien', 'Cuir du voleur', 'Armure du Néant', 'Armure d’écailles de dragon'],
+  JEWN = ['Amulette des morts', 'Talisman sylvestre', 'Pendentif de braise', 'Œil du marais', 'Pendentif de givre', 'Rubis de sang', 'Âme de liche', 'Médaillon du Roi-Rat', 'Étoile du Néant', 'Œil du dragon'];
+const gearCh = t => Math.max(0, Math.min(9, Math.floor((t - 1) / 5)));
+const itemImg = it => `img/${it.slot === 'w' ? `gw_${it.hero}_${it.r}` : `${it.slot === 'a' ? 'ga' : 'gj'}_${gearCh(it.t)}`}.webp`;
+const gearName = it => it.slot === 'w' ? WPN[it.hero][it.r] : (it.slot === 'a' ? ARMN : JEWN)[gearCh(it.t)];
+// 1.2: equipment sets (Rare and better). 2 pieces: stats; 3 pieces: a passive
+const SETS = {
+  gard: { n: 'Gardien', de: 'du Gardien', ic: '🛡️', b2: 'Défense +10 %, Vie +5 %', b3: 'Bouclier 💠 de 12 % de vie à chaque vague, dégâts reçus −8 %' },
+  assa: { n: 'Assassin', de: 'de l’Assassin', ic: '🗡️', b2: 'Critique +5 %', b3: 'Critiques ×1,9 au lieu de ×1,6, 12 % d’esquive' },
+  arca: { n: 'Arcaniste', de: 'de l’Arcaniste', ic: '🔮', b2: 'Magie +10 %, Mana +10', b3: 'Compétences −20 % de mana' },
+  chas: { n: 'Chasseur', de: 'du Chasseur', ic: '🏹', b2: 'Attaque +8 %', b3: '+25 % de dégâts contre élites et boss' } };
+const setHtml = (it, full) => it.set ? `<div class="pw" style="color:#6a4a10">${SETS[it.set].ic} <b>Set ${SETS[it.set].de}</b>${full ? ` · 2 pièces : ${SETS[it.set].b2} · 3 pièces : ${SETS[it.set].b3}` : ''}</div>` : '';
 const SLOTN = { w: 'Arme', a: 'Armure', j: 'Bijou' };
 const STN = { atk: ['⚔️', 'Attaque'], mag: ['✨', 'Magie'], hp: ['❤️', 'Vie'], def: ['🛡️', 'Défense'], mp: ['💧', 'Mana'], crit: ['🎯', 'Critique'], lb: ['🌟', 'Ultime'] };
 // special powers on Rare+ gear: they change how a hero plays, not just the numbers
@@ -691,14 +701,15 @@ const PW = {
 const pwHtml = it => it.pw ? `<div class="pw">✦ <b>${PW[it.pw].n}</b> : ${PW[it.pw].d}</div>` : '';
 const fmtSt = (k, v) => `${STN[k][0]} +${k === 'crit' ? Math.round(v * 100) + ' %' : k === 'lb' ? v + ' %' : v}`;
 function makeItem(slot, r, t, hero, forcePw) {
-  const m = RAR[r].m, ch = Math.min(4, Math.floor((t - 1) / 5)), it = { id: S.nid++, slot, r, t, st: {}, isNew: 1 };
-  if (slot === 'w') { const [img, name] = WPN[hero][r]; Object.assign(it, { hero, img, name });
+  const m = RAR[r].m, it = { id: S.nid++, slot, r, t, st: {}, isNew: 1 };
+  if (slot === 'w') { Object.assign(it, { hero });
     const v = Math.round((2 + 1.1 * t) * m); if (hero === 'orin') it.st.mag = v; else if (hero === 'selena') { it.st.atk = Math.round(v * .75); it.st.mag = Math.round(v * .6); } else it.st.atk = v;
     if (r === 4) it.st.crit = .08; }
-  else if (slot === 'a') { Object.assign(it, { img: `a${ch}armure`, name: ARMN[ch] }); it.st.hp = Math.round((8 + 5 * t) * m); it.st.def = Math.round((1 + .45 * t) * m); if (r === 4) it.st.lb = 20; }
-  else { Object.assign(it, { img: `a${ch}amulette`, name: JEWN[ch] }); const opts = ['crit', 'mp', 'hp', 'lb'], add = k => { it.st[k] = k === 'crit' ? +((.02 + .006 * t) * m).toFixed(3) : k === 'mp' ? Math.round((4 + 2 * t) * m) : k === 'hp' ? Math.round((6 + 4 * t) * m) : Math.round(8 * m); };
+  else if (slot === 'a') { it.st.hp = Math.round((8 + 5 * t) * m); it.st.def = Math.round((1 + .45 * t) * m); if (r === 4) it.st.lb = 20; }
+  else { const opts = ['crit', 'mp', 'hp', 'lb'], add = k => { it.st[k] = k === 'crit' ? +((.02 + .006 * t) * m).toFixed(3) : k === 'mp' ? Math.round((4 + 2 * t) * m) : k === 'hp' ? Math.round((6 + 4 * t) * m) : Math.round(8 * m); };
     const a = pick(opts); add(a); if (r >= 3) add(pick(opts.filter(x => x !== a))); }
   if (forcePw || (r >= 2 && Math.random() < .6)) it.pw = pick(Object.keys(PW).filter(k => PW[k].slot === slot));
+  it.name = gearName(it); if (r >= 2) it.set = pick(Object.keys(SETS));
   return it;
 }
 const itemById = id => S.inv.find(x => x.id === id);
@@ -760,7 +771,8 @@ const SKEY = 'dragonbound2.v2';
 function fresh() { const h = {}; HORDER.forEach(k => { h[k] = { lvl: 1, xp: 0, w: 0, a: 0 }; });
   return { v: 2, ctr: {}, tier: {}, tst: {}, gem: 0, tc: {}, trd: {}, trn: {}, login: { day: '', n: 0 }, tmax: 0, en: EN_MAX, enT: Date.now(), day: '', gold: 50, items: { pot: 5, eth: 1, fea: 1, eli: 0 }, h, team: ['aldric'], own: { aldric: 1 }, stars: LEVELS.map(() => 0), seen: {}, mute: false, ch: 0, inv: [], nid: 1, spd: 1 }; }
 let S = fresh();
-try { if (!SIM) { const s = JSON.parse(localStorage.getItem(SKEY)); if (s && s.v === 2) { S = Object.assign(fresh(), s); while (S.stars.length < LEVELS.length) S.stars.push(0); S.items = Object.assign({ pot: 0, eth: 0, fea: 0, eli: 0 }, S.items); } } } catch (e) {}
+try { if (!SIM) { const s = JSON.parse(localStorage.getItem(SKEY)); if (s && s.v === 2) { S = Object.assign(fresh(), s); while (S.stars.length < LEVELS.length) S.stars.push(0); S.items = Object.assign({ pot: 0, eth: 0, fea: 0, eli: 0 }, S.items);
+  if (!S.m12) { S.m12 = 1; const ks = Object.keys(SETS); for (const it of S.inv) { if (it.slot === 'w' && !WPN[it.hero]) continue; it.name = gearName(it); delete it.img; if (it.r >= 2 && !it.set) it.set = ks[it.id % 4]; } } } } } catch (e) {}
 const save = () => { if (SIM) return; S.tmax = Math.max(S.tmax || 0, Date.now()); try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {} };
 save(); // writes migrated fields of older saves right away
 const xpNeed = l => Math.round(40 + 24 * l + 6.5 * l * l);
@@ -769,6 +781,10 @@ function heroStats(id) { const H = HEROES[id], s = S.h[id], L = s.lvl, o = {};
   o.atk *= 1 + .1 * s.w; o.mag *= 1 + .1 * s.w; o.hp *= 1 + .1 * s.a; o.def *= 1 + .1 * s.a;
   o.crit = H.base.crit; o.lbm = 1; o.pw = [];
   for (const sl of ['w', 'a', 'j']) { const it = itemById((s.eq || {})[sl]); if (it && it.pw) o.pw.push(it.pw); if (it) for (const [k, v] of Object.entries(it.st)) { if (k === 'lb') o.lbm += v / 100; else o[k] = (o[k] || 0) + v; } }
+  o.sets = {}; for (const sl of ['w', 'a', 'j']) { const it = itemById((s.eq || {})[sl]); if (it && it.set) o.sets[it.set] = (o.sets[it.set] || 0) + 1; }
+  const ns = k => o.sets[k] || 0;
+  if (ns('gard') >= 2) { o.def *= 1.1; o.hp *= 1.05; } if (ns('assa') >= 2) o.crit += .05; if (ns('arca') >= 2) { o.mag *= 1.1; o.mp += 10; } if (ns('chas') >= 2) o.atk *= 1.08;
+  for (const k of Object.keys(SETS)) if (ns(k) >= 3) o.pw.push('set_' + k);
   for (const k of ['hp', 'mp', 'atk', 'mag', 'def']) o[k] = Math.round(o[k]); return o; }
 
 // ---------- Clock, tweens, waits ----------
@@ -795,7 +811,7 @@ const ZOOM = .84; // characters drawn a bit smaller so more of the background sh
 const persp = v => .8 + .3 * v;
 function mkHero(id, i, n) { const H = HEROES[id], st = heroStats(id);
   return { side: 'h', id, name: H.name, sprite: H.sprite, H, hpMax: st.hp, hp: st.hp, mpMax: st.mp, mp: st.mp, atk: st.atk, mag: st.mag, def: st.def, crit: st.crit,
-    lbm: st.lbm, pw: new Set(st.pw), rage: 0, charge: 0, shield: 0, slot: i == null ? null : HSLOT[n - 1][i], hsz: H.h, ox: 0, oy: 0, st: {}, pose: 'idle', poseUntil: 0, hitT: -1e9, kb: 0, alpha: 1, deadT: 0, lb: 0, seed: Math.random() * 6 }; }
+    lbm: st.lbm, pw: new Set(st.pw), spec: S.h[id].spec || null, rage: 0, charge: 0, shield: 0, slot: i == null ? null : HSLOT[n - 1][i], hsz: H.h, ox: 0, oy: 0, st: {}, pose: 'idle', poseUntil: 0, hitT: -1e9, kb: 0, alpha: 1, deadT: 0, lb: 0, seed: Math.random() * 6 }; }
 function mkFoe(id, i, lvIdx, boss, n, eliteP) { const m = MON[id], k = 1 + .25 * lvIdx, ps = m.boss ? 1 : [.5, .68, 1][Math.min(3, n) - 1], pa = [.6, .8, 1][Math.min(3, n) - 1];
   const slot = boss ? BSLOT[i] : FSLOT[Math.min(5, Math.max(n, i + 1)) - 1][i] || FSLOT[4][i % 5];
   const f = { side: 'f', id, name: m.name, sprite: id, m, boss: !!m.boss, hpMax: Math.round(m.hp * (m.boss ? 1 : k) * ps * (1 + .012 * Math.min(lvIdx, 32) + .012 * Math.max(0, Math.min(lvIdx, 32) - 10))), atk: Math.round(m.atk * (m.boss ? 1 : k) * pa * (1 + .014 * Math.min(lvIdx, 32) + .025 * Math.max(0, Math.min(lvIdx, 32) - 10))), mag: 0, def: m.def + Math.floor(lvIdx * .6), crit: .05,
@@ -811,6 +827,16 @@ const alive = u => u.hp > 0;
 const livingH = () => B.party.filter(alive), livingF = () => B.foes.filter(alive);
 function px(u) { const v = u.slot ? u.slot[1] : .5; return { x: (u.slot ? u.slot[0] : .2) * VW + u.ox, y: GY + (VH - GY) * (.3 + .64 * v) + u.oy, h: VH * u.hsz * persp(v) * ZOOM, v }; }
 function setPose(u, p, ms) { u.pose = p; u.poseUntil = now() + (FAST ? 0 : ms); }
+// 1.2: one specialization per hero from level 10 (free the first time, then 300 gold to change)
+const SPEC_LV = 10, SPEC_RE = 300;
+const SPECS = {
+  aldric: [['prot', 'Protecteur', '🛡️', 'Sous Provocation, dégâts reçus −35 % (au lieu de −20 %) et +3 💧 par coup encaissé. Il tient la ligne.'], ['bers', 'Berserker', '🪓', 'Jusqu’à +40 % de dégâts quand sa vie baisse, mais +10 % de dégâts reçus. Joue avec le Second souffle.']],
+  selena: [['oracle', 'Oracle', '✨', 'Tous ses soins +25 %. La soigneuse pure.'], ['inqui', 'Inquisitrice', '⚔️', '+30 % de dégâts physiques, et chaque coup soigne l’allié le plus blessé de 30 % des dégâts.']],
+  orin: [['destr', 'Destruction', '🔥', '+20 % de dégâts magiques. Les ennemis fondent.'], ['ctrl', 'Contrôle', '🌀', 'Chaque sort a 25 % de chances d’étourdir (et d’annuler une attaque annoncée ⚠️).']],
+  lyra: [['elite', 'Tireuse d’élite', '🎯', 'Ses marques durent un tour de plus et elle inflige +20 % aux cibles marquées.'], ['pist', 'Pisteuse', '🧪', 'Ses coups empoisonnent 35 % du temps.']],
+  nyx: [['assa', 'Assassine', '💀', '+35 % de dégâts sur les ennemis sous 35 % de vie : elle achève.'], ['ombre', 'Ombre', '🌑', '20 % d’esquive, et chaque esquive rend 5 💧.']] };
+const specOf = id => { const k = S.h[id].spec; return k ? SPECS[id].find(x => x[0] === k) : null; };
+const costOf = (h, k) => Math.round(SK[k].cost * (h.pw && h.pw.has('set_arca') ? .8 : 1));
 const gainLb = (u, n) => { if (u.side === 'h' && alive(u)) u.lb = Math.min(100, (u.lb || 0) + n * (u.lbm || 1)); };
 
 // ---------- Effects ----------
@@ -836,14 +862,18 @@ function calc(a, t, pow, stat = 'atk', el = 'phys', forceCrit) {
   if (a.aff === 'enrage') d *= 1 + (1 - a.hp / a.hpMax) * .8;
   let em = elMult(t, el); if (em > 1 && t.st.mark) em = 1.75; d *= em;
   if (a.side === 'h') { d *= (a.boost || 1) * (B.round > 20 ? 1 + .15 * (B.round - 20) : 1); if (t.st.mark) d *= 1.2;
-    if (a.pw.has('venin') && t.st.poison) d *= 1.35; if (a.pw.has('chasse') && t.st.mark) d *= 1.3; if (a.pw.has('bourreau') && t.hp < t.hpMax * .35) d *= 1.3; }
-  let crit = forceCrit || Math.random() < a.crit || a.st.nextCrit; if (crit) d *= 1.6;
-  if (t.side === 'h') { if (t.st.guard) d *= .5; if (B.aegis > 0) d *= .65; if (t.st.taunt) d *= .8; }
+    if (a.pw.has('venin') && t.st.poison) d *= 1.35; if (a.pw.has('chasse') && t.st.mark) d *= 1.3; if (a.pw.has('bourreau') && t.hp < t.hpMax * .35) d *= 1.3;
+    if (a.pw.has('set_chas') && (t.elite || t.boss)) d *= 1.25;
+    const sp = a.spec; if (sp === 'bers') d *= 1 + Math.min(.4, (1 - a.hp / a.hpMax) * .5); if (sp === 'inqui' && stat === 'atk') d *= 1.3; if (sp === 'destr' && stat === 'mag') d *= 1.2;
+    if (sp === 'elite' && t.st.mark) d *= 1.2; if (sp === 'assa' && t.hp < t.hpMax * .35) d *= 1.35; }
+  let crit = forceCrit || Math.random() < a.crit || a.st.nextCrit; if (crit) d *= a.side === 'h' && a.pw.has('set_assa') ? 1.9 : 1.6;
+  if (t.side === 'h') { if (t.st.guard) d *= .5; if (B.aegis > 0) d *= .65; if (t.st.taunt) d *= t.spec === 'prot' ? .65 : .8; if (t.pw.has('set_gard')) d *= .92; if (t.spec === 'bers') d *= 1.1; }
   return { d: Math.max(1, Math.round(d)), crit: !!crit, em };
 }
 async function damage(t, r, opts = {}) {
   const p = px(t), hy = p.y - p.h * .5, src = opts.src;
   if (t.side === 'h' && t.st.dodge) { t.st.dodge = 0; txt(p.x, p.y - p.h - 10, 'Esquive !', '#c8d2da', true); SFX.whoosh(); if (!FAST) { await tween(t, { ox: -30 }, 120); tween(t, { ox: 0 }, 200); } return 0; }
+  if (t.side === 'h' && src && src.side === 'f' && ((t.pw.has('set_assa') && Math.random() < .12) || (t.spec === 'ombre' && Math.random() < .2))) { if (t.spec === 'ombre') t.mp = Math.min(t.mpMax, t.mp + 5); txt(p.x, p.y - p.h - 10, 'Esquive !', '#c8d2da', true); SFX.whoosh(); refresh(); return 0; }
   if ((t.aff === 'ghost' || (t.m && t.m.trait === 'evade') || (t.ph && t.ph.swarm)) && Math.random() < .25) { txt(p.x, p.y - p.h - 10, 'Esquive !', '#bcd0ff', true); SFX.whoosh(); return 0; }
   let d = r.d;
   if (t.ph && t.ph.fly && opts.melee) { d = Math.max(1, Math.round(d * .4)); txt(p.x, p.y - p.h - 40, 'Hors de portée…', '#c8d2da'); }
@@ -854,6 +884,11 @@ async function damage(t, r, opts = {}) {
   if (t.shield > 0 && d > 0) { const ab = Math.min(t.shield, d); t.shield -= ab; d -= ab; txt(p.x + 30, p.y - p.h - 26, `-${ab} 💠`, '#bfe0ff'); }
   if (t.side === 'h' && d >= t.hp && t.id !== 'selena' && !B.grace) { const sel = livingH().find(x => x.id === 'selena'); if (sel) { B.grace = 1; d = t.hp - 1; txt(p.x, p.y - p.h - 46, 'Séléna le retient !', '#ffe58a', true); ring(p.x, hy, '#ffe58a', 80, 600); SFX.buff(); } }
   if (t.side === 'h' && t.id === 'aldric' && d > 0) t.rage = Math.min(5, (t.rage || 0) + 1);
+  if (t.side === 'h' && t.spec === 'prot' && t.st.taunt && d > 0) t.mp = Math.min(t.mpMax, t.mp + 3);
+  if (src && src.side === 'h' && d > 0 && t.side === 'f') { const c = center(t);
+    if (src.spec === 'inqui') { const w = livingH().reduce((x, y) => x.hp / x.hpMax < y.hp / y.hpMax ? x : y), g = Math.max(1, Math.round(d * .3)); if (w.hp < w.hpMax) { w.hp = Math.min(w.hpMax, w.hp + g); const wp = px(w); txt(wp.x, wp.y - wp.h - 6, `+${g}`, '#7ae08a'); } }
+    if (src.spec === 'pist' && Math.random() < .35 && !t.m.r.includes('poison')) { t.st.poison = { d: Math.max(3, Math.round(src.atk * .35)), n: 3 }; txt(c.x, c.y - 60, '☠️ Empoisonné', '#a8e070'); }
+    if (src.spec === 'ctrl' && SK[B.actK] && SK[B.actK].stat === 'mag' && Math.random() < .25 && !(t.boss && t.stunCd > 0) && d < t.hp) { t.st.stun = 1; if (t.boss) t.stunCd = 5; if (t.charging && !t.ultReady) { t.charging = false; t.aoeC = 0; } txt(c.x, c.y - 70, '💫 Étourdi', '#ffe08a', true); } }
   if (src && src.side === 'h' && d > 0) { if (r.em > 1) B.weakHits = (B.weakHits || 0) + 1; if (src.pw.has('vampire') && alive(src)) src.hp = Math.min(src.hpMax, src.hp + Math.max(1, Math.round(d * .1))); }
   t.hp = Math.max(0, t.hp - d); t.hitT = now();
   if (src && src.id === 'nyx' && t.side === 'f' && d > 0 && t.hp > 0) t.st.sh = Math.min(5, (t.st.sh || 0) + 1); t.kb = r.crit ? 24 : 14; if (alive(t) || t.side === 'h') setPose(t, 'hit', 320);
@@ -868,7 +903,7 @@ async function damage(t, r, opts = {}) {
   if (t.hp <= 0) await kill(t);
   refresh(); return d;
 }
-async function heal(t, n) { const p = px(t); n = Math.max(1, Math.round(n)); t.hp = Math.min(t.hpMax, t.hp + n);
+async function heal(t, n) { const p = px(t); if (B && B.acting && B.acting.spec === 'oracle' && t.side === 'h') n *= 1.25; n = Math.max(1, Math.round(n)); t.hp = Math.min(t.hpMax, t.hp + n);
   txt(p.x, p.y - p.h - 6, `+${n}`, '#8fe07a', n > 20); rise(p.x, p.y - p.h * .4, 14, ['#8fe07a', '#d6ffb0', '#ffffff']); refresh(); }
 async function kill(u) {
   if (u.side === 'f' && (u.m.trait === 'rise' || (u.id === 'bossLich' && u.ph)) && !u.rose && !u.st.burn) { u.rose = true; u.deadT = now(); setPose(u, 'ko', 99999); txt(px(u).x, px(u).y - 60, 'Il s’effondre…', '#c8d2da');
@@ -895,14 +930,14 @@ function markFoe(t, n) { if (!t || t.side !== 'f' || !alive(t)) return; const ha
 const center = u => { const p = px(u); return { x: p.x, y: p.y - p.h * .5 }; };
 async function heroAct(h, a) {
   B.acting = h; const k = a.k, sk = SK[k]; let t = a.tgt;
-  if (sk && sk.cost) h.mp -= sk.cost;
+  B.actK = k; if (sk && sk.cost) h.mp -= costOf(h, k);
   if (k !== 'guard') h.st.guard = 0;
   h.boost = 1; h.ov = 0;
   if (h.id === 'aldric' && h.rage && ['atk', 'whirl', 'bash', 'ult'].includes(k)) { h.boost = 1 + .15 * h.rage; const p = px(h); txt(p.x, p.y - p.h - 30, `Rage ×${h.rage} !`, '#ff8a4a', true); h.rage = 0; }
   if (h.id === 'orin' && (k === 'fire' || k === 'blizzard')) { if (h.charge >= 3) { h.ov = 1; h.charge = 0; h.boost = 1.6; const p = px(h); txt(p.x, p.y - p.h - 30, '⚡ SURCHARGE !', '#9fd8ff', true); ring(p.x, p.y - p.h * .5, '#9fd8ff', 90, 600); } else h.charge++; }
   if (k === 'item') B.usedItem = 1;
   refresh();
-  if (k === 'atk') { say(`<b>${h.name}</b> : ${h.H.atk.name}`); await basicAtk(h, t); h.mp = Math.min(h.mpMax, h.mp + 4 + (h.pw.has('source') ? 6 : 0)); if (h.id === 'lyra' && alive(t)) markFoe(t, 2); }
+  if (k === 'atk') { say(`<b>${h.name}</b> : ${h.H.atk.name}`); await basicAtk(h, t); h.mp = Math.min(h.mpMax, h.mp + 4 + (h.pw.has('source') ? 6 : 0)); if (h.id === 'lyra' && alive(t)) markFoe(t, h.spec === 'elite' ? 3 : 2); }
   else if (k === 'guard') { h.st.guard = 1; h.mp = Math.min(h.mpMax, h.mp + Math.round(h.mpMax * .15)); gainLb(h, 6); setPose(h, 'def', 700); const p = px(h); ring(p.x, p.y - p.h * .5, '#bfe0ff', 60); SFX.clang(); say(`<b>${h.name}</b> se met en garde.`); await wait(450); }
   else if (k === 'item') await useItem(h, a.item, t);
   else if (k === 'swap') await swapHero(h, a.sub);
@@ -1186,7 +1221,7 @@ async function tickStart(u) {
 
 // ---------- Hero AI (Auto button and simulator) ----------
 function aiHero(h) {
-  const fs = livingF(), hs = livingH(), dead = B.party.filter(x => !alive(x)), can = k => h.mp >= SK[k].cost && h.H.skills.includes(k);
+  const fs = livingF(), hs = livingH(), dead = B.party.filter(x => !alive(x)), can = k => h.mp >= costOf(h, k) && h.H.skills.includes(k);
   const weakest = fs.find(f => f.m.sup === 'heal' && !f.boss) || fs.reduce((a, b) => a.hp < b.hp ? a : b), boss = fs.find(f => f.boss), hurt = hs.filter(x => x.hp < x.hpMax * .5).sort((a, b) => a.hp / a.hpMax - b.hp / b.hpMax);
   const healer = hs.some(x => x.id === 'selena');
   if (h.lb >= 100) { const ok = h.id === 'selena' ? (dead.length || hurt.length >= 2 || (hs.length === 1 && h.hp < h.hpMax * .5)) : true; if (ok) return { k: 'ult', tgt: boss || weakest }; }
@@ -1239,20 +1274,22 @@ function aiHero(h) {
 async function runLevel(i, train, tier = 0) {
   const L = LEVELS[i], n = S.team.length, D = DIFF[tier], ei = i + D.eff;
   B = { lvIdx: ei, lv: i, tier, L, wave: 0, foes: [], party: S.team.map((id, j) => mkHero(id, j, n)), bench: Object.keys(S.own).filter(id => !S.team.includes(id)).map(id => mkHero(id, null, n)),
-    round: 0, aegis: 0, kills: [], contract: SIM || train ? null : ctrSel, train: !!train, usedItem: 0, kos: 0, weakHits: 0, cam: { z: 1, x: VW / 2, y: VH / 2, tz: 1, tx: VW / 2, ty: VH / 2 }, auto: SIM || autoPref, flee: false, rounds: [], minHp: 100 };
+    round: 0, aegis: 0, kills: [], contract: SIM || train ? null : ctrSel, train: !!train, usedItem: 0, kos: 0, weakHits: 0, cam: { z: 1, x: VW / 2, y: VH / 2, tz: 1, tx: VW / 2, ty: VH / 2 }, auto: SIM || autoPref, flee: false, rounds: [], minHp: 100, route: SIM ? simRoute : train ? 'safe' : routeSel };
   if (!SIM) { load(L.bg, L.local); S.team.concat(B.bench.map(b => b.id)).forEach(id => loadSprite(HEROES[id].sprite)); L.waves.flat().forEach(loadSprite); }
   for (B.wave = 0; B.wave < L.waves.length; B.wave++) {
     const ws = L.waves[B.wave].slice(), boss = ws.some(k => MON[k].boss), pool = [...new Set(L.waves.flat().filter(k => !MON[k].boss))];
-    if (!boss) { const cap = n === 1 ? 2 : n === 2 ? 3 : 5, add = D.add + (L.ch >= 2 && B.wave === L.waves.length - 1 ? 1 : 0) + (tier && L.ch === 0 && n >= 3 ? 1 : 0); for (let a = 0; a < add && ws.length < cap; a++) ws.push(pick(pool)); }
+    if (!boss) { const cap = n === 1 ? 2 : n === 2 ? 3 : 5, add = D.add + (L.ch >= 2 && B.wave === L.waves.length - 1 ? 1 : 0) + (tier && L.ch === 0 && n >= 3 ? 1 : 0); for (let a = 0; a < add && ws.length < cap; a++) ws.push(pick(pool)); if (B.route === 'danger' && ws.length < cap) ws.push(pick(pool)); }
     B.foes = ws.map((k, j) => mkFoe(k, j, ei, boss, ws.length > n ? ws.length : n, L.elite));
     if (tier) for (const f of B.foes) if (!f.boss) { f.hpMax = Math.round(f.hpMax * (1 + .2 * tier)); f.hp = f.hpMax; f.atk = Math.round(f.atk * (1 + .12 * tier)); }
     if (tier) for (const f of B.foes) if (f.boss) { const r = (1 + .25 * ei) / (1 + .25 * i); f.hpMax = Math.round(f.hpMax * r); f.hp = f.hpMax; f.atk = Math.round(f.atk * Math.sqrt(r) * 1.1); f.def += D.eff; } B.round = 0; B.toxic = 0; B.grace = 0;
-    for (const h of B.party.concat(B.bench)) { h.rallied = 0; h.shield = h.pw.has('rempart') ? Math.round(h.hpMax * .15) : 0; if (h.pw.has('colere')) h.lb = Math.max(h.lb || 0, 25); }
+    for (const h of B.party.concat(B.bench)) { h.rallied = 0; h.shield = Math.round(h.hpMax * ((h.pw.has('rempart') ? .15 : 0) + (h.pw.has('set_gard') ? .12 : 0))); if (h.pw.has('colere')) h.lb = Math.max(h.lb || 0, 25); }
     for (const f of B.foes) if (f.id === 'bossDragon') f.slot = [.72, .6];
     B.foes.forEach(soloScale);
+    if (B.route === 'danger') for (const f of B.foes) { f.hpMax = Math.round(f.hpMax * 1.15); f.hp = f.hpMax; f.atk = Math.round(f.atk * 1.15); }
     if (!boss) { B.foes.forEach((f, j) => { f.slot = FSLOT[ws.length - 1][j]; f.hsz *= ws.length >= 5 ? .8 : ws.length === 4 ? .88 : 1; });
       if (L.champ && B.wave === L.waves.length - 1) makeElite(B.foes[0], true);
-      const ep = (L.elite || (tier ? .1 : 0)) + D.elite; for (let e = 0; e < D.maxEl; e++) { const c = B.foes.filter(f => !f.elite); if (c.length && Math.random() < ep) makeElite(pick(c)); } }
+      const ep = (L.elite || (tier ? .1 : 0)) + D.elite + (B.route === 'danger' ? .15 : 0); for (let e = 0; e < D.maxEl; e++) { const c = B.foes.filter(f => !f.elite); if (c.length && Math.random() < ep) makeElite(pick(c)); }
+      if (B.route === 'defi' && !B.foes.some(f => f.elite)) makeElite(pick(B.foes)); }
     else if (D.bossAff) { const bf = B.foes.find(f => f.boss), a = pick(['enrage', 'vamp', 'armor', 'regen']); bf.aff = a; bf.elite = AFFIX[a]; bf.name = `${bf.m.name} ${AFFIX[a].n.toLowerCase()}`; if (a === 'armor') bf.shield = Math.round(bf.hpMax * .2); }
     for (const f of B.foes) { f.ox = VW * .5; f.alpha = 0; }
     $('fWave').textContent = `Vague ${B.wave + 1} / ${L.waves.length}`; refresh();
@@ -1337,7 +1374,7 @@ function buildActs() {
   const h = pending.h, sel = pending.sel || {}, dead = B.party.some(x => !alive(x));
   const btn = (k, name, ic, cls, cost, dis, extra = '', item = '') => `<button class="act ${cls || ''} ${sel.k === k && (sel.item || '') === item ? 'sel' : ''}" type="button" data-k="${k}" ${item ? `data-item="${item}"` : ''} ${dis ? 'disabled' : ''}><i>${ic}</i>${name}${cost ? `<span class="cost">${cost}💧</span>` : ''}${extra}</button>`;
   let html = btn('atk', h.H.atk.name, icon(h.H.atk.img, '⚔️'), '', 0, false);
-  for (const k of h.H.skills) { const s = SK[k], noT = s.tgt === 'dead' && !dead; html += btn(k, s.name, icon(s.img, s.ic), s.cls, s.cost, h.mp < s.cost || noT || (k === 'rally' && h.rallied)); }
+  for (const k of h.H.skills) { const s = SK[k], noT = s.tgt === 'dead' && !dead; html += btn(k, s.name, icon(s.img, s.ic), s.cls, costOf(h, k), h.mp < costOf(h, k) || noT || (k === 'rally' && h.rallied)); }
   html += `<button class="act ult ${h.lb >= 100 ? 'ready' : ''} ${sel.k === 'ult' ? 'sel' : ''}" type="button" data-k="ult" style="--lb:${Math.floor(h.lb)}" ${h.lb >= 100 ? '' : 'disabled'}><i>${h.lb >= 100 ? '🌟' : Math.floor(h.lb) + '%'}</i>Ultime</button>`;
   if (h.H.skills.length < 4) html += '<span></span>';
   html += btn('guard', 'Défense', icon('bl_shield', '🛡️'), 'def', 0, false);
@@ -1545,17 +1582,24 @@ const CONTRACTS = {
   weak: { ic: '⚡', n: 'Chasseur de failles', d: 'Touche 6 faiblesses élémentaires.', ok: () => (B.weakHits || 0) >= 6, need: () => S.own.orin || S.own.selena },
   quick: { ic: '⏱️', n: 'Éclair', d: 'Chaque vague en 5 tours maximum (boss : 12).', ok: res => res.rounds.every((r, j) => r <= (B.L.waves[j].some(k => MON[k].boss) ? 12 : 5)) },
 };
-let ctrSel = null;
+let ctrSel = null, routeSel = 'safe', simRoute = 'safe';
+// 1.2: expedition routes, picked before a level already won (risk and reward shown up front)
+const ROUTES = { safe: { n: 'Route sûre', ic: '🛡️', d: 'Difficulté normale, butin classique.' },
+  danger: { n: 'Route dangereuse', ic: '💀', d: '+1 ennemi par vague, ennemis +15 %, plus d’élites. Butin : or ×1,5, XP ×1,3 et coffres Rare minimum.' },
+  defi: { n: 'Défi du jour', ic: '✨', d: 'Un élite garanti dans chaque vague. Récompense : +3 💎 (une fois par jour sur ce niveau).' } };
+const defiOk = i => (Math.floor(Date.now() / 864e5) + i) % 3 === 0 && !(S.evd && S.evd.d === today() && S.evd.l.includes(i));
+function routeHtml(i) { const ks = ['safe', 'danger'].concat(defiOk(i) ? ['defi'] : []); if (!ks.includes(routeSel)) routeSel = 'safe';
+  return `<p style="text-align:center;font-size:13px;margin:8px 0 2px"><b>Choisis ta route</b></p><div class="routes">${ks.map(k => `<button type="button" data-route="${k}:${i}" class="${routeSel === k ? 'on' : ''}">${ROUTES[k].ic}<span>${ROUTES[k].n}</span></button>`).join('')}</div><p style="text-align:center;font-size:12.5px;margin:2px 0 6px">${ROUTES[routeSel].d}</p>`; }
 function ctrHtml(i) { return `<p style="text-align:center;font-size:13px;margin:10px 0 0"><b>Contrat</b> (facultatif) : +50 % d’or, et un objet rare la 1re fois.</p><div class="ctrs">${Object.entries(CONTRACTS).map(([k, C]) => { const ok = !C.need || C.need(), done = S.ctr[`${i}:${k}`];
   return `<button type="button" class="ctr ${ctrSel === k ? 'on' : ''}" data-ctr="${k}" data-ctrlv="${i}" ${ok ? '' : 'disabled'}><i>${C.ic}</i><span><b>${C.n}</b><small>${ok ? C.d : 'Débloqué quand Séléna ou Orin te rejoint.'}</small></span>${done ? '<span class="done">✓</span>' : ''}</button>`; }).join('')}</div>`; }
-function levelSheet(i, keep) { if (!keep) ctrSel = null;
+function levelSheet(i, keep) { if (!keep) { ctrSel = null; routeSel = 'safe'; }
   const L = LEVELS[i], foes = [...new Set(L.waves.flat())], t = tierOf(L.ch), D = DIFF[t], st = starsOf(t, i);
   modal(`<h3>${i % 5 + 1}. ${L.name}</h3>${t ? `<p style="text-align:center;margin:0;font-weight:700;color:${D.col}">${D.ic} ${D.n} · ennemis plus forts, butin ×${D.xg}</p>` : ''}<p style="text-align:center">${L.waves.length} vagues · niveau conseillé ${L.rec + D.eff}</p>${L.goal ? `<p style="text-align:center;font-size:14px;margin:4px 0">🎯 <b>Objectif</b> : ${L.goal}</p>` : ''}
     <div class="foes">${foes.map(k => `<img src="${IP}${k}.webp" alt="${MON[k].name}" title="${MON[k].name}">`).join('')}</div>
     ${foes.map(k => `<p style="font-size:13px;margin:3px 0">• <b>${MON[k].name}</b> : ${MON[k].tip} <span title="faiblesse">${MON[k].w.map(e => ELI[e]).join('')}</span></p>`).join('')}
     ${L.elite ? '<p style="font-size:13px;margin:3px 0">• ⭐ Des <b>élites</b> colorés peuvent apparaître : plus forts, mais double butin.</p>' : ''}
     ${L.champ ? '<p style="font-size:13px;margin:3px 0">• 👑 Un <b>champion</b> garde la dernière vague : très fort, triple butin.</p>' : ''}
-    ${st || i > 0 ? ctrHtml(i) : ''}
+    ${st || i > 0 ? ctrHtml(i) : ''}${st ? routeHtml(i) : ''}
     <p style="text-align:center;font-size:13px;margin:6px 0 0">Ton énergie : <b>${(enTick(), S.en)}</b> ⚡</p>
     <button class="btn" type="button" data-play="${i}">⚔️ Combattre · ${enCost(i)} ⚡</button>${st ? `<button class="btn alt" type="button" data-train="${i}">🎯 Entraînement · gratuit (XP réduite, sans butin)</button>` : ''}<button class="btn alt" type="button" data-close="1">Retour</button>`);
 }
@@ -1586,7 +1630,8 @@ async function victory(i, res) {
   for (const h of B.party) if (alive(h)) setPose(h, 'win', 1e9); stinger('m_victory'); say('<b>Victoire !</b>');
   const train = B.train, t = B.tier || 0, ST = starsArr(t), st = Math.round(res.alive / res.size * 3), first = !ST[i], ei = i + DIFF[t].eff, wasOpen = tierOpen(t + 1, LEVELS[i].ch); if (!train) ST[i] = Math.max(ST[i] || 0, st);
   const newTier = !train && t < DIFF.length - 1 && !wasOpen && tierOpen(t + 1, LEVELS[i].ch);
-  let { xp, gold } = rewards(i, B.kills, true); xp = Math.round(xp * DIFF[t].xg); gold = Math.round(gold * DIFF[t].xg); if (train) { xp = Math.round(xp * .5); gold = Math.round(gold * .3); } S.gold += gold; const ups = grantXp(xp);
+  let { xp, gold } = rewards(i, B.kills, true); xp = Math.round(xp * DIFF[t].xg); gold = Math.round(gold * DIFF[t].xg); if (train) { xp = Math.round(xp * .5); gold = Math.round(gold * .3); } const route = B.route; if (route === 'danger') { xp = Math.round(xp * 1.3); gold = Math.round(gold * 1.5); } S.gold += gold;
+  let defiGem = 0; if (route === 'defi' && !train) { defiGem = 3; S.gem = (S.gem || 0) + 3; if (!S.evd || S.evd.d !== today()) S.evd = { d: today(), l: [] }; S.evd.l.push(i); } const ups = grantXp(xp);
   let enBack = 0; if (!train && st === 3) { enTick(); enBack = Math.min(2, Math.max(0, EN_MAX - S.en)); S.en += enBack; }
   const drops = []; if (!train) { if (Math.random() < .4 || first) { const k = Math.random() < .6 ? 'pot' : 'eth'; S.items[k]++; drops.push(k); } if (B.kills.some(f => f.elite)) { S.items.pot++; drops.push('pot'); } if (LEVELS[i].boss && first) { S.items.fea++; drops.push('fea'); } }
   const rec = first && !train && !t ? recruit(i) : null;
@@ -1595,7 +1640,7 @@ async function victory(i, res) {
   if (cOk) { cGold = Math.round(gold * .5) + 20; S.gold += cGold; if (cFirst) S.ctr[cKey] = 1; }
   const legend = LEVELS[i].boss && first && !train;
   save(); await wait(900);
-  if (!train) await chestPick(makeChoice(ei, LEVELS[i].boss, elites), t ? `${DIFF[t].ic} Butin ${DIFF[t].n}` : 'Butin');
+  if (!train) await chestPick(makeChoice(ei, LEVELS[i].boss, elites, route === 'danger'), t ? `${DIFF[t].ic} Butin ${DIFF[t].n}` : 'Butin');
   if (cFirst) await lootChoice(makeChoice(ei, LEVELS[i].boss, elites, true), `${C.ic} Contrat réussi : objet rare`);
   if (legend) await lootChoice(makeChoice(ei, true, 0, true, true), `👑 Trésor du chapitre${t ? ' · ' + DIFF[t].n : ''} : un objet légendaire`);
   if (!train && B.kills.some(f => f.champ) && !B.kos) trc('champNoKo');
@@ -1607,7 +1652,7 @@ async function victory(i, res) {
   modal(`<h3>${train ? 'Entraînement réussi' : 'Victoire !'}</h3>${train ? '' : `<p style="text-align:center;font-size:30px;color:#c07a12;letter-spacing:4px">${'★'.repeat(st)}<span style="opacity:.25">${'★'.repeat(3 - st)}</span></p>
     <p style="text-align:center;font-size:13px">${st === 3 ? `Toute l’équipe est debout !${enBack ? ` +${enBack} ⚡` : ''}` : 'Garde tout le monde en vie pour 3 étoiles (et +2 ⚡).'}</p>`}
     ${ups.map(([id, g, up]) => { const H = HEROES[id], s = S.h[id]; return `<div class="row"><img class="f" src="${FP}${H.face}.webp" alt=""><div class="grow"><b>${H.name}</b> +${g} XP ${up ? `<span class="lvup">· Niveau ${s.lvl} !</span>` : ''}<div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div></div>`; }).join('')}
-    <p style="text-align:center;margin-top:10px">+${gold} <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"> ${drops.map(k => `· <img class="poti ${ITEMS[k].cls}" src="${IP}uiPotion.webp" style="width:22px;vertical-align:-5px" alt=""> ${ITEMS[k].name}`).join(' ')}</p>
+    <p style="text-align:center;margin-top:10px">+${gold} <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"> ${drops.map(k => `· <img class="poti ${ITEMS[k].cls}" src="${IP}uiPotion.webp" style="width:22px;vertical-align:-5px" alt=""> ${ITEMS[k].name}`).join(' ')}${defiGem ? ` · +${defiGem} 💎` : ''}${route !== 'safe' && !train ? `<br><small>${ROUTES[route].ic} ${ROUTES[route].n}</small>` : ''}</p>
     ${C ? `<p style="text-align:center;font-size:13px;margin-top:6px">${C.ic} Contrat <b>${C.n}</b> : ${cOk ? `réussi ! +${cGold} or${cFirst ? ' + un objet rare' : ''}` : 'raté.'}</p>` : ''}
     ${nIt ? `<p style="text-align:center;font-size:13px;margin-top:8px">🎁 ${nIt} objet${nIt > 1 ? 's' : ''} ajouté${nIt > 1 ? 's' : ''} à ton sac · <b>Héros &amp; équipement</b> sur la carte</p>` : ''}
     ${rec ? `<div class="row" style="background:rgba(255,215,106,.5)"><img class="f" src="${FP}${HEROES[rec].face}.webp" alt=""><div class="grow"><b>${HEROES[rec].name} rejoint l’équipe !</b><small>${HEROES[rec].desc}</small></div></div>` : ''}
@@ -1623,8 +1668,8 @@ let storyNext = null;
 // ---------- Chests ----------
 const rcss = it => `--rc:${RAR[it.r].c};--rg:${RAR[it.r].g}`;
 function itemHtml(it, id, btns = '') { const cur = id ? itemById((S.h[id].eq || {})[it.slot]) : null, diff = cur && cur !== it ? itemScore(it) - itemScore(cur) : null, w = wornBy(it);
-  return `<div class="item ${w ? 'eq' : ''}" style="${rcss(it)}"><img src="${IP}${it.img}.webp" alt=""><div class="grow"><b>${it.name}</b><small>${RAR[it.r].n} · ${SLOTN[it.slot]} niv. ${it.t}${it.hero ? ' · ' + HEROES[it.hero].name : ''}${w ? ` · porté par ${HEROES[w].name}` : ''}</small>
-    <div class="st">${Object.entries(it.st).map(([k, v]) => fmtSt(k, v)).join(' · ')} ${diff != null ? `<span class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '▲' : '▼'}</span>` : ''}</div>${pwHtml(it)}</div>${btns ? `<div class="btns">${btns}</div>` : ''}</div>`; }
+  return `<div class="item ${w ? 'eq' : ''}" style="${rcss(it)}"><img src="${itemImg(it)}" alt=""><div class="grow"><b>${it.name}</b><small>${RAR[it.r].n} · ${SLOTN[it.slot]} niv. ${it.t}${it.hero ? ' · ' + HEROES[it.hero].name : ''}${w ? ` · porté par ${HEROES[w].name}` : ''}</small>
+    <div class="st">${Object.entries(it.st).map(([k, v]) => fmtSt(k, v)).join(' · ')} ${diff != null ? `<span class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '▲' : '▼'}</span>` : ''}</div>${pwHtml(it)}${setHtml(it)}</div>${btns ? `<div class="btns">${btns}</div>` : ''}</div>`; }
 function bestWearer(it) { const ids = (it.slot === 'w' ? [it.hero] : S.team).filter(id => S.own[id]); let best = null, gain = -1e9;
   for (const id of ids) { const g = itemScore(it) - itemScore(itemById((S.h[id].eq || {})[it.slot])); if (g > gain) { gain = g; best = id; } } return [best, gain]; }
 // ---------- 1.1: item comparison. Real stats of the chosen hero, before / after; nothing changes until the player taps a button ----------
@@ -1640,6 +1685,7 @@ function cmpTable(it, id) { const cur = itemById((S.h[id].eq || {})[it.slot]), a
   return `<p class="cmpcur">${cur === it ? `Déjà porté par ${HEROES[id].name}.` : cur ? `${HEROES[id].name} porte : <b style="color:${RAR[cur.r].c || 'inherit'}">${cur.name}</b> (${RAR[cur.r].n}, niv. ${cur.t})` : `${HEROES[id].name} n’a pas de ${SLOTN[it.slot].toLowerCase()}.`}</p>
     <table class="cmp"><tr><th></th><th>Actuel</th><th>Avec</th><th>Écart</th></tr>${rows}</table>
     <div class="cmppw"><div>Pouvoir actuel : ${cur && cur.pw ? `<b>${PW[cur.pw].n}</b> · ${PW[cur.pw].d}` : '<i>aucun</i>'}</div><div>Nouveau pouvoir : ${it.pw ? `<b>${PW[it.pw].n}</b> · ${PW[it.pw].d}` : '<i>aucun</i>'}</div></div>
+    ${it.set ? `<div class="cmppw" style="text-align:center">${SETS[it.set].ic} Set ${SETS[it.set].de} : <b>${a.sets[it.set] || 0}/3 → ${b.sets[it.set] || 0}/3</b></div>` : ''}
     <p class="cmpsum">Résumé : <span class="${sc >= 0 ? 'up' : 'down'}">${cur === it ? '=' : (sc >= 0 ? '▲ +' : '▼ ') + sc}</span></p>`; }
 // opts: { title, extra (html under the item), sel (hero), sell (false hides it), keep (label) } → resolves 'equip' | 'keep' | 'sell'
 let dCtl = null;
@@ -1648,8 +1694,8 @@ function renderDecide() { const { it, opts, sel } = dCtl, fit = fitHeroes(it), w
   const tabs = fit.map(id => { const g = Math.round(itemScore(it) - itemScore(itemById((S.h[id].eq || {})[it.slot])));
     return `<button type="button" class="eqf ${id === sel ? 'on' : ''}" data-dtab="${id}"><img src="${FP}${HEROES[id].face}.webp" alt="${HEROES[id].name}"><span class="${g >= 0 ? 'up' : 'down'}">${(S.h[id].eq || {})[it.slot] === it.id ? '✔' : (g >= 0 ? '▲' : '▼') + Math.abs(g)}</span></button>`; }).join('');
   const none = it.slot === 'w' ? `Arme réservée à <b>${HEROES[it.hero].name}</b>${S.own[it.hero] ? '' : ', qui n’a pas encore rejoint l’équipe'}.` : 'Aucun héros ne peut le porter.';
-  modal(`${opts.title ? `<h3>${opts.title}</h3>` : ''}<div class="reveal" style="${rcss(it)}"><img src="${IP}${it.img}.webp" alt="" style="width:84px;height:84px"><h4>${it.name}</h4><p style="margin:0">${RAR[it.r].n} · ${SLOTN[it.slot]} niv. ${it.t}${it.hero ? ' de ' + HEROES[it.hero].name : ''}${w ? ` · porté par ${HEROES[w].name}` : ''}</p>
-    <p style="font-size:14px;margin:4px 0">${Object.entries(it.st).map(([k, v]) => fmtSt(k, v)).join(' · ')}</p>${pwHtml(it)}</div>
+  modal(`${opts.title ? `<h3>${opts.title}</h3>` : ''}<div class="reveal" style="${rcss(it)}"><img src="${itemImg(it)}" alt="" style="width:84px;height:84px"><h4>${it.name}</h4><p style="margin:0">${RAR[it.r].n} · ${SLOTN[it.slot]} niv. ${it.t}${it.hero ? ' de ' + HEROES[it.hero].name : ''}${w ? ` · porté par ${HEROES[w].name}` : ''}</p>
+    <p style="font-size:14px;margin:4px 0">${Object.entries(it.st).map(([k, v]) => fmtSt(k, v)).join(' · ')}</p>${pwHtml(it)}${setHtml(it, true)}</div>
     <p style="text-align:center;font-size:12.5px;margin:6px 0 2px">${fit.length ? `Héros compatibles${it.slot === 'w' ? '' : ' (armures et bijoux : tous)'} · touche pour comparer :` : none}</p>
     ${fit.length ? `<div class="eqrow" style="justify-content:center">${tabs}</div>${cmpTable(it, sel)}` : ''}
     <div class="dbtns">${fit.length && (S.h[sel].eq || {})[it.slot] !== it.id ? `<button class="btn" type="button" data-dequip="1">Équiper sur ${HEROES[sel].name}</button>` : ''}
@@ -1674,7 +1720,7 @@ function chestPick(cands, title) { if (SIM) { const it = pick(cands); S.inv.push
     modal(`<h3>${title}</h3><p style="text-align:center;font-size:13px">Choisis un coffre !</p><div class="ch3">${cands.map((_, k) => `<button type="button" data-chpick="${k}" style="animation-delay:${k * .15}s"><img src="${IP}uiChest2.webp" alt="coffre"></button>`).join('')}</div>`);
     chPickNext = async k => { chPickNext = null; const it = cands[k]; S.inv.push(it); gotItem(it); let g = 0; cands.forEach(o => { if (o !== it) g += sellPrice(o); }); S.gold += g; save(); SFX.chest(); if (it.r >= 3) SFX.levelup();
       const others = cands.filter(o => o !== it);
-      await itemDecide(it, { extra: `<p style="text-align:center;font-size:12.5px;margin:10px 0 2px;opacity:.85">Les autres coffres contenaient (revendus +${g} or) :</p><div class="missed">${others.map(o => `<span style="${rcss(o)}"><img src="${IP}${o.img}.webp" alt="">${o.name}<small>${RAR[o.r].n}</small></span>`).join('')}</div>` });
+      await itemDecide(it, { extra: `<p style="text-align:center;font-size:12.5px;margin:10px 0 2px;opacity:.85">Les autres coffres contenaient (revendus +${g} or) :</p><div class="missed">${others.map(o => `<span style="${rcss(o)}"><img src="${itemImg(o)}" alt="">${o.name}<small>${RAR[o.r].n}</small></span>`).join('')}</div>` });
       closeModal(); done(it); }; }); }
 function openChests(items) { if (SIM || !items.length) return Promise.resolve(); return new Promise(done => { let j = 0;
   const show = () => { const it = items[j], ck = it.r >= 4 ? 'uiChest3' : it.r >= 2 ? 'uiChest2' : 'uiChest1';
@@ -1686,9 +1732,13 @@ function openChests(items) { if (SIM || !items.length) return Promise.resolve();
     box.addEventListener('click', open); setTimeout(open, 1600); };
   show(); }); }
 // ---------- Hero sheet: stats, equipment, skills, bag ----------
+const setSum = st => { const a = Object.entries(st.sets || {}).filter(([, n]) => n >= 2); return a.length ? `<p style="text-align:center;font-size:12.5px;margin:4px 0">${a.map(([k, n]) => `${SETS[k].ic} <b>Set ${SETS[k].de}</b> ${n}/3 : ${SETS[k].b2}${n >= 3 ? ' + ' + SETS[k].b3 : ''}`).join('<br>')}</p>` : ''; };
+function specHtml(id) { const s = S.h[id];
+  if (s.lvl < SPEC_LV) return `<p style="text-align:center">🔒 La <b>Voie</b> se débloque au niveau ${SPEC_LV}.<br><small>${HEROES[id].name} choisira entre deux façons de combattre.</small></p>${SPECS[id].map(x => `<div class="row"><div class="grow"><b>${x[2]} ${x[1]}</b><small>${x[3]}</small></div></div>`).join('')}`;
+  return `<p style="text-align:center;font-size:13px">${s.spec ? `Changer de voie coûte ${SPEC_RE} or.` : 'Premier choix gratuit. Tu pourras changer plus tard contre de l’or.'}</p>${SPECS[id].map(x => `<div class="row" style="${s.spec === x[0] ? 'background:rgba(255,215,106,.55)' : ''}"><div class="grow"><b>${x[2]} ${x[1]}</b><small>${x[3]}</small></div>${s.spec === x[0] ? '<b>✔</b>' : `<button class="btn" type="button" data-spec="${x[0]}" style="width:auto;padding:6px 12px;font-size:14px" ${s.spec && S.gold < SPEC_RE ? 'disabled' : ''}>${s.spec ? SPEC_RE + ' or' : 'Choisir'}</button>`}</div>`).join('')}`; }
 let hsCtl = { id: 'aldric', tab: 'eq' };
 function heroSheet(id, tab) { if (id) hsCtl.id = id; if (tab) hsCtl.tab = tab; const ids = HORDER.filter(k => S.own[k]); id = hsCtl.id; const H = HEROES[id], s = S.h[id], st = heroStats(id), pts = ptsLeft(id), eq = s.eq || {};
-  const slots = ['w', 'a', 'j'].map(sl => { const it = itemById(eq[sl]); return it ? `<div class="on" style="${rcss(it)}"><img src="${IP}${it.img}.webp" alt="">${it.name}</div>` : `<div>${SLOTN[sl]}<br>vide</div>`; }).join('');
+  const slots = ['w', 'a', 'j'].map(sl => { const it = itemById(eq[sl]); return it ? `<div class="on" style="${rcss(it)}"><img src="${itemImg(it)}" alt="">${it.name}</div>` : `<div>${SLOTN[sl]}<br>vide</div>`; }).join('');
   const sks = H.skills.concat('ult').map(k => { const S2 = k === 'ult' ? { name: H.ult.name, img: null, ic: '🌟', tip: H.ult.tip } : SK[k], r = rankOf(id, k);
     return `<div class="skrow"><i>${icon(S2.img, S2.ic)}</i><div class="grow"><b>${S2.name}</b> <span class="pips">${'◆'.repeat(r)}${'◇'.repeat(5 - r)}</span><small>${k === 'ult' ? 'Ultime · ' : ''}+${Math.round((rkMult(id, k) - 1) * 100)} % de puissance</small></div><button type="button" data-skup="${k}" ${pts > 0 && r < 5 ? '' : 'disabled'} aria-label="Améliorer">+</button></div>`; }).join('');
   const bag = S.inv.filter(it => canWear(it, id)).sort((a, b) => (b.slot === 'w') - (a.slot === 'w') || b.r - a.r || b.t - a.t);
@@ -1697,12 +1747,12 @@ function heroSheet(id, tab) { if (id) hsCtl.id = id; if (tab) hsCtl.tab = tab; c
   bag.forEach(it => { it.isNew = 0; });
   modal(`<div class="hs-top">${ids.length > 1 ? '<button class="hs-nav" type="button" data-hnav="-1">‹</button>' : ''}<img src="${FP}${H.face}.webp" alt=""><div class="grow"><b style="font-family:var(--fd);font-size:22px;font-weight:400">${H.name}</b> · ${H.cls}<br>Niveau ${s.lvl}<div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>${ids.length > 1 ? '<button class="hs-nav" type="button" data-hnav="1">›</button>' : ''}</div>
     <div class="stats"><span>❤️ ${st.hp}</span><span>💧 ${st.mp}</span><span>⚔️ ${st.atk}</span><span>✨ ${st.mag}</span><span>🛡️ ${st.def}</span><span>🎯 ${Math.round(st.crit * 100)} %</span></div>
-    <div class="slots">${slots}</div>
-    <div class="tabsx"><button type="button" data-htab="eq" class="${hsCtl.tab === 'eq' ? 'on' : ''}">Sac (${bag.length})</button><button type="button" data-htab="sk" class="${hsCtl.tab === 'sk' ? 'on' : ''}">Compétences${pts ? ` (${pts})` : ''}</button></div>
-    ${hsCtl.tab === 'sk' ? `<p style="text-align:center;font-size:13px">Points à dépenser : <b>${pts}</b> · 1 point tous les 2 niveaux</p>${sks}` : `<button class="btn" type="button" data-autoeq="1" style="padding:8px;font-size:16px">Équiper le meilleur pour tous</button>${list}`}
+    <div class="slots">${slots}</div>${setSum(st)}${specOf(id) ? `<p style="text-align:center;font-size:13px;margin:4px 0">${specOf(id)[2]} Voie : <b>${specOf(id)[1]}</b></p>` : ''}
+    <div class="tabsx"><button type="button" data-htab="eq" class="${hsCtl.tab === 'eq' ? 'on' : ''}">Sac (${bag.length})</button><button type="button" data-htab="sk" class="${hsCtl.tab === 'sk' ? 'on' : ''}">Compétences${pts ? ` (${pts})` : ''}</button><button type="button" data-htab="sp" class="${hsCtl.tab === 'sp' ? 'on' : ''}">Voie${!s.spec && s.lvl >= SPEC_LV ? ' (!)' : ''}</button></div>
+    ${hsCtl.tab === 'sp' ? specHtml(id) : hsCtl.tab === 'sk' ? `<p style="text-align:center;font-size:13px">Points à dépenser : <b>${pts}</b> · 1 point tous les 2 niveaux</p>${sks}` : `<button class="btn" type="button" data-autoeq="1" style="padding:8px;font-size:16px">Équiper le meilleur pour tous</button>${list}`}
     <button class="btn alt" type="button" data-close="1">Fermer</button>`);
   save(); renderHome(); }
-function story(key, cb) { const lines = STORY[key]; let j = 0;
+function story(key, cb) { const lines = STORY[key]; let j = 0; if (key === 'out10') music('m_ending');
   const show = () => { const [who, t] = lines[j]; const H = HEROES[who], face = H ? H.face : MON[who] ? who : null, name = H ? H.name : MON[who] ? MON[who].name : '';
     modal(`<div class="say ${face ? '' : 'narr'}">${face ? `<img src="${H ? FP : IP}${face}.webp" alt="">` : ''}<div class="t">${name ? `<b>${name}</b><br>` : ''}${t}</div></div><button class="btn" type="button" data-next="1">${j < lines.length - 1 ? 'Suite' : 'C’est parti !'}</button>`); };
   storyNext = () => { j++; if (j < lines.length) show(); else { storyNext = null; closeModal(); S.seen[key] = 1; save(); if (cb) cb(); } }; show(); }
@@ -1834,7 +1884,9 @@ document.addEventListener('click', e => {
   if (d.bchest) return buyChest(d.bchest);
   if (d.lpick != null && pickNext) return pickNext(+d.lpick);
   if (d.hsheet) { SFX.click(); return heroSheet(d.hsheet, 'eq'); }
+  if (d.route) { const [k, i] = d.route.split(':'); routeSel = k; SFX.click(); return levelSheet(+i, true); }
   if (d.htab) return heroSheet(null, d.htab);
+  if (d.spec) { const s = S.h[hsCtl.id]; if (s.lvl < SPEC_LV) return; if (s.spec) { if (S.gold < SPEC_RE) return; S.gold -= SPEC_RE; } s.spec = d.spec; save(); SFX.levelup(); toast(`${specOf(hsCtl.id)[2]} ${HEROES[hsCtl.id].name} suit la voie : <b>${specOf(hsCtl.id)[1]}</b>`); return heroSheet(); }
   if (d.hnav) { const ids = HORDER.filter(k => S.own[k]), i = ids.indexOf(hsCtl.id); return heroSheet(ids[(i + +d.hnav + ids.length) % ids.length]); }
   if (d.skup) { const sk = (S.h[hsCtl.id].sk = S.h[hsCtl.id].sk || {}); if (ptsLeft(hsCtl.id) > 0 && (sk[d.skup] || 1) < 5) { sk[d.skup] = (sk[d.skup] || 1) + 1; SFX.buff(); } return heroSheet(); }
   if (d.iequip) { const it = itemById(+d.iequip); if (it) { equip(hsCtl.id, it); SFX.buff(); } return heroSheet(); }
@@ -1881,6 +1933,11 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.2', t: 'Version 1.2', d: `<p>• <b>Tout l’équipement redessiné</b> : 25 armes (5 par héros), 10 armures et 10 amulettes, une par chapitre. Tes anciens objets prennent leur nouvelle apparence.</p>
+  <p>• <b>Sets d’équipement</b> 🛡️🗡️🔮🏹 sur les objets Rares et mieux : Gardien, Assassin, Arcaniste, Chasseur. 2 pièces = bonus de stats, 3 pièces = pouvoir passif.</p>
+  <p>• <b>Voies</b> : au niveau 10, chaque héros choisit sa spécialisation (Protecteur ou Berserker, Oracle ou Inquisitrice, Destruction ou Contrôle, Tireuse d’élite ou Pisteuse, Assassine ou Ombre). Onglet « Voie » de la fiche héros.</p>
+  <p>• <b>Routes d’expédition</b> sur les niveaux déjà gagnés : sûre, dangereuse (plus d’ennemis, meilleur butin) ou Défi du jour (+3 💎).</p>
+  <p>• <b>5 nouvelles musiques</b> : Nécropole, Égouts, Citadelle du Néant, Forteresse de Vorthax et la musique de fin.</p>` },
   { v: '1.1.3', t: 'Version 1.1.3', d: `<p>• Sur la carte, la barre sous chaque héros était l’<b>XP</b>, pas la vie : elle devient violette avec « XP … % → niv. suivant ». La vie s’affiche en rouge : ❤️ vie pleine. Chaque niveau commence toujours avec toute la vie et toute la mana.</p>` },
   { v: '1.1.2', t: 'Version 1.1.2', d: `<p>• Retour à la règle d’origine : <b>pas de soin entre les vagues</b>. Chaque nouveau niveau commence avec toute la vie et toute la mana.</p>` },
   { v: '1.1', t: 'Version 1.1', d: `<p>• <b>Comparaison d’équipement</b> : chaque nouvel objet montre les vraies stats du héros, avant et après (vert = mieux, rouge = moins bien), son pouvoir et les héros qui peuvent le porter. Tu choisis : Équiper, Garder ou Vendre. Rien ne change sans ton accord.</p>
@@ -1944,9 +2001,9 @@ async function simCampaign(runs = 1, upto = 99, tier = 0, tch = 0) {
   }
   return out;
 }
-function simSkills() { for (const id of Object.keys(S.own)) { const s = S.h[id], ks = HEROES[id].skills.concat('ult'); s.sk = s.sk || {}; let g = 50; while (ptsLeft(id) > 0 && g--) { const k = pick(ks); if ((s.sk[k] || 1) < 5) s.sk[k] = (s.sk[k] || 1) + 1; } } }
+function simSkills() { for (const id of Object.keys(S.own)) { const s = S.h[id]; if (s.lvl >= SPEC_LV && !s.spec) s.spec = pick(SPECS[id])[0]; { const ks = HEROES[id].skills.concat('ult'); s.sk = s.sk || {}; let g = 50; while (ptsLeft(id) > 0 && g--) { const k = pick(ks); if ((s.sk[k] || 1) < 5) s.sk[k] = (s.sk[k] || 1) + 1; } } } }
 function autoShop() { for (const id of S.team) for (const k of ['w', 'a']) { const c = upCost(S.h[id][k]); if (S.gold >= c + 60) { S.gold -= c; S.h[id][k]++; } } while (S.gold >= 60 && S.items.pot < 3) { S.gold -= 30; S.items.pot++; } }
-window.__db2 = { simCampaign, get B() { return B; }, get S() { return S; }, set S(v) { S = v; }, runLevel, HEROES, MON, SK, LEVELS, setFast: v => { FAST = v; }, SOLO, heroStats, statsWith, itemDecide, openChests, makeItem };
+window.__db2 = { simCampaign, get B() { return B; }, get S() { return S; }, set S(v) { S = v; }, runLevel, HEROES, MON, SK, LEVELS, setFast: v => { FAST = v; }, SOLO, setRoute: v => { simRoute = v; }, heroStats, statsWith, itemDecide, openChests, makeItem };
 })();
 </script>
 </body>

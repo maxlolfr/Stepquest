@@ -14,6 +14,7 @@ srv.listen(0, async () => {
   await pg.goto(`http://127.0.0.1:${port}/${file}?sim`);
   await pg.waitForFunction(() => window.__db2, null, { timeout: 15000 }).catch(e => { console.log('ERREURS:', errs); throw e; });
   const upto = +process.argv[4] || 99, tier = +process.argv[5] || 0, tch = +process.argv[6] || 0;
+  if (process.env.ROUTE) await pg.evaluate(r => window.__db2.setRoute(r), process.env.ROUTE);
   const out = await pg.evaluate(([n, u, t, c]) => window.__db2.simCampaign(n, u, t, c), [runs, upto, tier, tch]);
   const L = out[0].length, rows = [];
   for (let i = 0; i < L; i++) { const r = out.map(o => o[i]), avg = f => (r.reduce((a, x) => a + f(x), 0) / r.length);
