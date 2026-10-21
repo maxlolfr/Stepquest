@@ -18,7 +18,7 @@
 :root {
   --bg: #140d18; --panel: #2a1c22; --panel2: #3a2730; --line: #6b4a2e;
   --gold: #f2b632; --gold2: #ffd76a; --parch: #f6e7c4; --ink: #2a1a0e; --muted: #c9b48f;
-  --hp: #e0413b; --mp: #3d8be0; --xp: #5cb85c; --ult: #ffb02e;
+  --hp: #e0413b; --mp: #3d8be0; --xp: #9b7bff; --ult: #ffb02e;
   --fd: "Lilita One", "Nunito", system-ui, sans-serif; --fb: "Nunito", system-ui, -apple-system, sans-serif;
   --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px); --safe-r: env(safe-area-inset-right, 0px); --safe-l: env(safe-area-inset-left, 0px);
   --pw: min(340px, 44vw);
@@ -71,6 +71,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 .role { display: inline-block; font-size: 11px; padding: 1px 7px; border-radius: 99px; margin-top: 3px; color: #fff; }
 .role.tank { background: #8a3a2a; } .role.heal { background: #2f7a3a; } .role.dps { background: #3a4fa8; } .role.ranged { background: #6a7a2a; } .role.crit { background: #5a3a8a; }
 .xpb { height: 6px; border-radius: 99px; background: rgba(0,0,0,.5); margin-top: 5px; overflow: hidden; } .xpb i { display: block; height: 100%; background: var(--xp); }
+.pc small.hpf { color: #ff8a8a; margin-top: 4px; } .pc small.xpl { color: #b9a4ff; font-size: 11px; margin-top: 2px; }
 .bench { margin-top: 8px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .bench img { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); object-fit: cover; background: #2a1a24; }
 .menu { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
@@ -318,7 +319,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.1.2 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.1.3 (10 chapitres)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -1525,7 +1526,7 @@ function renderHome() {
       + `<p>${T < DIFF.length - 1 ? (tierOpen(T + 1, S.ch) ? `${DIFF[T + 1].ic} ${DIFF[T + 1].n} débloqué !` : `3★ sur les 5 niveaux en ${DIFF[T].n} pour débloquer ${DIFF[T + 1].ic} ${DIFF[T + 1].n} (${got(T)}/15★)`) : 'Difficulté maximale !'}</p>`; }
   $('path').innerHTML = LEVELS.map((L, i) => L.ch !== S.ch ? '' : `<button class="node ${L.boss ? 'boss' : ''} ${unlocked(i) ? '' : 'lock'} ${i === cur ? 'cur' : ''}" type="button" data-lv="${i}" aria-label="${L.name}">
     <div class="disc">${L.boss ? `<img src="${IP}${C.boss}.webp" alt="">` : unlocked(i) ? i % 5 + 1 : '🔒'}</div><div class="stars">${stars(starsOf(T, i))}</div><div class="nm">${L.name}</div></button>`).join('');
-  const slots = S.team.map(id => { const H = HEROES[id], s = S.h[id], pts = ptsLeft(id); return `<div class="pc" data-hsheet="${id}" role="button" tabindex="0">${pts ? `<span class="dot">${pts}</span>` : ''}<img src="${FP}${H.face}.webp" alt=""><b>${H.name}</b><small>Niv. ${s.lvl}</small><span class="role ${H.role}">${H.roleN}</span><div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>`; });
+  const slots = S.team.map(id => { const H = HEROES[id], s = S.h[id], pts = ptsLeft(id); return `<div class="pc" data-hsheet="${id}" role="button" tabindex="0">${pts ? `<span class="dot">${pts}</span>` : ''}<img src="${FP}${H.face}.webp" alt=""><b>${H.name}</b><small>Niv. ${s.lvl}</small><span class="role ${H.role}">${H.roleN}</span><small class="hpf">❤️ ${heroStats(id).hp} · vie pleine</small><small class="xpl">XP ${Math.floor(s.xp / xpNeed(s.lvl) * 100)} % → niv. ${s.lvl + 1}</small><div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>`; });
   while (slots.length < 3) slots.push('<div class="pc empty"><div><span>❔</span>Un allié te rejoindra</div></div>');
   $('party').innerHTML = slots.join('');
   const bench = Object.keys(S.own).filter(id => !S.team.includes(id));
@@ -1880,6 +1881,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.1.3', t: 'Version 1.1.3', d: `<p>• Sur la carte, la barre sous chaque héros était l’<b>XP</b>, pas la vie : elle devient violette avec « XP … % → niv. suivant ». La vie s’affiche en rouge : ❤️ vie pleine. Chaque niveau commence toujours avec toute la vie et toute la mana.</p>` },
   { v: '1.1.2', t: 'Version 1.1.2', d: `<p>• Retour à la règle d’origine : <b>pas de soin entre les vagues</b>. Chaque nouveau niveau commence avec toute la vie et toute la mana.</p>` },
   { v: '1.1', t: 'Version 1.1', d: `<p>• <b>Comparaison d’équipement</b> : chaque nouvel objet montre les vraies stats du héros, avant et après (vert = mieux, rouge = moins bien), son pouvoir et les héros qui peuvent le porter. Tu choisis : Équiper, Garder ou Vendre. Rien ne change sans ton accord.</p>
   <p>• Dans le sac : bouton <b>Comparer</b> et badge ★ Meilleur pour chaque emplacement.</p>
