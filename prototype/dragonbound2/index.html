@@ -320,7 +320,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.2 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.2.1 (10 chapitres)';
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -533,7 +533,7 @@ const CHAPTERS = [
 const LEVELS = [
   { ch: 0, goal: 'Repousser les créatures sorties du sanctuaire d’Aube-Claire.', name: 'Le seuil', bg: 'bg_c1_1', local: true, hz: 0.5, waves: [['slime'], ['rat'], ['slime', 'rat']], rec: 1, elite: 0 },
   { ch: 0, goal: 'Trouver d’où vient la magie qui réveille la crypte.', name: 'Salle des rites', bg: 'bg_c1_2', local: true, hz: 0.5, waves: [['bat', 'rat'], ['slime', 'bat'], ['rat', 'slime'], ['bat', 'bat']], rec: 2, elite: 0 },
-  { ch: 0, goal: 'Comprendre pourquoi les morts se relèvent.', name: 'L’ossuaire', bg: 'bg0_2', hz: .82, waves: [['skel'], ['skel', 'rat'], ['bat', 'skel'], ['skel', 'slime']], rec: 3, elite: .15, champ: true },
+  { ch: 0, goal: 'Comprendre pourquoi les morts se relèvent.', name: 'L’ossuaire', bg: 'bg_c1_3', local: true, hz: 0.69, waves: [['skel'], ['skel', 'rat'], ['bat', 'skel'], ['skel', 'slime']], rec: 3, elite: .15, champ: true },
   { ch: 0, goal: 'Atteindre la chapelle scellée et ce qu’elle cache.', name: 'La chapelle', bg: 'bg_c1_4', local: true, hz: 0.5, waves: [['skel', 'rat'], ['skel', 'skel'], ['skel', 'bat'], ['skel', 'skel']], rec: 4, elite: .2 },
   { ch: 0, goal: 'Affronter le Roi des Os avant qu’il ouvre le sceau.', name: 'Le trône', bg: 'bg_c1_5', local: true, hz: 0.47, waves: [['skel', 'bat'], ['bossBone']], rec: 5, boss: true, elite: .2 },
   { ch: 1, name: 'L’orée', bg: 'bg_c2_1', local: true, hz: 0.48, waves: [['wolf', 'spider'], ['spider', 'shroom'], ['wolf', 'goblin', 'spider'], ['shroom', 'wolf', 'spider']], rec: 6, elite: .2 },
@@ -1933,6 +1933,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.2.1', t: 'Version 1.2.1', d: `<p>• Nouveau décor pour <b>1-3 L’ossuaire</b> : la grande salle des os, éclairée aux bougies.</p>` },
   { v: '1.2', t: 'Version 1.2', d: `<p>• <b>Tout l’équipement redessiné</b> : 25 armes (5 par héros), 10 armures et 10 amulettes, une par chapitre. Tes anciens objets prennent leur nouvelle apparence.</p>
   <p>• <b>Sets d’équipement</b> 🛡️🗡️🔮🏹 sur les objets Rares et mieux : Gardien, Assassin, Arcaniste, Chasseur. 2 pièces = bonus de stats, 3 pièces = pouvoir passif.</p>
   <p>• <b>Voies</b> : au niveau 10, chaque héros choisit sa spécialisation (Protecteur ou Berserker, Oracle ou Inquisitrice, Destruction ou Contrôle, Tireuse d’élite ou Pisteuse, Assassine ou Ombre). Onglet « Voie » de la fiche héros.</p>
