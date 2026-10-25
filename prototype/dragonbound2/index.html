@@ -326,7 +326,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.4.2 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.4.3 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -720,7 +720,11 @@ function makeItem(slot, r, t, hero, forcePw) {
   return it;
 }
 const itemById = id => S.inv.find(x => x.id === id);
-const itemScore = it => it ? Object.entries(it.st).reduce((a, [k, v]) => a + v * { atk: 2.2, mag: 2.2, hp: .35, def: 2, mp: .5, crit: 300, lb: 1.2 }[k], 0) + (it.pw ? 25 + 4 * it.t : 0) : 0;
+// 1.4.3: the score depends on who wears it (Orin values magic, the others attack, Séléna both)
+const SETFIT = { aldric: ['gard', 'chas'], selena: ['gard', 'arca'], orin: ['arca'], lyra: ['chas', 'assa'], nyx: ['assa', 'chas'] };
+const itemScore = (it, id) => { if (!it) return 0; const w = { atk: 2.2, mag: 2.2, hp: .35, def: 2, mp: .5, crit: 300, lb: 1.2 };
+  if (id === 'orin') w.atk = .3; else if (id === 'selena') { w.atk = 1.6; w.mag = 1.6; } else if (id) w.mag = .2;
+  return Object.entries(it.st).reduce((a, [k, v]) => a + v * w[k], 0) + (it.pw ? 25 + 4 * it.t : 0) + (id && it.set ? (SETFIT[id] || []).includes(it.set) ? 12 : -6 : 0); };
 const canWear = (it, id) => it.slot !== 'w' || it.hero === id;
 const sellPrice = it => Math.round(12 * it.t * RAR[it.r].m);
 const wornBy = it => Object.keys(S.h).find(id => (S.h[id].eq || {})[it.slot] === it.id);
@@ -739,12 +743,15 @@ function autoEquip() { let n = 0; const heroes = S.team.concat(Object.keys(S.own
   for (const sl of ['w', 'a', 'j']) {
     const pool = S.inv.filter(it => it.slot === sl).sort((a, b) => itemScore(b) - itemScore(a)), taken = new Set(), plan = {};
     for (const it of pool) { let best = null, bs = -1;
-      for (const id of heroes) { if (plan[id] || !canWear(it, id)) continue; const sc = itemScore(it) + (S.team.includes(id) ? 1000 : 0); if (sc > bs) { bs = sc; best = id; } }
+      for (const id of heroes) { if (plan[id] || !canWear(it, id)) continue; const sc = itemScore(it, id) + (S.team.includes(id) ? 1000 : 0); if (sc > bs) { bs = sc; best = id; } }
       if (best) { plan[best] = it; taken.add(it.id); } }
     for (const id of heroes) { const it = plan[id], cur = (S.h[id].eq || {})[sl]; if (it && it.id !== cur) { equip(id, it); n++; } } }
   return n; }
 // skill ranks: 1 point every 2 levels, rank 1..5, +10 % power per rank (Ultime +12 %)
 const rankOf = (id, k) => ((S.h[id].sk || {})[k]) || 1;
+const maxed = id => HEROES[id].skills.concat('ult').every(k => rankOf(id, k) >= 5);
+const mastery = id => maxed(id) ? Math.max(0, ptsLeft(id)) : 0; // 1.4.3: points beyond the skill cap give +1.5 % to every stat
+const spendable = id => maxed(id) ? 0 : Math.max(0, ptsLeft(id));
 const ptsLeft = id => Math.floor((S.h[id].lvl - 1) / 2) - Object.values(S.h[id].sk || {}).reduce((a, r) => a + r - 1, 0);
 const rkMult = (id, k) => 1 + (k === 'ult' ? .12 : .1) * (rankOf(id, k) - 1);
 
@@ -792,7 +799,7 @@ function heroStats(id) { const H = HEROES[id], s = S.h[id], L = s.lvl, o = {};
   const ns = k => o.sets[k] || 0;
   if (ns('gard') >= 2) { o.def *= 1.1; o.hp *= 1.05; } if (ns('assa') >= 2) o.crit += .05; if (ns('arca') >= 2) { o.mag *= 1.1; o.mp += 10; } if (ns('chas') >= 2) o.atk *= 1.08;
   for (const k of Object.keys(SETS)) if (ns(k) >= 3) o.pw.push('set_' + k);
-  for (const k of ['hp', 'mp', 'atk', 'mag', 'def']) o[k] = Math.round(o[k]); return o; }
+  const mm = 1 + .015 * mastery(id); for (const k of ['hp', 'mp', 'atk', 'mag', 'def']) o[k] = Math.round(o[k] * mm); o.mast = mastery(id); return o; }
 
 // ---------- Clock, tweens, waits ----------
 let clock = 0, last = 0, hsUntil = 0; const TW = [], WT = [];
@@ -854,7 +861,7 @@ function sparks(x, y, n, cols, pw = 1, grav = .05) { if (FAST) return; if (reduc
 function rise(x, y, n, cols) { if (FAST) return; for (let i = 0; i < n; i++) fx.push({ t: 'pt', x: x + rnd(-30, 30), y: y + rnd(-10, 20), vx: rnd(-.3, .3), vy: rnd(-2.2, -.8), r: rnd(2, 4), col: pick(cols), grav: -.01, t0: now() + rnd(0, 250), dur: rnd(600, 1000) }); }
 function ring(x, y, col, r = 70, dur = 450) { if (!FAST) fx.push({ t: 'ring', x, y, col, r, t0: now(), dur }); }
 function impact(x, y, lv, col) { if (FAST || reduce) return; const t0 = now();
-  hsUntil = performance.now() + [0, 45, 70, 105][lv]; B.shake = { t0: t0 + 10, amp: [0, 3.5, 6, 9][lv] };
+  hsUntil = performance.now() + [0, 45, 70, 105][lv] / Math.max(1, (S.spd || 1) / 2) * ((S.spd || 1) >= 10 ? 0 : 1); B.shake = { t0: t0 + 10, amp: [0, 3.5, 6, 9][lv] };
   for (let i = 0; i < 5 + lv * 4; i++) fx.push({ t: 'streak', x, y, a: rnd(-3.14, 3.14), v: rnd(5, 9) + lv * 2, len: rnd(10, 20) + lv * 4, col: col || (lv > 2 ? '#ffe58a' : '#fff6d0'), t0, dur: rnd(220, 340) });
   ring(x, y, lv > 2 ? '#ffd76a' : 'rgba(255,255,255,.9)', 46 + lv * 16, 260); }
 function slashFx(x, y, flip, col, big) { if (!FAST) fx.push({ t: 'slash', x, y, flip, col, big, t0: now(), dur: big ? 520 : 330 }); }
@@ -1588,13 +1595,13 @@ function renderHome() {
       + `<p>${T < DIFF.length - 1 ? (tierOpen(T + 1, S.ch) ? `${DIFF[T + 1].ic} ${DIFF[T + 1].n} débloqué !` : `3★ sur les 5 niveaux en ${DIFF[T].n} pour débloquer ${DIFF[T + 1].ic} ${DIFF[T + 1].n} (${got(T)}/15★)`) : 'Difficulté maximale !'}</p>`; }
   $('path').innerHTML = LEVELS.map((L, i) => L.ch !== S.ch ? '' : `<button class="node ${L.boss ? 'boss' : ''} ${unlocked(i) ? '' : 'lock'} ${i === cur ? 'cur' : ''}" type="button" data-lv="${i}" aria-label="${L.name}">
     <div class="disc">${L.boss ? `<img src="${IP}${C.boss}.webp" alt="">` : unlocked(i) ? i % 5 + 1 : '🔒'}</div><div class="stars">${stars(starsOf(T, i))}</div><div class="nm">${L.name}</div></button>`).join('');
-  const slots = S.team.map(id => { const H = HEROES[id], s = S.h[id], pts = ptsLeft(id); return `<div class="pc" data-hsheet="${id}" role="button" tabindex="0">${pts ? `<span class="dot">${pts}</span>` : ''}<img src="${FP}${H.face}.webp" alt=""><b>${H.name}</b><small>Niv. ${s.lvl}</small><span class="role ${H.role}">${H.roleN}</span><small class="hpf">❤️ ${heroStats(id).hp} · vie pleine</small><small class="xpl">XP ${Math.floor(s.xp / xpNeed(s.lvl) * 100)} % → niv. ${s.lvl + 1}</small><div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>`; });
+  const slots = S.team.map(id => { const H = HEROES[id], s = S.h[id], pts = spendable(id); return `<div class="pc" data-hsheet="${id}" role="button" tabindex="0">${pts ? `<span class="dot">${pts}</span>` : ''}<img src="${FP}${H.face}.webp" alt=""><b>${H.name}</b><small>Niv. ${s.lvl}</small><span class="role ${H.role}">${H.roleN}</span><small class="hpf">❤️ ${heroStats(id).hp} · vie pleine</small><small class="xpl">XP ${Math.floor(s.xp / xpNeed(s.lvl) * 100)} % → niv. ${s.lvl + 1}</small><div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>`; });
   while (slots.length < 3) slots.push('<div class="pc empty"><div><span>❔</span>Un allié te rejoindra</div></div>');
   $('party').innerHTML = slots.join('');
   const bench = Object.keys(S.own).filter(id => !S.team.includes(id));
   $('bench').innerHTML = bench.length ? `Réserve : ${bench.map(id => `<img src="${FP}${HEROES[id].face}.webp" alt="${HEROES[id].name}" title="${HEROES[id].name}">`).join('')}` : '';
   $('teamBtn').hidden = Object.keys(S.own).length < 2;
-  const nNew = S.inv.filter(it => it.isNew).length + Object.keys(S.own).reduce((a, id) => a + ptsLeft(id), 0); $('heroDot').hidden = !nNew; $('heroDot').textContent = nNew;
+  const nNew = S.inv.filter(it => it.isNew).length + Object.keys(S.own).reduce((a, id) => a + spendable(id), 0); $('heroDot').hidden = !nNew; $('heroDot').textContent = nNew;
 }
 const modalEl = $('modal'), sheet = $('sheet');
 let modalCb = null;
@@ -1692,11 +1699,11 @@ function defeat(i) { const { xp } = rewards(i, B.kills, false); grantXp(xp); sav
 let storyNext = null;
 // ---------- Chests ----------
 const rcss = it => `--rc:${RAR[it.r].c};--rg:${RAR[it.r].g}`;
-function itemHtml(it, id, btns = '') { const cur = id ? itemById((S.h[id].eq || {})[it.slot]) : null, diff = cur && cur !== it ? itemScore(it) - itemScore(cur) : null, w = wornBy(it);
+function itemHtml(it, id, btns = '') { const cur = id ? itemById((S.h[id].eq || {})[it.slot]) : null, diff = cur && cur !== it ? itemScore(it, id) - itemScore(cur, id) : null, w = wornBy(it);
   return `<div class="item ${w ? 'eq' : ''}" style="${rcss(it)}"><img src="${itemImg(it)}" alt=""><div class="grow"><b>${it.name}</b><small>${RAR[it.r].n} · ${SLOTN[it.slot]} niv. ${it.t}${it.hero ? ' · ' + HEROES[it.hero].name : ''}${w ? ` · porté par ${HEROES[w].name}` : ''}</small>
     <div class="st">${Object.entries(it.st).map(([k, v]) => fmtSt(k, v)).join(' · ')} ${diff != null ? `<span class="${diff >= 0 ? 'up' : 'down'}">${diff >= 0 ? '▲' : '▼'}</span>` : ''}</div>${pwHtml(it)}${setHtml(it)}</div>${btns ? `<div class="btns">${btns}</div>` : ''}</div>`; }
 function bestWearer(it) { const ids = (it.slot === 'w' ? [it.hero] : S.team).filter(id => S.own[id]); let best = null, gain = -1e9;
-  for (const id of ids) { const g = itemScore(it) - itemScore(itemById((S.h[id].eq || {})[it.slot])); if (g > gain) { gain = g; best = id; } } return [best, gain]; }
+  for (const id of ids) { const g = itemScore(it, id) - itemScore(itemById((S.h[id].eq || {})[it.slot]), id); if (g > gain) { gain = g; best = id; } } return [best, gain]; }
 // ---------- 1.1: item comparison. Real stats of the chosen hero, before / after; nothing changes until the player taps a button ----------
 const CMPK = [['hp', '❤️', 'Vie'], ['mp', '💧', 'Mana'], ['atk', '⚔️', 'Attaque'], ['mag', '✨', 'Magie'], ['def', '🛡️', 'Défense'], ['crit', '🎯', 'Critique'], ['lbm', '🌟', 'Ultime']];
 const cmpV = (k, v) => k === 'crit' ? Math.round(v * 100) + ' %' : k === 'lbm' ? '+' + Math.round((v - 1) * 100) + ' %' : v;
@@ -1706,7 +1713,7 @@ const fitHeroes = it => HORDER.filter(id => S.own[id] && canWear(it, id));
 function cmpTable(it, id) { const cur = itemById((S.h[id].eq || {})[it.slot]), a = heroStats(id), b = cur === it ? a : statsWith(id, it);
   const rows = CMPK.filter(([k]) => k !== 'lbm' || a.lbm !== 1 || b.lbm !== 1).map(([k, ic, n]) => { const d = k === 'crit' ? Math.round((b[k] - a[k]) * 100) : k === 'lbm' ? Math.round((b[k] - a[k]) * 100) : b[k] - a[k], u = k === 'crit' || k === 'lbm' ? ' %' : '';
     return `<tr><td>${ic} ${n}</td><td>${cmpV(k, a[k])}</td><td>${cmpV(k, b[k])}</td><td class="${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d > 0 ? '+' + d + u : d < 0 ? '−' + -d + u : '='}</td></tr>`; }).join('');
-  const sc = Math.round(itemScore(it) - itemScore(cur));
+  const sc = Math.round(itemScore(it, id) - itemScore(cur, id));
   return `<p class="cmpcur">${cur === it ? `Déjà porté par ${HEROES[id].name}.` : cur ? `${HEROES[id].name} porte : <b style="color:${RAR[cur.r].c || 'inherit'}">${cur.name}</b> (${RAR[cur.r].n}, niv. ${cur.t})` : `${HEROES[id].name} n’a pas de ${SLOTN[it.slot].toLowerCase()}.`}</p>
     <table class="cmp"><tr><th></th><th>Actuel</th><th>Avec</th><th>Écart</th></tr>${rows}</table>
     <div class="cmppw"><div>Pouvoir actuel : ${cur && cur.pw ? `<b>${PW[cur.pw].n}</b> · ${PW[cur.pw].d}` : '<i>aucun</i>'}</div><div>Nouveau pouvoir : ${it.pw ? `<b>${PW[it.pw].n}</b> · ${PW[it.pw].d}` : '<i>aucun</i>'}</div></div>
@@ -1716,7 +1723,7 @@ function cmpTable(it, id) { const cur = itemById((S.h[id].eq || {})[it.slot]), a
 let dCtl = null;
 function itemDecide(it, opts = {}) { return new Promise(done => { const fit = fitHeroes(it); dCtl = { it, opts, done, sel: opts.sel && fit.includes(opts.sel) ? opts.sel : (bestWearer(it)[0] && fit.includes(bestWearer(it)[0]) ? bestWearer(it)[0] : fit[0]) }; renderDecide(); }); }
 function renderDecide() { const { it, opts, sel } = dCtl, fit = fitHeroes(it), w = wornBy(it);
-  const tabs = fit.map(id => { const g = Math.round(itemScore(it) - itemScore(itemById((S.h[id].eq || {})[it.slot])));
+  const tabs = fit.map(id => { const g = Math.round(itemScore(it, id) - itemScore(itemById((S.h[id].eq || {})[it.slot]), id));
     return `<button type="button" class="eqf ${id === sel ? 'on' : ''}" data-dtab="${id}"><img src="${FP}${HEROES[id].face}.webp" alt="${HEROES[id].name}"><span class="${g >= 0 ? 'up' : 'down'}">${(S.h[id].eq || {})[it.slot] === it.id ? '✔' : (g >= 0 ? '▲' : '▼') + Math.abs(g)}</span></button>`; }).join('');
   const none = it.slot === 'w' ? `Arme réservée à <b>${HEROES[it.hero].name}</b>${S.own[it.hero] ? '' : ', qui n’a pas encore rejoint l’équipe'}.` : 'Aucun héros ne peut le porter.';
   modal(`${opts.title ? `<h3>${opts.title}</h3>` : ''}<div class="reveal" style="${rcss(it)}"><img src="${itemImg(it)}" alt="" style="width:84px;height:84px"><h4>${it.name}</h4><p style="margin:0">${RAR[it.r].n} · ${SLOTN[it.slot]} niv. ${it.t}${it.hero ? ' de ' + HEROES[it.hero].name : ''}${w ? ` · porté par ${HEROES[w].name}` : ''}</p>
@@ -1762,19 +1769,19 @@ function specHtml(id) { const s = S.h[id];
   if (s.lvl < SPEC_LV) return `<p style="text-align:center">🔒 La <b>Voie</b> se débloque au niveau ${SPEC_LV}.<br><small>${HEROES[id].name} choisira entre deux façons de combattre.</small></p>${SPECS[id].map(x => `<div class="row"><div class="grow"><b>${x[2]} ${x[1]}</b><small>${x[3]}</small></div></div>`).join('')}`;
   return `<p style="text-align:center;font-size:13px">${s.spec ? `Changer de voie coûte ${SPEC_RE} or.` : 'Premier choix gratuit. Tu pourras changer plus tard contre de l’or.'}</p>${SPECS[id].map(x => `<div class="row" style="${s.spec === x[0] ? 'background:rgba(255,215,106,.55)' : ''}"><div class="grow"><b>${x[2]} ${x[1]}</b><small>${x[3]}</small></div>${s.spec === x[0] ? '<b>✔</b>' : `<button class="btn" type="button" data-spec="${x[0]}" style="width:auto;padding:6px 12px;font-size:14px" ${s.spec && S.gold < SPEC_RE ? 'disabled' : ''}>${s.spec ? SPEC_RE + ' or' : 'Choisir'}</button>`}</div>`).join('')}`; }
 let hsCtl = { id: 'aldric', tab: 'eq' };
-function heroSheet(id, tab) { if (id) hsCtl.id = id; if (tab) hsCtl.tab = tab; const ids = HORDER.filter(k => S.own[k]); id = hsCtl.id; const H = HEROES[id], s = S.h[id], st = heroStats(id), pts = ptsLeft(id), eq = s.eq || {};
+function heroSheet(id, tab) { if (id) hsCtl.id = id; if (tab) hsCtl.tab = tab; const ids = HORDER.filter(k => S.own[k]); id = hsCtl.id; const H = HEROES[id], s = S.h[id], st = heroStats(id), pts = spendable(id), eq = s.eq || {};
   const slots = ['w', 'a', 'j'].map(sl => { const it = itemById(eq[sl]); return it ? `<div class="on" style="${rcss(it)}"><img src="${itemImg(it)}" alt="">${it.name}</div>` : `<div>${SLOTN[sl]}<br>vide</div>`; }).join('');
   const sks = H.skills.concat('ult').map(k => { const S2 = k === 'ult' ? { name: H.ult.name, img: null, ic: '🌟', tip: H.ult.tip } : SK[k], r = rankOf(id, k);
     return `<div class="skrow"><i>${icon(S2.img, S2.ic)}</i><div class="grow"><b>${S2.name}</b> <span class="pips">${'◆'.repeat(r)}${'◇'.repeat(5 - r)}</span><small>${k === 'ult' ? 'Ultime · ' : ''}+${Math.round((rkMult(id, k) - 1) * 100)} % de puissance</small></div><button type="button" data-skup="${k}" ${pts > 0 && r < 5 ? '' : 'disabled'} aria-label="Améliorer">+</button></div>`; }).join('');
   const bag = S.inv.filter(it => canWear(it, id)).sort((a, b) => (b.slot === 'w') - (a.slot === 'w') || b.r - a.r || b.t - a.t);
-  const best = {}; for (const it of bag) if (!best[it.slot] || itemScore(it) > itemScore(best[it.slot])) best[it.slot] = it;
+  const best = {}; for (const it of bag) if (!best[it.slot] || itemScore(it, id) > itemScore(best[it.slot], id)) best[it.slot] = it;
   const list = bag.map(it => itemHtml(it, id, `${best[it.slot] === it ? '<span class="bestb">★ Meilleur</span>' : ''}${(eq[it.slot] === it.id) ? '' : `<button type="button" data-icmp="${it.id}">Comparer</button>`}${wornBy(it) ? '' : `<button type="button" class="sell" data-isell="${it.id}">${sellPrice(it)} or</button>`}`)).join('') || '<p style="text-align:center">Aucun objet pour ce héros. Les coffres tombent à la fin de chaque niveau.</p>';
   bag.forEach(it => { it.isNew = 0; });
   modal(`<div class="hs-top">${ids.length > 1 ? '<button class="hs-nav" type="button" data-hnav="-1">‹</button>' : ''}<img src="${FP}${H.face}.webp" alt=""><div class="grow"><b style="font-family:var(--fd);font-size:22px;font-weight:400">${H.name}</b> · ${H.cls}<br>Niveau ${s.lvl}<div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>${ids.length > 1 ? '<button class="hs-nav" type="button" data-hnav="1">›</button>' : ''}</div>
     <div class="stats"><span>❤️ ${st.hp}</span><span>💧 ${st.mp}</span><span>⚔️ ${st.atk}</span><span>✨ ${st.mag}</span><span>🛡️ ${st.def}</span><span>🎯 ${Math.round(st.crit * 100)} %</span></div>
     <div class="slots">${slots}</div>${setSum(st)}${specOf(id) ? `<p style="text-align:center;font-size:13px;margin:4px 0">${specOf(id)[2]} Voie : <b>${specOf(id)[1]}</b></p>` : ''}
     <div class="tabsx"><button type="button" data-htab="eq" class="${hsCtl.tab === 'eq' ? 'on' : ''}">Sac (${bag.length})</button><button type="button" data-htab="sk" class="${hsCtl.tab === 'sk' ? 'on' : ''}">Compétences${pts ? ` (${pts})` : ''}</button><button type="button" data-htab="sp" class="${hsCtl.tab === 'sp' ? 'on' : ''}">Voie${!s.spec && s.lvl >= SPEC_LV ? ' (!)' : ''}</button></div>
-    ${hsCtl.tab === 'sp' ? specHtml(id) : hsCtl.tab === 'sk' ? `<p style="text-align:center;font-size:13px">Points à dépenser : <b>${pts}</b> · 1 point tous les 2 niveaux</p>${sks}` : `<button class="btn" type="button" data-autoeq="1" style="padding:8px;font-size:16px">Équiper le meilleur pour tous</button>${list}`}
+    ${hsCtl.tab === 'sp' ? specHtml(id) : hsCtl.tab === 'sk' ? `<p style="text-align:center;font-size:13px">${maxed(id) ? `🏅 Compétences au maximum · <b>Maîtrise ${st.mast}</b> : +${(st.mast * 1.5).toFixed(1).replace('.', ',')} % à toutes les stats<br><small>Chaque nouveau point (1 tous les 2 niveaux) ajoute +1,5 %.</small>` : `Points à dépenser : <b>${pts}</b> · 1 point tous les 2 niveaux`}</p>${sks}` : `<button class="btn" type="button" data-autoeq="1" style="padding:8px;font-size:16px">Équiper le meilleur pour tous</button>${list}`}
     <button class="btn alt" type="button" data-close="1">Fermer</button>`);
   save(); renderHome(); }
 function story(key, cb) { const lines = STORY[key]; let j = 0; if (key === 'out10') music('m_ending');
@@ -1963,6 +1970,9 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.4.3', t: 'Version 1.4.3', d: `<p>• <b>Maîtrise</b> 🏅 : quand toutes les compétences d’un héros sont au maximum, chaque nouveau point donne +1,5 % à toutes ses stats. La progression ne s’arrête plus.</p>
+  <p>• L’équipement est noté selon le héros : Orin préfère la magie, les autres l’attaque, Séléna les deux, et les sets qui vont à son rôle comptent plus (comparaison, ★ Meilleur, « Équiper le meilleur »).</p>
+  <p>• Correction : aux vitesses rapides, les monstres pouvaient rester blancs (flash d’impact) et le combat ralentissait.</p>` },
   { v: '1.4.2', t: 'Version 1.4.2', d: `<p>• Vitesses <b>×20</b> et <b>×30</b> (version de test).</p><p>• Correction : les bruitages pouvaient se couper sur iPhone après un moment de jeu (écran verrouillé, appli changée) ; chaque toucher les réactive.</p>` },
   { v: '1.4.1', t: 'Version 1.4.1', d: `<p>• Vitesse <b>×10</b> pour les tests (bouton de vitesse en combat, version de test uniquement).</p>` },
   { v: '1.4', t: 'Version 1.4 · Plus lisible', d: `<p>• <b>Mode Auto</b> : les boutons se replient et le combat prend presque tout l’écran. « ✋ Reprendre la main » pour rejouer toi-même.</p>
