@@ -326,7 +326,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.4.1 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.4.2 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -1432,7 +1432,7 @@ cv.addEventListener('click', e => { if (!pending || !pending.sel) return; const 
   const c = B.cam, wx = (x - VW / 2) / c.z + c.x, wy = (y - VH / 2) / c.z + c.y; let best = null, bd = 1e9;
   for (const u of pending.sel.ts) { const p = px(u), d = Math.hypot(p.x - wx, (p.y - p.h * .45) - wy); if (d < bd) { bd = d; best = u; } }
   if (best && bd < VH * .3) pickUnit(best); });
-const SPDS = DEV ? [1, 2, 3, 5, 10] : [1, 2, 3, 5]; // ×10 only in the test build
+const SPDS = DEV ? [1, 2, 3, 5, 10, 20, 30] : [1, 2, 3, 5]; // ×10-×30 in the test build (a paid fast mode later)
 $('spdBtn').addEventListener('click', () => { S.spd = SPDS[(SPDS.indexOf(S.spd || 1) + 1) % SPDS.length]; save(); spdUi(); });
 function spdUi() { $('spdBtn').textContent = '×' + (S.spd || 1); $('spdBtn').classList.toggle('on', (S.spd || 1) > 1); }
 $('takeBtn').addEventListener('click', () => { if (B && B.auto) $('autoBtn').click(); });
@@ -1569,7 +1569,7 @@ function drawScreenFx(c) {
 }
 function loop(t) {
   const dt = Math.min(50, t - (last || t)); last = t;
-  if (performance.now() >= hsUntil) clock += dt * (B ? Math.min(S.spd || 1, DEV ? 10 : 5) : 1);
+  if (performance.now() >= hsUntil) clock += dt * (B ? Math.min(S.spd || 1, DEV ? 30 : 5) : 1);
   stepTime(); draw(t); requestAnimationFrame(loop);
 }
 
@@ -1950,6 +1950,10 @@ sheet.addEventListener('input', e => { const k = e.target.dataset && e.target.da
   if (k === 'm') bgm.volume = MUSV(); else { if (BUS) BUS.gain.value = VOL.s; SFX.click(); } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) ac(); });
 bgm.addEventListener('play', () => ac());
+// 1.4.2: iOS can suspend/interrupt the audio context (lock screen, app switch, long sessions); every tap wakes it up again
+const wakeAudio = () => { if (AC && AC.state !== 'running') AC.resume().catch(() => {}); };
+['pointerdown', 'touchend', 'click'].forEach(ev => document.addEventListener(ev, wakeAudio, { passive: true }));
+document.addEventListener('visibilitychange', () => { if (!document.hidden) wakeAudio(); });
 document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused && bgm.dataset.k) bgm.play().catch(() => {}); }, { once: true });
 
 // ---------- Boot ----------
@@ -1959,6 +1963,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.4.2', t: 'Version 1.4.2', d: `<p>• Vitesses <b>×20</b> et <b>×30</b> (version de test).</p><p>• Correction : les bruitages pouvaient se couper sur iPhone après un moment de jeu (écran verrouillé, appli changée) ; chaque toucher les réactive.</p>` },
   { v: '1.4.1', t: 'Version 1.4.1', d: `<p>• Vitesse <b>×10</b> pour les tests (bouton de vitesse en combat, version de test uniquement).</p>` },
   { v: '1.4', t: 'Version 1.4 · Plus lisible', d: `<p>• <b>Mode Auto</b> : les boutons se replient et le combat prend presque tout l’écran. « ✋ Reprendre la main » pour rejouer toi-même.</p>
   <p>• <b>Chapitres 3 à 5 allégés</b> : une mécanique forte par chapitre (protecteur au 3, soigneur au 4, attaque de zone au 5) et un seul élite par vague en Normal.</p>
