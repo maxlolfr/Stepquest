@@ -163,6 +163,9 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 .toast { position: fixed; left: 50%; top: calc(var(--safe-t) + 60px); transform: translateX(-50%); z-index: 80; background: rgba(20,12,16,.92); border: 2px solid var(--gold); border-radius: 14px; padding: 8px 14px; font-size: 14px; max-width: 90vw; text-align: center; animation: pop .2s; pointer-events: none; }
 .poti.mana { filter: hue-rotate(205deg) saturate(1.3); } .poti.eli { filter: hue-rotate(95deg) saturate(1.4) brightness(1.1); } .poti.fea { filter: hue-rotate(-40deg) saturate(1.6) brightness(1.2); }
 @media (max-height: 700px) and (orientation: portrait) { .acts { min-height: 116px; } .act i { width: 40px; height: 40px; } .act .cost, .act .cnt { top: 26px; } }
+/* 1.4: in Auto the controls fold away and the stage grows */
+.takeback { display: none; width: 100%; margin-top: 6px; padding: 7px; border-radius: 12px; background: linear-gradient(#f2b632, #c07a12); color: #2a1406; border: 2px solid #6a3b0a; font-weight: 900; font-size: 14px; }
+#fight.auto .acts, #fight.auto #msg, #fight.auto .bar.lb { display: none; } #fight.auto .takeback { display: block; } #fight.auto .card .num { display: none; }
 /* Landscape: stage on the left, controls in a column on the right */
 @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
   .fwrap { max-width: none; flex-direction: row; }
@@ -171,6 +174,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
   .ftop { right: calc(var(--pw) + 8px); }
   .acts { min-height: 0; grid-template-columns: repeat(5, 1fr); }
   .act i { width: 42px; height: 42px; } .act .cost, .act .cnt { top: 28px; }
+  #fight.auto { --pw: 190px; } #fight.auto .cards { grid-template-columns: 1fr !important; }
   #pop { left: auto; right: calc(var(--safe-r) + 8px); width: calc(var(--pw) - 16px); bottom: auto; top: 50%; transform: translateY(-50%); }
 }
 /* iPad and large landscape screens: wider panel, bigger buttons */
@@ -206,6 +210,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 .item .btns small { font-size: 11px; text-align: center; font-weight: 800; } .bestb { font-size: 11px; font-weight: 900; color: #8a5a00; background: #ffe9a8; border: 1.5px solid #c99a2a; border-radius: 8px; padding: 1px 5px; text-align: center; }
 .vol { display: grid; grid-template-columns: 118px 1fr 46px; white-space: nowrap; align-items: center; gap: 8px; margin: 10px 0; font-weight: 800; } .vol input { width: 100%; accent-color: #c07a12; } .vol b { text-align: right; font-size: 13px; }
 .routes { display: flex; gap: 6px; justify-content: center; } .routes button { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 4px; border-radius: 12px; border: 2px solid #8a6a3a; background: #f3e6cc; font: 700 12px system-ui; color: #2a1a0e; font-size: 20px; } .routes button span { font-size: 11.5px; } .routes button.on { outline: 3px solid #f2b632; background: #fff3c8; }
+details.foed { margin: 6px 0; border: 2px solid rgba(0,0,0,.12); border-radius: 12px; padding: 4px 10px; background: rgba(255,255,255,.25); } details.foed summary { font-weight: 800; font-size: 14px; cursor: pointer; }
 details.hist { border: 2px solid rgba(0,0,0,.12); border-radius: 12px; padding: 4px 10px; margin: 6px 0; background: rgba(255,255,255,.3); } details.hist summary { font-family: var(--fd); font-size: 18px; cursor: pointer; }
 table.cmp { width: 100%; border-collapse: collapse; font-size: 13.5px; margin: 4px 0; } table.cmp th { font-size: 11.5px; opacity: .75; font-weight: 700; } table.cmp td, table.cmp th { padding: 3px 4px; text-align: right; border-bottom: 1px solid rgba(0,0,0,.08); } table.cmp td:first-child { text-align: left; }
 table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b53a2c; font-weight: 900; } .cmpcur { font-size: 12.5px; text-align: center; margin: 6px 0 2px; } .cmppw { font-size: 12px; display: grid; gap: 2px; margin: 4px 0; }
@@ -307,6 +312,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
       <div id="msg"></div>
       <div class="cards" id="cards"></div>
       <div class="acts" id="acts"></div>
+      <button type="button" id="takeBtn" class="takeback">✋ Reprendre la main</button>
     </div>
     <div id="pop" hidden></div>
   </div>
@@ -320,7 +326,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.3 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.4 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -461,11 +467,11 @@ const MON = {
   golem: { name: 'Golem de lave', hp: 190, atk: 30, def: 14, xp: 32, gold: 15, h: .3, trait: 'slow', w: ['glace'], r: ['feu', 'poison'], tip: 'Lent : il charge un tour, puis frappe très fort.' },
   bossDragon: { name: 'Dragon Écarlate', boss: true, hp: 2800, atk: 100, def: 15, xp: 520, gold: 450, h: .34, w: ['glace'], r: ['feu'], tip: 'Souffle de feu sur toute l’équipe. À mi-vie, il s’envole : l’épée ne fait presque rien. Après un piqué, il s’écrase : dégâts ×2 !' },
   frog: { name: 'Crapaud toxique', hp: 120, atk: 22, def: 8, xp: 26, gold: 13, h: .18, trait: 'poison', w: ['glace'], r: ['poison'], tip: 'Sa langue gluante empoisonne.' },
-  wisp: { name: 'Feu follet', hp: 95, atk: 25, def: 6, xp: 26, gold: 13, h: .16, fly: true, trait: 'evade', w: ['foudre'], r: ['feu', 'poison'], tip: 'Insaisissable : esquive un coup sur quatre.' },
+  wisp: { name: 'Feu follet', hp: 95, atk: 25, def: 6, xp: 26, gold: 13, h: .16, fly: true, trait: '', w: ['foudre'], r: ['feu', 'poison'], tip: 'Esprit fragile qui flotte au-dessus du combat.' },
   zombie: { name: 'Noyé des marais', hp: 160, atk: 24, def: 10, xp: 28, gold: 14, h: .24, trait: 'regen', w: ['feu'], r: ['poison'], tip: 'Il se recompose à chaque tour.' },
   vine: { name: 'Liane carnivore', hp: 135, atk: 21, def: 9, xp: 27, gold: 13, h: .23, trait: 'double', w: ['feu'], r: ['poison'], tip: 'Ses lianes frappent deux fois.' },
   bossHag: { name: 'Morgane', boss: true, hp: 3900, atk: 116, def: 17, xp: 700, gold: 650, h: .42, w: ['foudre'], r: ['poison'], tip: 'Son chaudron empoisonne toute l’équipe. À mi-vie, le marais devient toxique (défends-toi) et elle se soigne à chaque tour… sauf si elle brûle 🔥.' },
-  harpy: { name: 'Harpie des cimes', hp: 115, atk: 27, def: 8, xp: 29, gold: 15, h: .19, fly: true, trait: 'double', w: ['feu', 'foudre'], r: ['glace'], tip: 'Elle fond sur toi deux fois.' },
+  harpy: { name: 'Harpie des cimes', hp: 115, atk: 27, def: 8, xp: 29, gold: 15, h: .19, fly: true, trait: '', w: ['feu', 'foudre'], r: ['glace'], tip: 'Elle plane au-dessus de l’équipe.' },
   bear: { name: 'Ours de givre', hp: 175, atk: 30, def: 12, xp: 31, gold: 15, h: .25, trait: 'howl', w: ['feu', 'foudre'], r: ['glace'], tip: 'Il rugit, puis frappe très fort.' },
   spirit: { name: 'Esprit de glace', hp: 120, atk: 28, def: 9, xp: 30, gold: 15, h: .19, fly: true, trait: 'chill', w: ['feu'], r: ['glace', 'poison'], tip: 'Son toucher glacé vide ton mana.' },
   yeti: { name: 'Yéti', hp: 220, atk: 34, def: 14, xp: 34, gold: 17, h: .31, trait: 'slow', w: ['feu'], r: ['glace'], tip: 'Énorme et lent : il charge, puis frappe très fort.' },
@@ -501,8 +507,8 @@ const MON = {
 // max one elite per wave, never before level 3; level 3 of each chapter has a Champion in its last wave
 const UNDEAD = ['skel', 'zombie', 'spirit', 'wisp', 'vampire', 'armor'];
 // 1.1: support roles, only on some families (never in chapter 1, where Aldric fights alone)
-const SUP = { shroom: 'heal', wisp: 'heal', necro: 'heal', tslime: 'heal', golem: 'guard', armor: 'guard', knight: 'guard', scorp: 'fort', garg: 'fort', dknight: 'fort', spider: 'aoe', harpy: 'aoe', demon: 'aoe', drake: 'aoe' };
-const SUPT = { heal: 'Soigneur 💚 : soigne l’allié le plus blessé (bloqué par poison et brûlure).', guard: 'Protecteur 💠 : place un bouclier sur un allié.', fort: 'Renfort 🪨 : durcit la défense d’un allié pendant 2 tours.', aoe: 'Attaque de zone annoncée un tour à l’avance : défends-toi ou étourdis-le !' };
+const SUP = { shroom: 'heal', wisp: 'heal', necro: 'heal', tslime: 'heal', golem: 'guard', armor: 'guard', knight: 'guard', garg: 'fort', dknight: 'fort', spider: 'aoe', harpy: 'aoe', demon: 'aoe', drake: 'aoe' };
+const SUPT = { heal: 'Soigneur 💚 : soigne l’allié le plus blessé (bloqué par poison et brûlure).', guard: 'Protecteur 💠 : place un bouclier sur un allié.', fort: 'Renfort 🪨 : durcit la défense d’un allié pendant 2 tours (🛡️).', aoe: 'Attaque de zone annoncée un tour à l’avance : défends-toi ou étourdis-le !' };
 const AOEN = { spider: ['Pluie de venin', 'poison'], harpy: ['Tempête de plumes', null], demon: ['Flammes infernales', 'burn'], drake: ['Pluie d’étincelles', 'burn'] };
 for (const [k, r] of Object.entries(SUP)) { MON[k].sup = r; MON[k].tip += ' ' + SUPT[r]; }
 const AFFIX = {
@@ -1305,7 +1311,7 @@ async function runLevel(i, train, tier = 0) {
     if (B.route === 'danger') for (const f of B.foes) { f.hpMax = Math.round(f.hpMax * 1.15); f.hp = f.hpMax; f.atk = Math.round(f.atk * 1.15); }
     if (!boss) { B.foes.forEach((f, j) => { f.slot = FSLOT[ws.length - 1][j]; f.hsz *= ws.length >= 5 ? .8 : ws.length === 4 ? .88 : 1; });
       if (L.champ && B.wave === L.waves.length - 1) makeElite(B.foes[0], true);
-      const ep = (L.elite || (tier ? .1 : 0)) + D.elite + (B.route === 'danger' ? .15 : 0); for (let e = 0; e < D.maxEl; e++) { const c = B.foes.filter(f => !f.elite); if (c.length && Math.random() < ep) makeElite(pick(c)); }
+      const ep = (L.elite || (tier ? .1 : 0)) + D.elite + (B.route === 'danger' ? .15 : 0); const maxEl = !tier && L.ch >= 2 && L.ch <= 4 ? 1 : D.maxEl; for (let e = 0; e < D.maxEl; e++) { const c = B.foes.filter(f => !f.elite); if (c.length && B.foes.length - c.length < maxEl && Math.random() < ep) makeElite(pick(c)); }
       if (B.route === 'defi' && !B.foes.some(f => f.elite)) makeElite(pick(B.foes)); }
     else if (D.bossAff) { const bf = B.foes.find(f => f.boss), a = pick(['enrage', 'vamp', 'armor', 'regen']); bf.aff = a; bf.elite = AFFIX[a]; bf.name = `${bf.m.name} ${AFFIX[a].n.toLowerCase()}`; if (a === 'armor') bf.shield = Math.round(bf.hpMax * .2); }
     for (const f of B.foes) { f.ox = VW * .5; f.alpha = 0; }
@@ -1410,7 +1416,7 @@ function refresh() {
       <div class="bar hp"><i class="${hp < .3 ? 'low' : ''}" style="width:${hp * 100}%"></i></div><div class="bar mp"><i style="width:${h.mp / h.mpMax * 100}%"></i></div><div class="bar lb ${h.lb >= 100 ? 'full' : ''}"><i style="width:${h.lb}%"></i></div>
       <div class="num"><span>❤️ ${h.hp}</span><span>💧 ${h.mp}</span></div></div>`; }).join('');
   $('cards').style.gridTemplateColumns = `repeat(${Math.max(B.party.length, 2)}, 1fr)`;
-  $('autoBtn').classList.toggle('on', !!B.auto);
+  $('autoBtn').classList.toggle('on', !!B.auto); $('fight').classList.toggle('auto', !!B.auto);
 }
 $('acts').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled || !pending || held) { held = false; return; } SFX.click();
   if (b.dataset.k === 'swap') return openSwap(); $('pop').hidden = true; select(b.dataset.k, b.dataset.item); });
@@ -1428,6 +1434,7 @@ cv.addEventListener('click', e => { if (!pending || !pending.sel) return; const 
   if (best && bd < VH * .3) pickUnit(best); });
 $('spdBtn').addEventListener('click', () => { S.spd = [1, 2, 3, 5][([1, 2, 3, 5].indexOf(S.spd || 1) + 1) % 4]; save(); spdUi(); });
 function spdUi() { $('spdBtn').textContent = '×' + (S.spd || 1); $('spdBtn').classList.toggle('on', (S.spd || 1) > 1); }
+$('takeBtn').addEventListener('click', () => { if (B && B.auto) $('autoBtn').click(); });
 $('autoBtn').addEventListener('click', () => { if (!B) return; B.auto = !B.auto; autoPref = B.auto; refresh(); if (B.auto && pending) finish(aiHero(pending.h)); });
 $('fleeBtn').addEventListener('click', () => { if (!B) return; modal(`<h3>Quitter le combat ?</h3><p>Tu ne gagnes rien en fuyant.</p><button class="btn red" type="button" data-flee="1">Fuir</button><button class="btn alt" type="button" data-close="1">Continuer</button>`); });
 function toast(h) { const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = h; const n = document.querySelectorAll('.toast').length; t.style.marginTop = `${n * 62}px`; document.body.appendChild(t); setTimeout(() => t.remove(), 2600 + n * 400); }
@@ -1498,7 +1505,7 @@ function drawUnit(c, u, t, sel) {
     if (u.side === 'f' && u.shield > 0) { c.fillStyle = '#bfe0ff'; rr(c, p.x - bw / 2, by + bh - 3, bw * Math.min(1, u.shield / u.hpMax), 3, 1.5); c.fill(); }
     if (u.side === 'f') { c.font = 'bold 10px system-ui'; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = '#000'; c.strokeText(u.hp, p.x, by + 9); c.fillStyle = '#fff'; c.fillText(u.hp, p.x, by + 9); } }
   if (u.elite) { c.font = '11px "Lilita One", sans-serif'; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = '#000'; c.fillStyle = `rgb(${u.elite.col})`; const s = `⭐ ${u.elite.n}`; c.strokeText(s, p.x, by - 5); c.fillText(s, p.x, by - 5); }
-  const ic = [u.st.poison ? '☠️' : '', u.st.burn ? '🔥' : '', u.st.stun ? '💫' : '', u.st.freeze || u.st.ice ? '❄️' : '', u.st.taunt ? '🛡️' : '', u.st.mark ? '🎯' : '', u.st.fort ? '🪨' : '', u.st.sh ? '🌑' + u.st.sh : '', u.shield ? '💠' : ''].join('');
+  const ic = [u.st.poison ? '☠️' : '', u.st.burn ? '🔥' : '', u.st.stun ? '💫' : '', u.st.freeze || u.st.ice ? '❄️' : '', u.st.taunt ? '🛡️' : '', u.st.mark ? '🎯' : '', u.st.fort ? '🛡️' : '', u.side === 'f' && u.m.sup ? { heal: '💚', guard: '💠', fort: '🪨', aoe: '⚠️' }[u.m.sup] : '', u.st.sh ? '🌑' + u.st.sh : '', u.shield ? '💠' : ''].join('');
   if (ic) { c.font = '13px system-ui'; c.textAlign = 'center'; c.fillText(ic, p.x, by - (u.elite ? 18 : 4)); }
   if (u.charging && u.intent) { const ty = by - (u.elite ? 34 : ic ? 22 : 10) - (u.boss ? 0 : 4), s = '⚠️ ' + u.intent; c.font = '12px "Lilita One", sans-serif'; c.textAlign = 'center'; const w = c.measureText(s).width + 14, pul = .75 + .25 * Math.sin(t / 140);
     const cx0 = Math.max(w / 2 + 4, Math.min(VW - w / 2 - 4, p.x)); c.fillStyle = `rgba(120,20,20,${.85 * pul})`; rr(c, cx0 - w / 2, ty - 15, w, 19, 9); c.fill(); c.strokeStyle = '#ffd76a'; c.lineWidth = 1.5; c.stroke(); c.fillStyle = '#fff'; c.fillText(s, cx0, ty - 1); }
@@ -1613,10 +1620,10 @@ function levelSheet(i, keep) { if (!keep) { ctrSel = null; routeSel = 'safe'; }
   const L = LEVELS[i], foes = [...new Set(L.waves.flat())], t = tierOf(L.ch), D = DIFF[t], st = starsOf(t, i);
   modal(`<h3>${i % 5 + 1}. ${L.name}</h3>${t ? `<p style="text-align:center;margin:0;font-weight:700;color:${D.col}">${D.ic} ${D.n} · ennemis plus forts, butin ×${D.xg}</p>` : ''}<p style="text-align:center">${L.waves.length} vagues · niveau conseillé ${L.rec + D.eff}</p>${L.goal ? `<p style="text-align:center;font-size:14px;margin:4px 0">🎯 <b>Objectif</b> : ${L.goal}</p>` : ''}
     <div class="foes">${foes.map(k => `<img src="${IP}${k}.webp" alt="${MON[k].name}" title="${MON[k].name}">`).join('')}</div>
-    ${foes.map(k => `<p style="font-size:13px;margin:3px 0">• <b>${MON[k].name}</b> : ${MON[k].tip} <span title="faiblesse">${MON[k].w.map(e => ELI[e]).join('')}</span></p>`).join('')}
+    <details class="foed"><summary>Ennemis et conseils</summary>${foes.map(k => `<p style="font-size:13px;margin:3px 0">• <b>${MON[k].name}</b> : ${MON[k].tip} <span title="faiblesse">${MON[k].w.map(e => ELI[e]).join('')}</span></p>`).join('')}
     ${L.elite ? '<p style="font-size:13px;margin:3px 0">• ⭐ Des <b>élites</b> colorés peuvent apparaître : plus forts, mais double butin.</p>' : ''}
-    ${L.champ ? '<p style="font-size:13px;margin:3px 0">• 👑 Un <b>champion</b> garde la dernière vague : très fort, triple butin.</p>' : ''}
-    ${st || i > 0 ? ctrHtml(i) : ''}${st ? routeHtml(i) : ''}
+    ${L.champ ? '<p style="font-size:13px;margin:3px 0">• 👑 Un <b>champion</b> garde la dernière vague : très fort, triple butin.</p>' : ''}</details>
+    ${st || i > 0 ? `<details class="foed" ${ctrSel ? 'open' : ''}><summary>Contrat (facultatif)${ctrSel ? ' · ' + CONTRACTS[ctrSel].ic : ''}</summary>${ctrHtml(i)}</details>` : ''}${st ? routeHtml(i) : ''}
     <p style="text-align:center;font-size:13px;margin:6px 0 0">Ton énergie : <b>${(enTick(), S.en)}</b> ⚡</p>
     <button class="btn" type="button" data-play="${i}">⚔️ Combattre · ${enCost(i)} ⚡</button>${st ? `<button class="btn alt" type="button" data-train="${i}">🎯 Entraînement · gratuit (XP réduite, sans butin)</button>` : ''}<button class="btn alt" type="button" data-close="1">Retour</button>`);
 }
@@ -1630,7 +1637,7 @@ async function playLevel(i, train) {
   spdUi();
   const ck = CHAPTERS[LEVELS[i].ch].story; if (!S.seen[ck] && LEVELS[i].ch > 0) { modalCb = null; return story(ck, () => playLevel(i)); }
   if (!train && !SIM) { if (S.en >= EN_MAX) S.enT = Date.now(); S.en -= enCost(i); save(); }
-  closeModal(); ac(); $('home').hidden = true; $('fight').hidden = false; toast(`💡 ${pick(TIPS)}`);
+  closeModal(); ac(); $('home').hidden = true; $('fight').hidden = false; document.querySelectorAll('.toast').forEach(t => t.remove()); toast(`💡 ${pick(TIPS)}`);
   $('fName').textContent = `${tier ? DIFF[tier].ic + ' ' : ''}${LEVELS[i].ch + 1}-${i % 5 + 1}. ${LEVELS[i].name}`; music(tier >= 3 ? 'm_nightmare' : CH_MUSIC[LEVELS[i].ch] || 'fight1'); fx = []; sfx = []; pending = null;
   const res = await runLevel(i, train, tier);
   pending = null; buildActs();
@@ -1951,6 +1958,10 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.4', t: 'Version 1.4 · Plus lisible', d: `<p>• <b>Mode Auto</b> : les boutons se replient et le combat prend presque tout l’écran. « ✋ Reprendre la main » pour rejouer toi-même.</p>
+  <p>• <b>Chapitres 3 à 5 allégés</b> : une mécanique forte par chapitre (protecteur au 3, soigneur au 4, attaque de zone au 5) et un seul élite par vague en Normal.</p>
+  <p>• Le <b>rôle des ennemis</b> s’affiche au-dessus de leur vie : 💚 soigneur, 💠 protecteur, 🪨 renfort, ⚠️ attaque de zone.</p>
+  <p>• Fiche de niveau plus courte, une seule astuce à la fois.</p>` },
   { v: '1.3', t: 'Version 1.3 · Des boss qui changent la donne', d: `<p>• <b>À mi-vie, chaque boss change de règle</b>, et il faut changer de plan :</p>
   <p>💀 Roi des Os : sa muraille d’os n’a peur que de la Charge et du feu. 🌿 Sylvaine : ses ronces se dressent un tour sur deux. 🐉 Dragon : en vol, l’épée ne fait presque rien, mais au sol il prend double dégâts. 🧪 Morgane : elle se soigne, sauf si elle brûle. ❄️ Reine des Glaces : elle emprisonne ton héros le plus fort, soigne-le pour le libérer. 🦇 Comte : abats ses chauves-souris, sinon il se soigne et esquive. 💀 Roi-Liche : il revient à mi-vie, sauf s’il brûle en tombant. 🐀 Reine des Rats : intouchable tant qu’un rat vit. 🌌 Seigneur du Néant : seule la magie le touche quand il est intangible. 🔥 Vorthax : à 25 %, sa dernière chaîne cède.</p>
   <p>• Corrections de textes (aide, trophée, histoire du chapitre 5).</p>` },
