@@ -326,7 +326,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.4 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.4.1 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -1432,7 +1432,8 @@ cv.addEventListener('click', e => { if (!pending || !pending.sel) return; const 
   const c = B.cam, wx = (x - VW / 2) / c.z + c.x, wy = (y - VH / 2) / c.z + c.y; let best = null, bd = 1e9;
   for (const u of pending.sel.ts) { const p = px(u), d = Math.hypot(p.x - wx, (p.y - p.h * .45) - wy); if (d < bd) { bd = d; best = u; } }
   if (best && bd < VH * .3) pickUnit(best); });
-$('spdBtn').addEventListener('click', () => { S.spd = [1, 2, 3, 5][([1, 2, 3, 5].indexOf(S.spd || 1) + 1) % 4]; save(); spdUi(); });
+const SPDS = DEV ? [1, 2, 3, 5, 10] : [1, 2, 3, 5]; // ×10 only in the test build
+$('spdBtn').addEventListener('click', () => { S.spd = SPDS[(SPDS.indexOf(S.spd || 1) + 1) % SPDS.length]; save(); spdUi(); });
 function spdUi() { $('spdBtn').textContent = '×' + (S.spd || 1); $('spdBtn').classList.toggle('on', (S.spd || 1) > 1); }
 $('takeBtn').addEventListener('click', () => { if (B && B.auto) $('autoBtn').click(); });
 $('autoBtn').addEventListener('click', () => { if (!B) return; B.auto = !B.auto; autoPref = B.auto; refresh(); if (B.auto && pending) finish(aiHero(pending.h)); });
@@ -1568,7 +1569,7 @@ function drawScreenFx(c) {
 }
 function loop(t) {
   const dt = Math.min(50, t - (last || t)); last = t;
-  if (performance.now() >= hsUntil) clock += dt * (B ? S.spd || 1 : 1);
+  if (performance.now() >= hsUntil) clock += dt * (B ? Math.min(S.spd || 1, DEV ? 10 : 5) : 1);
   stepTime(); draw(t); requestAnimationFrame(loop);
 }
 
@@ -1958,6 +1959,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.4.1', t: 'Version 1.4.1', d: `<p>• Vitesse <b>×10</b> pour les tests (bouton de vitesse en combat, version de test uniquement).</p>` },
   { v: '1.4', t: 'Version 1.4 · Plus lisible', d: `<p>• <b>Mode Auto</b> : les boutons se replient et le combat prend presque tout l’écran. « ✋ Reprendre la main » pour rejouer toi-même.</p>
   <p>• <b>Chapitres 3 à 5 allégés</b> : une mécanique forte par chapitre (protecteur au 3, soigneur au 4, attaque de zone au 5) et un seul élite par vague en Normal.</p>
   <p>• Le <b>rôle des ennemis</b> s’affiche au-dessus de leur vie : 💚 soigneur, 💠 protecteur, 🪨 renfort, ⚠️ attaque de zone.</p>
