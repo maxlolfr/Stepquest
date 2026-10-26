@@ -337,7 +337,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.8 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.8.1 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -913,7 +913,7 @@ const HSLOT = [[[.3, .6]], [[.32, .42], [.19, .88]], [[.37, .52], [.13, .2], [.2
 const FSLOT = [[[.7, .6]], [[.68, .42], [.83, .88]], [[.66, .55], [.85, .26], [.84, .93]], [[.62, .44], [.82, .22], [.66, .95], [.89, .66]], [[.6, .5], [.76, .2], [.62, .96], [.9, .4], [.88, .86]]];
 const BSLOT = [[.66, .66], [.9, .2], [.92, .95]];
 // 1.6: bigger characters; landscape stages are short and wide, so they get a stronger zoom and units are pulled toward the centre
-const ZOOM_P = .94, ZOOM_L = 1.2, XPULL_L = .84; let ZOOM = ZOOM_P, XPULL = 1, WIDE = false;
+const ZOOM_P = .88, ZOOM_L = 1.2, XPULL_L = .84; let ZOOM = ZOOM_P, XPULL = 1, WIDE = false;
 const persp = v => .8 + .3 * v;
 function mkHero(id, i, n) { const H = HEROES[id], st = heroStats(id);
   return { side: 'h', id, name: H.name, sprite: H.sprite, H, hpMax: st.hp, hp: st.hp, mpMax: st.mp, mp: st.mp, atk: st.atk, mag: st.mag, def: st.def, crit: st.crit,
@@ -931,7 +931,9 @@ function soloScale(f) { const k = B && SOLO[B.party.length]; if (!k) return f; f
 const SOLO = { 1: { h: .66, a: .6, bh: .55, ba: .58 }, 2: { h: .84, a: .9, bh: .8, ba: .9 } };
 const alive = u => u.hp > 0;
 const livingH = () => B.party.filter(alive), livingF = () => B.foes.filter(alive);
-function px(u) { const v = u.slot ? u.slot[1] : .5; return { x: (.5 + ((u.slot ? u.slot[0] : .2) - .5) * XPULL) * VW + u.ox, y: GY + (VH - GY) * (.3 + .64 * v) + u.oy, h: VH * u.hsz * persp(v) * ZOOM, v }; }
+// 1.8.1: in portrait, heroes and foes were touching: open a gap in the middle (edges unchanged)
+const gapX = (u, x) => WIDE ? x : u.side === 'h' ? x - .045 * Math.max(0, Math.min(1, (x - .13) / .24)) : u.side === 'f' ? x + .055 * Math.max(0, Math.min(1, 1 - (x - .6) / .3)) : x;
+function px(u) { const v = u.slot ? u.slot[1] : .5; return { x: (.5 + (gapX(u, u.slot ? u.slot[0] : .2) - .5) * XPULL) * VW + u.ox, y: GY + (VH - GY) * (.3 + .64 * v) + u.oy, h: VH * u.hsz * persp(v) * ZOOM, v }; }
 function setPose(u, p, ms) { u.pose = p; u.poseDur = ms; u.poseUntil = now() + (FAST ? 0 : ms); }
 // 1.8: animated heroes hit on their swing frame (frame 3 of 4): the pose lasts 2×lead, so after `lead` ms the swing/release frame is on screen
 const isAnim = u => !!ANIM[u.sprite];
@@ -2129,6 +2131,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.8.1', t: 'Version 1.8.1', d: `<p>• En portrait, <b>les ennemis et les boss ne collent plus aux héros</b> : caméra un peu plus large et vrai espace entre les deux camps.</p>` },
   { v: '1.8', t: 'Version 1.8 · Des coups qui portent', d: `<p>• <b>Coups synchronisés</b> : l’épée, l’arc et le bâton frappent pile sur l’image du coup. Les dégâts tombent au bon moment.</p><p>• <b>Attaques de zone</b> : chaque cible encaisse à son tour, on voit le coup traverser l’équipe.</p><p>• <b>Chute des boss</b> : ralenti, caméra sur le boss, explosions à ses couleurs et disparition lente.</p>` },
   { v: '1.7', t: 'Version 1.7 · Une histoire plus claire', d: `<p>• <b>Nouvelle histoire</b> : tous les dialogues des 10 chapitres ont été réécrits. Plus courts, plus clairs, avec un vrai mystère autour d’Ardaël, des sceaux et de Vorthax.</p><p>• <b>Écran d’objet simplifié</b> : un verdict clair (meilleur ou moins bien), seulement les stats qui changent, et le bon bouton en premier. Le détail complet reste accessible.</p><p>• Le bouton <b>Histoire</b> permet de relire les scènes du chapitre en cours.</p>` },
   { v: '1.6.1', t: 'Version 1.6.1', d: `<p>• Les personnages restent <b>immobiles</b> quand ils n’agissent pas (plus d’animation d’attente ni de respiration).</p>` },
