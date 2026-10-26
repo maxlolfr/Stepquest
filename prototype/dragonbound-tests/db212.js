@@ -3,7 +3,7 @@ const { chromium } = require('playwright'); const http = require('http'), fs = r
 const ROOT = path.resolve(__dirname, '..'), OUT = process.argv[2] || '.', KEY = 'dragonbound2.v2', miss = new Set();
 const MIME = { '.html': 'text/html', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.mp3': 'audio/mpeg', '.mp4': 'video/mp4' };
 const srv = http.createServer((q, r) => { const p = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); fs.readFile(p, (e, d) => { if (e) { miss.add(q.url); r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': MIME[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); });
-const res = [], ok = (n, c, x = '') => res.push(`${c ? '✅' : '❌'} ${n}${x ? ' — ' + x : ''}`);
+const res = [], ok = (n, c, x = '') => (c || (process.exitCode = 1), res.push(`${c ? '✅' : '❌'} ${n}${x ? ' — ' + x : ''}`));
 const H = ['aldric', 'selena', 'orin', 'lyra', 'nyx'];
 // a 1.1-style save: old image names, no sets
 const inv = [{ id: 1, slot: 'w', r: 2, t: 12, st: { atk: 20 }, hero: 'aldric', img: 'wAxe', name: 'Hache du bourreau' }, { id: 2, slot: 'a', r: 3, t: 12, st: { hp: 90, def: 9 }, img: 'a2armure', name: 'Armure de braise' },

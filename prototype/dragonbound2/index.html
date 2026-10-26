@@ -348,7 +348,10 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 (() => {
 'use strict';
 const VERSION = 'Dragonbound II · Version 1.9.2 (10 chapitres)';
-const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
+// 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
+// while it is false, adding ?release to the address previews the commercial build without touching the code.
+const COMMERCIAL = false;
+const DEV = !COMMERCIAL && !/[?&]release\b/.test(location.search);
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -1577,9 +1580,10 @@ cv.addEventListener('click', e => { if (!pending || !pending.sel) return; const 
   const c = B.cam, wx = (x - VW / 2) / c.z + c.x, wy = (y - VH / 2) / c.z + c.y; let best = null, bd = 1e9;
   for (const u of pending.sel.ts) { const p = px(u), d = Math.hypot(p.x - wx, (p.y - p.h * .45) - wy); if (d < bd) { bd = d; best = u; } }
   if (best && bd < VH * .3) pickUnit(best); });
-const SPDS = DEV ? [1, 2, 3, 5, 10, 20, 30] : [1, 2, 3, 5]; // ×10-×30 in the test build (a paid fast mode later)
+const SPDS = DEV ? [1, 2, 3, 5, 10, 20, 30] : [1, 2, 3, 5]; // ×10-×30 in the test build only
+if (!SPDS.includes(S.spd || 1)) S.spd = SPDS.at(-1); // a test speed saved earlier never leaks into the commercial build
 $('spdBtn').addEventListener('click', () => { S.spd = SPDS[(SPDS.indexOf(S.spd || 1) + 1) % SPDS.length]; save(); spdUi(); });
-function spdUi() { $('spdBtn').textContent = '×' + (S.spd || 1); $('spdBtn').classList.toggle('on', (S.spd || 1) > 1); }
+function spdUi() { if (!SPDS.includes(S.spd || 1)) S.spd = SPDS.at(-1); $('spdBtn').textContent = '×' + (S.spd || 1); $('spdBtn').classList.toggle('on', (S.spd || 1) > 1); }
 $('takeBtn').addEventListener('click', () => { if (B && B.auto) $('autoBtn').click(); });
 $('autoBtn').addEventListener('click', () => { if (!B) return; B.auto = !B.auto; autoPref = B.auto; refresh(); if (B.auto && pending) finish(aiHero(pending.h)); });
 $('fleeBtn').addEventListener('click', () => { if (!B) return; modal(`<h3>Quitter le combat ?</h3><p>Tu ne gagnes rien en fuyant.</p><button class="btn red" type="button" data-flee="1">Fuir</button><button class="btn alt" type="button" data-close="1">Continuer</button>`); });
@@ -1822,10 +1826,12 @@ async function victory(i, res) {
   const C = B.contract && CONTRACTS[B.contract], cOk = !!(C && C.ok(res)), cKey = `${t ? t + '-' : ''}${i}:${B.contract}`, cFirst = cOk && !S.ctr[cKey]; let cGold = 0;
   if (cOk) { cGold = Math.round(gold * .5) + 20; S.gold += cGold; if (cFirst) S.ctr[cKey] = 1; }
   const legend = LEVELS[i].boss && first && !train;
-  save(); await wait(900);
-  if (!train) await chestPick(makeChoice(ei, LEVELS[i].boss, elites, route === 'danger'), t ? `${DIFF[t].ic} Butin ${DIFF[t].n}` : 'Butin');
-  if (cFirst) await lootChoice(makeChoice(ei, LEVELS[i].boss, elites, true), `${C.ic} Contrat réussi : objet rare`);
-  if (legend) await lootChoice(makeChoice(ei, true, 0, true, true), `👑 Trésor du chapitre${t ? ' · ' + DIFF[t].n : ''} : un objet légendaire`);
+  // 2.0 lot 1: the loot to pick is rolled and SAVED with the rest of the victory, so closing the app on the chest screen loses nothing
+  const pend = []; if (!train) pend.push({ t: 'c', c: makeChoice(ei, LEVELS[i].boss, elites, route === 'danger'), n: t ? `${DIFF[t].ic} Butin ${DIFF[t].n}` : 'Butin' });
+  if (cFirst) pend.push({ t: 'l', c: makeChoice(ei, LEVELS[i].boss, elites, true), n: `${C.ic} Contrat réussi : objet rare` });
+  if (legend) pend.push({ t: 'l', c: makeChoice(ei, true, 0, true, true), n: `👑 Trésor du chapitre${t ? ' · ' + DIFF[t].n : ''} : un objet légendaire` });
+  S.pend = (S.pend || []).concat(pend);
+  save(); await wait(900); await runPend();
   if (!train && B.kills.some(f => f.champ) && !B.kos) trc('champNoKo');
   trCheck();
   if (newTier) { SFX.win(); toast(`${DIFF[t + 1].ic} <b>${DIFF[t + 1].n}</b> débloqué pour ce chapitre !`); }
@@ -1900,19 +1906,23 @@ function decideAct(k, v) { const c = dCtl; if (!c) return; if (k === 'tab') { c.
   if (k === 'sell') { S.inv = S.inv.filter(x => x !== it); S.gold += sellPrice(it); SFX.coin(); toast(`💰 <b>${it.name}</b> vendu : +${sellPrice(it)} or`); }
   save(); c.done(k); }
 let pickNext = null;
-function lootChoice(cands, title) { if (SIM) { const it = cands.reduce((a, b) => bestWearer(b)[1] > bestWearer(a)[1] ? b : a); S.inv.push(it); return Promise.resolve(it); }
+function lootChoice(cands, title) { if (SIM) { const it = cands.reduce((a, b) => bestWearer(b)[1] > bestWearer(a)[1] ? b : a); S.inv.push(it); pendDone(cands); return Promise.resolve(it); }
   return new Promise(done => { SFX.chest();
     const hint = it => { const [who, g] = bestWearer(it); return who && S.own[who] ? `<small class="${g >= 0 ? 'up' : 'down'}">${g >= 0 ? '▲' : '▼'} ${HEROES[who].name}</small>` : ''; };
     modal(`<h3>${title}</h3><p style="text-align:center;font-size:13px">Choisis un objet : tu verras ensuite la comparaison avant de l’équiper. Les deux autres sont revendus.</p>
       ${cands.map((it, k) => itemHtml(it, null, `<button type="button" data-lpick="${k}">Choisir</button>${hint(it)}`)).join('')}`);
-    pickNext = async k => { const it = cands[k]; pickNext = null; S.inv.push(it); gotItem(it); let g = 0; cands.forEach(o => { if (o !== it) g += sellPrice(o); }); S.gold += g; save(); SFX[it.r >= 3 ? 'win' : 'buff']();
+    pickNext = async k => { const it = cands[k]; pickNext = null; S.inv.push(it); gotItem(it); let g = 0; cands.forEach(o => { if (o !== it) g += sellPrice(o); }); S.gold += g; pendDone(cands); save(); SFX[it.r >= 3 ? 'win' : 'buff']();
       toast(`+${g} or pour les deux autres`); await itemDecide(it, { title }); closeModal(); done(it); }; }); }
 // after a fight: 3 closed chests, the player taps one; the two others open to show what was missed (and are sold)
 let chPickNext = null;
-function chestPick(cands, title) { if (SIM) { const it = pick(cands); S.inv.push(it); return Promise.resolve(it); }
+// 2.0 lot 1: pending loot choices survive a closed app; each choice removes itself in the same save that adds the item
+const pendDone = cands => { if (S.pend && S.pend[0] && S.pend[0].c === cands) S.pend.shift(); };
+async function runPend() { while (S.pend && S.pend.length) { const p = S.pend[0]; await (p.t === 'c' ? chestPick : lootChoice)(p.c, p.n); if (S.pend && S.pend[0] === p) S.pend.shift(); }
+  if (S.pend) { delete S.pend; save(); } }
+function chestPick(cands, title) { if (SIM) { const it = pick(cands); S.inv.push(it); pendDone(cands); return Promise.resolve(it); }
   return new Promise(done => { SFX.chest();
     modal(`<h3>${title}</h3><p style="text-align:center;font-size:13px">Choisis un coffre !</p><div class="ch3">${cands.map((_, k) => `<button type="button" data-chpick="${k}" style="animation-delay:${k * .15}s"><img src="${IP}uiChest2.webp" alt="coffre"></button>`).join('')}</div>`);
-    chPickNext = async k => { chPickNext = null; const it = cands[k]; S.inv.push(it); gotItem(it); let g = 0; cands.forEach(o => { if (o !== it) g += sellPrice(o); }); S.gold += g; save(); SFX.chest(); if (it.r >= 3) SFX.levelup();
+    chPickNext = async k => { chPickNext = null; const it = cands[k]; S.inv.push(it); gotItem(it); let g = 0; cands.forEach(o => { if (o !== it) g += sellPrice(o); }); S.gold += g; pendDone(cands); save(); SFX.chest(); if (it.r >= 3) SFX.levelup();
       const others = cands.filter(o => o !== it);
       await itemDecide(it, { extra: `<p style="text-align:center;font-size:12.5px;margin:10px 0 2px;opacity:.85">Les autres coffres contenaient (revendus +${g} or) :</p><div class="missed">${others.map(o => `<span style="${rcss(o)}"><img src="${itemImg(o)}" alt="">${o.name}<small>${RAR[o.r].n}</small></span>`).join('')}</div>` });
       closeModal(); done(it); }; }); }
@@ -2150,7 +2160,7 @@ document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused 
 muted = !!S.mute; if (S.vol) Object.assign(VOL, S.vol);
 if (!SIM) { HORDER.forEach(id => { const im = new Image(); im.src = FP + HEROES[id].face + '.webp'; IMG['face_' + id] = im; }); load('bg_c1_1', true); loadSprite('ald'); }
 renderHome();
-function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
+function afterIntro() { if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
   { v: '1.9.2', t: 'Version 1.9.2 · Plus fluide', d: `<p>• Toutes les images sont préparées dès le chargement du niveau : plus de petit gel la première fois qu’un ultime, un effet ou un boss apparaît.</p>` },

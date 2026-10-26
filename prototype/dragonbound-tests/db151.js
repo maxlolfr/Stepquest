@@ -2,7 +2,7 @@
 const { chromium } = require('playwright'); const http = require('http'), fs = require('fs'), path = require('path');
 const ROOT = path.resolve(__dirname, '..'), KEY = 'dragonbound2.v2';
 const srv = http.createServer((q, r) => { const p = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': p.endsWith('.html') ? 'text/html' : 'application/octet-stream' }); r.end(d); }); });
-const H = ['aldric', 'selena', 'orin', 'lyra', 'nyx'], res = [], ok = (n, c, x = '') => res.push(`${c ? '✅' : '❌'} ${n}${x ? ' — ' + x : ''}`);
+const H = ['aldric', 'selena', 'orin', 'lyra', 'nyx'], res = [], ok = (n, c, x = '') => (c || (process.exitCode = 1), res.push(`${c ? '✅' : '❌'} ${n}${x ? ' — ' + x : ''}`));
 const it = (id, slot, r, st, hero) => ({ id, slot, r, t: 5, st, hero, name: 'x' });
 const inv = [it(1, 'w', 0, { atk: 5 }, 'aldric'), it(2, 'w', 4, { atk: 50 }, 'aldric'), it(3, 'a', 0, { hp: 10, def: 1 }), it(4, 'a', 1, { hp: 15, def: 1 }), it(5, 'a', 3, { hp: 80, def: 8 }), it(6, 'j', 2, { crit: .01 }), it(7, 'a', 4, { hp: 200, def: 20 })];
 const save = { v: 2, gold: 100, gem: 0, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h: Object.fromEntries(H.map(k => [k, { lvl: 10, xp: 0, w: 0, a: 0, eq: k === 'aldric' ? { w: 2, a: 7 } : {} }])), team: ['aldric'], own: { aldric: 1 }, stars: Array(50).fill(0), seen: { in: 1, vid: 1, vid2: 1, n09: 1, n10: 1, ver: '1.9.2' }, mute: true, ch: 0, inv, nid: 20, spd: 1, m12: 1, tc: { kills: 1200, thermal: 20, embrase: 20, brise: 20 } };

@@ -4,7 +4,7 @@ const { chromium } = require('playwright'); const http = require('http'), fs = r
 const ROOT = path.resolve(__dirname, '..'), OUT = process.argv[2] || '.', KEY = 'dragonbound2.v2';
 const MIME = { '.html': 'text/html', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.mp3': 'audio/mpeg', '.mp4': 'video/mp4' };
 const srv = http.createServer((q, r) => { const p = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': MIME[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); });
-const res = [], ok = (name, cond, extra = '') => res.push(`${cond ? '✅' : '❌'} ${name}${extra ? ' — ' + extra : ''}`);
+const res = [], ok = (name, cond, extra = '') => (cond || (process.exitCode = 1), res.push(`${cond ? '✅' : '❌'} ${name}${extra ? ' — ' + extra : ''}`));
 const base = over => Object.assign({ v: 2, gold: 100, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h: Object.fromEntries(['aldric', 'selena', 'orin', 'lyra', 'nyx'].map(k => [k, { lvl: 3, xp: 0, w: 0, a: 0 }])),
   team: ['aldric'], own: { aldric: 1 }, stars: Array(30).fill(0), seen: { in: 1, vid: 1, vid2: 1, n09: 1, n10: 1, ver: '1.9.2' }, mute: true, ch: 0, inv: [], nid: 1, spd: 3 }, over);
 srv.listen(0, async () => {
