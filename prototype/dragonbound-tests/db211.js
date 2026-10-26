@@ -8,7 +8,7 @@ const H = ['aldric', 'selena', 'orin', 'lyra', 'nyx'];
 const inv = [{ id: 1, slot: 'w', r: 1, t: 3, st: { atk: 6 }, hero: 'aldric', img: 'wSword', name: 'Épée A' }, { id: 2, slot: 'w', r: 3, t: 8, st: { atk: 20 }, hero: 'aldric', img: 'wSword', name: 'Épée B', pw: 'vampire' },
   { id: 3, slot: 'a', r: 2, t: 5, st: { hp: 40, def: 4 }, img: 'a0armure', name: 'Armure C' }, { id: 4, slot: 'w', r: 2, t: 5, st: { atk: 12 }, hero: 'nyx', img: 'wDaggers', name: 'Dagues N' }];
 const base = o => Object.assign({ v: 2, gold: 100, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h: Object.fromEntries(H.map(k => [k, { lvl: 6, xp: 0, w: 0, a: 0, eq: k === 'aldric' ? { w: 1 } : {} }])),
-  team: ['aldric', 'selena'], own: { aldric: 1, selena: 1 }, stars: Array(50).fill(0), seen: { in: 1, vid: 1, vid2: 1, n09: 1, n10: 1, ver: '1.6' }, mute: true, ch: 1, inv, nid: 10, spd: 3 }, o);
+  team: ['aldric', 'selena'], own: { aldric: 1, selena: 1 }, stars: Array(50).fill(0), seen: { in: 1, vid: 1, vid2: 1, n09: 1, n10: 1, ver: '1.6.1' }, mute: true, ch: 1, inv, nid: 10, spd: 3 }, o);
 srv.listen(0, async () => {
   const url = `http://127.0.0.1:${srv.address().port}/dragonbound2/index.html`, b = await chromium.launch(), errs = [];
   for (const [w, h, tag] of [[390, 844, 'portrait'], [1180, 820, 'paysage']]) {
