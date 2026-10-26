@@ -326,7 +326,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.5.1 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.5.2 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -2016,6 +2016,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.5.2', t: 'Version 1.5.2', d: `<p>• <b>Nouvelle vidéo d’introduction</b> avec tous les boss et l’équipe, et nouvel écran titre.</p>` },
   { v: '1.5.1', t: 'Version 1.5.1', d: `<p>• Trophées : bouton <b>Tout réclamer</b>.</p><p>• Sac : bouton <b>Vendre en lot</b> — tous les Communs, Peu communs ou Rares, ou tout ce qui est moins bien que l’équipement porté. Les objets portés, Épiques et Légendaires ne sont jamais vendus.</p>` },
   { v: '1.5', t: 'Version 1.5 · La grande refonte graphique', d: `<p>• <b>Héros animés</b> : Aldric, Séléna, Orin, Lyra et Nyx respirent, frappent, lancent leurs sorts, encaissent et tombent avec de vraies animations.</p>
   <p>• <b>Les 10 boss redessinés</b>, avec leurs poses d’attaque, de rage, d’ultime et de défaite.</p>
@@ -2076,10 +2077,10 @@ const VER = CHANGELOG[0].v;
 function newsSheet(cb) { const c = CHANGELOG[0]; modal(`<h3>${c.t}</h3>${c.d}<button class="btn" type="button" data-close="1">À l’aventure !</button><button class="btn alt" type="button" data-hist="1">Toutes les versions</button>`, cb); }
 function histSheet() { modal(`<h3>Nouveautés</h3>${CHANGELOG.map((c, k) => `<details ${k ? '' : 'open'} class="hist"><summary>${c.t}</summary>${c.d}</details>`).join('')}<button class="btn" type="button" data-close="1">Fermer</button>`); }
 function playIntro(then) { const v = $('video'), box = $('vid'); bgm.pause(); if (!v.src) v.src = 'intro.mp4'; v.currentTime = 0; v.muted = muted; box.hidden = false;
-  const end = () => { v.pause(); box.hidden = true; v.onended = null; S.seen.vid = 1; save(); if (!muted) music('m_theme'); if (then) then(); };
+  const end = () => { v.pause(); box.hidden = true; v.onended = null; S.seen.vid = 1; S.seen.vid2 = 1; save(); if (!muted) music('m_theme'); if (then) then(); };
   v.onended = end; $('skipVid').onclick = end; v.play().catch(() => end()); }
 if (!SIM) { requestAnimationFrame(loop); bgm.dataset.k = 'm_theme'; bgm.src = 'audio/m_theme.mp3'; bgm.volume = MUSV();
-  $('title').hidden = false; $('title').addEventListener('click', () => { $('title').hidden = true; ac(); if (!S.seen.vid) playIntro(afterIntro); else { if (!muted) music('m_theme'); afterIntro(); } }, { once: true }); }
+  $('title').hidden = false; $('title').addEventListener('click', () => { $('title').hidden = true; ac(); if (!S.seen.vid2) playIntro(afterIntro); else { if (!muted) music('m_theme'); afterIntro(); } }, { once: true }); }
 
 // ---------- Simulator: ?sim plays the chapter on Auto and reports ----------
 async function simCampaign(runs = 1, upto = 99, tier = 0, tch = 0) {
