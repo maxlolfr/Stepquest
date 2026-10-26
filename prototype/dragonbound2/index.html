@@ -142,11 +142,19 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 @keyframes pulse { 50% { transform: scale(1.04); } }
 .acts { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px 2px; margin-top: 6px; min-height: 128px; align-content: start; }
 .act { position: relative; display: flex; flex-direction: column; align-items: center; gap: 1px; font-size: 10.5px; line-height: 1.05; text-align: center; color: #f3e6cc; text-shadow: 0 1px 2px #000; min-width: 0; }
-.act i { width: 46px; height: 46px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 23px; background: radial-gradient(circle at 50% 35%, #6a4a36, #2a1810); border: 3px solid var(--gold); box-shadow: 0 3px 0 #120a06; overflow: hidden; }
+.act i { width: 50px; height: 50px; border-radius: 50%; display: grid; place-items: center; font-style: normal; font-size: 23px; background: radial-gradient(circle at 50% 35%, #6a4a36, #2a1810); border: 3px solid var(--gold); box-shadow: 0 3px 0 #120a06; overflow: hidden; }
 .act i img { width: 100%; height: 100%; object-fit: cover; }
+.act.wide { grid-column: span 2; flex-direction: row; justify-content: center; gap: 8px; font-size: 14px; font-family: var(--fd); background: rgba(0,0,0,.25); border-radius: 30px; padding: 3px 8px 3px 4px; margin-top: 4px; }
+.act.wide i { width: 44px; height: 44px; flex: none; } .act.wide .cnt { position: static; margin: 0; font-size: 11px; }
+.act.wide.sel { box-shadow: 0 0 0 2px #fff, 0 0 12px 3px rgba(255,220,120,.8); } .act.wide.sel i { box-shadow: none; }
+.ski { display: block; font-size: 13px; line-height: 1.3; } .ski b { font-size: 15px; } .ski i { font-style: normal; font-size: 11.5px; border-radius: 99px; padding: 0 6px; margin-left: 2px; white-space: nowrap; }
+.skc { background: #10305a; border: 1px solid #6aa8ff; } .skt { background: rgba(255,215,106,.15); border: 1px solid rgba(255,215,106,.6); }
+.skh { display: block; font-size: 12px; color: var(--gold2); margin-top: 2px; }
+.stm { font-style: normal; font-size: 11px; color: var(--gold2); margin-left: 2px; }
+#pop .pt { font-size: 10.5px; line-height: 1.2; color: #d8c8b0; }
 .act i img.poti { object-fit: contain; padding: 4px; }
 .act.mag i { border-color: #6aa8ff; } .act.heal i { border-color: #6ad07a; } .act.def i { border-color: #b8c4cc; }
-.act .cost, .act .cnt { position: absolute; top: 31px; right: 50%; margin-right: -30px; border-radius: 99px; font-size: 10px; padding: 0 4px; color: #fff; }
+.act .cost, .act .cnt { position: absolute; top: 35px; right: 50%; margin-right: -30px; border-radius: 99px; font-size: 10px; padding: 0 4px; color: #fff; }
 .act .cost { background: #10305a; border: 2px solid #6aa8ff; } .act .cnt { background: #3a1a10; border: 2px solid var(--gold); }
 .act:disabled { opacity: .36; filter: grayscale(.7); }
 .act.sel i { box-shadow: 0 0 0 3px #fff, 0 0 16px 4px rgba(255,220,120,.9); }
@@ -156,6 +164,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 .waitbar { grid-column: 1 / -1; text-align: center; color: #8a7a8a; font-size: 13px; padding-top: 44px; }
 #pop { position: absolute; left: 8px; right: 8px; bottom: calc(var(--safe-b) + 150px); z-index: 4; background: linear-gradient(#3a2730, #21151a); border: 3px solid var(--gold); border-radius: 16px; padding: 8px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; box-shadow: 0 8px 24px rgba(0,0,0,.6); }
 #pop[hidden] { display: none; }
+#pop[data-m=bag] { grid-template-columns: repeat(2, 1fr); }
 #pop button { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 2px; border-radius: 12px; background: rgba(0,0,0,.3); font-size: 12px; }
 #pop button img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid var(--gold); background: #3a2a30; }
 #pop button:disabled { opacity: .4; }
@@ -178,6 +187,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
   .ftop { right: calc(var(--pw) + 8px); }
   .acts { min-height: 0; grid-template-columns: repeat(5, 1fr); }
   .act i { width: 42px; height: 42px; } .act .cost, .act .cnt { top: 28px; }
+  .act.wide { grid-column: span 1; flex-direction: column; gap: 1px; font-size: 10.5px; padding: 0; background: none; } .act.wide i { width: 42px; height: 42px; } .act.wide .cnt { position: absolute; top: 28px; margin-right: -30px; }
   #fight.auto { --pw: 190px; } #fight.auto .cards { grid-template-columns: 1fr !important; }
   #pop { left: auto; right: calc(var(--safe-r) + 8px); width: calc(var(--pw) - 16px); bottom: auto; top: 50%; transform: translateY(-50%); }
 }
@@ -337,7 +347,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.8.1 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.9 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -1500,15 +1510,22 @@ function needTargets(type) {
 }
 function select(k, item) {
   const h = pending.h, type = item ? ITEMS[item].tgt : k === 'atk' ? 'foe' : k === 'guard' ? 'self' : k === 'ult' ? (h.id === 'nyx' ? 'foe' : 'self') : SK[k].tgt;
-  if (pending.sel && pending.sel.k === k && pending.sel.item === item) { pending.sel = null; say(`À <b>${h.name}</b> de jouer.`); buildActs(); refresh(); return; }
-  const ts = needTargets(type);
-  if (type === 'self' || type === 'party' || type === 'foes') return finish({ k, tgt: h });
-  if (!ts.length) return;
-  if (ts.length === 1) return finish({ k, item, tgt: ts[0] });
+  const noT = type === 'self' || type === 'party' || type === 'foes', ts = noT ? [] : needTargets(type), again = pending.sel && pending.sel.k === k && pending.sel.item === item;
+  // 1.9: basic attack and Defense stay one tap; every other action is described first, then launched by a second tap (or by touching a target)
+  const quick = k === 'atk' || k === 'guard';
+  if (again) { if (noT) return finish({ k, item, tgt: h }); if (ts.length === 1) return finish({ k, item, tgt: ts[0] }); pending.sel = null; say(`À <b>${h.name}</b> de jouer.`); buildActs(); refresh(); return; }
+  if (quick && noT) return finish({ k, tgt: h });
+  if (!noT && !ts.length) return;
+  if (quick && ts.length === 1) return finish({ k, item, tgt: ts[0] });
   pending.sel = { k, item, type, ts }; SFX.click();
-  say(type === 'foe' ? 'Touche l’ennemi à viser.' : type === 'dead' ? 'Touche l’allié à relever.' : 'Touche l’allié à aider (carte ou personnage).');
+  const hint = noT || ts.length === 1 ? 'Touche encore le bouton pour lancer.' : type === 'foe' ? 'Touche l’ennemi à viser.' : type === 'dead' ? 'Touche l’allié à relever.' : 'Touche l’allié à aider (carte ou personnage).';
+  say(actInfo(h, k, item, type) + `<span class="skh">👉 ${hint}</span>`);
   buildActs(); refresh();
 }
+const TGTL = { foe: '1 ennemi', foes: 'tous les ennemis', ally: '1 allié', party: 'toute l’équipe', self: 'sur soi', dead: '1 allié K.O.' };
+function actInfo(h, k, item, type) { const I = item && ITEMS[item], s = SK[k];
+  const [nm, cost, tip] = I ? [I.name, '', `${I.tip} Il t’en reste ${S.items[item]}.`] : k === 'atk' ? [h.H.atk.name, '', 'Attaque de base. Rend 4 💧.'] : k === 'ult' ? [h.H.ult.name + ' · Ultime', '', h.H.ult.tip] : [s.name, costOf(h, k) + ' 💧', s.tip];
+  return `<span class="ski"><b>${nm}</b>${cost ? ` <i class="skc">${cost}</i>` : ''} <i class="skt">🎯 ${TGTL[type] || ''}</i><br>${tip}</span>`; }
 function pickUnit(u) { if (!pending || !pending.sel || !pending.sel.ts.includes(u)) return false; const s = pending.sel; finish({ k: s.k, item: s.item, tgt: u }); return true; }
 
 // ---------- UI: battle panel ----------
@@ -1523,31 +1540,34 @@ function buildActs() {
   for (const k of h.H.skills) { const s = SK[k], noT = s.tgt === 'dead' && !dead; html += btn(k, s.name, icon(s.img, s.ic), s.cls, costOf(h, k), h.mp < costOf(h, k) || noT || (k === 'rally' && h.rallied)); }
   html += `<button class="act ult ${h.lb >= 100 ? 'ready' : ''} ${sel.k === 'ult' ? 'sel' : ''}" type="button" data-k="ult" style="--lb:${Math.floor(h.lb)}" ${h.lb >= 100 ? '' : 'disabled'}><i>${h.lb >= 100 ? '🌟' : Math.floor(h.lb) + '%'}</i>Ultime</button>`;
   if (h.H.skills.length < 4) html += '<span></span>';
-  html += btn('guard', 'Défense', icon('bl_shield', '🛡️'), 'def', 0, false);
-  for (const [k, I] of Object.entries(ITEMS)) html += btn('item', I.short, `<img class="poti ${I.cls}" src="${IP}uiPotion.webp" alt="">`, '', 0, !S.items[k] || (I.tgt === 'dead' && !dead), `<span class="cnt">${S.items[k]}</span>`, k);
-  const bn = B.bench.filter(alive).length;
-  if (B.bench.length) html += btn('swap', 'Relais', '🔄', '', 0, !bn);
+  const nIt = Object.entries(ITEMS).reduce((n, [k, I]) => n + (S.items[k] && !(I.tgt === 'dead' && !dead) ? S.items[k] : 0), 0), bn = B.bench.filter(alive).length;
+  const itSel = sel.k === 'item' ? ITEMS[sel.item] : null;
+  html += btn('guard', 'Défense', icon('bl_shield', '🛡️'), 'def wide', 0, false);
+  html += `<button class="act wide ${itSel ? 'sel' : ''}" type="button" data-k="bag" ${nIt ? '' : 'disabled'}><i><img class="poti ${itSel ? itSel.cls : ''}" src="${IP}uiPotion.webp" alt=""></i>${itSel ? itSel.short : 'Sac'}<span class="cnt">${itSel ? S.items[sel.item] : nIt}</span></button>`;
+  if (B.bench.length) html += btn('swap', 'Relais', '🔄', 'wide', 0, !bn);
   el.innerHTML = html;
 }
-function openSwap() { const b = $('pop'); if (!b.hidden) { b.hidden = true; return; }
+function openBag() { const b = $('pop'); if (!b.hidden && b.dataset.m === 'bag') { b.hidden = true; return; } const dead = B.party.some(x => !alive(x)); b.dataset.m = 'bag';
+  b.innerHTML = '<p>🎒 Sac — quelle potion ?</p>' + Object.entries(ITEMS).map(([k, I]) => `<button type="button" data-it="${k}" ${!S.items[k] || (I.tgt === 'dead' && !dead) ? 'disabled' : ''}><img class="poti ${I.cls}" src="${IP}uiPotion.webp" alt="">${I.short} ×${S.items[k]}<span class="pt">${I.tip}</span></button>`).join(''); b.hidden = false; }
+function openSwap() { $('pop').dataset.m = 'swap'; const b = $('pop'); if (!b.hidden) { b.hidden = true; return; }
   b.innerHTML = '<p>Qui entre en jeu ?</p>' + B.bench.map((u, i) => `<button type="button" data-sub="${i}" ${alive(u) ? '' : 'disabled'}><img src="${FP}${u.H.face}.webp" alt="">${u.name}<span style="font-size:10px">❤️ ${u.hp}/${u.hpMax}</span></button>`).join(''); b.hidden = false; }
 function refresh() {
   if (FAST || !B) return;
   const sel = pending && pending.sel;
-  $('cards').innerHTML = B.party.map((h, i) => { const hp = h.hp / h.hpMax, st = [h.st.poison ? '☠️' : '', h.st.burn ? '🔥' : '', h.st.taunt ? '🛡️' : '', h.st.guard ? '🔰' : '', h.st.dodge ? '🌑' : '', B.aegis ? '🌞' : '', h.rage ? '🔥' + h.rage : '', h.id === 'orin' ? '⚡' + (h.charge || 0) : '', h.shield ? '💠' + h.shield : ''].join('');
-    return `<div class="card ${B.turn === h ? 'on' : ''} ${alive(h) ? '' : 'dead'} ${sel && sel.ts.includes(h) ? 'tgt' : ''}" data-hero="${i}"><div class="ch"><img src="${FP}${h.H.face}.webp" alt=""><b>${h.name}</b><span>${st}</span></div>
+  $('cards').innerHTML = B.party.map((h, i) => { const hp = h.hp / h.hpMax, st = [h.st.poison ? '☠️' : '', h.st.burn ? '🔥' : '', h.st.taunt ? '🛡️' : '', h.st.guard ? '🔰' : '', h.st.dodge ? '🌑' : '', B.aegis ? '🌞' : '', h.rage ? '🔥' + h.rage : '', h.id === 'orin' ? '⚡' + (h.charge || 0) : '', h.shield ? '💠' + h.shield : ''].filter(Boolean), stS = st.length > 3 ? st.slice(0, 2).join('') + `<em class="stm">+${st.length - 2}</em>` : st.join('');
+    return `<div class="card ${B.turn === h ? 'on' : ''} ${alive(h) ? '' : 'dead'} ${sel && sel.ts.includes(h) ? 'tgt' : ''}" data-hero="${i}"><div class="ch"><img src="${FP}${h.H.face}.webp" alt=""><b>${h.name}</b><span>${stS}</span></div>
       <div class="bar hp"><i class="${hp < .3 ? 'low' : ''}" style="width:${hp * 100}%"></i></div><div class="bar mp"><i style="width:${h.mp / h.mpMax * 100}%"></i></div><div class="bar lb ${h.lb >= 100 ? 'full' : ''}"><i style="width:${h.lb}%"></i></div>
       <div class="num"><span>❤️ ${h.hp}</span><span>💧 ${h.mp}</span></div></div>`; }).join('');
   $('cards').style.gridTemplateColumns = `repeat(${Math.max(B.party.length, 2)}, 1fr)`;
   $('autoBtn').classList.toggle('on', !!B.auto); $('fight').classList.toggle('auto', !!B.auto);
 }
 $('acts').addEventListener('click', e => { const b = e.target.closest('button'); if (!b || b.disabled || !pending || held) { held = false; return; } SFX.click();
-  if (b.dataset.k === 'swap') return openSwap(); $('pop').hidden = true; select(b.dataset.k, b.dataset.item); });
-$('pop').addEventListener('click', e => { const b = e.target.closest('[data-sub]'); if (!b || b.disabled || !pending) return; $('pop').hidden = true; finish({ k: 'swap', sub: B.bench[+b.dataset.sub] }); });
+  if (b.dataset.k === 'swap') return openSwap(); if (b.dataset.k === 'bag') return openBag(); $('pop').hidden = true; select(b.dataset.k, b.dataset.item); });
+$('pop').addEventListener('click', e => { const it = e.target.closest('[data-it]'); if (it) { if (it.disabled || !pending) return; $('pop').hidden = true; SFX.click(); return select('item', it.dataset.it); } const b = e.target.closest('[data-sub]'); if (!b || b.disabled || !pending) return; $('pop').hidden = true; finish({ k: 'swap', sub: B.bench[+b.dataset.sub] }); });
 $('cards').addEventListener('click', e => { const c = e.target.closest('[data-hero]'); if (c) pickUnit(B.party[+c.dataset.hero]); });
 let hold = null, held = false;
 $('acts').addEventListener('pointerdown', e => { const b = e.target.closest('[data-k]'); if (!b || !pending) return; held = false; clearTimeout(hold);
-  hold = setTimeout(() => { held = true; const k = b.dataset.k, h = pending.h, it = b.dataset.item;
+  hold = setTimeout(() => { held = true; const k = b.dataset.k, h = pending.h, it = b.dataset.item; if (k === 'bag') return;
     toast(it ? `<b>${ITEMS[it].name}</b><br>${ITEMS[it].tip}` : k === 'atk' ? `<b>${h.H.atk.name}</b><br>Attaque de base. Rend 4 💧.` : k === 'guard' ? '<b>Défense</b><br>Divise par deux les dégâts reçus jusqu’à ton prochain tour et rend 15 % de mana.'
       : k === 'ult' ? `<b>${h.H.ult.name}</b> · Ultime<br>${h.H.ult.tip}<br><small>La jauge dorée se remplit en frappant et en encaissant.</small>` : k === 'swap' ? '<b>Relais</b><br>Un héros du banc prend la place de celui-ci. Ça coûte le tour.' : `<b>${SK[k].name}</b> · ${SK[k].cost} 💧<br>${SK[k].tip}`); }, 420); });
 ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => $('acts').addEventListener(ev, () => clearTimeout(hold)));
@@ -2131,6 +2151,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9', t: 'Version 1.9 · Un combat plus lisible', d: `<p>• <b>Chaque compétence s’explique</b> : touche-la une fois pour voir ce qu’elle fait, son coût et qui elle touche. Touche-la encore (ou touche la cible) pour la lancer. L’attaque de base et la Défense restent en un seul geste.</p><p>• <b>Barre d’actions allégée</b> : icônes plus grandes, et toutes les potions rangées dans le <b>Sac 🎒</b>.</p><p>• Les icônes d’état des héros ne débordent plus.</p>` },
   { v: '1.8.1', t: 'Version 1.8.1', d: `<p>• En portrait, <b>les ennemis et les boss ne collent plus aux héros</b> : caméra un peu plus large et vrai espace entre les deux camps.</p>` },
   { v: '1.8', t: 'Version 1.8 · Des coups qui portent', d: `<p>• <b>Coups synchronisés</b> : l’épée, l’arc et le bâton frappent pile sur l’image du coup. Les dégâts tombent au bon moment.</p><p>• <b>Attaques de zone</b> : chaque cible encaisse à son tour, on voit le coup traverser l’équipe.</p><p>• <b>Chute des boss</b> : ralenti, caméra sur le boss, explosions à ses couleurs et disparition lente.</p>` },
   { v: '1.7', t: 'Version 1.7 · Une histoire plus claire', d: `<p>• <b>Nouvelle histoire</b> : tous les dialogues des 10 chapitres ont été réécrits. Plus courts, plus clairs, avec un vrai mystère autour d’Ardaël, des sceaux et de Vorthax.</p><p>• <b>Écran d’objet simplifié</b> : un verdict clair (meilleur ou moins bien), seulement les stats qui changent, et le bon bouton en premier. Le détail complet reste accessible.</p><p>• Le bouton <b>Histoire</b> permet de relire les scènes du chapitre en cours.</p>` },
