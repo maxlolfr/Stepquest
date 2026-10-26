@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b0a10">
+<title>Dragonbound: Last Stand</title>
+<style>
+:root{--gold:#f2c66d;--ink:#0b0a10;--panel:rgba(14,11,20,.78);--line:rgba(242,198,109,.55);--red:#ff5a4e;--ice:#8fd8ff}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{margin:0;height:100%;background:var(--ink);overflow:hidden;font-family:Georgia,'Times New Roman',serif;color:#f4ead6;touch-action:none}
+canvas{position:fixed;inset:0;width:100%;height:100%;display:block}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;touch-action:manipulation}
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud>*{pointer-events:auto}
+#top{position:absolute;top:max(8px,env(safe-area-inset-top));left:max(10px,env(safe-area-inset-left));right:max(10px,env(safe-area-inset-right));display:flex;align-items:flex-start;justify-content:space-between;gap:8px;pointer-events:none}
+#top>*{pointer-events:auto}
+.pill{background:var(--panel);border:1.5px solid var(--line);border-radius:14px;padding:6px 12px;font-size:17px;font-weight:bold;box-shadow:0 2px 8px rgba(0,0,0,.5);white-space:nowrap}
+#life.hurt{animation:hurt .35s}
+@keyframes hurt{0%,100%{transform:none;border-color:var(--line)}30%{transform:scale(1.15);border-color:var(--red);color:var(--red)}}
+#mid{display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:none}
+#tip{font-size:14px;font-style:italic;background:rgba(0,0,0,.55);padding:3px 10px;border-radius:10px;opacity:.95}
+#tip:empty{display:none}
+#ctl{display:flex;gap:8px}
+.cb{width:48px;height:48px;border-radius:14px;background:var(--panel);border:1.5px solid var(--line);font-size:20px;font-weight:bold;display:flex;align-items:center;justify-content:center}
+.cb.on{background:rgba(242,198,109,.3)}
+#bar{position:absolute;left:max(10px,env(safe-area-inset-left));bottom:max(8px,env(safe-area-inset-bottom));display:flex;gap:8px}
+.card{display:flex;align-items:center;gap:4px;background:var(--panel);border:1.5px solid var(--line);border-radius:16px;padding:4px}
+.card.sel{border-color:#fff;box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(242,198,109,.8)}
+.face{width:56px;height:56px;border-radius:12px;position:relative;overflow:hidden;background:#221b2b}
+.face img{width:100%;height:100%;object-fit:cover;display:block}
+.face .lbl{position:absolute;left:0;right:0;bottom:0;font-size:10px;text-align:center;background:rgba(0,0,0,.65);line-height:14px}
+.card.todo .face{animation:glow 1.2s infinite alternate}
+@keyframes glow{to{box-shadow:0 0 12px 2px var(--gold)}}
+.sk{width:52px;height:52px;border-radius:50%;position:relative;border:2px solid var(--gold);background:#1b1424 center/86% no-repeat;display:none}
+.card.placed .sk{display:block}
+.sk .cd{position:absolute;inset:-2px;border-radius:50%;background:conic-gradient(rgba(0,0,0,.72) var(--p,0%),transparent 0)}
+.sk.ready{animation:rdy 1s infinite alternate}
+@keyframes rdy{to{box-shadow:0 0 14px 3px #ffe3a0}}
+.sk:disabled{filter:grayscale(.8) brightness(.7)}
+#bGo{position:absolute;right:max(12px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));padding:14px 22px;border-radius:18px;font-size:19px;font-weight:bold;color:#2a1a05;background:linear-gradient(#ffe39a,#e2a33c);border:2px solid #fff3c8;box-shadow:0 4px 14px rgba(0,0,0,.6);min-height:56px}
+#bGo[hidden],.hide{display:none!important}
+#scr{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:radial-gradient(ellipse at center,rgba(20,10,30,.72),rgba(0,0,0,.92));text-align:center;padding:20px;z-index:5}
+#scr h1{margin:0;font-size:34px;color:var(--gold);letter-spacing:1px;text-shadow:0 3px 0 #000}
+#scr h1 small{display:block;font-size:15px;color:#d8c8a8;letter-spacing:3px;margin-top:4px}
+#scr p{margin:0;max-width:560px;font-size:16px;line-height:1.4}
+#scr .err{color:#ffb4a8;font-family:monospace;font-size:13px;text-align:left;max-height:40vh;overflow:auto;background:rgba(0,0,0,.6);padding:8px 12px;border-radius:8px}
+.big{padding:14px 34px;border-radius:18px;font-size:20px;font-weight:bold;color:#2a1a05;background:linear-gradient(#ffe39a,#e2a33c);border:2px solid #fff3c8;min-height:56px}
+#rot{position:fixed;inset:0;z-index:9;display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;background:#0b0a10;font-size:20px;text-align:center;padding:30px}
+#rot b{font-size:54px;display:block;animation:spin 2s infinite}
+@keyframes spin{50%{transform:rotate(90deg)}}
+@media (orientation:portrait){#rot{display:flex}}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="hud" class="hide">
+  <div id="top">
+    <div id="life" class="pill">❤️ 20</div>
+    <div id="mid"><div id="wave" class="pill">Vague 1/3</div><div id="tip"></div></div>
+    <div id="ctl"><button class="cb" id="bSpeed" aria-label="Vitesse">×1</button><button class="cb" id="bPause" aria-label="Pause">⏸</button></div>
+  </div>
+  <div id="bar"></div>
+  <button id="bGo">Lancer la vague 1</button>
+</div>
+<div id="scr"><h1>Dragonbound<small>LAST STAND · PROTOTYPE</small></h1><p id="load">Chargement…</p></div>
+<div id="rot"><b>📱</b>Tourne ton téléphone<br>en mode paysage</div>
+<script>
+'use strict';
+// ===== Asset paths: everything is reused from Dragonbound II / Dragonbound 1 (read only) =====
+const PATHS = window.LS_PATHS || { db2img: '../dragonbound2/img/', db1img: '../dragonbound/img/', db2aud: '../dragonbound2/audio/' };
+const VER = 'Last Stand · prototype 0.1';
+
+// ===== Data =====
+// pose scale + horizontal anchor, copied from Dragonbound II's POSEM (feet stay on the ground)
+const PM = { aldA: [1.02, .5], oriA: [1.083, .469], lyrA: [1.059, .501],
+  skel: [1, .397], skel_atk: [.978, .389], skel_hit: [.873, .534], skel_ko: [.585, .482],
+  bat: [1, .452], bat_atk: [.811, .444], bat_hit: [.965, .48], bat_ko: [.417, .574],
+  golem: [1.017, .53], golem_atk: [1.01, .579], golem_hit: [1.01, .532], golem_ko: [.537, .53],
+  bossBone: [1.017, .324], bossBone_atk: [1.158, .283], bossBone_hit: [1.209, .479], bossBone_ko: [.785, .471], bossBone_rage: [1.29, .507] };
+
+const HERO = {
+  aldric: { name: 'Aldric', role: 'Tank', spr: 'ald', face: 'ald-face', range: 150, dmg: 16, cd: .7, block: 2, atkAnim: 'atk', snd: 'ald_sword',
+    sk: { name: 'Provocation', icon: 'bl_shield', cd: 15, snd: 'ald_taunt', tip: 'immobilise les monstres proches 3 s (boss compris)' } },
+  orin: { name: 'Orin', role: 'Mage', spr: 'ori', face: 'ori-face', range: 205, dmg: 28, splash: 80, cd: 1.8, atkAnim: 'cast', snd: 'ori_fire',
+    sk: { name: 'Blizzard', icon: 'spFrost', cd: 18, snd: 'ori_ice', tip: 'gèle et ralentit tous les monstres 5 s' } },
+  lyra: { name: 'Lyra', role: 'Archère', spr: 'lyr', face: 'lyr-face', range: 260, dmg: 11, cd: .5, atkAnim: 'atk', snd: 'lyr_arrow',
+    sk: { name: 'Pluie de flèches', icon: 'spRain', cd: 14, snd: 'lyr_rain', tip: '14 flèches sur les monstres autour d’elle' } },
+};
+const HORDER = ['aldric', 'orin', 'lyra'];
+
+const FOE = {
+  skel: { name: 'Squelette', img: 'skel', hp: 70, spd: 50, dmg: 1, h: 112 },
+  bat: { name: 'Chauve-souris', img: 'bat', hp: 30, spd: 105, dmg: 1, h: 66, fly: true },
+  golem: { name: 'Golem de lave', img: 'golem', hp: 300, spd: 28, dmg: 3, h: 138 },
+  boss: { name: 'Roi des Os', img: 'bossBone', hp: 1700, spd: 21, dmg: 10, h: 205, boss: true },
+};
+// [type, count, interval s, wait before group s]
+const WAVES = [
+  [['skel', 8, 1.3, 0], ['bat', 5, .7, 2]],
+  [['skel', 6, 1, 0], ['bat', 6, .5, 1.5], ['golem', 3, 2.4, 1], ['skel', 6, .8, 1]],
+  [['skel', 8, .8, 0], ['golem', 3, 2, 1], ['bat', 8, .45, 1], ['boss', 1, 0, 2], ['skel', 6, 1, 3], ['bat', 6, .5, 2]],
+];
+const LIFE = 20, PAUSE_BETWEEN = 12;
+
+// ===== Field geometry (logical units, height 720, width adapts to the screen) =====
+let FW = 1280, OX = 0, PATH = [], SEG = [], PLEN = 0, SLOTS = [];
+const BASE_PATH = [[930, 245], [830, 480], [440, 480], [340, 275]];
+const BASE_SLOTS = [[1090, 375], [645, 345], [650, 605], [215, 415], [480, 160]];
+function layout() {
+  OX = (FW - 1280) / 2;
+  PATH = [[FW + 70, 245], ...BASE_PATH.map(([x, y]) => [x + OX, y]), [-70, 275]];
+  SEG = []; PLEN = 0;
+  for (let i = 0; i < PATH.length - 1; i++) { const [ax, ay] = PATH[i], [bx, by] = PATH[i + 1], l = Math.hypot(bx - ax, by - ay); SEG.push({ ax, ay, bx, by, l, s: PLEN }); PLEN += l; }
+  SLOTS = BASE_SLOTS.map(([x, y], i) => ({ i, x: x + OX, y, hero: S ? S.slotHero[i] : null }));
+}
+function posAt(d) { d = Math.max(0, Math.min(PLEN, d)); for (const s of SEG) if (d <= s.s + s.l) { const k = (d - s.s) / s.l; return [s.ax + (s.bx - s.ax) * k, s.ay + (s.by - s.ay) * k]; } const s = SEG[SEG.length - 1]; return [s.bx, s.by]; }
+const depth = y => .78 + .42 * (y - 150) / 460; // perspective: lower on screen = closer = bigger
+const EXIT_D = () => PLEN - 120; // where monsters vanish into the gate
+
+// ===== State =====
+let S = null;
+function fresh() {
+  return { phase: 'prep', wave: 0, life: LIFE, t: 0, speed: 1, paused: false, sel: null, foes: [], shots: [], fx: [], txt: [], queue: [], between: 0,
+    slotHero: [null, null, null, null, null], h: Object.fromEntries(HORDER.map(k => [k, { id: k, slot: null, cd: 0, skCd: 0, pose: 'idle', poseT: 0, flip: false, target: null }])),
+    stats: { killed: 0, leaked: 0, skills: 0 } };
+}
+function heroPos(id) { const sl = S.h[id].slot; return sl == null ? null : [SLOTS[sl].x, SLOTS[sl].y]; }
+function place(id, slot) {
+  const H = S.h[id], other = S.slotHero[slot];
+  if (other === id) return;
+  if (S.phase === 'wave' && H.slot != null) return false; // moving is only allowed between waves
+  if (other) { if (S.phase === 'wave') return false; S.h[other].slot = H.slot; if (H.slot != null) S.slotHero[H.slot] = other; }
+  else if (H.slot != null) S.slotHero[H.slot] = null;
+  H.slot = slot; S.slotHero[slot] = id; return true;
+}
+function remaining() { return S.foes.filter(f => !f.dead).length + S.queue.length; }
+function startWave() {
+  if (S.phase === 'wave' || S.phase === 'win' || S.phase === 'lose') return;
+  if (!HORDER.some(k => S.h[k].slot != null)) return;
+  S.phase = 'wave'; S.queue = []; let t = S.t + .6;
+  for (const [type, n, iv, wait] of WAVES[S.wave]) { t += wait; for (let i = 0; i < n; i++) { S.queue.push({ type, at: t }); t += iv; } }
+  for (const k of HORDER) S.h[k].skCd = 0;
+  if (S.wave === 2) music('m_boss');
+  sfx('ui_click');
+}
+function spawn(type, d = 0) {
+  const T = FOE[type], hpMul = 1 + S.wave * .12;
+  const f = { type, T, hp: Math.round(T.hp * (T.boss ? 1 : hpMul)), d, slow: 0, stun: 0, hitT: -9, dead: false, deadT: 0, blockBy: null, atkT: 0, rage: false, bob: Math.random() * 6, off: (Math.random() - .5) * 34, vm: .92 + Math.random() * .16 };
+  f.hpMax = f.hp; S.foes.push(f); if (T.boss) { sfx('boss_roar'); banner('Le Roi des Os arrive !'); } return f;
+}
+function foePos(f) { const [x, y] = posAt(f.d), o = f.T.boss ? 0 : f.off; return [x, (f.T.fly ? y - 52 : y) + o]; }
+function hurt(f, dmg, src) {
+  if (f.dead) return; f.hp -= dmg; f.hitT = S.t;
+  if (f.T.boss && !f.rage && f.hp < f.hpMax / 2) { f.rage = true; f.rageT = S.t; sfx('boss_roar'); banner('Le Roi des Os enrage !'); for (let i = 0; i < 3; i++) spawn('skel', Math.max(0, f.d - 40 - i * 45)); }
+  if (f.hp <= 0) { f.dead = true; f.deadT = S.t; S.stats.killed++; sfx('foe_die', .5); }
+}
+function inRange(p, f, r) { const [x, y] = foePos(f); return Math.hypot(x - p[0], (y - p[1]) * 1.15) <= r; }
+function target(id) { // most advanced monster in range: predictable
+  const p = heroPos(id), H = HERO[id]; let best = null;
+  for (const f of S.foes) if (!f.dead && f.d > 20 && inRange(p, f, H.range) && (!best || f.d > best.d)) best = f;
+  return best;
+}
+
+// ===== Simulation step =====
+function step(dt) {
+  if (S.paused || S.phase === 'win' || S.phase === 'lose') return;
+  S.t += dt;
+  if (S.phase === 'between') { S.between -= dt; if (S.between <= 0) startWave(); }
+  // spawning
+  while (S.queue.length && S.queue[0].at <= S.t) spawn(S.queue.shift().type);
+  // Aldric blocks up to 2 ground monsters (never the boss)
+  const ap = heroPos('aldric');
+  for (const f of S.foes) if (f.blockBy && (f.dead || !ap || !inRange(ap, f, HERO.aldric.range))) f.blockBy = null;
+  if (ap) { let n = S.foes.filter(f => f.blockBy && !f.dead).length;
+    for (const f of S.foes) if (n < HERO.aldric.block && !f.dead && !f.blockBy && !f.T.fly && !f.T.boss && inRange(ap, f, HERO.aldric.range - 15)) { f.blockBy = 'aldric'; n++; } }
+  // monsters move
+  for (const f of S.foes) {
+    if (f.dead) continue;
+    f.slow = Math.max(0, f.slow - dt); f.stun = Math.max(0, f.stun - dt);
+    let v = f.T.spd * f.vm * (f.rage ? 1.6 : 1) * (f.slow > 0 ? .5 : 1);
+    if (f.stun > 0 || f.blockBy || (f.T.boss && f.rage && S.t - f.rageT < 1.2)) v = 0;
+    f.d += v * dt;
+    if (f.blockBy && S.t - f.atkT > 1.1) { f.atkT = S.t; if (Math.random() < .5) sfx('ald_sword', .25, 1.4); }
+    if (f.d >= EXIT_D()) { f.dead = true; f.leaked = true; f.deadT = S.t; S.life = Math.max(0, S.life - f.T.dmg); S.stats.leaked++; sfx('hero_hurt'); lifeHit(); }
+  }
+  // heroes attack
+  for (const id of HORDER) {
+    const h = S.h[id], H = HERO[id]; if (h.slot == null) continue;
+    h.cd -= dt; h.skCd = Math.max(0, h.skCd - dt);
+    const p = heroPos(id);
+    let tg = null;
+    if (id === 'aldric') tg = S.foes.find(f => f.blockBy === 'aldric' && !f.dead) || target(id); else tg = target(id);
+    if (tg) h.flip = foePos(tg)[0] < p[0];
+    if (tg && h.cd <= 0 && S.phase === 'wave') {
+      h.cd = H.cd; h.pose = H.atkAnim; h.poseT = S.t; sfx(H.snd, id === 'lyra' ? .35 : .45);
+      const [tx, ty] = foePos(tg);
+      if (id === 'aldric') { hurt(tg, H.dmg); fxAdd('fx_slash', tx, ty - 50, 120, .32, h.flip); }
+      else S.shots.push({ id, x: p[0] + (h.flip ? -20 : 20), y: p[1] - 70, f: tg, spd: id === 'lyra' ? 1100 : 620, dmg: H.dmg, splash: H.splash || 0 });
+    }
+  }
+  // projectiles home on their target
+  for (const s of S.shots) {
+    if (s.done) continue;
+    if (s.f.dead && !s.lx) { const [x, y] = foePos(s.f); s.lx = x; s.ly = y; }
+    const [tx, ty0] = s.lx != null ? [s.lx, s.ly] : foePos(s.f), ty = ty0 - (s.f.T.h * .35);
+    const dx = tx - s.x, dy = ty - s.y, dd = Math.hypot(dx, dy), mv = s.spd * dt;
+    s.a = Math.atan2(dy, dx);
+    if (dd <= mv) { s.done = true;
+      if (s.splash) { for (const f of S.foes) if (!f.dead && Math.hypot(foePos(f)[0] - tx, foePos(f)[1] - ty0) <= s.splash) hurt(f, s.dmg); fxAdd('fx_fire', tx, ty, 130, .45); }
+      else if (!s.f.dead) hurt(s.f, s.dmg, s.id);
+    } else { s.x += dx / dd * mv; s.y += dy / dd * mv; }
+  }
+  S.shots = S.shots.filter(s => !s.done);
+  // rain of arrows
+  for (const r of S.rain || []) { while (r.n > 0 && S.t >= r.next) { r.n--; r.next += .1; const c = S.foes.filter(f => !f.dead && inRange(r.p, f, HERO.lyra.range * 1.4)); if (c.length) { const f = c[Math.floor(Math.random() * c.length)], [x, y] = foePos(f); S.shots.push({ id: 'lyra', x: x - 60 + Math.random() * 40, y: y - 420, f, spd: 1500, dmg: 16 }); sfx('lyr_arrow', .2, 1.2); } } }
+  S.rain = (S.rain || []).filter(r => r.n > 0);
+  S.foes = S.foes.filter(f => !f.dead || S.t - f.deadT < .6);
+  // end of wave / game
+  if (S.life <= 0) { S.phase = 'lose'; end(false); return; }
+  if (S.phase === 'wave' && !S.queue.length && !S.foes.some(f => !f.dead)) {
+    S.wave++;
+    if (S.wave >= WAVES.length) { S.phase = 'win'; end(true); }
+    else { S.phase = 'between'; S.between = PAUSE_BETWEEN; banner('Vague ' + S.wave + ' repoussée !'); }
+  }
+}
+function useSkill(id) {
+  const h = S.h[id], H = HERO[id], p = heroPos(id);
+  if (!p || S.phase !== 'wave' || h.skCd > 0 || S.paused) return false;
+  h.skCd = H.sk.cd; h.pose = 'cast'; h.poseT = S.t; S.stats.skills++; sfx(H.sk.snd, .8);
+  floatTxt(H.sk.name + ' !', p[0], p[1] - 150, '#ffe3a0');
+  if (id === 'aldric') { for (const f of S.foes) if (!f.dead && !f.T.fly && inRange(p, f, 230)) { f.stun = 3; } S.fx.push({ k: 'ring', x: p[0], y: p[1], r: 230, t0: S.t, dur: .6, col: '255,215,120' }); }
+  if (id === 'orin') { let n = 0; for (const f of S.foes) if (!f.dead) { hurt(f, 25); f.slow = 5; const [x, y] = foePos(f); if (n++ < 8) fxAdd('fx_ice', x, y - f.T.h * .5, 95, .55); } S.fx.push({ k: 'flash', t0: S.t, dur: .5, col: '160,220,255' }); }
+  if (id === 'lyra') { S.rain = S.rain || []; S.rain.push({ p, n: 14, next: S.t }); }
+  return true;
+}
+
+// ===== Rendering =====
+const cv = document.getElementById('cv'), cx = cv.getContext('2d');
+let DPR = 1, K = 1, VW = 0, VH = 0;
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1); VW = innerWidth; VH = innerHeight;
+  cv.width = Math.round(VW * DPR); cv.height = Math.round(VH * DPR);
+  FW = Math.max(1280, Math.min(1600, 720 * VW / VH)); K = Math.min(VW / FW, VH / 720); layout();
+}
+const IMG = {}, WHITE = {}, MISSING = [];
+const ok = k => IMG[k] && IMG[k].complete && IMG[k].naturalWidth > 0;
+function drawImg(k, x, y, h, flip, alpha = 1, flash = 0) { // feet at (x,y)
+  const im = IMG[k]; if (!ok(k)) return false;
+  const pm = PM[k] || PM[k.replace(/_(idle|atk|cast|hit|ko)\d$/, '')] || [1, .5];
+  const hh = h * pm[0], w = hh * im.naturalWidth / im.naturalHeight, x0 = -w * pm[1];
+  cx.save(); cx.translate(x, y); if (flip) cx.scale(-1, 1); cx.globalAlpha = alpha; cx.drawImage(im, x0, -hh, w, hh);
+  if (flash > 0 && WHITE[k]) { cx.globalAlpha = alpha * flash; cx.drawImage(WHITE[k], x0, -hh, w, hh); }
+  cx.restore(); return true;
+}
+function fxAdd(k, x, y, size, dur, flip) { if (!SIM) S.fx.push({ k, x, y, size, t0: S.t, dur, flip }); }
+function floatTxt(s, x, y, col) { if (!SIM) S.txt.push({ s, x, y, col, t0: S.t }); }
+let bannerTxt = '', bannerT = -9;
+function banner(s) { bannerTxt = s; bannerT = S.t; }
+
+function drawBG() {
+  const im = IMG.bg; cx.fillStyle = '#16131c'; cx.fillRect(0, 0, FW, 720);
+  if (ok('bg')) { const sw = im.naturalWidth, sh = sw * 720 / FW; cx.drawImage(im, 0, im.naturalHeight - sh, sw, sh, 0, 0, FW, 720); }
+  // darken a bit so units read better
+  const g = cx.createLinearGradient(0, 0, 0, 720); g.addColorStop(0, 'rgba(5,4,10,.35)'); g.addColorStop(.5, 'rgba(5,4,10,.05)'); g.addColorStop(1, 'rgba(5,4,10,.3)'); cx.fillStyle = g; cx.fillRect(0, 0, FW, 720);
+}
+function drawPath() {
+  cx.save(); cx.lineJoin = 'round'; cx.lineCap = 'round';
+  const line = () => { cx.beginPath(); PATH.forEach(([x, y], i) => i ? cx.lineTo(x, y) : cx.moveTo(x, y)); };
+  line(); cx.strokeStyle = 'rgba(10,6,4,.55)'; cx.lineWidth = 92; cx.stroke();
+  line(); cx.strokeStyle = 'rgba(96,70,46,.62)'; cx.lineWidth = 76; cx.stroke();
+  line(); cx.strokeStyle = 'rgba(140,108,72,.28)'; cx.lineWidth = 52; cx.stroke();
+  // chevrons drifting toward the gate show the direction
+  cx.fillStyle = 'rgba(255,225,170,.22)';
+  for (let d = (S.t * 40) % 90; d < PLEN - 150; d += 90) { const [x, y] = posAt(d), [x2, y2] = posAt(d + 5), a = Math.atan2(y2 - y, x2 - x);
+    cx.save(); cx.translate(x, y); cx.rotate(a); cx.beginPath(); cx.moveTo(10, 0); cx.lineTo(-6, -9); cx.lineTo(-2, 0); cx.lineTo(-6, 9); cx.closePath(); cx.fill(); cx.restore(); }
+  cx.restore();
+  // gate (exit) on the left
+  const [gx, gy] = posAt(EXIT_D()), pul = .5 + .5 * Math.sin(S.t * 3);
+  const g = cx.createRadialGradient(gx, gy - 60, 6, gx, gy - 60, 110); g.addColorStop(0, `rgba(190,140,255,${.75 + .2 * pul})`); g.addColorStop(.55, 'rgba(110,60,200,.45)'); g.addColorStop(1, 'rgba(60,20,120,0)');
+  cx.fillStyle = g; cx.beginPath(); cx.ellipse(gx, gy - 60, 70, 105, 0, 0, Math.PI * 2); cx.fill();
+  cx.strokeStyle = `rgba(230,200,255,${.5 + .3 * pul})`; cx.lineWidth = 4; cx.beginPath(); cx.ellipse(gx, gy - 60, 48, 84, 0, 0, Math.PI * 2); cx.stroke();
+  // red mist at the entrance
+  const e = cx.createRadialGradient(FW, 245, 10, FW, 245, 160); e.addColorStop(0, 'rgba(200,40,40,.45)'); e.addColorStop(1, 'rgba(120,0,0,0)'); cx.fillStyle = e; cx.fillRect(FW - 170, 80, 170, 330);
+}
+function drawSlots() {
+  const sel = S.sel, canMove = sel && (S.h[sel].slot == null || S.phase !== 'wave');
+  for (const s of SLOTS) {
+    const occ = S.slotHero[s.i], pul = .5 + .5 * Math.sin(S.t * 4 + s.i), hl = canMove && occ !== sel && (!occ || S.phase !== 'wave');
+    cx.save(); cx.translate(s.x, s.y); cx.scale(1, .42);
+    cx.fillStyle = occ ? 'rgba(242,198,109,.18)' : `rgba(242,198,109,${hl ? .22 + .2 * pul : .12})`; cx.beginPath(); cx.arc(0, 0, 62, 0, Math.PI * 2); cx.fill();
+    cx.lineWidth = hl ? 6 : 3.5; cx.strokeStyle = hl ? `rgba(255,230,160,${.6 + .4 * pul})` : 'rgba(242,198,109,.6)'; cx.setLineDash(occ ? [] : [14, 9]); cx.stroke();
+    cx.restore();
+    if (!occ) { cx.fillStyle = `rgba(255,230,170,${hl ? .9 : .55})`; cx.font = 'bold 26px Georgia'; cx.textAlign = 'center'; cx.fillText('+', s.x, s.y + 9); }
+  }
+  if (sel && S.h[sel].slot != null) { const [x, y] = heroPos(sel); cx.save(); cx.translate(x, y); cx.scale(1, 1 / 1.15); cx.beginPath(); cx.arc(0, 0, HERO[sel].range, 0, Math.PI * 2); cx.fillStyle = 'rgba(255,230,160,.08)'; cx.fill(); cx.strokeStyle = 'rgba(255,230,160,.6)'; cx.lineWidth = 2.5; cx.setLineDash([10, 8]); cx.stroke(); cx.restore(); }
+}
+function shadow(x, y, w, a = .4) { cx.fillStyle = `rgba(0,0,0,${a})`; cx.beginPath(); cx.ellipse(x, y, w, w * .3, 0, 0, Math.PI * 2); cx.fill(); }
+function drawHero(id) {
+  const h = S.h[id], H = HERO[id], [x, y] = heroPos(id), sc = depth(y), ht = 152 * sc;
+  let anim = 'idle', fr = Math.floor(S.t * 5) % 4; const el = S.t - h.poseT;
+  if (h.pose !== 'idle' && el < .4) { anim = h.pose; fr = Math.min(3, Math.floor(el / .1)); } else h.pose = 'idle';
+  shadow(x, y + 2, 34 * sc);
+  if (S.sel === id) { cx.strokeStyle = '#fff'; cx.lineWidth = 3; cx.beginPath(); cx.ellipse(x, y + 2, 44 * sc, 14 * sc, 0, 0, Math.PI * 2); cx.stroke(); }
+  if (!drawImg(H.spr + 'A_' + anim + fr, x, y + 4, ht, h.flip)) drawImg(H.spr + 'A_idle0', x, y + 4, ht, h.flip) || ph(x, y, ht, '#d9b45a', H.name[0]);
+}
+function drawFoe(f) {
+  const [x, y] = foePos(f), [gx, gy0] = posAt(f.d), gy = gy0 + (T0 => T0.boss ? 0 : f.off)(f.T), sc = depth(gy), T = f.T, ht = T.h * 1.2 * sc;
+  let pose = '', alpha = 1, bob = 0, sx = 1;
+  if (f.dead) { if (f.leaked) { alpha = 1 - (S.t - f.deadT) / .6; } else { pose = '_ko'; alpha = 1 - (S.t - f.deadT) / .6; } }
+  else if (S.t - f.hitT < .12) pose = '_hit';
+  else if (f.blockBy && S.t - f.atkT < .35) pose = '_atk';
+  else if (T.boss && f.rage && S.t - f.rageT < 1.2) pose = '_rage';
+  const moving = !f.dead && !f.blockBy && f.stun <= 0;
+  if (moving) { const ph = S.t * (T.fly ? 14 : 9) + f.bob; bob = T.fly ? Math.sin(ph) * 6 : -Math.abs(Math.sin(ph)) * 5; if (T.fly) sx = 1; }
+  shadow(gx, gy + 2, (T.boss ? 60 : T.fly ? 22 : 30) * sc, T.fly ? .25 : .4);
+  const flash = S.t - f.hitT < .1 ? .7 : 0;
+  if (!drawImg(T.img + pose, x, y + bob + 4, ht, false, Math.max(0, alpha), flash)) drawImg(T.img, x, y + bob + 4, ht, false, Math.max(0, alpha), flash) || ph(x, y, ht, '#9a4', T.name[0]);
+  if (!f.dead) {
+    if (f.slow > 0) { cx.fillStyle = 'rgba(140,210,255,.28)'; cx.beginPath(); cx.ellipse(x, y - ht * .4, ht * .35, ht * .5, 0, 0, Math.PI * 2); cx.fill(); }
+    if (f.stun > 0) { cx.font = `${18 * sc}px serif`; cx.textAlign = 'center'; cx.fillText('💫', x, y - ht - 6); }
+    if (f.hp < f.hpMax || T.boss) { const w = (T.boss ? 120 : 44) * sc, yy = y - ht - (T.boss ? 14 : 4); cx.fillStyle = 'rgba(0,0,0,.7)'; cx.fillRect(x - w / 2 - 1, yy - 1, w + 2, T.boss ? 9 : 6);
+      cx.fillStyle = T.boss ? '#c63cff' : '#e8463a'; cx.fillRect(x - w / 2, yy, w * Math.max(0, f.hp / f.hpMax), T.boss ? 7 : 4); }
+  }
+}
+function ph(x, y, h, col, l) { cx.fillStyle = col; cx.fillRect(x - h * .25, y - h, h * .5, h); cx.fillStyle = '#000'; cx.font = 'bold 20px sans-serif'; cx.textAlign = 'center'; cx.fillText(l, x, y - h / 2); return true; }
+function drawShots() {
+  for (const s of S.shots) {
+    cx.save(); cx.translate(s.x, s.y); cx.rotate(s.a || 0);
+    if (s.id === 'lyra') { cx.strokeStyle = '#f7e9c8'; cx.lineWidth = 3; cx.beginPath(); cx.moveTo(-22, 0); cx.lineTo(8, 0); cx.stroke(); cx.fillStyle = '#ffd36b'; cx.beginPath(); cx.moveTo(12, 0); cx.lineTo(4, -4); cx.lineTo(4, 4); cx.fill(); }
+    else { cx.globalCompositeOperation = 'lighter'; const g = cx.createRadialGradient(0, 0, 1, 0, 0, 22); g.addColorStop(0, 'rgba(255,240,200,1)'); g.addColorStop(.4, 'rgba(255,140,40,.9)'); g.addColorStop(1, 'rgba(255,60,0,0)'); cx.fillStyle = g; cx.beginPath(); cx.arc(0, 0, 22, 0, Math.PI * 2); cx.fill(); }
+    cx.restore();
+  }
+}
+function drawFx() {
+  for (const p of S.fx) {
+    const k = (S.t - p.t0) / p.dur; if (k > 1) continue;
+    if (p.k === 'ring') { cx.strokeStyle = `rgba(${p.col},${1 - k})`; cx.lineWidth = 8 * (1 - k) + 2; cx.save(); cx.translate(p.x, p.y); cx.scale(1, .45); cx.beginPath(); cx.arc(0, 0, p.r * (.3 + .7 * k), 0, Math.PI * 2); cx.stroke(); cx.restore(); continue; }
+    if (p.k === 'flash') { cx.fillStyle = `rgba(${p.col},${.35 * (1 - k)})`; cx.fillRect(0, 0, FW, 720); continue; }
+    const im = IMG[p.k]; if (!ok(p.k)) continue;
+    const fw = im.naturalWidth / 6, fh = im.naturalHeight, i = Math.min(5, Math.floor(k * 6)), w = p.size, h = w * fh / fw;
+    cx.save(); cx.globalCompositeOperation = 'lighter'; cx.translate(p.x, p.y); if (p.flip) cx.scale(-1, 1); cx.drawImage(im, i * fw, 0, fw, fh, -w / 2, -h / 2, w, h); cx.restore();
+  }
+  S.fx = S.fx.filter(p => S.t - p.t0 < p.dur);
+  for (const t of S.txt) { const k = (S.t - t.t0) / 1.2; cx.globalAlpha = Math.max(0, 1 - k); cx.font = 'bold 26px Georgia'; cx.textAlign = 'center'; cx.lineWidth = 5; cx.strokeStyle = '#000'; cx.strokeText(t.s, t.x, t.y - 40 * k); cx.fillStyle = t.col; cx.fillText(t.s, t.x, t.y - 40 * k); cx.globalAlpha = 1; }
+  S.txt = S.txt.filter(t => S.t - t.t0 < 1.2);
+  const bk = S.t - bannerT; if (bk < 2.2) { const a = Math.min(1, bk * 4, (2.2 - bk) * 2); cx.globalAlpha = a; cx.fillStyle = 'rgba(0,0,0,.55)'; cx.fillRect(0, 300, FW, 74); cx.font = 'bold 40px Georgia'; cx.textAlign = 'center'; cx.lineWidth = 6; cx.strokeStyle = '#000'; cx.strokeText(bannerTxt, FW / 2, 352); cx.fillStyle = '#f2c66d'; cx.fillText(bannerTxt, FW / 2, 352); cx.globalAlpha = 1; }
+}
+function render() {
+  cx.setTransform(DPR, 0, 0, DPR, 0, 0); cx.fillStyle = '#000'; cx.fillRect(0, 0, VW, VH);
+  cx.setTransform(DPR * K, 0, 0, DPR * K, DPR * (VW - FW * K) / 2, DPR * (VH - 720 * K) / 2);
+  drawBG(); drawPath(); drawSlots();
+  const ents = []; for (const id of HORDER) if (S.h[id].slot != null) ents.push({ y: heroPos(id)[1], d: () => drawHero(id) });
+  for (const f of S.foes) ents.push({ y: posAt(f.d)[1] + (f.T.boss ? 0 : f.off) + (f.dead ? -1 : 0), d: () => drawFoe(f) });
+  ents.sort((a, b) => a.y - b.y).forEach(e => e.d());
+  drawShots(); drawFx();
+}
+function toField(px, py) { return [(px - (VW - FW * K) / 2) / K, (py - (VH - 720 * K) / 2) / K]; }
+
+// ===== Sound =====
+let AC = null; const SMP = {}, lastS = {}; let MUS = null;
+const SOUNDS = ['ald_sword', 'ald_taunt', 'ori_fire', 'ori_ice', 'lyr_arrow', 'lyr_rain', 'foe_die', 'hero_hurt', 'boss_roar', 'ui_click'];
+function audioInit() {
+  if (AC || SIM) return; try { AC = new (window.AudioContext || window.webkitAudioContext)(); } catch (e) { return; }
+  for (const k of SOUNDS) fetch(PATHS.db2aud + k + '.mp3').then(r => { if (!r.ok) throw 0; return r.arrayBuffer(); }).then(b => AC.decodeAudioData(b)).then(d => SMP[k] = d).catch(() => MISSING.push('audio/' + k + '.mp3'));
+}
+function sfx(k, v = .6, rate = 1) {
+  if (SIM || !AC || !SMP[k]) return; const now = performance.now(); if (now - (lastS[k] || 0) < 70) return; lastS[k] = now;
+  if (AC.state !== 'running') AC.resume().catch(() => {});
+  const s = AC.createBufferSource(), g = AC.createGain(); s.buffer = SMP[k]; s.playbackRate.value = rate * (S ? Math.min(1.3, 1 + (S.speed - 1) * .15) : 1); g.gain.value = v; s.connect(g).connect(AC.destination); s.start();
+}
+function music(k, loop = true) { if (SIM) return; try { if (MUS) MUS.pause(); MUS = new Audio(PATHS.db2aud + k + '.mp3'); MUS.loop = loop; MUS.volume = .45; MUS.play().catch(() => {}); } catch (e) {} }
+
+// ===== HUD =====
+const $ = id => document.getElementById(id);
+function buildBar() {
+  $('bar').innerHTML = HORDER.map(id => `<div class="card" data-h="${id}"><button class="face" data-sel="${id}" aria-label="${HERO[id].name}"><img src="${PATHS.db2img + HERO[id].face}.webp" alt=""><span class="lbl">${HERO[id].name}</span></button><button class="sk" data-sk="${id}" aria-label="${HERO[id].sk.name}" style="background-image:url('${PATHS.db1img + HERO[id].sk.icon}.webp')"><span class="cd"></span></button></div>`).join('');
+}
+function tipText() {
+  if (S.phase === 'prep') { const n = HORDER.filter(k => S.h[k].slot != null).length; if (S.sel && S.h[S.sel].slot == null) return `Touche un emplacement + pour placer ${HERO[S.sel].name}`; if (!n) return 'Touche un héros en bas, puis un emplacement +'; if (n < 3) return 'Place les autres héros, puis lance la vague'; return 'Prêt ? Lance la vague !'; }
+  if (S.phase === 'between') return S.sel ? `Touche un emplacement pour déplacer ${HERO[S.sel].name}` : 'Tu peux déplacer tes héros';
+  if (S.phase === 'wave' && S.sel && S.h[S.sel].slot == null) return `Touche un emplacement + pour placer ${HERO[S.sel].name}`;
+  return '';
+}
+function lifeHit() { if (SIM) return; const l = $('life'); l.classList.remove('hurt'); void l.offsetWidth; l.classList.add('hurt'); }
+function hud() {
+  $('life').textContent = '❤️ ' + S.life;
+  $('wave').textContent = `Vague ${Math.min(S.wave + 1, 3)}/3 · 👹 ${S.phase === 'wave' ? remaining() : WAVES[Math.min(S.wave, 2)].reduce((a, g) => a + g[1], 0)}`;
+  $('tip').textContent = tipText();
+  const go = $('bGo'); go.hidden = !(S.phase === 'prep' || S.phase === 'between');
+  go.textContent = S.phase === 'between' ? `Vague ${S.wave + 1} dans ${Math.ceil(S.between)} s ▶` : `Lancer la vague ${S.wave + 1} ▶`;
+  go.disabled = !HORDER.some(k => S.h[k].slot != null); go.style.opacity = go.disabled ? .5 : 1;
+  $('bPause').textContent = S.paused ? '▶' : '⏸'; $('bPause').classList.toggle('on', S.paused);
+  $('bSpeed').textContent = '×' + S.speed; $('bSpeed').classList.toggle('on', S.speed > 1);
+  for (const id of HORDER) {
+    const c = document.querySelector(`.card[data-h="${id}"]`), h = S.h[id]; if (!c) continue;
+    c.classList.toggle('sel', S.sel === id); c.classList.toggle('placed', h.slot != null); c.classList.toggle('todo', h.slot == null && S.phase !== 'wave' || (h.slot == null && S.sel !== id && S.phase === 'wave'));
+    const b = c.querySelector('.sk'), p = h.skCd > 0 ? Math.round(100 * h.skCd / HERO[id].sk.cd) : 0;
+    b.querySelector('.cd').style.setProperty('--p', p + '%'); b.disabled = S.phase !== 'wave'; b.classList.toggle('ready', S.phase === 'wave' && p === 0);
+  }
+}
+
+// ===== Input (touch + mouse through pointer events) =====
+function tapField(px, py) {
+  if (!S || S.phase === 'win' || S.phase === 'lose') return;
+  const [x, y] = toField(px, py);
+  let slot = null, best = 75; for (const s of SLOTS) { const d = Math.hypot(s.x - x, (s.y - y) * 1.3); if (d < best) { best = d; slot = s; } }
+  // tap on a hero's body also counts as its slot
+  for (const id of HORDER) { const p = heroPos(id); if (p && Math.abs(x - p[0]) < 50 && y < p[1] + 20 && y > p[1] - 140) slot = SLOTS[S.h[id].slot]; }
+  if (!slot) { S.sel = null; return; }
+  const occ = S.slotHero[slot.i];
+  if (S.sel && occ !== S.sel && (S.h[S.sel].slot == null || S.phase !== 'wave') && (!occ || S.phase !== 'wave')) { if (place(S.sel, slot.i)) { sfx('ui_click'); S.sel = null; } return; }
+  if (occ) { S.sel = S.sel === occ ? null : occ; sfx('ui_click', .4); return; }
+  S.sel = null;
+}
+cv.addEventListener('pointerdown', e => { e.preventDefault(); audioInit(); tapField(e.clientX, e.clientY); });
+$('bar').addEventListener('pointerdown', e => {
+  const b = e.target.closest('button'); if (!b || !S) return; e.preventDefault();
+  if (b.dataset.sel) { const id = b.dataset.sel; S.sel = S.h[id].slot == null || S.sel !== id ? id : null; sfx('ui_click', .4); }
+  if (b.dataset.sk) useSkill(b.dataset.sk);
+  hud();
+});
+$('bGo').addEventListener('click', () => { if (S) { S.sel = null; startWave(); } });
+$('bPause').addEventListener('click', () => { if (S && S.phase !== 'win' && S.phase !== 'lose') S.paused = !S.paused; });
+$('bSpeed').addEventListener('click', () => { if (S) S.speed = S.speed === 1 ? 2 : 1; });
+document.addEventListener('visibilitychange', () => { if (document.hidden && S && S.phase === 'wave') S.paused = true; if (MUS) document.hidden ? MUS.pause() : MUS.play().catch(() => {}); });
+
+// ===== Screens =====
+function screen(html) { const s = $('scr'); s.innerHTML = html; s.classList.toggle('hide', !html); }
+function newGame() {
+  audioInit(); S = fresh(); layout(); buildBar(); $('hud').classList.remove('hide'); screen(''); music('m_crypt'); S.sel = 'aldric'; hud();
+}
+function end(win) {
+  if (SIM) return; setTimeout(() => {
+    music(win ? 'm_victory' : 'm_defeat', false);
+    screen(`<h1>${win ? 'Victoire !' : 'Défaite…'}</h1><p>${win ? `La défense tient avec ❤️ ${S.life}/${LIFE}.` : `Les monstres ont franchi le portail à la vague ${S.wave + 1}.`}<br>Monstres vaincus : ${S.stats.killed} · passés : ${S.stats.leaked} · compétences : ${S.stats.skills}</p><button class="big" id="bAgain">Rejouer</button>`);
+    $('bAgain').onclick = newGame; $('hud').classList.add('hide');
+  }, 900);
+}
+function title(err) {
+  screen(`<h1>Dragonbound<small>LAST STAND · PROTOTYPE</small></h1><p>Les monstres veulent atteindre le portail. Place tes héros près du chemin : ils attaquent seuls. Utilise leurs compétences au bon moment.</p>
+  ${err ? `<p>⚠️ Ressources introuvables (le jeu utilisera des formes simples à la place) :</p><div class="err">${err}</div>` : ''}<button class="big" id="bPlay">Jouer</button><p style="font-size:12px;opacity:.6">${VER}</p>`);
+  $('bPlay').onclick = newGame;
+}
+
+// ===== Loading =====
+const LIST = [['bg', PATHS.db2img + 'bg_c1_2.webp']];
+for (const id of HORDER) { const s = HERO[id].spr; for (const [a, n] of [['idle', 4], ['atk', 4], ['cast', 4]]) for (let i = 0; i < n; i++) LIST.push([s + 'A_' + a + i, PATHS.db2img + s + 'A_' + a + i + '.webp']); }
+for (const t of ['skel', 'bat', 'golem']) for (const p of ['', '_atk', '_hit', '_ko']) LIST.push([t + p, PATHS.db1img + t + p + '.webp']);
+for (const p of ['', '_atk', '_hit', '_ko', '_rage']) LIST.push(['bossBone' + p, PATHS.db2img + 'bossBone' + p + '.webp']);
+for (const k of ['fx_slash', 'fx_fire', 'fx_ice']) LIST.push([k, PATHS.db2img + k + '.webp']);
+const SIM = /[?&]sim\b/.test(location.search);
+function loadAll(done) {
+  let n = 0; const fin = () => { if (++n === LIST.length) done(); else if (!SIM) $('load').textContent = `Chargement… ${Math.round(100 * n / LIST.length)} %`; };
+  for (const [k, src] of LIST) { const im = new Image(); IMG[k] = im;
+    im.onload = () => { if (!/^(bg|fx_)/.test(k)) { const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight; const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; } fin(); };
+    im.onerror = () => { MISSING.push(src); fin(); }; im.src = src; }
+}
+
+// ===== Main loop =====
+let last = performance.now();
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  if (S) { const sub = S.speed; for (let i = 0; i < sub; i++) step(dt); render(); hud(); }
+  requestAnimationFrame(frame);
+}
+addEventListener('resize', resize); resize();
+if (!SIM) loadAll(() => { title(MISSING.length ? MISSING.join('<br>') : ''); requestAnimationFrame(frame); });
+
+// ===== Test hooks: headless balance simulation (no rendering) =====
+window.LS = {
+  state: () => S, HERO, FOE, WAVES, SLOTS: () => SLOTS, missing: () => MISSING,
+  newGame, place, startWave, useSkill, step,
+  simulate(placement, opts = {}) { // placement: {aldric: slot, orin: slot, lyra: slot}
+    S = fresh(); layout(); for (const [id, sl] of Object.entries(placement)) place(id, sl);
+    const dt = 1 / 30; let guard = 0;
+    while (S.phase !== 'win' && S.phase !== 'lose' && guard++ < 30 * 60 * 15) {
+      if (S.phase === 'prep' || S.phase === 'between') startWave();
+      if (opts.skills !== false) for (const id of HORDER) { const p = heroPos(id); if (!p || S.h[id].skCd > 0) continue;
+        const near = S.foes.filter(f => !f.dead && inRange(p, f, id === 'aldric' ? 230 : HERO[id].range * 1.4)).length, live = S.foes.filter(f => !f.dead).length;
+        if ((id === 'orin' ? live >= 6 : near >= 3) || S.foes.some(f => f.T.boss && !f.dead && inRange(p, f, 230))) useSkill(id); }
+      step(dt);
+    }
+    return { result: S.phase, life: S.life, wave: S.wave, killed: S.stats.killed, leaked: S.stats.leaked, time: Math.round(S.t) };
+  },
+};
+</script>
+</body>
+</html>
