@@ -347,7 +347,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.9.1 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.9.2 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -364,11 +364,13 @@ const ANIM = {"ald":{"idle":4,"atk":4,"cast":4,"hit":2,"ko":2},"sel":{"idle":4,"
 const AMAP = { idle: 'idle', win: 'idle', def: 'idle', atk: 'atk', run: 'atk', cast: 'cast', prep: 'cast', spe: 'cast', heal: 'cast', hit: 'hit', kneel: 'hit', ko: 'ko' };
 function load(k, local) {
   if (IMG[k] || SIM) return; const im = new Image(); im.decoding = 'async';
-  im.onload = () => { if (!POSEM[k]) return; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
+  // 1.9.2: decode every image as soon as it loads, so the first ultimate, effect or boss pose never freezes a fight mid-animation
+  const white = () => { if (!POSEM[k]) return; const c = document.createElement('canvas'); c.width = im.naturalWidth; c.height = im.naturalHeight;
     const x = c.getContext('2d'); x.drawImage(im, 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); WHITE[k] = c; };
+  im.onload = () => { const ok = () => { im._ok = 1; setTimeout(white, 0); }; const bm = () => { if (window.createImageBitmap) createImageBitmap(im).then(x => { im._bm = x; ok(); }, ok); else ok(); }; if (im.decode) im.decode().then(bm, bm); else bm(); };
   im.src = (local || /^(ald|lyr|nyx|sel|ori|boss|ult_|syn_|fx_)/.test(k) ? FP : IP) + k + '.webp'; IMG[k] = im;
 }
-const ready = k => IMG[k] && IMG[k].complete && IMG[k].naturalWidth > 0;
+const ready = k => IMG[k] && IMG[k]._ok && IMG[k].naturalWidth > 0;
 function loadSprite(b) { load(b); for (const k in POSEM) if (k.startsWith(b + '_') || (ANIM[b] && k.startsWith(b + 'A_'))) load(k); }
 function tinted(k, col) { const tk = k + '|' + col; if (!TINT[tk] && WHITE[k]) { const t = document.createElement('canvas'); t.width = WHITE[k].width; t.height = WHITE[k].height; const x = t.getContext('2d'); x.drawImage(WHITE[k], 0, 0); x.globalCompositeOperation = 'source-in'; x.fillStyle = `rgb(${col})`; x.fillRect(0, 0, t.width, t.height); TINT[tk] = t; } return TINT[tk]; }
 const FB = { prep: 'atk', spe: 'atk', cast: 'spe', def: 'idle', win: 'idle', hit: 'idle', ko: 'hit', laugh: 'idle', rage: 'spe', blast: 'atk', run: 'atk', kneel: 'idle', heal: 'spe', freeze: 'spe', fly: 'idle', dive: 'atk', stun: 'hit' };
@@ -383,7 +385,7 @@ function drawSprite(c, base, pose, x, y, h, flash, sx = 1, sy = 1, tint, u) {
   if (!k) { k = p === 'idle' ? base : base + '_' + p; while (!(POSEM[k] && ready(k)) && n++ < 6) { p = FB[p] || 'idle'; k = p === 'idle' ? base : base + '_' + p; } }
   if (!ready(k)) return;
   const pm = POSEM[k], im = IMG[k], hh = h * pm[0] * sy, w = h * pm[0] * im.naturalWidth / im.naturalHeight * sx, x0 = x - w * pm[1];
-  c.drawImage(im, x0, y - hh, w, hh);
+  c.drawImage(im._bm || im, x0, y - hh, w, hh);
   if (tint) { const t = tinted(k, tint); if (t) { const a = c.globalAlpha; c.globalAlpha = a * .32; c.drawImage(t, x0, y - hh, w, hh); c.globalAlpha = a; } }
   if (flash > 0 && WHITE[k]) { const a = c.globalAlpha; c.globalAlpha = a * flash; c.drawImage(WHITE[k], x0, y - hh, w, hh); c.globalAlpha = a; }
 }
@@ -1590,11 +1592,11 @@ function drawBg(c, L) {
   const iw = bg.naturalWidth, ih = bg.naturalHeight, hzPx = L.hz * ih;
   // scale so the picture covers the width and its floor line lands on GY
   const s = Math.max(VW / iw, GY / hzPx) * 1.02, w = iw * s, x0 = (VW - w) / 2, top = GY - hzPx * s;
-  c.drawImage(bg, 0, 0, iw, hzPx, x0, top, w, hzPx * s);
+  c.drawImage(bg._bm || bg, 0, 0, iw, hzPx, x0, top, w, hzPx * s);
   // floor: the picture's floor band, stretched down to the bottom of the stage (reads like a lower camera)
   const fb = ih - hzPx, need = VH - GY + 2, natural = fb * s;
-  if (natural >= need) c.drawImage(bg, 0, hzPx, iw, need / s, x0, GY, w, need);
-  else { c.drawImage(bg, 0, hzPx, iw, fb * .92, x0, GY, w, need); }
+  if (natural >= need) c.drawImage(bg._bm || bg, 0, hzPx, iw, need / s, x0, GY, w, need);
+  else { c.drawImage(bg._bm || bg, 0, hzPx, iw, fb * .92, x0, GY, w, need); }
 }
 function draw(t) {
   if (!B || $('fight').hidden) return;
@@ -1680,7 +1682,7 @@ function drawFx(c) {
         c.fillStyle = p.kind === 'venom' || p.kind === 'arrow' ? '#a8f070' : p.kind === 'dagger' ? '#e0c8ff' : '#dfe6ee'; c.beginPath(); c.moveTo(14, 0); c.lineTo(4, -5); c.lineTo(4, 5); c.closePath(); c.fill(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = p.kind === 'dagger' ? 'rgba(180,120,255,.45)' : p.kind === 'arrow' || p.kind === 'venom' ? 'rgba(140,255,120,.45)' : 'rgba(255,255,220,.35)'; c.lineWidth = 6; c.beginPath(); c.moveTo(-40, 0); c.lineTo(-6, 0); c.stroke(); }
       c.restore(); }
     else if (p.t === 'spr') { const im = IMG[p.key], fw = im.naturalWidth / 6, fh = im.naturalHeight, i = Math.min(5, Math.floor(k * 6)), w = p.size, h = w * fh / fw;
-      c.save(); c.globalCompositeOperation = 'lighter'; c.translate(p.x, p.y); if (p.flip) c.scale(-1, 1); c.drawImage(im, i * fw, 0, fw, fh, -w / 2, -h / 2, w, h); c.restore(); }
+      c.save(); c.globalCompositeOperation = 'lighter'; c.translate(p.x, p.y); if (p.flip) c.scale(-1, 1); c.drawImage(im._bm || im, i * fw, 0, fw, fh, -w / 2, -h / 2, w, h); c.restore(); }
     else if (p.t === 'bolt') { c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = 1 - k; c.strokeStyle = '#fff6a0'; c.lineWidth = 5 * (1 - k) + 2; c.shadowColor = '#9fd8ff'; c.shadowBlur = 18; c.beginPath(); let yy = -40, xx = p.x; c.moveTo(xx, yy);
       let s = p.seed * 1000; while (yy < p.y - 20) { s = (s * 9301 + 49297) % 233280; yy += 26; xx = p.x + (s / 233280 - .5) * 34; c.lineTo(xx, yy); } c.stroke(); c.restore();
       if (k < .3) { c.save(); c.globalAlpha = (.3 - k) * 1.2; c.fillStyle = '#fffbe0'; c.fillRect(-VW, -VH, VW * 3, VH * 3); c.restore(); } }
@@ -1703,7 +1705,7 @@ function drawScreenFx(c) {
     if ((p.t === 'ult' && ready('ult_' + p.h.id)) || (p.t === 'syn' && ready(p.key))) { const im = IMG[p.t === 'ult' ? 'ult_' + p.h.id : p.key];
       const inK = Math.min(1, k / .16), outK = k > .8 ? (k - .8) / .2 : 0, al = inK * (1 - outK), ih = Math.min(VH * (p.t === 'ult' ? .52 : .44), VW * .9 * im.naturalHeight / im.naturalWidth), iw = ih * im.naturalWidth / im.naturalHeight;
       const x = (VW - iw) / 2 + (1 - easeOut(inK)) * VW * .7 - outK * VW * .25 + (k > .16 && k < .8 ? -(k - .16) * 30 : 0), y = VH * .4 - ih / 2;
-      c.save(); c.globalAlpha = al * .5; c.fillStyle = '#000'; c.fillRect(0, 0, VW, VH); c.globalAlpha = al; c.drawImage(im, x, y, iw, ih);
+      c.save(); c.globalAlpha = al * .5; c.fillStyle = '#000'; c.fillRect(0, 0, VW, VH); c.globalAlpha = al; c.drawImage(im._bm || im, x, y, iw, ih);
       const txt2 = p.t === 'ult' ? p.h.H.ult.name : p.text; c.textAlign = 'center'; c.lineJoin = 'round'; c.font = `${Math.round(Math.min(30, VW * .06))}px "Lilita One", sans-serif`; c.lineWidth = 6; c.strokeStyle = '#2a1404';
       c.strokeText(txt2, VW / 2, y + ih + 26); c.fillStyle = p.t === 'ult' ? '#ffd76a' : '#bfe8ff'; c.fillText(txt2, VW / 2, y + ih + 26); c.restore(); return true; }
     if (p.t === 'ult') { // darken + a banner with the hero's face sweeping across
@@ -2151,6 +2153,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.2', t: 'Version 1.9.2 · Plus fluide', d: `<p>• Toutes les images sont préparées dès le chargement du niveau : plus de petit gel la première fois qu’un ultime, un effet ou un boss apparaît.</p>` },
   { v: '1.9.1', t: 'Version 1.9.1', d: `<p>• La caméra ne sort plus du décor quand elle zoome (plus de bande noire pendant la chute d’un boss).</p>` },
   { v: '1.9', t: 'Version 1.9 · Un combat plus lisible', d: `<p>• <b>Chaque compétence s’explique</b> : touche-la une fois pour voir ce qu’elle fait, son coût et qui elle touche. Touche-la encore (ou touche la cible) pour la lancer. L’attaque de base et la Défense restent en un seul geste.</p><p>• <b>Barre d’actions allégée</b> : icônes plus grandes, et toutes les potions rangées dans le <b>Sac 🎒</b>.</p><p>• Les icônes d’état des héros ne débordent plus.</p>` },
   { v: '1.8.1', t: 'Version 1.8.1', d: `<p>• En portrait, <b>les ennemis et les boss ne collent plus aux héros</b> : caméra un peu plus large et vrai espace entre les deux camps.</p>` },

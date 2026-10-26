@@ -6,7 +6,7 @@ const MIME = { '.html': 'text/html', '.webp': 'image/webp', '.jpg': 'image/jpeg'
 const srv = http.createServer((q, r) => { const p = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': MIME[path.extname(p)] || 'application/octet-stream' }); r.end(d); }); });
 const res = [], ok = (name, cond, extra = '') => res.push(`${cond ? '✅' : '❌'} ${name}${extra ? ' — ' + extra : ''}`);
 const base = over => Object.assign({ v: 2, gold: 100, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h: Object.fromEntries(['aldric', 'selena', 'orin', 'lyra', 'nyx'].map(k => [k, { lvl: 3, xp: 0, w: 0, a: 0 }])),
-  team: ['aldric'], own: { aldric: 1 }, stars: Array(30).fill(0), seen: { in: 1, vid: 1, vid2: 1, n09: 1, n10: 1, ver: '1.9.1' }, mute: true, ch: 0, inv: [], nid: 1, spd: 3 }, over);
+  team: ['aldric'], own: { aldric: 1 }, stars: Array(30).fill(0), seen: { in: 1, vid: 1, vid2: 1, n09: 1, n10: 1, ver: '1.9.2' }, mute: true, ch: 0, inv: [], nid: 1, spd: 3 }, over);
 srv.listen(0, async () => {
   const url = `http://127.0.0.1:${srv.address().port}/dragonbound2/index.html`, b = await chromium.launch(), errs = [];
   const ctx = await b.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, hasTouch: true });
