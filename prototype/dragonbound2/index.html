@@ -347,7 +347,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.9.2 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.9.3 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
@@ -2163,6 +2163,7 @@ renderHome();
 function afterIntro() { if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.3', t: 'Version 1.9.3 · Plus fiable', d: `<p>• <b>Ton butin est protégé</b> : si le jeu se ferme pendant le choix d’un coffre ou du trésor d’un boss, il t’attend à la réouverture. Rien n’est perdu, rien n’est doublé.</p>` },
   { v: '1.9.2', t: 'Version 1.9.2 · Plus fluide', d: `<p>• Toutes les images sont préparées dès le chargement du niveau : plus de petit gel la première fois qu’un ultime, un effet ou un boss apparaît.</p>` },
   { v: '1.9.1', t: 'Version 1.9.1', d: `<p>• La caméra ne sort plus du décor quand elle zoome (plus de bande noire pendant la chute d’un boss).</p>` },
   { v: '1.9', t: 'Version 1.9 · Un combat plus lisible', d: `<p>• <b>Chaque compétence s’explique</b> : touche-la une fois pour voir ce qu’elle fait, son coût et qui elle touche. Touche-la encore (ou touche la cible) pour la lancer. L’attaque de base et la Défense restent en un seul geste.</p><p>• <b>Barre d’actions allégée</b> : icônes plus grandes, et toutes les potions rangées dans le <b>Sac 🎒</b>.</p><p>• Les icônes d’état des héros ne débordent plus.</p>` },
