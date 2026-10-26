@@ -21,7 +21,7 @@
   --hp: #e0413b; --mp: #3d8be0; --xp: #9b7bff; --ult: #ffb02e;
   --fd: "Lilita One", "Nunito", system-ui, sans-serif; --fb: "Nunito", system-ui, -apple-system, sans-serif;
   --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px); --safe-r: env(safe-area-inset-right, 0px); --safe-l: env(safe-area-inset-left, 0px);
-  --pw: min(340px, 44vw);
+  --pw: min(300px, 36vw); /* 1.6: narrower panel on phones in landscape, bigger stage */
 }
 * { box-sizing: border-box; }
 html, body { margin: 0; height: 100%; background: var(--bg); color: #fff; font-family: var(--fb); font-weight: 800; -webkit-tap-highlight-color: transparent; overscroll-behavior: none; }
@@ -161,6 +161,10 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 #pop button:disabled { opacity: .4; }
 #pop p { grid-column: 1 / -1; margin: 0; text-align: center; font-size: 13px; color: var(--gold2); }
 .toast { position: fixed; left: 50%; top: calc(var(--safe-t) + 60px); transform: translateX(-50%); z-index: 80; background: rgba(20,12,16,.92); border: 2px solid var(--gold); border-radius: 14px; padding: 8px 14px; font-size: 14px; max-width: 90vw; text-align: center; animation: pop .2s; pointer-events: none; }
+/* 1.6: combat tip, compact and placed over the background, never over the fighters */
+.tip { position: fixed; left: 50%; top: calc(var(--safe-t) + 50px); transform: translateX(-50%); z-index: 30; background: rgba(20,12,16,.82); border: 1.5px solid var(--gold); border-radius: 12px; padding: 5px 11px; font-size: 12.5px; line-height: 1.25; max-width: min(86vw, 330px); text-align: center; pointer-events: none; animation: pop .2s; transition: opacity .5s; }
+.tip.out { opacity: 0; }
+@media (orientation: landscape) and (min-aspect-ratio: 5/4) { .tip { left: calc((100vw - var(--pw)) / 2); max-width: calc((100vw - var(--pw)) * .8); } }
 .poti.mana { filter: hue-rotate(205deg) saturate(1.3); } .poti.eli { filter: hue-rotate(95deg) saturate(1.4) brightness(1.1); } .poti.fea { filter: hue-rotate(-40deg) saturate(1.6) brightness(1.2); }
 @media (max-height: 700px) and (orientation: portrait) { .acts { min-height: 116px; } .act i { width: 40px; height: 40px; } .act .cost, .act .cnt { top: 26px; } }
 /* 1.4: in Auto the controls fold away and the stage grows */
@@ -326,7 +330,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.5.2 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.6 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -831,10 +835,11 @@ let B = null;
 const cv = $('cv'), cx = cv.getContext('2d');
 let VW = 390, VH = 500, GY = 220; // GY: where the floor starts on the stage
 // slots: [x 0..1, depth 0 (back) .. 1 (front) inside the floor band]
-const HSLOT = [[[.3, .6]], [[.32, .42], [.19, .88]], [[.35, .55], [.17, .26], [.18, .93]]];
+const HSLOT = [[[.3, .6]], [[.32, .42], [.19, .88]], [[.37, .52], [.13, .2], [.23, .96]]]; // 1.6: trio spread out (less overlap)
 const FSLOT = [[[.7, .6]], [[.68, .42], [.83, .88]], [[.66, .55], [.85, .26], [.84, .93]], [[.62, .44], [.82, .22], [.66, .95], [.89, .66]], [[.6, .5], [.76, .2], [.62, .96], [.9, .4], [.88, .86]]];
 const BSLOT = [[.66, .66], [.9, .2], [.92, .95]];
-const ZOOM = .84; // characters drawn a bit smaller so more of the background shows
+// 1.6: bigger characters; landscape stages are short and wide, so they get a stronger zoom and units are pulled toward the centre
+const ZOOM_P = .94, ZOOM_L = 1.2, XPULL_L = .84; let ZOOM = ZOOM_P, XPULL = 1, WIDE = false;
 const persp = v => .8 + .3 * v;
 function mkHero(id, i, n) { const H = HEROES[id], st = heroStats(id);
   return { side: 'h', id, name: H.name, sprite: H.sprite, H, hpMax: st.hp, hp: st.hp, mpMax: st.mp, mp: st.mp, atk: st.atk, mag: st.mag, def: st.def, crit: st.crit,
@@ -852,7 +857,7 @@ function soloScale(f) { const k = B && SOLO[B.party.length]; if (!k) return f; f
 const SOLO = { 1: { h: .66, a: .6, bh: .55, ba: .58 }, 2: { h: .84, a: .9, bh: .8, ba: .9 } };
 const alive = u => u.hp > 0;
 const livingH = () => B.party.filter(alive), livingF = () => B.foes.filter(alive);
-function px(u) { const v = u.slot ? u.slot[1] : .5; return { x: (u.slot ? u.slot[0] : .2) * VW + u.ox, y: GY + (VH - GY) * (.3 + .64 * v) + u.oy, h: VH * u.hsz * persp(v) * ZOOM, v }; }
+function px(u) { const v = u.slot ? u.slot[1] : .5; return { x: (.5 + ((u.slot ? u.slot[0] : .2) - .5) * XPULL) * VW + u.ox, y: GY + (VH - GY) * (.3 + .64 * v) + u.oy, h: VH * u.hsz * persp(v) * ZOOM, v }; }
 function setPose(u, p, ms) { u.pose = p; u.poseDur = ms; u.poseUntil = now() + (FAST ? 0 : ms); }
 // 1.2: one specialization per hero from level 10 (free the first time, then 300 gold to change)
 const SPEC_LV = 10, SPEC_RE = 300;
@@ -867,7 +872,7 @@ const costOf = (h, k) => Math.round(SK[k].cost * (h.pw && h.pw.has('set_arca') ?
 const gainLb = (u, n) => { if (u.side === 'h' && alive(u)) u.lb = Math.min(100, (u.lb || 0) + n * (u.lbm || 1)); };
 
 // ---------- Effects ----------
-let fx = [], sfx = []; // world-space and screen-space effects
+let BARS = [], fx = [], sfx = []; // world-space and screen-space effects
 function txt(x, y, text, col, big, crit) { if (FAST) return; fx.push({ t: 'txt', x, y, text, col, big, crit, t0: now(), dur: crit ? 1300 : 1050 }); }
 function sparks(x, y, n, cols, pw = 1, grav = .05) { if (FAST) return; if (reduce) n = Math.ceil(n / 3); for (let i = 0; i < n; i++) { const a = rnd(0, 6.28), v = rnd(1, 4) * pw;
   fx.push({ t: 'pt', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 1, r: rnd(2, 4.5), col: pick(cols), grav, t0: now(), dur: rnd(400, 800) }); } }
@@ -1480,7 +1485,7 @@ function drawBg(c, L) {
 function draw(t) {
   if (!B || $('fight').hidden) return;
   const r = cv.getBoundingClientRect(); if (!r.width) return; VW = r.width; VH = r.height;
-  GY = VH * (VW > VH * 1.2 ? .4 : .42);
+  WIDE = VW > VH * 1.2; GY = VH * (WIDE ? .38 : .42); ZOOM = WIDE ? ZOOM_L : ZOOM_P; XPULL = WIDE ? XPULL_L : 1;
   const dpr = Math.min(2, devicePixelRatio || 1); if (cv.width !== Math.round(VW * dpr) || cv.height !== Math.round(VH * dpr)) { cv.width = Math.round(VW * dpr); cv.height = Math.round(VH * dpr); }
   const c = cx; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.fillStyle = '#0c0810'; c.fillRect(0, 0, VW, VH);
   const cam = B.cam; if (!B.acting && !pending) cam.tz = 1; if (cam.tz === 1) { cam.tx = VW / 2; cam.ty = VH / 2; }
@@ -1491,14 +1496,14 @@ function draw(t) {
   { const g = c.createLinearGradient(0, 0, 0, VH); g.addColorStop(0, 'rgba(10,6,14,.55)'); g.addColorStop(.22, 'rgba(10,6,14,0)'); g.addColorStop(.7, 'rgba(10,6,14,0)'); g.addColorStop(1, 'rgba(10,6,14,.5)'); c.fillStyle = g; c.fillRect(0, 0, VW, VH); }
   c.save(); c.translate(VW / 2 + sx, VH / 2 + sy); c.scale(cam.z, cam.z); c.translate(-cam.x, -cam.y);
   if (!reduce) { if (dust.length < 26) dust.push({ x: rnd(0, VW), y: rnd(VH * .2, VH), v: rnd(.1, .35), r: rnd(1, 2.4), p: rnd(0, 6) }); for (const d of dust) { d.y -= d.v; d.x += Math.sin(t / 1200 + d.p) * .2; if (d.y < 0) { d.y = VH; d.x = rnd(0, VW); } c.fillStyle = `rgba(200,210,255,${.25 + .2 * Math.sin(t / 500 + d.p)})`; c.beginPath(); c.arc(d.x, d.y, d.r, 0, 7); c.fill(); } }
-  const units = [...B.party, ...B.foes].sort((a, b) => px(a).y - px(b).y), sel = pending && pending.sel;
+  BARS = []; const units = [...B.party, ...B.foes].sort((a, b) => px(a).y - px(b).y), sel = pending && pending.sel;
   for (const u of units) drawUnit(c, u, t, sel);
   drawFx(c, t);
   c.restore();
   const bs = B.foes.find(f => f.boss && alive(f)); if (bs) { const w = Math.min(300, VW - 120), x = (VW - w) / 2, y = $('fWave').getBoundingClientRect().bottom - cv.getBoundingClientRect().top + 24;
-    c.fillStyle = 'rgba(0,0,0,.6)'; rr(c, x - 3, y - 3, w + 6, 16, 8); c.fill(); c.fillStyle = '#5a1a14'; rr(c, x, y, w, 10, 5); c.fill(); c.fillStyle = '#e0413b'; rr(c, x, y, w * bs.hp / bs.hpMax, 10, 5); c.fill();
-    if (bs.ph && bs.ph.shield > 0) { c.fillStyle = '#f2ead8'; rr(c, x, y + 11, w * bs.ph.shield / bs.ph.max, 4, 2); c.fill(); }
-    c.font = '13px "Lilita One", sans-serif'; c.textAlign = 'center'; c.fillStyle = '#fff'; c.strokeStyle = '#000'; c.lineWidth = 3; c.strokeText(`${bs.name} · ${bs.hp}/${bs.hpMax}`, VW / 2, y - 6); c.fillText(`${bs.name} · ${bs.hp}/${bs.hpMax}`, VW / 2, y - 6); }
+    c.fillStyle = 'rgba(0,0,0,.6)'; rr(c, x - 3, y - 3, w + 6, 20, 9); c.fill(); c.fillStyle = '#5a1a14'; rr(c, x, y, w, 14, 7); c.fill(); c.fillStyle = '#e0413b'; rr(c, x, y, w * bs.hp / bs.hpMax, 14, 7); c.fill();
+    if (bs.ph && bs.ph.shield > 0) { c.fillStyle = '#f2ead8'; rr(c, x, y + 15, w * bs.ph.shield / bs.ph.max, 4, 2); c.fill(); }
+    c.font = '15px "Lilita One", sans-serif'; c.textAlign = 'center'; c.fillStyle = '#fff'; c.strokeStyle = '#000'; c.lineWidth = 3; c.strokeText(`${bs.name} · ${bs.hp}/${bs.hpMax}`, VW / 2, y - 6); c.fillText(`${bs.name} · ${bs.hp}/${bs.hpMax}`, VW / 2, y - 6); }
   drawScreenFx(c);
 }
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
@@ -1525,24 +1530,26 @@ function drawUnit(c, u, t, sel) {
   drawSprite(c, u.sprite, pose, p.x + recoil, p.y - fly, p.h, flash, 1 + sq, 1 + br - sq * .6, u.elite ? u.elite.col : null, u);
   c.restore();
   if (dead) return;
-  const bw = Math.max(46, Math.min(80, p.h * .5)), by = p.y - fly - p.h * (u.boss ? .98 : 1.02) - 10;
-  if (!u.boss) { const bh = u.side === 'f' ? 11 : 6; c.fillStyle = 'rgba(0,0,0,.7)'; rr(c, p.x - bw / 2 - 2, by - 2, bw + 4, bh + 4, 5); c.fill(); c.fillStyle = u.side === 'h' ? '#5cd65c' : u.hp < u.hpMax * .35 ? '#ff8a3c' : '#e0413b'; rr(c, p.x - bw / 2, by, Math.max(2, bw * u.hp / u.hpMax), bh, 3); c.fill();
+  const bw = Math.max(54, Math.min(92, p.h * .55)); let by = p.y - fly - p.h * (u.boss ? .98 : 1.02) - 10;
+  // 1.6: enemy HP bars never stack on top of each other (crowded waves, bosses with guards)
+  if (u.side === 'f' && alive(u)) { for (let k = 0; k < 4; k++) { const hit = BARS.find(b => Math.abs(b.x - p.x) < (b.w + bw) / 2 + 2 && Math.abs(b.y - by) < 20); if (!hit) break; by = hit.y - 21; } BARS.push({ x: p.x, y: by, w: bw }); }
+  if (!u.boss) { const bh = u.side === 'f' ? 14 : 8; c.fillStyle = 'rgba(0,0,0,.7)'; rr(c, p.x - bw / 2 - 2, by - 2, bw + 4, bh + 4, 5); c.fill(); c.fillStyle = u.side === 'h' ? '#5cd65c' : u.hp < u.hpMax * .35 ? '#ff8a3c' : '#e0413b'; rr(c, p.x - bw / 2, by, Math.max(2, bw * u.hp / u.hpMax), bh, 3); c.fill();
     if (u.side === 'f' && u.shield > 0) { c.fillStyle = '#bfe0ff'; rr(c, p.x - bw / 2, by + bh - 3, bw * Math.min(1, u.shield / u.hpMax), 3, 1.5); c.fill(); }
-    if (u.side === 'f') { c.font = 'bold 10px system-ui'; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = '#000'; c.strokeText(u.hp, p.x, by + 9); c.fillStyle = '#fff'; c.fillText(u.hp, p.x, by + 9); } }
+    if (u.side === 'f') { c.font = 'bold 12px system-ui'; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = '#000'; c.strokeText(u.hp, p.x, by + 11.5); c.fillStyle = '#fff'; c.fillText(u.hp, p.x, by + 11.5); } }
   if (u.elite) { c.font = '11px "Lilita One", sans-serif'; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = '#000'; c.fillStyle = `rgb(${u.elite.col})`; const s = `⭐ ${u.elite.n}`; c.strokeText(s, p.x, by - 5); c.fillText(s, p.x, by - 5); }
   const ic = [u.st.poison ? '☠️' : '', u.st.burn ? '🔥' : '', u.st.stun ? '💫' : '', u.st.freeze || u.st.ice ? '❄️' : '', u.st.taunt ? '🛡️' : '', u.st.mark ? '🎯' : '', u.st.fort ? '🛡️' : '', u.side === 'f' && u.m.sup ? { heal: '💚', guard: '💠', fort: '🪨', aoe: '⚠️' }[u.m.sup] : '', u.st.sh ? '🌑' + u.st.sh : '', u.shield ? '💠' : ''].join('');
-  if (ic) { c.font = '13px system-ui'; c.textAlign = 'center'; c.fillText(ic, p.x, by - (u.elite ? 18 : 4)); }
-  if (u.charging && u.intent) { const ty = by - (u.elite ? 34 : ic ? 22 : 10) - (u.boss ? 0 : 4), s = '⚠️ ' + u.intent; c.font = '12px "Lilita One", sans-serif'; c.textAlign = 'center'; const w = c.measureText(s).width + 14, pul = .75 + .25 * Math.sin(t / 140);
-    const cx0 = Math.max(w / 2 + 4, Math.min(VW - w / 2 - 4, p.x)); c.fillStyle = `rgba(120,20,20,${.85 * pul})`; rr(c, cx0 - w / 2, ty - 15, w, 19, 9); c.fill(); c.strokeStyle = '#ffd76a'; c.lineWidth = 1.5; c.stroke(); c.fillStyle = '#fff'; c.fillText(s, cx0, ty - 1); }
+  if (ic) { c.font = '15px system-ui'; c.textAlign = 'center'; c.fillText(ic, p.x, by - (u.elite ? 19 : 5)); }
+  if (u.charging && u.intent) { const ty = by - (u.elite ? 34 : ic ? 22 : 10) - (u.boss ? 0 : 4), s = '⚠️ ' + u.intent; c.font = '15px "Lilita One", sans-serif'; c.textAlign = 'center'; const w = c.measureText(s).width + 14, pul = .75 + .25 * Math.sin(t / 140);
+    const cx0 = Math.max(w / 2 + 4, Math.min(VW - w / 2 - 4, p.x)); c.fillStyle = `rgba(120,20,20,${.85 * pul})`; rr(c, cx0 - w / 2, ty - 19, w, 24, 11); c.fill(); c.strokeStyle = '#ffd76a'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#fff'; c.fillText(s, cx0, ty - 1.5); }
   if (B.turn === u && !reduce) { const ay = by - 16 + Math.sin(t / 180) * 4; c.fillStyle = '#ffd76a'; c.strokeStyle = '#4a2a06'; c.lineWidth = 2; c.beginPath(); c.moveTo(p.x - 9, ay - 10); c.lineTo(p.x + 9, ay - 10); c.lineTo(p.x, ay); c.closePath(); c.fill(); c.stroke(); }
 }
 function drawFx(c) {
   const n = now();
   fx = fx.filter(p => {
     const k = (n - p.t0) / p.dur; if (k >= 1) { if (p.done) p.done(); return false; } if (k < 0) return true;
-    if (p.t === 'txt') { const pop = k < .1 ? .3 + k / .1 * 1.25 : k < .2 ? 1.55 - (k - .1) / .1 * .7 : k < .28 ? .85 + (k - .2) / .08 * .15 : 1, sz = (p.crit ? 34 : p.big ? 28 : 21) * pop, y = p.y - (1 - Math.pow(1 - k, 3)) * 44;
+    if (p.t === 'txt') { const pop = k < .1 ? .3 + k / .1 * 1.25 : k < .2 ? 1.55 - (k - .1) / .1 * .7 : k < .28 ? .85 + (k - .2) / .08 * .15 : 1, sz = (p.crit ? 40 : p.big ? 32 : 25) * pop * Math.max(1, ZOOM / ZOOM_P * .9), y = p.y - (1 - Math.pow(1 - k, 3)) * 44;
       c.save(); c.textAlign = 'center'; c.lineJoin = 'round'; c.globalAlpha = 1 - Math.max(0, k - .65) / .35;
-      if (p.crit) { c.font = `${Math.round(12 * pop)}px "Lilita One", sans-serif`; c.lineWidth = 4; c.strokeStyle = 'rgba(90,30,0,.9)'; c.strokeText('CRITIQUE !', p.x, y - sz * .85); c.fillStyle = '#ffe58a'; c.fillText('CRITIQUE !', p.x, y - sz * .85); }
+      if (p.crit) { c.font = `${Math.round(15 * pop)}px "Lilita One", sans-serif`; c.lineWidth = 4; c.strokeStyle = 'rgba(90,30,0,.9)'; c.strokeText('CRITIQUE !', p.x, y - sz * .85); c.fillStyle = '#ffe58a'; c.fillText('CRITIQUE !', p.x, y - sz * .85); }
       c.font = `${Math.round(sz)}px "Lilita One", sans-serif`; c.lineWidth = p.crit ? 6 : 5; c.strokeStyle = 'rgba(30,15,5,.9)'; c.strokeText(p.text, p.x, y); c.fillStyle = p.col; c.fillText(p.text, p.x, y); c.restore(); }
     else if (p.t === 'pt') { p.vy += p.grav; p.x += p.vx; p.y += p.vy; p.vx *= .97; c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = 1 - k; c.fillStyle = p.col; c.beginPath(); c.arc(p.x, p.y, p.r * (1 - k * .5), 0, 7); c.fill(); c.restore(); }
     else if (p.t === 'ring') { c.save(); c.globalAlpha = (1 - k) * .85; c.strokeStyle = p.col; c.lineWidth = 4 * (1 - k) + 1; c.beginPath(); c.ellipse(p.x, p.y, p.r * easeOut(k), p.r * easeOut(k) * .6, 0, 0, 7); c.stroke(); c.restore(); }
@@ -1660,17 +1667,20 @@ function levelSheet(i, keep) { if (!keep) { ctrSel = null; routeSel = 'safe'; }
     <p style="text-align:center;font-size:13px;margin:6px 0 0">Ton énergie : <b>${(enTick(), S.en)}</b> ⚡</p>
     <button class="btn" type="button" data-play="${i}">⚔️ Combattre · ${enCost(i)} ⚡</button>${st ? `<button class="btn alt" type="button" data-train="${i}">🎯 Entraînement · gratuit (XP réduite, sans butin)</button>` : ''}<button class="btn alt" type="button" data-close="1">Retour</button>`);
 }
-const TIPS = ['Feu sur un ennemi gelé : Choc thermique, dégâts ×1,5.', 'Feu sur une cible marquée 🎯 par Lyra : Embrasement, dégâts ×1,4.', 'La Charge d’Aldric sur un ennemi gelé : Brise-glace, dégâts ×1,8.',
-  'Un ⚠️ rouge annonce une grosse attaque : Défense, Égide ou Charge pour l’annuler.', 'Aldric gagne de la Rage 🔥 en encaissant : sa prochaine attaque frappe plus fort.', 'Les ombres 🌑 de Nyx rendent l’Assassinat plus puissant.',
-  'Orin explose en Surcharge ⚡ tous les 3 sorts : garde-la pour le boss.', 'Séléna retient un allié au bord de la mort une fois par vague.', 'Le Venin de Lyra s’accumule si la cible est déjà empoisonnée.',
-  'Les objets ✦ ont un pouvoir spécial : regarde-les bien avant de choisir.', 'Gagne avec 3 étoiles pour récupérer 2 ⚡.', 'Un 👑 champion garde le niveau 3 de chaque chapitre.', 'À mi-vie, chaque boss change de règle : lis bien son annonce.'];
+// 1.6: each tip names the heroes it needs, so the game never gives advice about someone who is not in the team
+const TIPS = [['Feu sur un ennemi gelé : Choc thermique, dégâts ×1,5.', ['orin']], ['Feu sur une cible marquée 🎯 par Lyra : Embrasement, dégâts ×1,4.', ['orin', 'lyra']], ['La Charge d’Aldric sur un ennemi gelé : Brise-glace, dégâts ×1,8.', ['aldric', 'orin']],
+  ['Un ⚠️ rouge annonce une grosse attaque : Défense, Égide ou Charge pour l’annuler.', []], ['Aldric gagne de la Rage 🔥 en encaissant : sa prochaine attaque frappe plus fort.', ['aldric']], ['Les ombres 🌑 de Nyx rendent l’Assassinat plus puissant.', ['nyx']],
+  ['Orin explose en Surcharge ⚡ tous les 3 sorts : garde-la pour le boss.', ['orin']], ['Séléna retient un allié au bord de la mort une fois par vague.', ['selena']], ['Le Venin de Lyra s’accumule si la cible est déjà empoisonnée.', ['lyra']],
+  ['Les objets ✦ ont un pouvoir spécial : regarde-les bien avant de choisir.', []], ['Gagne avec 3 étoiles pour récupérer 2 ⚡.', []], ['Un 👑 champion garde le niveau 3 de chaque chapitre.', []], ['À mi-vie, chaque boss change de règle : lis bien son annonce.', []]];
+function pickTip() { const ids = S.team || []; const ok = TIPS.filter(([, need]) => need.every(id => ids.includes(id))); return pick(ok.length ? ok : TIPS)[0]; }
+function tipToast(h) { const t = document.createElement('div'); t.className = 'tip'; t.innerHTML = h; document.body.appendChild(t); setTimeout(() => t.classList.add('out'), 3000); setTimeout(() => t.remove(), 3500); }
 async function playLevel(i, train) {
   const tier = tierOf(LEVELS[i].ch);
   if (!train && !SIM) { enTick(); const c = enCost(i); if (S.en < c) { SFX.click(); return energySheet(c); } }
   spdUi();
   const ck = CHAPTERS[LEVELS[i].ch].story; if (!S.seen[ck] && LEVELS[i].ch > 0) { modalCb = null; return story(ck, () => playLevel(i)); }
   if (!train && !SIM) { if (S.en >= EN_MAX) S.enT = Date.now(); S.en -= enCost(i); save(); }
-  closeModal(); ac(); $('home').hidden = true; $('fight').hidden = false; document.querySelectorAll('.toast').forEach(t => t.remove()); toast(`💡 ${pick(TIPS)}`);
+  closeModal(); ac(); $('home').hidden = true; $('fight').hidden = false; document.querySelectorAll('.toast,.tip').forEach(t => t.remove()); tipToast(`💡 ${pickTip()}`);
   $('fName').textContent = `${tier ? DIFF[tier].ic + ' ' : ''}${LEVELS[i].ch + 1}-${i % 5 + 1}. ${LEVELS[i].name}`; music(tier >= 3 ? 'm_nightmare' : CH_MUSIC[LEVELS[i].ch] || 'fight1'); fx = []; sfx = []; pending = null;
   const res = await runLevel(i, train, tier);
   pending = null; buildActs();
@@ -2016,6 +2026,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.6', t: 'Version 1.6 · Impact & confort', d: `<p>• <b>Combats plus grands</b> : en paysage, la scène prend plus de place et les personnages sont nettement plus gros ; en portrait, l’équipe est mieux répartie.</p><p>• <b>Astuces</b> plus discrètes, et seulement sur les héros de ton équipe.</p><p>• <b>Vie des ennemis et alertes ⚠️</b> plus lisibles ; les barres ne se chevauchent plus.</p><p>• <b>Chiffres de dégâts</b> plus gros et plus marquants.</p>` },
   { v: '1.5.2', t: 'Version 1.5.2', d: `<p>• <b>Nouvelle vidéo d’introduction</b> avec tous les boss et l’équipe, et nouvel écran titre.</p>` },
   { v: '1.5.1', t: 'Version 1.5.1', d: `<p>• Trophées : bouton <b>Tout réclamer</b>.</p><p>• Sac : bouton <b>Vendre en lot</b> — tous les Communs, Peu communs ou Rares, ou tout ce qui est moins bien que l’équipement porté. Les objets portés, Épiques et Légendaires ne sont jamais vendus.</p>` },
   { v: '1.5', t: 'Version 1.5 · La grande refonte graphique', d: `<p>• <b>Héros animés</b> : Aldric, Séléna, Orin, Lyra et Nyx respirent, frappent, lancent leurs sorts, encaissent et tombent avec de vraies animations.</p>
