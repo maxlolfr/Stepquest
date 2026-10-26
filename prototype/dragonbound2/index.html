@@ -344,11 +344,15 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.9.3 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.9.4 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
 const DEV = !COMMERCIAL && !/[?&]release\b/.test(location.search);
+// 2.0 lot 3: free demo = chapters 1-3 (Aldric, Séléna, Orin). The commercial build is a demo until the full game is unlocked (S.full);
+// ?demo previews it in the test build. The purchase itself is NOT built yet (lot 7).
+const DEMO_CH = 3, DEMO_URL = /[?&]demo\b/.test(location.search);
+const isDemo = () => (COMMERCIAL || DEMO_URL) && !(S && S.full), demoLocked = ch => isDemo() && ch >= DEMO_CH;
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
@@ -623,7 +627,7 @@ const LEVELS = [
   { ch: 9, goal: 'Traverser la forge de lave des chaînes.', name: 'La forge des chaînes', bg: 'bg_c10_4', local: true, hz: 0.66, waves: [['salam', 'salam'], ['drake', 'dknight', 'dmage'], ['salam', 'drake', 'dknight'], ['dmage', 'salam', 'drake']], rec: 49, elite: .48 },
   { ch: 9, goal: 'Affronter Vorthax au sommet de la Forteresse.', name: 'Le sommet', bg: 'bg_c10_5', local: true, hz: 0.66, waves: [['dknight', 'salam', 'drake'], ['dmage', 'dknight', 'salam'], ['bossVort', 'drake']], rec: 50, boss: true, elite: .5 },
 ];
-const RECRUIT = { 4: 'selena', 9: 'orin', 14: 'lyra', 19: 'nyx' }; // one hero joins at the end of each chapter
+const RECRUIT = { 2: 'selena', 9: 'orin', 14: 'lyra', 19: 'nyx' }; // 2.0 lot 3: Séléna joins after 1-3 (behind the door the 1-3 scene opens), then one hero per chapter
 const STORY = {
   in: [['narr', 'Chapitre 1 · La Crypte oubliée'],
     ['narr', 'À Aube-Claire, les cloches sonnent avant l’aube. Des créatures fuient le vieux sanctuaire et se ruent vers le village.'],
@@ -890,6 +894,8 @@ let S = fresh();
 try { if (!SIM) { const s = JSON.parse(localStorage.getItem(SKEY)); if (s && s.v === 2) { S = Object.assign(fresh(), s); while (S.stars.length < LEVELS.length) S.stars.push(0); S.items = Object.assign({ pot: 0, eth: 0, fea: 0, eli: 0 }, S.items);
   if (!S.m12) { S.m12 = 1; const ks = Object.keys(SETS); for (const it of S.inv) { if (it.slot === 'w' && !WPN[it.hero]) continue; it.name = gearName(it); delete it.img; if (it.r >= 2 && !it.set) it.set = ks[it.id % 4]; } }
   // 2.0 lot 2: gems become gold (40 each), 5 difficulty tiers fold into 3 (Héroïque → Difficile, Enfer → Cauchemar), nothing unlocked is lost
+  if (!s.m30 && S.stars[2] > 0 && !S.own.selena) { S.own.selena = 1; S.h.selena.lvl = Math.max(S.h.selena.lvl, S.h.aldric.lvl - 1); if (S.team.length < 3 && !S.team.includes('selena')) S.team.push('selena'); S.selLate = 1; }
+  S.m30 = 1;
   if (!s.m20) { S.m20 = 1; if (S.gem > 0) { S.gold += S.gem * 40; S.gemGold = S.gem * 40; } S.gem = 0;
     const T = S.tst || {}, mx = (a, b) => { a = a || []; b = b || []; const o = []; for (let k = 0; k < Math.max(a.length, b.length); k++) o.push(Math.max(a[k] || 0, b[k] || 0)); return o; };
     const d = mx(T[1], T[2]), n = mx(T[3], T[4]); S.tst = {}; if (d.length) S.tst[1] = d; if (n.length) S.tst[2] = n;
@@ -943,7 +949,8 @@ function mkFoe(id, i, lvIdx, boss, n, eliteP) { const m = MON[id], k = 1 + .25 *
   { const ck = CHK[B && B.L ? B.L.ch : 0]; f.hpMax = Math.round(f.hpMax * (m.boss ? ck.bh : ck.h)); f.atk = Math.round(f.atk * (m.boss ? ck.ba : ck.a)); }
   f.hp = f.hpMax; return f; }
 // difficulty per chapter (1.0): tuned with the simulator so fights are lost sometimes and bosses need gear or farming
-const CHK = [[.97, .97, 1.1, 1], [1.05, 1.03, 1.35, 1.2], [1.3, 1.22, 1.55, 1.36], [1.38, 1.26, 1.62, 1.4], [1.42, 1.3, 1.66, 1.44], [1.45, 1.32, 1.7, 1.46], [1.3, 1.2, 1.55, 1.36], [1.3, 1.2, 1.57, 1.38], [1.25, 1.16, 1.6, 1.4], [1.12, 1.08, 1.62, 1.42]].map(([h, a, bh, ba]) => ({ h, a, bh, ba }));
+const CHK = [[.97, .97, 1.3, 1.42], // 2.0 lot 3: chapter-1 boss now faces a duo (Séléna joins after 1-3)
+  [1.05, 1.03, 1.35, 1.2], [1.3, 1.22, 1.55, 1.36], [1.38, 1.26, 1.62, 1.4], [1.42, 1.3, 1.66, 1.44], [1.45, 1.32, 1.7, 1.46], [1.3, 1.2, 1.55, 1.36], [1.3, 1.2, 1.57, 1.38], [1.25, 1.16, 1.6, 1.4], [1.12, 1.08, 1.62, 1.42]].map(([h, a, bh, ba]) => ({ h, a, bh, ba }));
 // chapter 1 is played with Aldric alone and chapter 2 as a duo: monsters are scaled down for smaller teams
 function soloScale(f) { const k = B && SOLO[B.party.length]; if (!k) return f; f.hpMax = Math.round(f.hpMax * (f.boss ? k.bh : k.h)); f.hp = f.hpMax; f.atk = Math.round(f.atk * (f.boss ? k.ba : k.a)); return f; }
 const SOLO = { 1: { h: .66, a: .6, bh: .55, ba: .58 }, 2: { h: .84, a: .9, bh: .8, ba: .9 } };
@@ -1737,12 +1744,12 @@ function loop(t) {
 
 // ---------- Home screen ----------
 function stars(n) { return [0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">★</i>`).join(''); }
-const unlocked = (i, t = tierOf(LEVELS[i].ch)) => t ? tierOpen(t, LEVELS[i].ch) && (i % 5 === 0 || starsOf(t, i - 1) > 0) : i === 0 || S.stars[i - 1] > 0;
+const unlocked = (i, t = tierOf(LEVELS[i].ch)) => demoLocked(LEVELS[i].ch) ? false : t ? tierOpen(t, LEVELS[i].ch) && (i % 5 === 0 || starsOf(t, i - 1) > 0) : i === 0 || S.stars[i - 1] > 0;
 function enUi() {} // 2.0 lot 2: no more energy
 function renderHome() {
   enUi(); $('gold').textContent = S.gold; { const n = trClaimable(); $('trDot').style.display = n ? '' : 'none'; $('trDot').textContent = n; }  $('snd').textContent = muted ? '🔇' : '🔊'; $('ver').innerHTML = `${VERSION}<button type="button" id="replayIntro">Revoir l’intro</button>${DEV ? '<button type="button" id="adminBtn">⚙️ Test</button>' : ''}`;
   const T = tierOf(S.ch), cur = LEVELS.findIndex((_, i) => LEVELS[i].ch === S.ch && unlocked(i) && !starsOf(T, i)), C = CHAPTERS[S.ch];
-  $('tabs').innerHTML = CHAPTERS.map((ch, j) => `<button type="button" data-ch="${j}" class="${j === S.ch ? 'on' : ''}" ${unlocked(LEVELS.findIndex(L => L.ch === j), 0) ? '' : 'disabled'} title="${ch.name}">${unlocked(LEVELS.findIndex(L => L.ch === j), 0) ? j + 1 : '🔒'}</button>`).join('');
+  $('tabs').innerHTML = CHAPTERS.map((ch, j) => `<button type="button" data-ch="${j}" class="${j === S.ch ? 'on' : ''}" ${demoLocked(j) ? 'data-demo="1"' : unlocked(LEVELS.findIndex(L => L.ch === j), 0) ? '' : 'disabled'} title="${ch.name}">${unlocked(LEVELS.findIndex(L => L.ch === j), 0) ? j + 1 : '🔒'}</button>`).join('');
   $('ban').style.backgroundImage = `url(${C.ban})`; $('chN').textContent = `CHAPITRE ${S.ch + 1}`; $('chT').textContent = C.name;
   { const got = t => [0, 1, 2, 3, 4].reduce((a, j) => a + starsOf(t, S.ch * 5 + j), 0);
     $('tiers').innerHTML = DIFF.map((D, t) => { const open = tierOpen(t, S.ch); return `<button type="button" data-tier="${t}" class="${t === T ? 'on' : ''}" style="--tc:${D.col}" ${open ? '' : 'disabled'} title="${D.n}">${open ? D.ic : '🔒'}<small>${D.n}</small>${open ? `<em>${got(t)}/15★</em>` : ''}</button>`; }).join('')
@@ -1811,7 +1818,7 @@ function grantXp(xp, bench = .5) { const ups = [];
   for (const id of Object.keys(S.own)) { const s = S.h[id], g = Math.round(xp * (S.team.includes(id) ? 1 : bench)); s.xp += g; let up = 0; while (s.xp >= xpNeed(s.lvl)) { s.xp -= xpNeed(s.lvl); s.lvl++; up++; } if (S.team.includes(id)) ups.push([id, g, up]); } return ups; }
 function rewards(i, kills, win) { let xp = 0, gold = 0; for (const f of kills) { xp += Math.round(MON[f.id].xp * 1.25 * (1 + .08 * i) * f.xpM); gold += Math.round(MON[f.id].gold * (1 + .1 * i) * f.goldM * .6); }
   if (!win) { xp = Math.round(xp * .3); gold = 0; } return { xp, gold }; }
-function recruit(i) { const id = RECRUIT[i]; if (!id || S.own[id]) return null; S.own[id] = 1; const lv = Math.max(...S.team.map(k => S.h[k].lvl)); S.h[id].lvl = Math.max(S.h[id].lvl, lv - 1); if (S.team.length < 3) S.team.push(id); return id; }
+function recruit(i) { const id = RECRUIT[i]; if (!id || S.own[id] || demoLocked(LEVELS[i].ch + 1) && i % 5 === 4) return null; S.own[id] = 1; const lv = Math.max(...S.team.map(k => S.h[k].lvl)); S.h[id].lvl = Math.max(S.h[id].lvl, lv - 1); if (S.team.length < 3) S.team.push(id); return id; }
 async function victory(i, res) {
   for (const h of B.party) if (alive(h)) setPose(h, 'win', 1e9); stinger('m_victory'); say('<b>Victoire !</b>');
   const train = B.train, t = B.tier || 0, ST = starsArr(t), st = Math.round(res.alive / res.size * 3), first = !ST[i], ei = i + DIFF[t].eff, wasOpen = tierOpen(t + 1, LEVELS[i].ch); if (!train) ST[i] = Math.max(ST[i] || 0, st);
@@ -1845,7 +1852,8 @@ async function victory(i, res) {
     ${rec ? `<div class="row" style="background:rgba(255,215,106,.5)"><img class="f" src="${FP}${HEROES[rec].face}.webp" alt=""><div class="grow"><b>${HEROES[rec].name} rejoint l’équipe !</b><small>${HEROES[rec].desc}</small></div></div>` : ''}
     <button class="btn" type="button" data-home="1">Continuer</button>${train ? `<button class="btn alt" type="button" data-train="${i}">Rejouer en entraînement</button>` : `<button class="btn alt" type="button" data-play="${i}">Rejouer</button>`}`);
   const endK = CHAPTERS[LEVELS[i].ch].end, q = []; if (first && !t && STORY['v' + i]) q.push('v' + i); if (LEVELS[i].boss && first && !t) q.push(endK); if (rec) q.push(rec);
-  const run = () => { const k = q.shift(); if (!k) return; if (k === endK && CHAPTERS[LEVELS[i].ch + 1]) { S.ch = LEVELS[i].ch + 1; save(); renderHome(); } story(k, run); };
+  const demoEnd = isDemo() && LEVELS[i].boss && LEVELS[i].ch === DEMO_CH - 1 && first && !t;
+  const run = () => { const k = q.shift(); if (!k) { if (demoEnd) demoSheet(); return; } if (k === endK && CHAPTERS[LEVELS[i].ch + 1] && !demoLocked(LEVELS[i].ch + 1)) { S.ch = LEVELS[i].ch + 1; save(); renderHome(); } story(k, run); };
   modalCb = run;
 }
 function defeat(i) { const { xp } = rewards(i, B.kills, false); grantXp(xp); save(); stinger('m_defeat'); say('Ton équipe est tombée…');
@@ -2083,6 +2091,11 @@ function shopSheet() { const stock = shopStock(), left = SHOP_EVERY - (S.shopW |
     <p style="text-align:center;font-size:13px;margin:12px 0 0"><b>Potions</b></p>${Object.entries(ITEMS).map(([k, I]) => `<div class="row"><img class="f poti ${I.cls}" src="${IP}uiPotion.webp" alt="" style="border:0;border-radius:0;object-fit:contain;background:none"><div class="grow"><b>${I.name}</b> ×${S.items[k]}<small>${I.tip}</small></div><button type="button" data-buy="${k}" ${S.gold >= I.price ? '' : 'disabled'}>${I.price}<img src="${IP}uiGold.webp" alt=""></button></div>`).join('')}
     <p style="text-align:center;font-size:13px;margin:12px 0 0"><b>Coffres</b></p>${Object.entries(SHOPCH).map(([k, C]) => `<div class="row"><img class="f" src="${IP}${C.img}.webp" alt="" style="border:0;border-radius:0;object-fit:contain;background:none"><div class="grow"><b>${C.n}</b><small>${C.d}</small></div><button type="button" data-bchest="${k}" ${S.gold >= C.price ? '' : 'disabled'}>${C.price}<img src="${IP}uiGold.webp" alt=""></button></div>`).join('')}
     <p style="text-align:center;margin-top:10px"><b>${S.gold}</b> <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"></p><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
+function demoSheet() { const done = S.stars[DEMO_CH * 5 - 1] > 0;
+  modal(`<h3>${done ? '🏁 Fin de la démo' : '🔒 Version complète'}</h3><p style="text-align:center;font-size:14px">${done ? 'Bravo, tu as terminé les 3 premiers chapitres !' : `La démo gratuite contient les chapitres 1 à ${DEMO_CH}.`}</p>
+    <p style="font-size:14px">La version complète continue l’aventure :</p><p style="font-size:14px">• <b>7 chapitres de plus</b>, jusqu’à la Forteresse de Vorthax<br>• <b>Lyra et Nyx</b> rejoignent l’équipe<br>• <b>7 nouveaux boss</b> et la fin de l’histoire<br>• Difficile et Cauchemar sur tout le jeu</p>
+    <p style="text-align:center;font-size:13px">Ta progression, tes héros et ton équipement sont conservés.</p>
+    <button class="btn" type="button" disabled>⭐ Débloquer le jeu complet · bientôt</button><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
 function helpSheet() { modal(`<h3>Comment jouer</h3>
   <p>• À chaque tour, choisis une action pour chaque héros, puis les monstres attaquent. D’autres héros te rejoignent au fil de l’aventure.</p>
   <p>• Touche une compétence, puis l’ennemi (ou l’allié) à viser. <b>Appui long</b> sur un bouton pour savoir ce qu’il fait.</p>
@@ -2130,6 +2143,7 @@ document.addEventListener('click', e => {
   if (d.isell) { const it = itemById(+d.isell); if (it && !wornBy(it)) { S.inv = S.inv.filter(x => x !== it); S.gold += sellPrice(it); SFX.coin(); } return heroSheet(); }
   if (d.autoeq) { const n = autoEquip(); SFX[n ? 'buff' : 'click'](); toast(n ? `✅ ${n} objet${n > 1 ? 's' : ''} équipé${n > 1 ? 's' : ''} sur ton équipe` : 'Tes héros portent déjà leur meilleur équipement.'); return heroSheet(); }
   if (d.tier != null && b.closest('#tiers')) { (S.tier = S.tier || {})[S.ch] = +d.tier; save(); SFX.click(); return renderHome(); }
+  if (d.demo) { SFX.click(); return demoSheet(); }
   if (d.ch != null && b.closest('#tabs')) { S.ch = +d.ch; save(); SFX.click(); return renderHome(); }
   if (d.next && storyNext) return storyNext();
   if (d.lv != null && b.classList.contains('node')) { if (!unlocked(+d.lv)) return toast('Termine le niveau précédent d’abord.'); SFX.click(); return levelSheet(+d.lv); }
@@ -2181,9 +2195,10 @@ document.addEventListener('pointerdown', () => { ac(); if (!muted && bgm.paused 
 muted = !!S.mute; if (S.vol) Object.assign(VOL, S.vol);
 if (!SIM) { HORDER.forEach(id => { const im = new Image(); im.src = FP + HEROES[id].face + '.webp'; IMG['face_' + id] = im; }); load('bg_c1_1', true); loadSprite('ald'); }
 renderHome();
-function afterIntro() { if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
+function afterIntro() { if (S.selLate) { delete S.selLate; save(); return story('selena', afterIntro); } if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.4', t: 'Version 1.9.4 · Le jeu complet, sans attente', d: `<p>• <b>Plus d’énergie ni de gemmes</b> : joue autant que tu veux. Tes gemmes ont été converties en or (40 or chacune).</p><p>• <b>3 difficultés</b> : Normal, Difficile, Cauchemar. Bats le boss d’un chapitre pour ouvrir la suivante. Ta progression en Héroïque compte pour Difficile, celle en Enfer pour Cauchemar.</p><p>• <b>Séléna arrive plus tôt</b>, dès la fin de l’Ossuaire (1-3). Le premier boss est un peu plus fort en conséquence.</p><p>• <b>Boutique</b> : 4 pièces d’équipement à acheter avec ton or, renouvelées toutes les 3 victoires.</p><p>• <b>Sauvegarde</b> : bouton 🔊 puis « Sauvegarde » pour copier un code et retrouver ta partie n’importe où.</p><p>• Accueil allégé : plus de cadeau du jour ni de bouton Histoire (les scènes se jouent toujours pendant l’aventure).</p>` },
   { v: '1.9.3', t: 'Version 1.9.3 · Plus fiable', d: `<p>• <b>Ton butin est protégé</b> : si le jeu se ferme pendant le choix d’un coffre ou du trésor d’un boss, il t’attend à la réouverture. Rien n’est perdu, rien n’est doublé.</p>` },
   { v: '1.9.2', t: 'Version 1.9.2 · Plus fluide', d: `<p>• Toutes les images sont préparées dès le chargement du niveau : plus de petit gel la première fois qu’un ultime, un effet ou un boss apparaît.</p>` },
   { v: '1.9.1', t: 'Version 1.9.1', d: `<p>• La caméra ne sort plus du décor quand elle zoome (plus de bande noire pendant la chute d’un boss).</p>` },
