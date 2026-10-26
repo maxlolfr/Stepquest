@@ -347,7 +347,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.9 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.9.1 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -1603,7 +1603,7 @@ function draw(t) {
   const dpr = Math.min(2, devicePixelRatio || 1); if (cv.width !== Math.round(VW * dpr) || cv.height !== Math.round(VH * dpr)) { cv.width = Math.round(VW * dpr); cv.height = Math.round(VH * dpr); }
   const c = cx; c.setTransform(dpr, 0, 0, dpr, 0, 0); c.fillStyle = '#0c0810'; c.fillRect(0, 0, VW, VH);
   const cam = B.cam; if (!B.acting && !pending && !B.fall) cam.tz = 1; if (cam.tz === 1) { cam.tx = VW / 2; cam.ty = VH / 2; }
-  const kk = reduce ? 1 : .08; cam.z += (cam.tz - cam.z) * kk; cam.x += (cam.tx - cam.x) * kk; cam.y += (cam.ty - cam.y) * kk;
+  const kk = reduce ? 1 : .08; cam.z += (cam.tz - cam.z) * kk; cam.x += (cam.tx - cam.x) * kk; cam.y += (cam.ty - cam.y) * kk; { const hx = VW / 2 / Math.max(1, cam.z), hy = VH / 2 / Math.max(1, cam.z); cam.x = Math.min(VW - hx, Math.max(hx, cam.x)); cam.y = Math.min(VH - hy, Math.max(hy, cam.y)); } // 1.9.1: never show past the stage edge
   let sx = 0, sy = 0; if (B.shake) { const k = (now() - B.shake.t0) / 320; if (k >= 1) B.shake = null; else if (k > 0) { sx = rnd(-1, 1) * B.shake.amp * (1 - k); sy = rnd(-1, 1) * B.shake.amp * (1 - k); } }
   c.save(); c.translate(VW / 2 + sx, VH / 2 + sy); c.scale(1 + (cam.z - 1) * .5, 1 + (cam.z - 1) * .5); c.translate(-(VW / 2 + (cam.x - VW / 2) * .5), -(VH / 2 + (cam.y - VH / 2) * .5));
   drawBg(c, B.L); c.restore();
@@ -2151,6 +2151,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.1', t: 'Version 1.9.1', d: `<p>• La caméra ne sort plus du décor quand elle zoome (plus de bande noire pendant la chute d’un boss).</p>` },
   { v: '1.9', t: 'Version 1.9 · Un combat plus lisible', d: `<p>• <b>Chaque compétence s’explique</b> : touche-la une fois pour voir ce qu’elle fait, son coût et qui elle touche. Touche-la encore (ou touche la cible) pour la lancer. L’attaque de base et la Défense restent en un seul geste.</p><p>• <b>Barre d’actions allégée</b> : icônes plus grandes, et toutes les potions rangées dans le <b>Sac 🎒</b>.</p><p>• Les icônes d’état des héros ne débordent plus.</p>` },
   { v: '1.8.1', t: 'Version 1.8.1', d: `<p>• En portrait, <b>les ennemis et les boss ne collent plus aux héros</b> : caméra un peu plus large et vrai espace entre les deux camps.</p>` },
   { v: '1.8', t: 'Version 1.8 · Des coups qui portent', d: `<p>• <b>Coups synchronisés</b> : l’épée, l’arc et le bâton frappent pile sur l’image du coup. Les dégâts tombent au bon moment.</p><p>• <b>Attaques de zone</b> : chaque cible encaisse à son tour, on voit le coup traverser l’équipe.</p><p>• <b>Chute des boss</b> : ralenti, caméra sur le boss, explosions à ses couleurs et disparition lente.</p>` },
