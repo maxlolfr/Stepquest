@@ -12,7 +12,7 @@ srv.listen(0, async () => { const b = await chromium.launch(), pg = await b.newP
   for (let i = 0; i < 10 && await pg.$('#modal:not([hidden]) [data-close]'); i++) { await pg.click('#modal:not([hidden]) [data-close]'); await pg.waitForTimeout(100); }
   await pg.click('#trBtn'); await pg.waitForTimeout(300); const btn = await pg.textContent('[data-trall]').catch(() => ''); await pg.click('[data-trall]'); await pg.waitForTimeout(600);
   for (let i = 0; i < 10; i++) { const x = await pg.$('#modal:not([hidden]) [data-lpick]') || await pg.$('#modal:not([hidden]) [data-dkeep]'); if (!x) break; await x.click(); await pg.waitForTimeout(300); }
-  let s = await S(); const n = Object.keys(s.trd || {}).length; ok('Tout réclamer : tous les trophées finis d’un coup', n >= 4 && s.gold > 100 && s.gem > 0, `${btn.trim()} → ${n} réclamés · or ${s.gold} · gemmes ${s.gem}`);
+  let s = await S(); const n = Object.keys(s.trd || {}).length; ok('Tout réclamer : tous les trophées finis d’un coup', n >= 4 && s.gold > 750 && !s.gem, `${btn.trim()} → ${n} réclamés · or ${s.gold} (gemmes converties en or)`);
   await pg.click('#modal:not([hidden]) [data-close]').catch(() => {}); await pg.waitForTimeout(200);
   await pg.click('#heroesBtn'); await pg.waitForTimeout(300); await pg.click('[data-sellall]'); await pg.waitForTimeout(300); const g0 = (await S()).gold;
   const labels = await pg.$$eval('[data-sellg]', a => a.map(x => x.innerText.replace(/\s+/g, ' ')));

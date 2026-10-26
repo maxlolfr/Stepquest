@@ -36,4 +36,5 @@ jobs:
           node db212.js
           node db151.js
           node db2close.js
+          node db2lot2.js
           node db2ui.js out

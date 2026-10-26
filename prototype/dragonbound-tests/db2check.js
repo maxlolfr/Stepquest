@@ -16,39 +16,35 @@ srv.listen(0, async () => {
   const closeAll = async () => { for (let i = 0; i < 30 && await pg.$('#modal:not([hidden]) [data-next], #modal:not([hidden]) [data-close]'); i++) { const n = await pg.$('#modal:not([hidden]) [data-next]') || await pg.$('#modal:not([hidden]) [data-close]'); await n.click(); await pg.waitForTimeout(120); } };
   // 1. new player
   await load(null); await closeAll(); let s = await S();
-  ok('Nouveau joueur : sauvegarde créée, Aldric seul, 60 énergie', s && s.team.join() === 'aldric' && s.en === 60, s && `équipe ${s.team} · énergie ${s.en}`);
+  ok('Nouveau joueur : sauvegarde créée, Aldric seul, ni énergie ni gemmes affichées', s && s.team.join() === 'aldric' && !(await pg.$('#enBtn')) && !(await pg.$('#gemBtn')), s && `équipe ${s.team}`);
   await pg.screenshot({ path: `${OUT}/c1-accueil.png` });
   // 2. old 0.8 save (no tiers, trophies, gems, login)
   const old = base({ stars: [3, 2, 0].concat(Array(27).fill(0)), en: 12, enT: Date.now(), day: '', ctr: {} }); await load(old); await closeAll(); s = await S();
-  ok('Ancienne sauvegarde 0.8 chargée sans perte', s.stars[0] === 3 && s.en === 12 && s.gem === 0 && s.login && s.tc, `étoiles ${s.stars.slice(0, 3)} · énergie ${s.en} · gemmes ${s.gem}`);
+  ok('Ancienne sauvegarde 0.8 chargée sans perte', s.stars[0] === 3 && s.stars[1] === 2 && s.login && s.tc && s.m20 === 1, `étoiles ${s.stars.slice(0, 3)}`);
   // 3. trophy claim + reload
   await load(base({ tc: { kills: 60 }, gold: 100 })); await closeAll(); await pg.click('#trBtn'); await pg.waitForTimeout(300); await pg.screenshot({ path: `${OUT}/c2-trophees.png` });
   await pg.click('[data-trc="k50"]'); await pg.waitForTimeout(400); s = await S(); const g1 = s.gold;
   await pg.reload(); await pg.click('#title'); await pg.waitForTimeout(400); await closeAll(); await pg.click('#trBtn'); await pg.waitForTimeout(300);
   const again = await pg.$('[data-trc="k50"]'); s = await S();
   ok('Trophée réclamé une seule fois (+150 or, toujours réclamé après rechargement)', g1 === 250 && !again && s.trd.k50 === 1 && s.gold === 250, `or ${g1} puis ${s.gold}`);
-  // 4. daily gift, reload, clock back, next day
-  await load(base({ login: { day: '', n: 0 } })); await closeAll(); await pg.click('#loginBtn'); await pg.waitForTimeout(300); await pg.screenshot({ path: `${OUT}/c3-cadeau.png` });
-  await pg.click('[data-login]'); await pg.waitForTimeout(400); s = await S(); const day1 = s.login.n, gold1 = s.gold;
-  await pg.reload(); await pg.click('#title'); await pg.waitForTimeout(400); await closeAll(); await pg.click('#loginBtn'); await pg.waitForTimeout(300); const twice = await pg.$('[data-login]');
-  ok('Cadeau du jour : une seule fois par jour', day1 === 1 && gold1 === 200 && !twice, `jour ${day1} · or ${gold1}`);
-  await load(base({ login: { day: '2000-01-01', n: 3 }, tmax: Date.now() + 5 * 3600e3 })); await closeAll(); await pg.click('#loginBtn'); await pg.waitForTimeout(300); const cheat = await pg.$('[data-login]');
-  ok('Horloge reculée : cadeau bloqué', !cheat);
-  await load(base({ login: { day: '2000-01-01', n: 3 } })); await closeAll(); await pg.click('#loginBtn'); await pg.waitForTimeout(300); await pg.click('[data-login]'); await pg.waitForTimeout(300); s = await S();
-  ok('Jour manqué : la série continue (jour 4 → 5)', s.login.n === 4 && s.gold === 350, `série ${s.login.n} · or ${s.gold}`);
-  // 5. energy wall + gem refill
-  await load(base({ en: 3, enT: Date.now(), gem: 20 })); await closeAll(); await pg.click('.node[data-lv="0"]'); await pg.waitForTimeout(200); await pg.click('[data-play]'); await pg.waitForTimeout(300);
-  const wall = await pg.$('[data-gemen]'); await pg.screenshot({ path: `${OUT}/c4-energie.png` }); if (wall) await pg.click('[data-gemen]'); await pg.waitForTimeout(300); s = await S();
-  ok('Énergie insuffisante → écran d’énergie, recharge avec 15 gemmes', !!wall && s.en === 60 && s.gem === 5, `énergie ${s.en} · gemmes ${s.gem}`);
-  // 6. tiers: 3 stars on chapter 1 opens Difficile
+  // 4. 2.0 lot 2: no daily gift any more (covered by db2lot2.js)
+  // 5. 2.0 lot 2: an old save with gems and 5 tiers is migrated (gems → gold, Héroïque → Difficile, Enfer → Cauchemar) and plays with no energy
+  const T5 = n => Array(30).fill(0).map((_, k) => k < 5 ? n : 0);
+  await load(base({ en: 0, enT: Date.now(), gem: 20, gold: 100, tier: { 0: 4 }, tst: { 1: T5(1), 2: T5(3), 3: T5(2), 4: [0, 0, 1].concat(Array(27).fill(0)) }, trd: { t2: 1, t4: 1 } })); await closeAll(); s = await S();
+  ok('Migration : 20 gemmes → +800 or', s.gold === 900 && s.gem === 0, `or ${s.gold} · gemmes ${s.gem}`);
+  ok('Migration : Héroïque fusionné dans Difficile, Enfer dans Cauchemar', s.tier[0] === 2 && s.tst[1][0] === 3 && s.tst[2][0] === 2 && s.tst[2][2] === 2 && !s.tst[3] && !s.tst[4], `palier ${s.tier[0]} · Difficile ${s.tst[1].slice(0, 3)} · Cauchemar ${s.tst[2].slice(0, 3)}`);
+  ok('Migration : trophées de difficulté déjà réclamés conservés', s.trd.t1 === 1 && s.trd.t2 === 1 && !s.trd.t3 && !s.trd.t4, JSON.stringify(s.trd));
+  await load(base({ en: 0, enT: Date.now() })); await closeAll(); await pg.click('.node[data-lv="0"]'); await pg.waitForTimeout(200); await pg.click('[data-play]'); await pg.waitForTimeout(600);
+  ok('Sans énergie : le combat se lance quand même', await pg.evaluate(() => !!window.__db2.B && !document.getElementById('fight').hidden));
+  // 6. tiers: beating chapter 1's boss opens Difficile (2.0 lot 2), Cauchemar stays locked
   await load(base({ stars: [3, 3, 3, 3, 3].concat(Array(25).fill(0)), team: ['aldric', 'selena'], own: { aldric: 1, selena: 1 } })); await closeAll();
   const tierBtn = await pg.$('#tiers [data-tier="1"]:not([disabled])'), locked = await pg.$('#tiers [data-tier="2"][disabled]'); await pg.screenshot({ path: `${OUT}/c5-difficultes.png` });
   if (tierBtn) { await tierBtn.click(); await pg.waitForTimeout(200); await pg.click('.node[data-lv="0"]'); await pg.waitForTimeout(200); }
   const sheet = await pg.textContent('#sheet').catch(() => '');
-  ok('3★ sur le chapitre 1 → Difficile ouvert, Héroïque fermé', !!tierBtn && !!locked && sheet.includes('Difficile'), sheet.includes('Difficile') ? 'fiche du niveau en Difficile' : '');
+  ok('Boss du chapitre 1 battu → Difficile ouvert, Cauchemar fermé', !!tierBtn && !!locked && sheet.includes('Difficile'), sheet.includes('Difficile') ? 'fiche du niveau en Difficile' : '');
   await pg.click('[data-play]'); await pg.waitForFunction(() => window.__db2.B && window.__db2.B.foes.length, null, { timeout: 10000 }).catch(() => {});
   const tb = await pg.evaluate(() => ({ t: window.__db2.B.tier, n: window.__db2.B.foes.length, lv: window.__db2.B.lvIdx }));
-  ok('Combat en Difficile : ennemis renforcés', tb.t === 1 && tb.lv === 9, `palier ${tb.t} · indice ${tb.lv} · ${tb.n} ennemis`);
+  ok('Combat en Difficile : ennemis renforcés', tb.t === 1 && tb.lv === 14, `palier ${tb.t} · indice ${tb.lv} · ${tb.n} ennemis`);
   // 7. chapter 1 boss → victory → Séléna joins
   await load(base({ stars: [1, 1, 1, 1, 0].concat(Array(25).fill(0)), h: Object.fromEntries(['aldric', 'selena', 'orin', 'lyra', 'nyx'].map(k => [k, { lvl: 14, xp: 0, w: 3, a: 3 }])) })); await closeAll();
   await pg.click('.node[data-lv="4"]'); await pg.waitForTimeout(200); await pg.click('[data-play]'); await pg.waitForSelector('#autoBtn', { state: 'visible' }); await pg.waitForTimeout(1200); await pg.click('#autoBtn');

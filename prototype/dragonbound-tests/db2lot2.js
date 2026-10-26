@@ -1,0 +1,38 @@
+// Dragonbound II 2.0 lot 2: shop stock, save code export/import, lighter home (no daily gift, no story button, no energy). node db2lot2.js
+const { chromium } = require('playwright'); const http = require('http'), fs = require('fs'), path = require('path');
+const ROOT = path.resolve(__dirname, '..');
+const MIME = { '.html': 'text/html', '.webp': 'image/webp', '.jpg': 'image/jpeg', '.png': 'image/png', '.mp3': 'audio/mpeg', '.mp4': 'video/mp4' };
+const srv = http.createServer((q, r) => { const p = path.join(ROOT, decodeURIComponent(q.url.split('?')[0])); fs.readFile(p, (e, d) => { if (e) { r.writeHead(404); return r.end(); } r.writeHead(200, { 'content-type': MIME[path.extname(p)] || 'text/plain' }); r.end(d); }); });
+let fails = 0; const ok = (n, c, d) => { console.log(`${c ? '✅' : '❌'} ${n}${d ? ' — ' + d : ''}`); if (!c) fails++; };
+srv.listen(0, async () => { const b = await chromium.launch(), errs = [], base = `http://127.0.0.1:${srv.address().port}/dragonbound2/index.html`;
+  const ctx = await b.newContext({ viewport: { width: 430, height: 932 }, hasTouch: true }); const pg = await ctx.newPage(); pg.on('pageerror', e => errs.push(e.message));
+  const save = { v: 2, m20: 1, gold: 20000, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h: Object.fromEntries(['aldric', 'selena', 'orin', 'lyra', 'nyx'].map(k => [k, { lvl: 12, xp: 0, w: 0, a: 0 }])),
+    team: ['aldric', 'selena', 'orin'], own: { aldric: 1, selena: 1, orin: 1 }, stars: Array(15).fill(3).concat(Array(35).fill(0)), seen: { in: 1, vid: 1, vid2: 1, in2: 1, in3: 1, ver: '9' }, login: { day: '', n: 0 }, mute: true, ch: 2, inv: [], nid: 1, spd: 1, ctr: {} };
+  const closeAll = async () => { for (let k = 0; k < 20 && await pg.$('#modal:not([hidden]) [data-close]'); k++) { await pg.click('#modal:not([hidden]) [data-close]'); await pg.waitForTimeout(120); } };
+  const S = () => pg.evaluate(() => JSON.parse(localStorage.getItem('dragonbound2.v2')));
+  await pg.goto(base); await pg.evaluate(s => localStorage.setItem('dragonbound2.v2', s), JSON.stringify(save)); await pg.reload(); await pg.click('#title'); await pg.waitForTimeout(500);
+  ok('Aucune fenêtre de cadeau du jour au démarrage', !(await pg.$('#modal:not([hidden]) [data-login]')));
+  await closeAll();
+  ok('Accueil : plus de boutons Cadeau du jour, Histoire, énergie ni gemmes', !(await pg.$('#loginBtn')) && !(await pg.$('#storyBtn')) && !(await pg.$('#enBtn')) && !(await pg.$('#gemBtn')));
+  await pg.click('#shopBtn'); await pg.waitForTimeout(300);
+  const n1 = (await pg.$$('[data-bgear]')).length; ok('Boutique : 4 pièces d’équipement en vente', n1 === 4, `${n1} en stock`);
+  const s0 = await S();
+  await pg.click('[data-bgear="0"]'); await pg.waitForTimeout(600);
+  ok('Achat : la comparaison de l’objet s’ouvre', !!(await pg.$('[data-dkeep]'))); await pg.click('[data-dkeep]'); await pg.waitForTimeout(400);
+  ok('Puis retour à la boutique', (await pg.$$('[data-bgear]')).length === 3); await closeAll(); const s1 = await S();
+  ok('Achat : objet ajouté au sac, or débité, stock réduit', s1.inv.length === s0.inv.length + 1 && s1.gold < s0.gold && s1.shop.l.length === 3, `sac ${s0.inv.length} → ${s1.inv.length} · or ${s0.gold} → ${s1.gold} · stock ${s1.shop.l.length}`);
+  await pg.evaluate(() => { window.__db2.S.shopW = 3; }); await pg.click('#shopBtn'); await pg.waitForTimeout(300);
+  ok('Après 3 victoires : nouveau stock de 4 objets', (await pg.$$('[data-bgear]')).length === 4); await closeAll();
+  // save code: export then import into a wiped game
+  await pg.click('#snd'); await pg.waitForTimeout(200); await pg.click('[data-svsheet]'); await pg.waitForTimeout(300);
+  const code = await pg.inputValue('#svOut'); ok('Code de sauvegarde généré', code.length > 100, `${code.length} caractères`);
+  await pg.evaluate(s => localStorage.setItem('dragonbound2.v2', s), JSON.stringify(Object.assign({}, save, { gold: 7, stars: Array(50).fill(0), ch: 0, team: ['aldric'], own: { aldric: 1 } }))); await pg.reload(); await pg.click('#title'); await pg.waitForTimeout(500); await closeAll();
+  const wiped = await S(); ok('Partie effacée (simulation d’un navigateur vidé)', wiped.gold !== s1.gold);
+  await pg.click('#snd'); await pg.waitForTimeout(200); await pg.click('[data-svsheet]'); await pg.waitForTimeout(300); await pg.fill('#svIn', code);
+  pg.once('dialog', d => d.accept()); await pg.click('[data-svimp]'); await pg.waitForTimeout(1200); const back = await S();
+  ok('Import du code : partie restaurée à l’identique', back.gold === s1.gold && back.inv.length === s1.inv.length && back.stars[14] === 3, `or ${back.gold} · sac ${back.inv.length}`);
+  await pg.click('#title').catch(() => {}); await pg.waitForTimeout(400); await closeAll(); await pg.click('#snd'); await pg.waitForTimeout(200); await pg.click('[data-svsheet]'); await pg.waitForTimeout(200);
+  await pg.fill('#svIn', 'nimporte quoi'); pg.once('dialog', d => d.accept()); await pg.click('[data-svimp]'); await pg.waitForTimeout(500);
+  ok('Code invalide refusé, partie intacte', (await S()).gold === s1.gold);
+  ok('Aucune erreur JavaScript', !errs.length, errs.join(' | '));
+  await b.close(); srv.close(); process.exit(fails ? 1 : 0); });

@@ -293,8 +293,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <div class="app" id="home">
   <div class="top">
     <div class="logo"><img src="../dragonbound/img/logo.webp" alt="Dragonbound"><span class="two">II</span></div>
-    <button class="pill en" id="enBtn" type="button" aria-label="Énergie"><img src="img/uiEnergy.webp" alt=""><span id="en">30</span><small id="enT"></small></button>
-    <button class="pill en" id="gemBtn" type="button" aria-label="Gemmes"><img src="img/uiGem.webp" alt=""><span id="gem">0</span></button>
+
     <span class="pill"><img src="../dragonbound/img/uiGold.webp" alt="or"><span id="gold">0</span></span>
     <button class="iconbtn" id="snd" type="button" aria-label="Son">🔊</button>
   </div>
@@ -311,11 +310,9 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
     <button class="big wide" type="button" id="heroesBtn"><img src="../dragonbound/img/wSword.webp" alt="">Héros &amp; équipement<span class="dot" id="heroDot" hidden></span></button>
     <button class="big" type="button" id="forgeBtn"><img src="../dragonbound/img/ic_sword.webp" alt="">Forge</button>
     <button class="big" type="button" id="shopBtn"><img src="../dragonbound/img/uiPotion.webp" alt="">Boutique</button>
-    <button class="big" type="button" id="storyBtn"><img src="../dragonbound/img/uiScroll.webp" alt="">Histoire</button>
     <button class="big" type="button" id="helpBtn"><img src="../dragonbound/img/uiQuest.webp" alt="">Comment jouer</button>
     <button class="big" type="button" id="trBtn" style="position:relative"><img src="img/uiTrophy.webp" alt="">Trophées<span class="dot" id="trDot" hidden></span></button>
     <button class="big" type="button" id="newsBtn"><img src="../dragonbound/img/uiScroll.webp" alt="">Nouveautés</button>
-    <button class="big" type="button" id="loginBtn" style="position:relative"><img src="../dragonbound/img/uiChest2.webp" alt="">Cadeau du jour<span class="dot" id="loginDot" hidden>!</span></button>
   </div>
   <div class="ver" id="ver"></div>
 </div>
@@ -864,15 +861,14 @@ const rkMult = (id, k) => 1 + (k === 'ult' ? .12 : .1) * (rankOf(id, k) - 1);
 // eff: extra level index for monsters and loot · add: extra enemies per wave · en: extra energy cost · xg: XP/gold multiplier · rar: chance of +1 rarity
 const DIFF = [
   { n: 'Normal', ic: '⚔️', col: '#c8b48a', eff: 0, en: 0, xg: 1, rar: 0, add: 0, elite: 0, maxEl: 1 },
-  { n: 'Difficile', ic: '🔥', col: '#e0913b', eff: 9, en: 2, xg: 1.4, rar: .15, add: 0, elite: .15, maxEl: 1 },
-  { n: 'Héroïque', ic: '⭐', col: '#e8c040', eff: 18, en: 3, xg: 1.8, rar: .3, add: 1, elite: .3, maxEl: 1 },
-  { n: 'Cauchemar', ic: '💀', col: '#d0405a', eff: 27, en: 4, xg: 2.3, rar: .45, add: 2, elite: .5, maxEl: 2, bossAff: true },
-  { n: 'Enfer', ic: '👹', col: '#ff4a1a', eff: 36, en: 5, xg: 3, rar: .6, add: 2, elite: .8, maxEl: 3, bossAff: true },
+  // 2.0 lot 2: three tiers instead of five (no more farming); each new tier opens by beating the chapter's boss in the one before
+  { n: 'Difficile', ic: '🔥', col: '#e0913b', eff: 14, en: 0, xg: 1.6, rar: .25, add: 0, elite: .25, maxEl: 1 },
+  { n: 'Cauchemar', ic: '💀', col: '#d0405a', eff: 30, en: 0, xg: 2.6, rar: .55, add: 2, elite: .6, maxEl: 2, bossAff: true },
 ];
 const tierOf = ch => (S.tier && S.tier[ch]) || 0;
 const starsArr = t => { if (!t) return S.stars; S.tst = S.tst || {}; const a = S.tst[t] = S.tst[t] || []; while (a.length < LEVELS.length) a.push(0); return a; };
 const starsOf = (t, i) => starsArr(t)[i] || 0;
-const tierOpen = (t, ch) => t === 0 || [0, 1, 2, 3, 4].every(j => starsOf(t - 1, ch * 5 + j) >= 3);
+const tierOpen = (t, ch) => t === 0 || (t < DIFF.length && starsOf(t - 1, ch * 5 + 4) > 0);
 // ---------- Energy: 60 max, +1 every 6 min, cost per chapter in ENC (+ tier extra), one free refill a day; cleared levels can be replayed free in training ----------
 const EN_MAX = 60, EN_MS = 6 * 60 * 1000;
 const ENC = [[4, 6], [6, 10], [8, 12], [8, 12], [10, 15], [10, 15], [12, 18], [12, 18], [12, 18], [12, 18]];
@@ -889,12 +885,19 @@ function enTick() { const t = Date.now(); if (S.en == null) { S.en = EN_MAX; S.e
 function enNext() { const ms = Math.max(0, EN_MS - (Date.now() - S.enT)), m = Math.floor(ms / 60000), sec = Math.floor(ms / 1000) % 60; return `${m}:${String(sec).padStart(2, '0')}`; }
 const SKEY = 'dragonbound2.v2';
 function fresh() { const h = {}; HORDER.forEach(k => { h[k] = { lvl: 1, xp: 0, w: 0, a: 0 }; });
-  return { v: 2, ctr: {}, tier: {}, tst: {}, gem: 0, tc: {}, trd: {}, trn: {}, login: { day: '', n: 0 }, tmax: 0, en: EN_MAX, enT: Date.now(), day: '', gold: 50, items: { pot: 5, eth: 1, fea: 1, eli: 0 }, h, team: ['aldric'], own: { aldric: 1 }, stars: LEVELS.map(() => 0), seen: {}, mute: false, ch: 0, inv: [], nid: 1, spd: 1 }; }
+  return { v: 2, m20: 1, ctr: {}, tier: {}, tst: {}, gem: 0, tc: {}, trd: {}, trn: {}, login: { day: '', n: 0 }, tmax: 0, en: EN_MAX, enT: Date.now(), day: '', gold: 50, items: { pot: 5, eth: 1, fea: 1, eli: 0 }, h, team: ['aldric'], own: { aldric: 1 }, stars: LEVELS.map(() => 0), seen: {}, mute: false, ch: 0, inv: [], nid: 1, spd: 1 }; }
 let S = fresh();
 try { if (!SIM) { const s = JSON.parse(localStorage.getItem(SKEY)); if (s && s.v === 2) { S = Object.assign(fresh(), s); while (S.stars.length < LEVELS.length) S.stars.push(0); S.items = Object.assign({ pot: 0, eth: 0, fea: 0, eli: 0 }, S.items);
-  if (!S.m12) { S.m12 = 1; const ks = Object.keys(SETS); for (const it of S.inv) { if (it.slot === 'w' && !WPN[it.hero]) continue; it.name = gearName(it); delete it.img; if (it.r >= 2 && !it.set) it.set = ks[it.id % 4]; } } } } } catch (e) {}
+  if (!S.m12) { S.m12 = 1; const ks = Object.keys(SETS); for (const it of S.inv) { if (it.slot === 'w' && !WPN[it.hero]) continue; it.name = gearName(it); delete it.img; if (it.r >= 2 && !it.set) it.set = ks[it.id % 4]; } }
+  // 2.0 lot 2: gems become gold (40 each), 5 difficulty tiers fold into 3 (Héroïque → Difficile, Enfer → Cauchemar), nothing unlocked is lost
+  if (!s.m20) { S.m20 = 1; if (S.gem > 0) { S.gold += S.gem * 40; S.gemGold = S.gem * 40; } S.gem = 0;
+    const T = S.tst || {}, mx = (a, b) => { a = a || []; b = b || []; const o = []; for (let k = 0; k < Math.max(a.length, b.length); k++) o.push(Math.max(a[k] || 0, b[k] || 0)); return o; };
+    const d = mx(T[1], T[2]), n = mx(T[3], T[4]); S.tst = {}; if (d.length) S.tst[1] = d; if (n.length) S.tst[2] = n;
+    for (const c in S.tier || {}) S.tier[c] = [0, 1, 1, 2, 2][S.tier[c]] || 0;
+    for (const k of ['trd', 'trn']) { const o = S[k] || {}, t1 = o.t1 || o.t2, t2 = o.t3 || o.t4; delete o.t1; delete o.t2; delete o.t3; delete o.t4; if (t1) o.t1 = 1; if (t2) o.t2 = 1; S[k] = o; } } } } } catch (e) {}
 const save = () => { if (SIM) return; S.tmax = Math.max(S.tmax || 0, Date.now()); try { localStorage.setItem(SKEY, JSON.stringify(S)); } catch (e) {} };
 save(); // writes migrated fields of older saves right away
+if (!SIM && navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {}); // 2.0 lot 2: ask the browser not to wipe the save
 const xpNeed = l => Math.round(40 + 24 * l + 6.5 * l * l);
 function heroStats(id) { const H = HEROES[id], s = S.h[id], L = s.lvl, o = {};
   for (const k of ['hp', 'mp', 'atk', 'mag', 'def']) o[k] = H.base[k] + H.gr[k] * (L - 1);
@@ -1735,16 +1738,15 @@ function loop(t) {
 // ---------- Home screen ----------
 function stars(n) { return [0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">★</i>`).join(''); }
 const unlocked = (i, t = tierOf(LEVELS[i].ch)) => t ? tierOpen(t, LEVELS[i].ch) && (i % 5 === 0 || starsOf(t, i - 1) > 0) : i === 0 || S.stars[i - 1] > 0;
-function enUi() { enTick(); $('en').textContent = `${S.en}/${EN_MAX}`; $('enT').textContent = S.en < EN_MAX ? enNext() : ''; }
-setInterval(() => { if (!SIM && !$('home').hidden) enUi(); }, 1000);
+function enUi() {} // 2.0 lot 2: no more energy
 function renderHome() {
-  enUi(); $('gold').textContent = S.gold; $('gem').textContent = S.gem || 0; { const n = trClaimable(); $('trDot').style.display = n ? '' : 'none'; $('trDot').textContent = n; } $('loginDot').style.display = loginReady() ? '' : 'none'; $('snd').textContent = muted ? '🔇' : '🔊'; $('ver').innerHTML = `${VERSION}<button type="button" id="replayIntro">Revoir l’intro</button>${DEV ? '<button type="button" id="adminBtn">⚙️ Test</button>' : ''}`;
+  enUi(); $('gold').textContent = S.gold; { const n = trClaimable(); $('trDot').style.display = n ? '' : 'none'; $('trDot').textContent = n; }  $('snd').textContent = muted ? '🔇' : '🔊'; $('ver').innerHTML = `${VERSION}<button type="button" id="replayIntro">Revoir l’intro</button>${DEV ? '<button type="button" id="adminBtn">⚙️ Test</button>' : ''}`;
   const T = tierOf(S.ch), cur = LEVELS.findIndex((_, i) => LEVELS[i].ch === S.ch && unlocked(i) && !starsOf(T, i)), C = CHAPTERS[S.ch];
   $('tabs').innerHTML = CHAPTERS.map((ch, j) => `<button type="button" data-ch="${j}" class="${j === S.ch ? 'on' : ''}" ${unlocked(LEVELS.findIndex(L => L.ch === j), 0) ? '' : 'disabled'} title="${ch.name}">${unlocked(LEVELS.findIndex(L => L.ch === j), 0) ? j + 1 : '🔒'}</button>`).join('');
   $('ban').style.backgroundImage = `url(${C.ban})`; $('chN').textContent = `CHAPITRE ${S.ch + 1}`; $('chT').textContent = C.name;
   { const got = t => [0, 1, 2, 3, 4].reduce((a, j) => a + starsOf(t, S.ch * 5 + j), 0);
     $('tiers').innerHTML = DIFF.map((D, t) => { const open = tierOpen(t, S.ch); return `<button type="button" data-tier="${t}" class="${t === T ? 'on' : ''}" style="--tc:${D.col}" ${open ? '' : 'disabled'} title="${D.n}">${open ? D.ic : '🔒'}<small>${D.n}</small>${open ? `<em>${got(t)}/15★</em>` : ''}</button>`; }).join('')
-      + `<p>${T < DIFF.length - 1 ? (tierOpen(T + 1, S.ch) ? `${DIFF[T + 1].ic} ${DIFF[T + 1].n} débloqué !` : `3★ sur les 5 niveaux en ${DIFF[T].n} pour débloquer ${DIFF[T + 1].ic} ${DIFF[T + 1].n} (${got(T)}/15★)`) : 'Difficulté maximale !'}</p>`; }
+      + `<p>${T < DIFF.length - 1 ? (tierOpen(T + 1, S.ch) ? `${DIFF[T + 1].ic} ${DIFF[T + 1].n} débloqué !` : `Bats le boss du chapitre en ${DIFF[T].n} pour débloquer ${DIFF[T + 1].ic} ${DIFF[T + 1].n}`) : 'Difficulté maximale !'}</p>`; }
   $('path').innerHTML = LEVELS.map((L, i) => L.ch !== S.ch ? '' : `<button class="node ${L.boss ? 'boss' : ''} ${unlocked(i) ? '' : 'lock'} ${i === cur ? 'cur' : ''}" type="button" data-lv="${i}" aria-label="${L.name}">
     <div class="disc">${L.boss ? `<img src="${IP}${C.boss}.webp" alt="">` : unlocked(i) ? i % 5 + 1 : '🔒'}</div><div class="stars">${stars(starsOf(T, i))}</div><div class="nm">${L.name}</div></button>`).join('');
   const slots = S.team.map(id => { const H = HEROES[id], s = S.h[id], pts = spendable(id); return `<div class="pc" data-hsheet="${id}" role="button" tabindex="0">${pts ? `<span class="dot">${pts}</span>` : ''}<img src="${FP}${H.face}.webp" alt=""><b>${H.name}</b><small>Niv. ${s.lvl}</small><span class="role ${H.role}">${H.roleN}</span><small class="hpf">❤️ ${heroStats(id).hp} · vie pleine</small><small class="xpl">XP ${Math.floor(s.xp / xpNeed(s.lvl) * 100)} % → niv. ${s.lvl + 1}</small><div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div>`; });
@@ -1770,7 +1772,7 @@ let ctrSel = null, routeSel = 'safe', simRoute = 'safe';
 // 1.2: expedition routes, picked before a level already won (risk and reward shown up front)
 const ROUTES = { safe: { n: 'Route sûre', ic: '🛡️', d: 'Difficulté normale, butin classique.' },
   danger: { n: 'Route dangereuse', ic: '💀', d: '+1 ennemi par vague, ennemis +15 %, plus d’élites. Butin : or ×1,5, XP ×1,3 et coffres Rare minimum.' },
-  defi: { n: 'Défi du jour', ic: '✨', d: 'Un élite garanti dans chaque vague. Récompense : +3 💎 (une fois par jour sur ce niveau).' } };
+  defi: { n: 'Défi du jour', ic: '✨', d: 'Un élite garanti dans chaque vague. Récompense : +120 or (une fois par jour sur ce niveau).' } };
 const defiOk = i => (Math.floor(Date.now() / 864e5) + i) % 3 === 0 && !(S.evd && S.evd.d === today() && S.evd.l.includes(i));
 function routeHtml(i) { const ks = ['safe', 'danger'].concat(defiOk(i) ? ['defi'] : []); if (!ks.includes(routeSel)) routeSel = 'safe';
   return `<p style="text-align:center;font-size:13px;margin:8px 0 2px"><b>Choisis ta route</b></p><div class="routes">${ks.map(k => `<button type="button" data-route="${k}:${i}" class="${routeSel === k ? 'on' : ''}">${ROUTES[k].ic}<span>${ROUTES[k].n}</span></button>`).join('')}</div><p style="text-align:center;font-size:12.5px;margin:2px 0 6px">${ROUTES[routeSel].d}</p>`; }
@@ -1784,24 +1786,21 @@ function levelSheet(i, keep) { if (!keep) { ctrSel = null; routeSel = 'safe'; }
     ${L.elite ? '<p style="font-size:13px;margin:3px 0">• ⭐ Des <b>élites</b> colorés peuvent apparaître : plus forts, mais double butin.</p>' : ''}
     ${L.champ ? '<p style="font-size:13px;margin:3px 0">• 👑 Un <b>champion</b> garde la dernière vague : très fort, triple butin.</p>' : ''}</details>
     ${st || i > 0 ? `<details class="foed" ${ctrSel ? 'open' : ''}><summary>Contrat (facultatif)${ctrSel ? ' · ' + CONTRACTS[ctrSel].ic : ''}</summary>${ctrHtml(i)}</details>` : ''}${st ? routeHtml(i) : ''}
-    <p style="text-align:center;font-size:13px;margin:6px 0 0">Ton énergie : <b>${(enTick(), S.en)}</b> ⚡</p>
-    <button class="btn" type="button" data-play="${i}">⚔️ Combattre · ${enCost(i)} ⚡</button>${st ? `<button class="btn alt" type="button" data-train="${i}">🎯 Entraînement · gratuit (XP réduite, sans butin)</button>` : ''}<button class="btn alt" type="button" data-close="1">Retour</button>`);
+    <button class="btn" type="button" data-play="${i}">⚔️ Combattre</button><button class="btn alt" type="button" data-close="1">Retour</button>`);
 }
 // 1.6: each tip names the heroes it needs, so the game never gives advice about someone who is not in the team
 const TIPS = [['Feu sur un ennemi gelé : Choc thermique, dégâts ×1,5.', ['orin']], ['Feu sur une cible marquée 🎯 par Lyra : Embrasement, dégâts ×1,4.', ['orin', 'lyra']], ['La Charge d’Aldric sur un ennemi gelé : Brise-glace, dégâts ×1,8.', ['aldric', 'orin']],
   ['Un ⚠️ rouge annonce une grosse attaque : Défense, Égide ou Charge pour l’annuler.', []], ['Aldric gagne de la Rage 🔥 en encaissant : sa prochaine attaque frappe plus fort.', ['aldric']], ['Les ombres 🌑 de Nyx rendent l’Assassinat plus puissant.', ['nyx']],
   ['Orin explose en Surcharge ⚡ tous les 3 sorts : garde-la pour le boss.', ['orin']], ['Séléna retient un allié au bord de la mort une fois par vague.', ['selena']], ['Le Venin de Lyra s’accumule si la cible est déjà empoisonnée.', ['lyra']],
-  ['Les objets ✦ ont un pouvoir spécial : regarde-les bien avant de choisir.', []], ['Gagne avec 3 étoiles pour récupérer 2 ⚡.', []], ['Un 👑 champion garde le niveau 3 de chaque chapitre.', []], ['À mi-vie, chaque boss change de règle : lis bien son annonce.', []]];
+  ['Les objets ✦ ont un pouvoir spécial : regarde-les bien avant de choisir.', []], ['Un 👑 champion garde le niveau 3 de chaque chapitre.', []], ['À mi-vie, chaque boss change de règle : lis bien son annonce.', []]];
 function pickTip() { const ids = S.team || []; const ok = TIPS.filter(([, need]) => need.every(id => ids.includes(id))); return pick(ok.length ? ok : TIPS)[0]; }
 function tipToast(h) { const t = document.createElement('div'); t.className = 'tip'; t.innerHTML = h; document.body.appendChild(t); setTimeout(() => t.classList.add('out'), 3000); setTimeout(() => t.remove(), 3500); }
 async function playLevel(i, train) {
   const tier = tierOf(LEVELS[i].ch);
-  if (!train && !SIM) { enTick(); const c = enCost(i); if (S.en < c) { SFX.click(); return energySheet(c); } }
   spdUi();
   const ck = CHAPTERS[LEVELS[i].ch].story; if (!S.seen[ck] && LEVELS[i].ch > 0) { modalCb = null; return story(ck, () => playLevel(i)); }
-  if (!train && !SIM) { if (S.en >= EN_MAX) S.enT = Date.now(); S.en -= enCost(i); save(); }
   closeModal(); ac(); $('home').hidden = true; $('fight').hidden = false; document.querySelectorAll('.toast,.tip').forEach(t => t.remove()); tipToast(`💡 ${pickTip()}`);
-  $('fName').textContent = `${tier ? DIFF[tier].ic + ' ' : ''}${LEVELS[i].ch + 1}-${i % 5 + 1}. ${LEVELS[i].name}`; music(tier >= 3 ? 'm_nightmare' : CH_MUSIC[LEVELS[i].ch] || 'fight1'); fx = []; sfx = []; pending = null;
+  $('fName').textContent = `${tier ? DIFF[tier].ic + ' ' : ''}${LEVELS[i].ch + 1}-${i % 5 + 1}. ${LEVELS[i].name}`; music(tier >= 2 ? 'm_nightmare' : CH_MUSIC[LEVELS[i].ch] || 'fight1'); fx = []; sfx = []; pending = null;
   const res = await runLevel(i, train, tier);
   pending = null; buildActs();
   if (res.fled) return backHome();
@@ -1818,8 +1817,7 @@ async function victory(i, res) {
   const train = B.train, t = B.tier || 0, ST = starsArr(t), st = Math.round(res.alive / res.size * 3), first = !ST[i], ei = i + DIFF[t].eff, wasOpen = tierOpen(t + 1, LEVELS[i].ch); if (!train) ST[i] = Math.max(ST[i] || 0, st);
   const newTier = !train && t < DIFF.length - 1 && !wasOpen && tierOpen(t + 1, LEVELS[i].ch);
   let { xp, gold } = rewards(i, B.kills, true); xp = Math.round(xp * DIFF[t].xg); gold = Math.round(gold * DIFF[t].xg); if (train) { xp = Math.round(xp * .5); gold = Math.round(gold * .3); } const route = B.route; if (route === 'danger') { xp = Math.round(xp * 1.3); gold = Math.round(gold * 1.5); } S.gold += gold;
-  let defiGem = 0; if (route === 'defi' && !train) { defiGem = 3; S.gem = (S.gem || 0) + 3; if (!S.evd || S.evd.d !== today()) S.evd = { d: today(), l: [] }; S.evd.l.push(i); } const ups = grantXp(xp);
-  let enBack = 0; if (!train && st === 3) { enTick(); enBack = Math.min(1, Math.max(0, EN_MAX - S.en)); S.en += enBack; }
+  let defiGold = 0; if (route === 'defi' && !train) { defiGold = 3 * GEMG; S.gold += defiGold; if (!S.evd || S.evd.d !== today()) S.evd = { d: today(), l: [] }; S.evd.l.push(i); } S.shopW = (S.shopW || 0) + (train ? 0 : 1); const ups = grantXp(xp);
   const drops = []; if (!train) { if (Math.random() < .4 || first) { const k = Math.random() < .6 ? 'pot' : 'eth'; S.items[k]++; drops.push(k); } if (B.kills.some(f => f.elite)) { S.items.pot++; drops.push('pot'); } if (LEVELS[i].boss && first) { S.items.fea++; drops.push('fea'); } }
   const rec = first && !train && !t ? recruit(i) : null;
   const elites = B.kills.filter(f => f.elite).length, loot = train ? [] : rollLoot(ei, LEVELS[i].boss, elites);
@@ -1839,20 +1837,20 @@ async function victory(i, res) {
   if (ups.some(u => u[2])) setTimeout(SFX.levelup, 300);
   const nIt = train ? 0 : 1 + loot.length + (cFirst ? 1 : 0) + (legend ? 1 : 0);
   modal(`<h3>${train ? 'Entraînement réussi' : 'Victoire !'}</h3>${train ? '' : `<p style="text-align:center;font-size:30px;color:#c07a12;letter-spacing:4px">${'★'.repeat(st)}<span style="opacity:.25">${'★'.repeat(3 - st)}</span></p>
-    <p style="text-align:center;font-size:13px">${st === 3 ? `Toute l’équipe est debout !${enBack ? ` +${enBack} ⚡` : ''}` : 'Garde tout le monde en vie pour 3 étoiles (et +2 ⚡).'}</p>`}
+    <p style="text-align:center;font-size:13px">${st === 3 ? 'Toute l’équipe est debout !' : 'Garde tout le monde en vie pour 3 étoiles.'}</p>`}
     ${ups.map(([id, g, up]) => { const H = HEROES[id], s = S.h[id]; return `<div class="row"><img class="f" src="${FP}${H.face}.webp" alt=""><div class="grow"><b>${H.name}</b> +${g} XP ${up ? `<span class="lvup">· Niveau ${s.lvl} !</span>` : ''}<div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div></div>`; }).join('')}
-    <p style="text-align:center;margin-top:10px">+${gold} <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"> ${drops.map(k => `· <img class="poti ${ITEMS[k].cls}" src="${IP}uiPotion.webp" style="width:22px;vertical-align:-5px" alt=""> ${ITEMS[k].name}`).join(' ')}${defiGem ? ` · +${defiGem} 💎` : ''}${route !== 'safe' && !train ? `<br><small>${ROUTES[route].ic} ${ROUTES[route].n}</small>` : ''}</p>
+    <p style="text-align:center;margin-top:10px">+${gold} <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"> ${drops.map(k => `· <img class="poti ${ITEMS[k].cls}" src="${IP}uiPotion.webp" style="width:22px;vertical-align:-5px" alt=""> ${ITEMS[k].name}`).join(' ')}${defiGold ? ` · Défi : +${defiGold} or` : ''}${route !== 'safe' && !train ? `<br><small>${ROUTES[route].ic} ${ROUTES[route].n}</small>` : ''}</p>
     ${C ? `<p style="text-align:center;font-size:13px;margin-top:6px">${C.ic} Contrat <b>${C.n}</b> : ${cOk ? `réussi ! +${cGold} or${cFirst ? ' + un objet rare' : ''}` : 'raté.'}</p>` : ''}
     ${nIt ? `<p style="text-align:center;font-size:13px;margin-top:8px">🎁 ${nIt} objet${nIt > 1 ? 's' : ''} ajouté${nIt > 1 ? 's' : ''} à ton sac · <b>Héros &amp; équipement</b> sur la carte</p>` : ''}
     ${rec ? `<div class="row" style="background:rgba(255,215,106,.5)"><img class="f" src="${FP}${HEROES[rec].face}.webp" alt=""><div class="grow"><b>${HEROES[rec].name} rejoint l’équipe !</b><small>${HEROES[rec].desc}</small></div></div>` : ''}
-    <button class="btn" type="button" data-home="1">Continuer</button>${train ? `<button class="btn alt" type="button" data-train="${i}">Rejouer en entraînement</button>` : `<button class="btn alt" type="button" data-play="${i}">Rejouer · ${enCost(i)} ⚡</button>`}`);
+    <button class="btn" type="button" data-home="1">Continuer</button>${train ? `<button class="btn alt" type="button" data-train="${i}">Rejouer en entraînement</button>` : `<button class="btn alt" type="button" data-play="${i}">Rejouer</button>`}`);
   const endK = CHAPTERS[LEVELS[i].ch].end, q = []; if (first && !t && STORY['v' + i]) q.push('v' + i); if (LEVELS[i].boss && first && !t) q.push(endK); if (rec) q.push(rec);
   const run = () => { const k = q.shift(); if (!k) return; if (k === endK && CHAPTERS[LEVELS[i].ch + 1]) { S.ch = LEVELS[i].ch + 1; save(); renderHome(); } story(k, run); };
   modalCb = run;
 }
 function defeat(i) { const { xp } = rewards(i, B.kills, false); grantXp(xp); save(); stinger('m_defeat'); say('Ton équipe est tombée…');
   modal(`<h3>Défaite…</h3><p style="text-align:center">Tes héros gardent ${xp} XP de ce combat.</p><p style="font-size:13px">💡 Défends-toi quand le boss lève sa faux, garde l’<b>Ultime</b> pour les moments durs, et améliore tes armes à la <b>Forge</b>. Tu peux aussi rejouer un niveau d’avant pour gagner des niveaux.</p>
-    <button class="btn" type="button" data-${B.train ? 'train' : 'play'}="${i}">Réessayer${B.train ? '' : ` · ${enCost(i)} ⚡`}</button><button class="btn alt" type="button" data-home="1">Carte</button>`); }
+    <button class="btn" type="button" data-${B.train ? 'train' : 'play'}="${i}">Réessayer</button><button class="btn alt" type="button" data-home="1">Carte</button>`); }
 let storyNext = null;
 // ---------- Chests ----------
 const rcss = it => `--rc:${RAR[it.r].c};--rg:${RAR[it.r].g}`;
@@ -1984,7 +1982,7 @@ function adminSheet() { modal(`<h3>⚙️ Menu test</h3><p style="text-align:cen
   <button class="btn red" type="button" data-adm="reset">🔄 Recommencer à zéro</button>
   <p style="text-align:center;font-size:13px;margin:10px 0 4px"><b>Aller au début d’un chapitre</b> (héros et niveaux adaptés)</p>
   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px">${CHAPTERS.map((c, j) => `<button class="btn alt" type="button" data-adm="ch${j}" style="padding:8px 4px;font-size:15px;margin:0">Ch. ${j + 1}</button>`).join('')}</div>
-  <button class="btn alt" type="button" data-adm="en">⚡ Énergie pleine</button><button class="btn alt" type="button" data-adm="gold">💰 +1 000 or</button>
+  <button class="btn alt" type="button" data-adm="gold">💰 +1 000 or</button>
   <button class="btn alt" type="button" data-adm="all">🔓 Tout débloquer (héros niv. 25)</button><button class="btn alt" type="button" data-adm="tiers">💀 Ouvrir toutes les difficultés</button><button class="btn alt" type="button" data-adm="gem">💎 +50 gemmes</button><button class="btn alt" type="button" data-adm="day">📅 Rendre le cadeau du jour à nouveau disponible</button><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
 function admin(k) {
   if (k === 'reset') { if (!confirm('Effacer la sauvegarde et recommencer au début ?')) return; try { localStorage.removeItem(SKEY); } catch (e) {} location.reload(); return; }
@@ -2016,7 +2014,6 @@ const TROPHIES = [
   { id: 'bg10', cat: 'Combos', n: 'Brise-glace', d: 'Réaliser 10 Brise-glace (Charge sur un ennemi gelé).', p: () => [tcv('brise'), 10], r: { gem: 5 } },
   { id: 'ult25', cat: 'Combos', n: 'Déchaîné', d: 'Lancer 25 Ultimes.', p: () => [tcv('ults'), 25], r: { gold: 400 } },
   ...CHAPTERS.map((c, j) => ({ id: 'ch' + j, cat: 'Progression', n: c.name, d: `Terminer le chapitre ${j + 1}.`, p: () => [chDone(0, j) ? 1 : 0, 1], r: { gem: 5 + j } })),
-  { id: 'log7', cat: 'Progression', n: 'Fidèle au poste', d: 'Réclamer 7 récompenses quotidiennes.', p: () => [(S.login && S.login.n) || 0, 7], r: { gem: 5 } },
   ...DIFF.slice(1).map((D, j) => ({ id: 't' + (j + 1), cat: 'Difficulté', n: `${D.ic} ${D.n}`, d: `Terminer un chapitre en ${D.n}.`, p: () => [CHAPTERS.some((_, c) => chDone(j + 1, c)) ? 1 : 0, 1], r: { gem: [10, 15, 20, 30][j] } })),
   { id: 'r10', cat: 'Collection', n: 'Collectionneur', d: 'Obtenir 10 objets Rares ou mieux.', p: () => [tcv('rare'), 10], r: { chest: 1 } },
   { id: 'ep5', cat: 'Collection', n: 'Trésor épique', d: 'Obtenir 5 objets Épiques ou mieux.', p: () => [tcv('epic'), 5], r: { gem: 10 } },
@@ -2027,7 +2024,9 @@ const GEM = `<img src="${FP}uiGem.webp" class="ico" alt="gemmes">`, ENI = `<img 
 const rwHtml = r => [r.gold ? `${r.gold} or` : '', r.en ? `${r.en} ${ENI}` : '', r.gem ? `${r.gem} ${GEM}` : '', r.chest ? '🎁 coffre spécial' : ''].filter(Boolean).join(' + ');
 const trDone = T => { const [a, b] = T.p(); return a >= b; };
 const trClaimable = () => TROPHIES.filter(T => trDone(T) && !(S.trd || {})[T.id]).length;
-function giveReward(r) { if (r.gold) S.gold += r.gold; if (r.gem) S.gem = (S.gem || 0) + r.gem; if (r.en) { enTick(); S.en += r.en; } }
+// 2.0 lot 2: no gems, no energy — every reward that gave them now gives gold
+const GEMG = 40, ENG = 10, R$ = r => { const o = { ...r }; if (o.gem) { o.gold = (o.gold || 0) + o.gem * GEMG; delete o.gem; } if (o.en) { o.gold = (o.gold || 0) + o.en * ENG; delete o.en; } return o; };
+function giveReward(r) { r = R$(r); if (r.gold) S.gold += r.gold; }
 function trCheck() { if (SIM) return; S.trn = S.trn || {}; for (const T of TROPHIES) if (trDone(T) && !S.trn[T.id]) { S.trn[T.id] = 1; toast(`<img src="${FP}uiTrophy.webp" class="ico" alt=""> Trophée débloqué : <b>${T.n}</b>`); } save(); }
 let trCat = 'Combat';
 function trophySheet(cat) { if (cat) trCat = cat; S.trd = S.trd || {};
@@ -2036,7 +2035,7 @@ function trophySheet(cat) { if (cat) trCat = cat; S.trd = S.trd || {};
     return `<div class="tro ${got ? 'got' : done ? 'ready' : ''}"><img src="${FP}uiTrophy.webp" alt=""><div class="grow"><b>${T.n}</b><small>${T.d}</small><div class="xpb"><i style="width:${Math.min(100, a / b * 100)}%"></i></div><small>${Math.min(a, b)} / ${b} · ${rwHtml(T.r)}</small></div>
       ${got ? '<span class="ok">✓</span>' : done ? `<button type="button" data-trc="${T.id}">Réclamer</button>` : '<span class="lk">🔒</span>'}</div>`; }).join('');
   modal(`<h3>🏆 Trophées</h3><div class="tabsx tcat">${TCATS.map((c, j) => `<button type="button" data-tcat="${c}" class="${c === trCat ? 'on' : ''}">${c}${n[j] ? ` <span class="dot2">${n[j]}</span>` : ''}</button>`).join('')}</div>${n.some(x => x) ? `<button class="btn" type="button" data-trall="1">🏆 Tout réclamer (${n.reduce((a, b) => a + b, 0)})</button>` : ''}${rows}
-    <p style="text-align:center;font-size:13px;margin-top:8px">${GEM} ${S.gem || 0} gemmes · elles servent à recharger l’énergie.</p><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
+    <button class="btn alt" type="button" data-close="1">Fermer</button>`); }
 async function claimTrophy(id) { const T = TROPHIES.find(x => x.id === id); S.trd = S.trd || {}; if (!T || S.trd[id] || !trDone(T)) return trophySheet();
   S.trd[id] = 1; giveReward(T.r); save(); SFX.win(); toast(`🏆 ${T.n} : +${rwHtml(T.r)}`); renderHome();
   if (T.r.chest) { const top = Math.max(0, S.stars.reduce((m, x, i) => x ? i : m, 0)); closeModal(); await lootChoice(makeChoice(top, true, 1, true), '🎁 Coffre du collectionneur'); renderHome(); }
@@ -2059,8 +2058,9 @@ function sellSheet() { const g = sellGroups();
 function sellGroup(k) { const l = (sellGroups().find(x => x[0] === k) || [, , []])[2]; if (!l.length) return sellSheet(); const g = l.reduce((a, it) => a + sellPrice(it), 0), ids = new Set(l.map(it => it.id));
   S.inv = S.inv.filter(it => !ids.has(it.id)); S.gold += g; save(); SFX.coin(); toast(`💰 ${l.length} objet${l.length > 1 ? 's' : ''} vendu${l.length > 1 ? 's' : ''} : +${g} or`); renderHome(); sellSheet(); }
 // ---------- Daily login: 7-day calendar; a missed day never resets the series, it simply continues ----------
-const LOGIN = [{ gold: 100 }, { en: 5 }, { gem: 2 }, { gold: 250 }, { en: 10 }, { gem: 5 }, { gem: 10, chest: 1 }];
-const loginReady = () => S.login && S.login.day !== today() && clockOk();
+const LOGIN = [{ gold: 100 }, { en: 5 }, { gem: 2 }, { gold: 250 }, { en: 10 }, { gem: 5 }, { gem: 10, chest: 1 }].map(r => R$(r));
+TROPHIES.forEach(T => { T.r = R$(T.r); });
+const loginReady = () => false; // 2.0 lot 2: no daily gift in the premium game
 function loginSheet() { S.login = S.login || { day: '', n: 0 }; const d = S.login.n % 7, ready = loginReady();
   modal(`<h3>🎁 Récompense du jour</h3><p style="text-align:center;font-size:13px">Reviens chaque jour. Un jour manqué ne remet pas la série à zéro.</p>
     <div class="cal">${LOGIN.map((r, j) => `<div class="${j < d ? 'past' : j === d && ready ? 'now' : ''}"><small>Jour ${j + 1}</small><b>${rwHtml(r)}</b>${j < d ? '<span>✓</span>' : ''}</div>`).join('')}</div>
@@ -2071,8 +2071,16 @@ async function claimLogin() { if (!loginReady()) return loginSheet(); const r = 
 const SHOPCH = { epic: { n: 'Coffre épique', r: 3, price: 2500, img: 'uiChest2', d: 'Un objet Épique avec un pouvoir spécial ✦' }, leg: { n: 'Coffre légendaire', r: 4, price: 8000, img: 'uiChest3', d: 'Un objet Légendaire avec un pouvoir spécial ✦' } };
 async function buyChest(k) { const C = SHOPCH[k]; if (!C || S.gold < C.price) return; S.gold -= C.price; const top = Math.max(0, S.stars.reduce((m, x, i) => x ? i : m, 0)), slot = pick(['w', 'a', 'j']);
   const it = makeItem(slot, C.r, top + 1, pick(S.team), true); S.inv.push(it); gotItem(it); save(); renderHome(); closeModal(); await openChests([it]); shopSheet(); }
-function shopSheet() {
-  modal(`<h3>Boutique</h3>${Object.entries(ITEMS).map(([k, I]) => `<div class="row"><img class="f poti ${I.cls}" src="${IP}uiPotion.webp" alt="" style="border:0;border-radius:0;object-fit:contain;background:none"><div class="grow"><b>${I.name}</b> ×${S.items[k]}<small>${I.tip}</small></div><button type="button" data-buy="${k}" ${S.gold >= I.price ? '' : 'disabled'}>${I.price}<img src="${IP}uiGold.webp" alt=""></button></div>`).join('')}
+// 2.0 lot 2: gold has a real use again — 4 pieces of gear matched to your progress, restocked every 3 victories
+const SHOP_N = 4, SHOP_EVERY = 3;
+const shopTop = () => Math.max(0, S.stars.reduce((m, x, i) => x ? i : m, 0));
+const shopPrice = it => Math.round(sellPrice(it) * 4 / 10) * 10;
+function shopStock() { if (!S.shop || !S.shop.l || (S.shopW || 0) >= SHOP_EVERY) { const top = shopTop(), rs = [1, 2, 2, 3];
+    S.shop = { l: ['w', 'a', 'j', ['w', 'a', 'j'][Math.floor(Math.random() * 3)]].map((slot, k) => makeItem(slot, Math.min(4, rs[k] + (top >= 25 ? 1 : 0)), top + 1, pick(S.team))) }; S.shopW = 0; save(); }
+  return S.shop.l; }
+function shopSheet() { const stock = shopStock(), left = SHOP_EVERY - (S.shopW || 0);
+  modal(`<h3>Boutique</h3><p style="text-align:center;font-size:13px;margin:0 0 6px"><b>Équipement</b> · nouveau stock dans ${left} victoire${left > 1 ? 's' : ''}</p>${stock.length ? stock.map((it, k) => itemHtml(it, null, `<button type="button" data-bgear="${k}" ${S.gold >= shopPrice(it) ? '' : 'disabled'}>${shopPrice(it)}<img src="${IP}uiGold.webp" alt=""></button>`)).join('') : '<p style="text-align:center;font-size:13px">Tout est vendu ! Reviens après quelques victoires.</p>'}
+    <p style="text-align:center;font-size:13px;margin:12px 0 0"><b>Potions</b></p>${Object.entries(ITEMS).map(([k, I]) => `<div class="row"><img class="f poti ${I.cls}" src="${IP}uiPotion.webp" alt="" style="border:0;border-radius:0;object-fit:contain;background:none"><div class="grow"><b>${I.name}</b> ×${S.items[k]}<small>${I.tip}</small></div><button type="button" data-buy="${k}" ${S.gold >= I.price ? '' : 'disabled'}>${I.price}<img src="${IP}uiGold.webp" alt=""></button></div>`).join('')}
     <p style="text-align:center;font-size:13px;margin:12px 0 0"><b>Coffres</b></p>${Object.entries(SHOPCH).map(([k, C]) => `<div class="row"><img class="f" src="${IP}${C.img}.webp" alt="" style="border:0;border-radius:0;object-fit:contain;background:none"><div class="grow"><b>${C.n}</b><small>${C.d}</small></div><button type="button" data-bchest="${k}" ${S.gold >= C.price ? '' : 'disabled'}>${C.price}<img src="${IP}uiGold.webp" alt=""></button></div>`).join('')}
     <p style="text-align:center;margin-top:10px"><b>${S.gold}</b> <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"></p><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
 function helpSheet() { modal(`<h3>Comment jouer</h3>
@@ -2097,6 +2105,9 @@ document.addEventListener('click', e => {
   if (d.hsback) return heroSheet();
   if (d.tcat) return trophySheet(d.tcat);
   if (d.login) return claimLogin();
+  if (d.svsheet) { SFX.click(); return saveSheet(); }
+  if (d.svcopy) { const t = $('svOut'); t.select(); const done = () => toast('📋 Code copié'); if (navigator.clipboard) navigator.clipboard.writeText(t.value).then(done, () => { document.execCommand('copy'); done(); }); else { document.execCommand('copy'); done(); } return; }
+  if (d.svimp) { const v = $('svIn').value.trim(); if (!v) return toast('Colle d’abord ton code.'); if (!confirm('Remplacer ta partie actuelle par celle de ce code ?')) return; if (importSave(v)) location.reload(); return; }
   if (d.gemen) { if ((S.gem || 0) >= 15) { S.gem -= 15; enTick(); S.en = Math.max(S.en, EN_MAX); S.enT = Date.now(); save(); SFX.win(); toast('⚡ Énergie pleine !'); renderHome(); } return energySheet(); }
   if (d.enfree) { if (S.day !== today() && clockOk()) { S.day = today(); S.en = Math.min(EN_MAX, S.en + EN_MAX / 2); if (S.en >= EN_MAX) S.enT = Date.now(); save(); SFX.win(); toast(`⚡ +${EN_MAX / 2} énergie !`); renderHome(); } return energySheet(); }
   if (d.train != null) { modalCb = null; return playLevel(+d.train, true); }
@@ -2128,23 +2139,33 @@ document.addEventListener('click', e => {
   if (d.pick && teamCtl) { const id = d.pick; if (!S.own[id]) return; const s = teamCtl.sel, i = s.indexOf(id); if (i >= 0) s.splice(i, 1); else if (s.length < teamCtl.need) s.push(id); SFX.click(); return teamCtl.draw(); }
   if (d.teamok && teamCtl) { S.team = teamCtl.sel.slice(); save(); teamCtl = null; closeModal(); renderHome(); return; }
   if (d.up) { const [id, k] = d.up.split(':'), s = S.h[id], c = upCost(s[k]); if (S.gold < c) return; S.gold -= c; s[k]++; save(); SFX.coin(); forgeSheet(); renderHome(); return; }
+  if (d.bgear != null) { const it = (S.shop && S.shop.l || [])[+d.bgear], p = it && shopPrice(it); if (!it || S.gold < p) return; S.gold -= p; S.shop.l.splice(+d.bgear, 1); it.isNew = 1; S.inv.push(it); gotItem(it); save(); SFX.coin(); renderHome(); closeModal(); itemDecide(it, { title: 'Acheté !' }).then(() => shopSheet()); return; }
   if (d.buy) { const I = ITEMS[d.buy]; if (S.gold < I.price) return; S.gold -= I.price; S.items[d.buy]++; save(); SFX.coin(); shopSheet(); renderHome(); return; }
 });
 $('teamBtn').addEventListener('click', teamSheet);
-$('enBtn').addEventListener('click', () => { SFX.click(); energySheet(); });
+
 $('trBtn').addEventListener('click', () => { SFX.click(); trophySheet(); });
-$('loginBtn').addEventListener('click', () => { SFX.click(); loginSheet(); });
-$('gemBtn').addEventListener('click', () => { SFX.click(); energySheet(); });
+
+
 $('ver').addEventListener('click', e => { if (e.target.id === 'replayIntro') playIntro(); if (e.target.id === 'adminBtn' && DEV) adminSheet(); });
 $('forgeBtn').addEventListener('click', forgeSheet);
 $('shopBtn').addEventListener('click', shopSheet);
 $('helpBtn').addEventListener('click', helpSheet);
 $('newsBtn').addEventListener('click', () => { SFX.click(); histSheet(); });
 $('heroesBtn').addEventListener('click', () => heroSheet(S.team[0], 'eq'));
-$('storyBtn').addEventListener('click', () => { const C = CHAPTERS[S.ch], done = S.stars[LEVELS.findIndex(L => L.ch === S.ch && L.boss)]; story(done ? C.end : C.story); });
+
 function setMute(m) { muted = m; S.mute = muted; save(); if (muted) bgm.pause(); else { ac(); music(bgm.dataset.k || 'm_theme'); } renderHome(); }
 function soundSheet() { const sl = (k, n) => `<label class="vol"><span>${n}</span><input type="range" min="0" max="100" step="5" value="${Math.round(VOL[k] * 100)}" data-vol="${k}"><b id="vol_${k}">${Math.round(VOL[k] * 100)} %</b></label>`;
-  modal(`<h3>Son</h3>${sl('m', '🎵 Musique')}${sl('s', '💥 Bruitages')}<button class="btn alt" type="button" data-mute="1">${muted ? '🔊 Réactiver le son' : '🔇 Couper tout le son'}</button><button class="btn" type="button" data-close="1">OK</button>`); }
+  modal(`<h3>Son</h3>${sl('m', '🎵 Musique')}${sl('s', '💥 Bruitages')}<button class="btn alt" type="button" data-mute="1">${muted ? '🔊 Réactiver le son' : '🔇 Couper tout le son'}</button><button class="btn alt" type="button" data-svsheet="1">💾 Sauvegarde : copier / restaurer</button><button class="btn" type="button" data-close="1">OK</button>`); }
+// 2.0 lot 2: the save lives in the browser and can be wiped; a copyable code lets the player keep it and restore it anywhere
+const saveCode = () => btoa(unescape(encodeURIComponent(JSON.stringify(S))));
+function saveSheet() { save(); modal(`<h3>💾 Sauvegarde</h3><p style="font-size:13px;text-align:center">Copie ce code et garde-le (Notes, e-mail). Il permet de retrouver ta partie sur un autre appareil ou si le navigateur l’efface.</p>
+  <textarea id="svOut" readonly rows="3" style="width:100%;font-size:11px;border-radius:10px;padding:6px">${saveCode()}</textarea><button class="btn" type="button" data-svcopy="1">📋 Copier le code</button>
+  <p style="font-size:13px;text-align:center;margin-top:10px">Restaurer une partie :</p><textarea id="svIn" rows="3" placeholder="Colle ton code ici" style="width:100%;font-size:12px;border-radius:10px;padding:6px"></textarea>
+  <button class="btn alt" type="button" data-svimp="1">Restaurer cette partie</button><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
+function importSave(v) { let o = null; try { o = JSON.parse(decodeURIComponent(escape(atob(String(v).replace(/\s+/g, ''))))); } catch (e) {}
+  if (!o || o.v !== 2 || !o.h || !Array.isArray(o.stars)) { toast('Ce code de sauvegarde n’est pas valide.'); return false; }
+  try { localStorage.setItem(SKEY, JSON.stringify(o)); } catch (e) { toast('Impossible d’écrire la sauvegarde.'); return false; } return true; }
 $('snd').addEventListener('click', () => { ac(); soundSheet(); });
 sheet.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.vol; if (!k) return; VOL[k] = +e.target.value / 100; $('vol_' + k).textContent = e.target.value + ' %'; S.vol = { ...VOL }; save();
   if (k === 'm') bgm.volume = MUSV(); else { if (BUS) BUS.gain.value = VOL.s; SFX.click(); } });
