@@ -9,7 +9,7 @@ const H = ['aldric', 'selena', 'orin', 'lyra', 'nyx'];
 const inv = [{ id: 1, slot: 'w', r: 2, t: 12, st: { atk: 20 }, hero: 'aldric', img: 'wAxe', name: 'Hache du bourreau' }, { id: 2, slot: 'a', r: 3, t: 12, st: { hp: 90, def: 9 }, img: 'a2armure', name: 'Armure de braise' },
   { id: 3, slot: 'j', r: 2, t: 33, st: { crit: .05 }, img: 'a4amulette', name: 'Pendentif de givre' }, { id: 4, slot: 'w', r: 4, t: 48, st: { mag: 60, crit: .08 }, hero: 'orin', img: 'wLegM', name: 'Bâton du Néant' }, { id: 5, slot: 'a', r: 0, t: 3, st: { hp: 20, def: 1 }, img: 'a0armure', name: 'Armure d’os' }];
 const base = o => Object.assign({ v: 2, gold: 1000, gem: 0, items: { pot: 3, eth: 1, fea: 1, eli: 0 }, h: Object.fromEntries(H.map(k => [k, { lvl: 12, xp: 0, w: 2, a: 2, eq: k === 'aldric' ? { w: 1, a: 2 } : {} }])),
-  team: ['aldric', 'selena', 'orin'], own: { aldric: 1, selena: 1, orin: 1 }, stars: [3, 3, 3, 3, 3, 2].concat(Array(44).fill(0)), seen: { in: 1, vid: 1, n09: 1, n10: 1, ver: '1.5', in2: 1 }, mute: true, ch: 1, inv, nid: 10, spd: 3 }, o);
+  team: ['aldric', 'selena', 'orin'], own: { aldric: 1, selena: 1, orin: 1 }, stars: [3, 3, 3, 3, 3, 2].concat(Array(44).fill(0)), seen: { in: 1, vid: 1, n09: 1, n10: 1, ver: '1.5.1', in2: 1 }, mute: true, ch: 1, inv, nid: 10, spd: 3 }, o);
 srv.listen(0, async () => {
   const url = `http://127.0.0.1:${srv.address().port}/dragonbound2/index.html`, b = await chromium.launch(), errs = [];
   for (const [w, h, tag] of [[390, 844, 'portrait'], [1180, 820, 'paysage']]) {

@@ -326,7 +326,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.5 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.5.1 (10 chapitres)';
 const DEV = true; // 1.3: set to false for the commercial build (removes the test menu)
 const IP = '../dragonbound/img/', AP = '../dragonbound/audio/', FP = 'img/';
 const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
@@ -1806,7 +1806,7 @@ function heroSheet(id, tab) { if (id) hsCtl.id = id; if (tab) hsCtl.tab = tab; c
     <div class="stats"><span>❤️ ${st.hp}</span><span>💧 ${st.mp}</span><span>⚔️ ${st.atk}</span><span>✨ ${st.mag}</span><span>🛡️ ${st.def}</span><span>🎯 ${Math.round(st.crit * 100)} %</span></div>
     <div class="slots">${slots}</div>${setSum(st)}${specOf(id) ? `<p style="text-align:center;font-size:13px;margin:4px 0">${specOf(id)[2]} Voie : <b>${specOf(id)[1]}</b></p>` : ''}
     <div class="tabsx"><button type="button" data-htab="eq" class="${hsCtl.tab === 'eq' ? 'on' : ''}">Sac (${bag.length})</button><button type="button" data-htab="sk" class="${hsCtl.tab === 'sk' ? 'on' : ''}">Compétences${pts ? ` (${pts})` : ''}</button><button type="button" data-htab="sp" class="${hsCtl.tab === 'sp' ? 'on' : ''}">Voie${!s.spec && s.lvl >= SPEC_LV ? ' (!)' : ''}</button></div>
-    ${hsCtl.tab === 'sp' ? specHtml(id) : hsCtl.tab === 'sk' ? `<p style="text-align:center;font-size:13px">${maxed(id) ? `🏅 Compétences au maximum · <b>Maîtrise ${st.mast}</b> : +${(st.mast * 1.5).toFixed(1).replace('.', ',')} % à toutes les stats<br><small>Chaque nouveau point (1 tous les 2 niveaux) ajoute +1,5 %.</small>` : `Points à dépenser : <b>${pts}</b> · 1 point tous les 2 niveaux`}</p>${sks}` : `<button class="btn" type="button" data-autoeq="1" style="padding:8px;font-size:16px">Équiper le meilleur pour tous</button>${list}`}
+    ${hsCtl.tab === 'sp' ? specHtml(id) : hsCtl.tab === 'sk' ? `<p style="text-align:center;font-size:13px">${maxed(id) ? `🏅 Compétences au maximum · <b>Maîtrise ${st.mast}</b> : +${(st.mast * 1.5).toFixed(1).replace('.', ',')} % à toutes les stats<br><small>Chaque nouveau point (1 tous les 2 niveaux) ajoute +1,5 %.</small>` : `Points à dépenser : <b>${pts}</b> · 1 point tous les 2 niveaux`}</p>${sks}` : `<div style="display:flex;gap:6px"><button class="btn" type="button" data-autoeq="1" style="padding:8px;font-size:15px">Équiper le meilleur</button><button class="btn alt" type="button" data-sellall="1" style="padding:8px;font-size:15px">💰 Vendre en lot</button></div>${list}`}
     <button class="btn alt" type="button" data-close="1">Fermer</button>`);
   save(); renderHome(); }
 function story(key, cb) { const lines = STORY[key]; let j = 0; if (key === 'out10') music('m_ending');
@@ -1888,12 +1888,29 @@ function trophySheet(cat) { if (cat) trCat = cat; S.trd = S.trd || {};
   const rows = TROPHIES.filter(T => T.cat === trCat).map(T => { const [a, b] = T.p(), done = a >= b, got = S.trd[T.id];
     return `<div class="tro ${got ? 'got' : done ? 'ready' : ''}"><img src="${FP}uiTrophy.webp" alt=""><div class="grow"><b>${T.n}</b><small>${T.d}</small><div class="xpb"><i style="width:${Math.min(100, a / b * 100)}%"></i></div><small>${Math.min(a, b)} / ${b} · ${rwHtml(T.r)}</small></div>
       ${got ? '<span class="ok">✓</span>' : done ? `<button type="button" data-trc="${T.id}">Réclamer</button>` : '<span class="lk">🔒</span>'}</div>`; }).join('');
-  modal(`<h3>🏆 Trophées</h3><div class="tabsx tcat">${TCATS.map((c, j) => `<button type="button" data-tcat="${c}" class="${c === trCat ? 'on' : ''}">${c}${n[j] ? ` <span class="dot2">${n[j]}</span>` : ''}</button>`).join('')}</div>${rows}
+  modal(`<h3>🏆 Trophées</h3><div class="tabsx tcat">${TCATS.map((c, j) => `<button type="button" data-tcat="${c}" class="${c === trCat ? 'on' : ''}">${c}${n[j] ? ` <span class="dot2">${n[j]}</span>` : ''}</button>`).join('')}</div>${n.some(x => x) ? `<button class="btn" type="button" data-trall="1">🏆 Tout réclamer (${n.reduce((a, b) => a + b, 0)})</button>` : ''}${rows}
     <p style="text-align:center;font-size:13px;margin-top:8px">${GEM} ${S.gem || 0} gemmes · elles servent à recharger l’énergie.</p><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
 async function claimTrophy(id) { const T = TROPHIES.find(x => x.id === id); S.trd = S.trd || {}; if (!T || S.trd[id] || !trDone(T)) return trophySheet();
   S.trd[id] = 1; giveReward(T.r); save(); SFX.win(); toast(`🏆 ${T.n} : +${rwHtml(T.r)}`); renderHome();
   if (T.r.chest) { const top = Math.max(0, S.stars.reduce((m, x, i) => x ? i : m, 0)); closeModal(); await lootChoice(makeChoice(top, true, 1, true), '🎁 Coffre du collectionneur'); renderHome(); }
   trophySheet(); }
+// 1.5.1: claim every finished trophy at once (chests are opened one after the other)
+async function claimAllTrophies() { S.trd = S.trd || {}; const ready = TROPHIES.filter(T => !S.trd[T.id] && trDone(T)); if (!ready.length) return trophySheet();
+  const tot = {}; let chests = 0; for (const T of ready) { S.trd[T.id] = 1; giveReward(T.r); for (const [k, v] of Object.entries(T.r)) if (k === 'chest') chests++; else tot[k] = (tot[k] || 0) + v; }
+  save(); SFX.win(); toast(`🏆 ${ready.length} trophée${ready.length > 1 ? 's' : ''} : +${rwHtml(tot)}`); renderHome();
+  if (chests) { closeModal(); const top = Math.max(0, S.stars.reduce((m, x, i) => x ? i : m, 0)); for (let c = 0; c < chests; c++) await lootChoice(makeChoice(top, true, 1, true), `🎁 Coffre du collectionneur${chests > 1 ? ` (${c + 1}/${chests})` : ''}`); renderHome(); }
+  trophySheet(); }
+// 1.5.1: bulk selling — never touches worn items, epics or legendaries
+function sellGroups() { const free = S.inv.filter(it => !wornBy(it)), heroes = Object.keys(S.own);
+  const worse = it => { const ids = heroes.filter(id => canWear(it, id)); return ids.length > 0 && ids.every(id => { const cur = itemById((S.h[id].eq || {})[it.slot]); return cur && itemScore(it, id) <= itemScore(cur, id); }); };
+  return [['r0', '⚪ Tous les objets Communs', free.filter(it => it.r === 0)], ['r1', '🟢 Tous les Peu communs', free.filter(it => it.r === 1)], ['r2', '🔵 Tous les Rares', free.filter(it => it.r === 2)],
+    ['worse', '⬇️ Tout ce qui est moins bien que l’équipement porté (Commun à Rare)', free.filter(it => it.r <= 2 && worse(it))]]; }
+function sellSheet() { const g = sellGroups();
+  modal(`<h3>💰 Vente en lot</h3><p style="text-align:center;font-size:13px">Les objets portés, Épiques et Légendaires ne sont jamais vendus.</p>
+    ${g.map(([k, n, l]) => `<button class="btn ${k === 'worse' ? '' : 'alt'}" type="button" data-sellg="${k}" ${l.length ? '' : 'disabled'} style="font-size:15px">${n}<br><small>${l.length} objet${l.length > 1 ? 's' : ''} · +${l.reduce((a, it) => a + sellPrice(it), 0)} or</small></button>`).join('')}
+    <button class="btn alt" type="button" data-hsback="1">Retour</button>`); }
+function sellGroup(k) { const l = (sellGroups().find(x => x[0] === k) || [, , []])[2]; if (!l.length) return sellSheet(); const g = l.reduce((a, it) => a + sellPrice(it), 0), ids = new Set(l.map(it => it.id));
+  S.inv = S.inv.filter(it => !ids.has(it.id)); S.gold += g; save(); SFX.coin(); toast(`💰 ${l.length} objet${l.length > 1 ? 's' : ''} vendu${l.length > 1 ? 's' : ''} : +${g} or`); renderHome(); sellSheet(); }
 // ---------- Daily login: 7-day calendar; a missed day never resets the series, it simply continues ----------
 const LOGIN = [{ gold: 100 }, { en: 5 }, { gem: 2 }, { gold: 250 }, { en: 10 }, { gem: 5 }, { gem: 10, chest: 1 }];
 const loginReady = () => S.login && S.login.day !== today() && clockOk();
@@ -1927,6 +1944,10 @@ document.addEventListener('click', e => {
   if (d.close) return closeModal();
   if (d.adm) return DEV ? admin(d.adm) : null;
   if (d.trc) return claimTrophy(d.trc);
+  if (d.trall) return claimAllTrophies();
+  if (d.sellall) return sellSheet();
+  if (d.sellg) return sellGroup(d.sellg);
+  if (d.hsback) return heroSheet();
   if (d.tcat) return trophySheet(d.tcat);
   if (d.login) return claimLogin();
   if (d.gemen) { if ((S.gem || 0) >= 15) { S.gem -= 15; enTick(); S.en = Math.max(S.en, EN_MAX); S.enT = Date.now(); save(); SFX.win(); toast('⚡ Énergie pleine !'); renderHome(); } return energySheet(); }
@@ -1995,6 +2016,7 @@ renderHome();
 function afterIntro() { if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.5.1', t: 'Version 1.5.1', d: `<p>• Trophées : bouton <b>Tout réclamer</b>.</p><p>• Sac : bouton <b>Vendre en lot</b> — tous les Communs, Peu communs ou Rares, ou tout ce qui est moins bien que l’équipement porté. Les objets portés, Épiques et Légendaires ne sont jamais vendus.</p>` },
   { v: '1.5', t: 'Version 1.5 · La grande refonte graphique', d: `<p>• <b>Héros animés</b> : Aldric, Séléna, Orin, Lyra et Nyx respirent, frappent, lancent leurs sorts, encaissent et tombent avec de vraies animations.</p>
   <p>• <b>Les 10 boss redessinés</b>, avec leurs poses d’attaque, de rage, d’ultime et de défaite.</p>
   <p>• <b>40 nouveaux décors</b> pour les chapitres 3 à 10 : fini les personnages qui flottent.</p>
