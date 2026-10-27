@@ -9,10 +9,12 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Dragonbound II">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<link rel="apple-touch-icon" href="../dragonbound/apple-touch-icon.png">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lilita+One&family=Nunito:wght@700;800;900&display=swap">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="icon" type="image/png" href="icon-192.png">
+<link rel="manifest" href="manifest.webmanifest">
+<style>/* 2.0 lot 5: fonts ship with the game (SIL Open Font License, see fonts/), no Google request, works offline */
+@font-face { font-family: 'Lilita One'; src: url(fonts/lilita-one.woff) format('woff'); font-display: swap; }
+@font-face { font-family: 'Nunito'; src: url(fonts/nunito.woff) format('woff'); font-weight: 700 900; font-display: swap; }</style>
 <style>
 /* Dark-fantasy party RPG: dusk purple backdrop, parchment-and-gold panels, full-screen battle stage with the party facing a wave. Portrait: controls below the stage; landscape: controls on the right. */
 :root {
@@ -345,7 +347,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.9.5 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.9.6 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
@@ -1758,7 +1760,7 @@ function stars(n) { return [0, 1, 2].map(i => `<i class="${i < n ? 'on' : ''}">�
 const unlocked = (i, t = tierOf(LEVELS[i].ch)) => demoLocked(LEVELS[i].ch) ? false : t ? tierOpen(t, LEVELS[i].ch) && (i % 5 === 0 || starsOf(t, i - 1) > 0) : i === 0 || S.stars[i - 1] > 0;
 function enUi() {} // 2.0 lot 2: no more energy
 function renderHome() {
-  enUi(); $('gold').textContent = S.gold; { const n = trClaimable(); $('trDot').style.display = n ? '' : 'none'; $('trDot').textContent = n; }  $('snd').textContent = muted ? '🔇' : '🔊'; $('ver').innerHTML = `${VERSION}<button type="button" id="replayIntro">Revoir l’intro</button>${DEV ? '<button type="button" id="adminBtn">⚙️ Test</button>' : ''}`;
+  enUi(); $('gold').textContent = S.gold; { const n = trClaimable(); $('trDot').style.display = n ? '' : 'none'; $('trDot').textContent = n; }  $('snd').textContent = muted ? '🔇' : '🔊'; $('ver').innerHTML = `${VERSION}<button type="button" id="replayIntro">Revoir l’intro</button><button type="button" id="creditsBtn">Crédits</button>${DEV ? '<button type="button" id="adminBtn">⚙️ Test</button>' : ''}`;
   const T = tierOf(S.ch), cur = LEVELS.findIndex((_, i) => LEVELS[i].ch === S.ch && unlocked(i) && !starsOf(T, i)), C = CHAPTERS[S.ch];
   $('tabs').innerHTML = CHAPTERS.map((ch, j) => `<button type="button" data-ch="${j}" class="${j === S.ch ? 'on' : ''}" ${demoLocked(j) ? 'data-demo="1"' : unlocked(LEVELS.findIndex(L => L.ch === j), 0) ? '' : 'disabled'} title="${ch.name}">${unlocked(LEVELS.findIndex(L => L.ch === j), 0) ? j + 1 : '🔒'}</button>`).join('');
   $('ban').style.backgroundImage = `url(${C.ban})`; $('chN').textContent = `CHAPITRE ${S.ch + 1}`; $('chT').textContent = C.name;
@@ -2107,6 +2109,14 @@ function demoSheet() { const done = S.stars[DEMO_CH * 5 - 1] > 0;
     <p style="font-size:14px">La version complète continue l’aventure :</p><p style="font-size:14px">• <b>7 chapitres de plus</b>, jusqu’à la Forteresse de Vorthax<br>• <b>Lyra et Nyx</b> rejoignent l’équipe<br>• <b>7 nouveaux boss</b> et la fin de l’histoire<br>• Difficile et Cauchemar sur tout le jeu</p>
     <p style="text-align:center;font-size:13px">Ta progression, tes héros et ton équipement sont conservés.</p>
     <button class="btn" type="button" disabled>⭐ Débloquer le jeu complet · bientôt</button><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
+// 2.0 lot 5: credits — who made what, and the tools and licences behind the art, sound and fonts
+function creditsSheet() { modal(`<h3>Crédits</h3><p style="text-align:center;font-size:14px"><b>Dragonbound II</b><br>${VERSION.split('·')[1] || ''}</p>
+  <p style="font-size:13px"><b>Création, direction artistique et histoire</b><br>Maxlolfr</p>
+  <p style="font-size:13px"><b>Programmation</b><br>Maxlolfr, avec l’assistant IA Claude (Anthropic)</p>
+  <p style="font-size:13px"><b>Illustrations, personnages et décors</b><br>Créés par Maxlolfr avec les outils d’IA Gemini (Google) et ChatGPT (OpenAI)</p>
+  <p style="font-size:13px"><b>Musiques et bruitages</b><br>Créés par Maxlolfr avec ElevenLabs</p>
+  <p style="font-size:13px"><b>Polices</b><br>Lilita One (Juan Montoreano) et Nunito (Vernon Adams, Cyreal), sous licence SIL Open Font License 1.1</p>
+  <p style="text-align:center;font-size:12px;opacity:.8">Merci d’avoir joué !</p><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
 function helpSheet() { modal(`<h3>Comment jouer</h3>
   <p>• À chaque tour, choisis une action pour chaque héros, puis les monstres attaquent. D’autres héros te rejoignent au fil de l’aventure.</p>
   <p>• Touche une compétence, puis l’ennemi (ou l’allié) à viser. <b>Appui long</b> sur un bouton pour savoir ce qu’il fait.</p>
@@ -2172,7 +2182,7 @@ $('teamBtn').addEventListener('click', teamSheet);
 $('trBtn').addEventListener('click', () => { SFX.click(); trophySheet(); });
 
 
-$('ver').addEventListener('click', e => { if (e.target.id === 'replayIntro') playIntro(); if (e.target.id === 'adminBtn' && DEV) adminSheet(); });
+$('ver').addEventListener('click', e => { if (e.target.id === 'replayIntro') playIntro(); if (e.target.id === 'creditsBtn') creditsSheet(); if (e.target.id === 'adminBtn' && DEV) adminSheet(); });
 $('forgeBtn').addEventListener('click', forgeSheet);
 $('shopBtn').addEventListener('click', shopSheet);
 $('helpBtn').addEventListener('click', helpSheet);
@@ -2209,6 +2219,7 @@ renderHome();
 function afterIntro() { if (S.selLate) { delete S.selLate; save(); return story('selena', afterIntro); } if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.6', t: 'Version 1.9.6 · Finitions', d: `<p>• <b>Icône du jeu</b> : Aldric sur ton écran d’accueil quand tu ajoutes le jeu (Partager → Sur l’écran d’accueil).</p><p>• Les polices sont intégrées au jeu : même rendu partout, même sans connexion.</p><p>• Nouvel écran <b>Crédits</b> en bas de l’accueil.</p>` },
   { v: '1.9.5', t: 'Version 1.9.5 · Plus lisible', d: `<p>• <b>Combats chargés lisibles</b> : alertes, icônes et barres de vie ne se chevauchent plus, et aucun monstre ne cache une barre. L’alerte indique simplement la cible (⚠️ → Aldric), les élites ont une étoile ★ colorée.</p><p>• <b>Victoire en un seul écran</b> : les coffres bonus sont listés directement, plus besoin de les ouvrir un par un.</p><p>• Les notifications arrivent deux par deux au lieu de recouvrir l’écran, et les annonces des boss sont plus courtes.</p>` },
   { v: '1.9.4', t: 'Version 1.9.4 · Le jeu complet, sans attente', d: `<p>• <b>Plus d’énergie ni de gemmes</b> : joue autant que tu veux. Tes gemmes ont été converties en or (40 or chacune).</p><p>• <b>3 difficultés</b> : Normal, Difficile, Cauchemar. Bats le boss d’un chapitre pour ouvrir la suivante. Ta progression en Héroïque compte pour Difficile, celle en Enfer pour Cauchemar.</p><p>• <b>Séléna arrive plus tôt</b>, dès la fin de l’Ossuaire (1-3). Le premier boss est un peu plus fort en conséquence.</p><p>• <b>Boutique</b> : 4 pièces d’équipement à acheter avec ton or, renouvelées toutes les 3 victoires.</p><p>• <b>Sauvegarde</b> : bouton 🔊 puis « Sauvegarde » pour copier un code et retrouver ta partie n’importe où.</p><p>• Accueil allégé : plus de cadeau du jour ni de bouton Histoire (les scènes se jouent toujours pendant l’aventure).</p>` },
   { v: '1.9.3', t: 'Version 1.9.3 · Plus fiable', d: `<p>• <b>Ton butin est protégé</b> : si le jeu se ferme pendant le choix d’un coffre ou du trésor d’un boss, il t’attend à la réouverture. Rien n’est perdu, rien n’est doublé.</p>` },

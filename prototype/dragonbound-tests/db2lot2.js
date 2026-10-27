@@ -14,6 +14,9 @@ srv.listen(0, async () => { const b = await chromium.launch(), errs = [], base =
   ok('Aucune fenêtre de cadeau du jour au démarrage', !(await pg.$('#modal:not([hidden]) [data-login]')));
   await closeAll();
   ok('Accueil : plus de boutons Cadeau du jour, Histoire, énergie ni gemmes', !(await pg.$('#loginBtn')) && !(await pg.$('#storyBtn')) && !(await pg.$('#enBtn')) && !(await pg.$('#gemBtn')));
+  await pg.evaluate(() => document.getElementById('creditsBtn').click()); await pg.waitForTimeout(300); const cr = await pg.textContent('#sheet');
+  ok('Écran de crédits : auteur, outils et licences des polices', cr.includes('Crédits') && cr.includes('Maxlolfr') && cr.includes('ElevenLabs') && cr.includes('Open Font License')); await closeAll();
+  ok('Polices du jeu chargées en local', await pg.evaluate(async () => { await document.fonts.ready; return document.fonts.check('20px "Lilita One"') && document.fonts.check('800 16px "Nunito"'); }));
   await pg.click('#shopBtn'); await pg.waitForTimeout(300);
   const n1 = (await pg.$$('[data-bgear]')).length; ok('Boutique : 4 pièces d’équipement en vente', n1 === 4, `${n1} en stock`);
   const s0 = await S();
