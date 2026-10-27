@@ -298,6 +298,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
     <div class="logo"><img src="../dragonbound/img/logo.webp" alt="Dragonbound"><span class="two">II</span></div>
 
     <span class="pill"><img src="../dragonbound/img/uiGold.webp" alt="or"><span id="gold">0</span></span>
+    <button class="iconbtn" id="langBtn" type="button" aria-label="Langue">🌐</button>
     <button class="iconbtn" id="snd" type="button" aria-label="Son">🔊</button>
   </div>
   <div class="tabs" id="tabs"></div>
@@ -348,7 +349,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.9.7 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.9.8 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
@@ -2167,7 +2168,7 @@ document.addEventListener('click', e => {
   if (d.hsback) return heroSheet();
   if (d.tcat) return trophySheet(d.tcat);
   if (d.login) return claimLogin();
-  if (d.lang) { S.lang = d.lang; save(); location.reload(); return; }
+  if (d.lang) { if (d.lang === LANG) return closeModal(); S.lang = d.lang; save(); location.reload(); return; }
   if (d.svsheet) { SFX.click(); return saveSheet(); }
   if (d.svcopy) { const t = $('svOut'); t.select(); const done = () => toast('📋 Code copié'); if (navigator.clipboard) navigator.clipboard.writeText(t.value).then(done, () => { document.execCommand('copy'); done(); }); else { document.execCommand('copy'); done(); } return; }
   if (d.svimp) { const v = $('svIn').value.trim(); if (!v) return toast('Colle d’abord ton code.'); if (!askOk('Remplacer ta partie actuelle par celle de ce code ?')) return; if (importSave(v)) location.reload(); return; }
@@ -2220,7 +2221,7 @@ $('heroesBtn').addEventListener('click', () => heroSheet(S.team[0], 'eq'));
 
 function setMute(m) { muted = m; S.mute = muted; save(); if (muted) bgm.pause(); else { ac(); music(bgm.dataset.k || 'm_theme'); } renderHome(); }
 function soundSheet() { const sl = (k, n) => `<label class="vol"><span>${n}</span><input type="range" min="0" max="100" step="5" value="${Math.round(VOL[k] * 100)}" data-vol="${k}"><b id="vol_${k}">${Math.round(VOL[k] * 100)} %</b></label>`;
-  modal(`<h3>Son</h3>${sl('m', '🎵 Musique')}${sl('s', '💥 Bruitages')}<button class="btn alt" type="button" data-mute="1">${muted ? '🔊 Réactiver le son' : '🔇 Couper tout le son'}</button><button class="btn alt" type="button" data-svsheet="1">💾 Sauvegarde : copier / restaurer</button><button class="btn alt" type="button" data-lang="${LANG === 'en' ? 'fr' : 'en'}">🌐 ${LANG === 'en' ? 'Français' : 'English'}</button><button class="btn" type="button" data-close="1">OK</button>`); }
+  modal(`<h3>Son</h3>${sl('m', '🎵 Musique')}${sl('s', '💥 Bruitages')}<button class="btn alt" type="button" data-mute="1">${muted ? '🔊 Réactiver le son' : '🔇 Couper tout le son'}</button><button class="btn alt" type="button" data-svsheet="1">💾 Sauvegarde : copier / restaurer</button><button class="btn" type="button" data-close="1">OK</button>`); }
 // 2.0 lot 2: the save lives in the browser and can be wiped; a copyable code lets the player keep it and restore it anywhere
 const saveCode = () => btoa(unescape(encodeURIComponent(JSON.stringify(S))));
 function saveSheet() { save(); modal(`<h3>💾 Sauvegarde</h3><p style="font-size:13px;text-align:center">Copie ce code et garde-le (Notes, e-mail). Il permet de retrouver ta partie sur un autre appareil ou si le navigateur l’efface.</p>
@@ -2231,6 +2232,10 @@ function importSave(v) { let o = null; try { o = JSON.parse(decodeURIComponent(e
   if (!o || o.v !== 2 || !o.h || !Array.isArray(o.stars)) { toast('Ce code de sauvegarde n’est pas valide.'); return false; }
   try { localStorage.setItem(SKEY, JSON.stringify(o)); } catch (e) { toast('Impossible d’écrire la sauvegarde.'); return false; } return true; }
 $('snd').addEventListener('click', () => { ac(); soundSheet(); });
+// language choice: its own button on the home screen; each language is written in itself and the current one is marked
+const LANGS = [['fr', '🇫🇷', 'Français'], ['en', '🇬🇧', 'English']];
+function langSheet() { modal(`<h3>🌐 Langue</h3><div translate="no">${LANGS.map(([k, f, n]) => `<button class="btn ${k === LANG ? '' : 'alt'}" type="button" data-lang="${k}">${f} ${n}${k === LANG ? ' ✓' : ''}</button>`).join('')}</div><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
+$('langBtn').addEventListener('click', () => { ac(); langSheet(); });
 sheet.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.vol; if (!k) return; VOL[k] = +e.target.value / 100; $('vol_' + k).textContent = e.target.value + ' %'; S.vol = { ...VOL }; save();
   if (k === 'm') bgm.volume = MUSV(); else { if (BUS) BUS.gain.value = VOL.s; SFX.click(); } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) ac(); });
@@ -2248,6 +2253,7 @@ renderHome();
 function afterIntro() { if (S.selLate) { delete S.selLate; save(); return story('selena', afterIntro); } if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.8', t: 'Version 1.9.8 · Bouton langue', d: `<p>• Nouveau bouton <b>🌐</b> en haut de l’accueil, à côté du son, pour choisir la langue du jeu.</p>`, en: { v: '1.9.8', t: 'Version 1.9.8 · Language button', d: `<p>• New <b>🌐</b> button at the top of the home screen, next to the sound, to choose the game’s language.</p>` } },
   { v: '1.9.7', t: 'Version 1.9.7 · English', d: `<p>• Le jeu est maintenant <b>disponible en anglais</b>. Change de langue dans le menu du son (🌐). Ta partie est conservée.</p><p>• Nouvelle icône du jeu.</p>`, en: { v: '1.9.7', t: 'Version 1.9.7 · English', d: `<p>• The game is now <b>available in English</b>. Switch language from the sound menu (🌐). Your progress is kept.</p><p>• New game icon.</p>` } },
   { v: '1.9.6', t: 'Version 1.9.6 · Finitions', d: `<p>• <b>Icône du jeu</b> : Aldric sur ton écran d’accueil quand tu ajoutes le jeu (Partager → Sur l’écran d’accueil).</p><p>• Les polices sont intégrées au jeu : même rendu partout, même sans connexion.</p><p>• Nouvel écran <b>Crédits</b> en bas de l’accueil.</p>` },
   { v: '1.9.5', t: 'Version 1.9.5 · Plus lisible', d: `<p>• <b>Combats chargés lisibles</b> : alertes, icônes et barres de vie ne se chevauchent plus, et aucun monstre ne cache une barre. L’alerte indique simplement la cible (⚠️ → Aldric), les élites ont une étoile ★ colorée.</p><p>• <b>Victoire en un seul écran</b> : les coffres bonus sont listés directement, plus besoin de les ouvrir un par un.</p><p>• Les notifications arrivent deux par deux au lieu de recouvrir l’écran, et les annonces des boss sont plus courtes.</p>` },

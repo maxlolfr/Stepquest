@@ -31,7 +31,8 @@ srv.listen(0, async () => { const b = await chromium.launch(), errs = [], miss =
   ok('Anglais : aucun texte français oublié sur les écrans parcourus', !left.length, left.slice(0, 60).join(' | '));
   ok('Anglais : la page est marquée en anglais', await pg.evaluate(() => document.documentElement.lang === 'en'));
   // the language button switches back to French and keeps the game
-  await pg.click('#snd', { force: true }); await pg.waitForTimeout(300);
+  await pg.click('#langBtn'); await pg.waitForTimeout(300);
+  ok('Bouton 🌐 de l’accueil : la liste des langues s’ouvre, English coché', (await pg.textContent('#sheet')).includes('English ✓'));
   await Promise.all([pg.waitForNavigation(), pg.click('[data-lang="fr"]', { force: true })]); await pg.waitForTimeout(500);
   const st = await pg.evaluate(() => JSON.parse(localStorage.getItem('dragonbound2.v2')));
   ok('Bouton langue : passe en français, partie conservée', st.lang === 'fr' && st.gold >= 9000 && await pg.evaluate(() => document.documentElement.lang !== 'en'), `lang ${st.lang} · or ${st.gold}`);
