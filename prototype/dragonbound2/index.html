@@ -246,6 +246,35 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 .item .btns button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; } .item .btns button img { width: 18px; height: 18px; object-fit: contain; flex: none; } .item .btns button:disabled { filter: grayscale(1); opacity: .6; }
 .item .btns button.sell, .item .btns button.buy { background: linear-gradient(#f2b632, #c07a12); border-color: #6a3b0a; color: #2a1406; }
 .item.eq { outline: 3px solid #2f7a3a; }
+.cfx { position: relative; height: 290px; overflow: hidden; margin: 4px -10px 0; cursor: pointer; }
+.cfx > * { position: absolute; left: 50%; top: 50%; translate: -50% -50%; }
+.cfx .rays { width: 460px; height: 460px; border-radius: 50%; background: repeating-conic-gradient(rgba(var(--rg), .55) 0 9deg, transparent 9deg 20deg); -webkit-mask: radial-gradient(circle, #000 18%, transparent 66%); mask: radial-gradient(circle, #000 18%, transparent 66%); opacity: 0; transform: scale(.3); }
+.cfx .cbox { width: 168px; height: 168px; object-fit: contain; filter: drop-shadow(0 0 18px rgba(var(--rg), .9)); animation: cdrop .6s cubic-bezier(.3,1.6,.5,1), cwig 1.1s .6s ease-in-out infinite; z-index: 2; }
+.cfx .burst { width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle, #fff 0, rgba(var(--rg), .95) 38%, transparent 70%); opacity: 0; z-index: 3; }
+.cfx .sp { width: 9px; height: 9px; border-radius: 50%; background: radial-gradient(circle, #fff, rgba(var(--rg), 1) 60%); opacity: 0; z-index: 3; }
+.cfx-item { width: 92%; display: flex; flex-direction: column; align-items: center; opacity: 0; transform: scale(.2); z-index: 4; text-align: center; }
+.cfx-item img { width: 116px; height: 116px; object-fit: contain; filter: drop-shadow(0 0 14px rgba(var(--rg), 1)) drop-shadow(0 4px 4px rgba(0,0,0,.35)); }
+.cfx-item b { font-family: var(--fd); font-size: 23px; color: var(--rc); -webkit-text-stroke: 1px rgba(0,0,0,.25); text-shadow: 0 2px 0 rgba(255,255,255,.7), 0 0 14px rgba(var(--rg), .8); margin-top: 4px; }
+.cfx-item small { font-weight: 900; color: var(--rc); text-transform: uppercase; letter-spacing: 1.5px; font-size: 12px; }
+.cfx-item em { font-style: normal; font-weight: 900; font-size: 15px; color: #8a5a00; margin-top: 4px; }
+.cfx-hint { text-align: center; margin: 0; font-weight: 800; min-height: 1.3em; animation: pulse 1.2s ease-in-out infinite; }
+.cfx.open .cbox { animation: cshake .45s ease-in-out, cout .35s .45s ease-in forwards; }
+.cfx.open .burst { animation: cburst .75s .42s ease-out forwards; }
+.cfx.open .rays { animation: craysin .5s .4s ease-out forwards, cspin 10s linear infinite; }
+.cfx.open .sp { animation: cspark .95s .45s ease-out forwards; }
+.cfx.open .cfx-item { animation: cpop .6s .55s cubic-bezier(.2,1.6,.4,1) forwards; } .cfx.open .cfx-item img { animation: cfloat 2.4s 1.2s ease-in-out infinite; }
+.cfx.r3.open .rays, .cfx.r4.open .rays { animation: craysin .5s .4s ease-out forwards, cspin 6s linear infinite; }
+@keyframes cdrop { from { transform: translateY(-160px) scale(.6); opacity: 0; } }
+@keyframes cwig { 0%, 60%, 100% { transform: rotate(0); } 70% { transform: rotate(-6deg) scale(1.04); } 80% { transform: rotate(6deg) scale(1.06); } 90% { transform: rotate(-3deg); } }
+@keyframes cshake { 0%, 100% { transform: rotate(0) scale(1.05); } 20% { transform: rotate(-12deg) scale(1.1); } 40% { transform: rotate(12deg) scale(1.14); } 60% { transform: rotate(-14deg) scale(1.18); } 80% { transform: rotate(14deg) scale(1.22); } }
+@keyframes cout { to { transform: scale(1.6); opacity: 0; } }
+@keyframes cburst { 0% { opacity: 1; transform: scale(.2); } 100% { opacity: 0; transform: scale(10); } }
+@keyframes craysin { to { opacity: 1; transform: scale(1); } }
+@keyframes cspin { to { rotate: 360deg; } }
+@keyframes cspark { 0% { opacity: 1; transform: rotate(var(--a)) translateY(0) scale(1.4); } 100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(-1 * var(--d))) scale(.4); } }
+@keyframes cpop { to { opacity: 1; transform: scale(1); } }
+@keyframes cfloat { 0%, 100% { translate: 0 0; } 50% { translate: 0 -6px; } }
+@media (prefers-reduced-motion: reduce) { .cfx .cbox, .cfx.open .cbox, .cfx .rays, .cfx-hint { animation: none !important; } .cfx.open .cbox { opacity: 0; } .cfx.open .cfx-item, .cfx.open .rays { animation: none !important; opacity: 1; transform: none; } }
 .chestbox { display: grid; place-items: center; min-height: 230px; }
 .chestbox img { width: 170px; height: 170px; object-fit: contain; animation: shake .8s ease-in-out infinite; filter: drop-shadow(0 0 22px rgba(var(--rg), .9)); }
 @keyframes shake { 0%,100% { transform: rotate(0) scale(1); } 20% { transform: rotate(-7deg) scale(1.04); } 40% { transform: rotate(7deg) scale(1.06); } 60% { transform: rotate(-9deg) scale(1.08); } 80% { transform: rotate(9deg) scale(1.08); } }
@@ -355,7 +384,7 @@ if (window.DB2_LANG !== 'fr') document.write('<script src="lang-' + window.DB2_L
 <script>
 (() => {
 'use strict';
-const VERSION = 'Ardael · Version 1.9.12 (10 chapitres)';
+const VERSION = 'Ardael · Version 1.9.13 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
@@ -1967,28 +1996,31 @@ function lootChoice(cands, title) { if (SIM) { const it = cands.reduce((a, b) =>
       ${cands.map((it, k) => itemHtml(it, null, `<button type="button" data-lpick="${k}">Choisir</button>${hint(it)}`)).join('')}`);
     pickNext = async k => { const it = cands[k]; pickNext = null; S.inv.push(it); gotItem(it); let g = 0; cands.forEach(o => { if (o !== it) g += sellPrice(o); }); S.gold += g; pendDone(cands); save(); SFX[it.r >= 3 ? 'win' : 'buff']();
       toast(`+${g} or pour les deux autres`); await itemDecide(it, { title }); closeModal(); done(it); }; }); }
-// after a fight: 3 closed chests, the player taps one; the two others open to show what was missed (and are sold)
-let chPickNext = null;
 // 2.0 lot 1: pending loot choices survive a closed app; each choice removes itself in the same save that adds the item
 const pendDone = cands => { if (S.pend && S.pend[0] && S.pend[0].c === cands) S.pend.shift(); };
 async function runPend() { while (S.pend && S.pend.length) { const p = S.pend[0]; await (p.t === 'c' ? chestPick : lootChoice)(p.c, p.n); if (S.pend && S.pend[0] === p) S.pend.shift(); }
   if (S.pend) { delete S.pend; save(); } }
-function chestPick(cands, title) { if (SIM) { const it = pick(cands); S.inv.push(it); pendDone(cands); return Promise.resolve(it); }
-  return new Promise(done => { SFX.chest();
-    modal(`<h3>${title}</h3><p style="text-align:center;font-size:13px">Choisis un coffre !</p><div class="ch3">${cands.map((_, k) => `<button type="button" data-chpick="${k}" style="animation-delay:${k * .15}s"><img src="${IP}uiChest2.webp" alt="coffre"></button>`).join('')}</div>`);
-    chPickNext = async k => { chPickNext = null; const it = cands[k]; S.inv.push(it); gotItem(it); let g = 0; cands.forEach(o => { if (o !== it) g += sellPrice(o); }); S.gold += g; pendDone(cands); save(); SFX.chest(); if (it.r >= 3) SFX.levelup();
-      const others = cands.filter(o => o !== it);
-      await itemDecide(it, { extra: `<p style="text-align:center;font-size:12.5px;margin:10px 0 2px;opacity:.85">Les autres coffres contenaient (revendus +${g} or) :</p><div class="missed">${others.map(o => `<span style="${rcss(o)}"><img src="${itemImg(o)}" alt="">${o.name}<small>${RAR[o.r].n}</small></span>`).join('')}</div>` });
-      closeModal(); done(it); }; }); }
-function openChests(items) { if (SIM || !items.length) return Promise.resolve(); return new Promise(done => { let j = 0;
-  const show = () => { const it = items[j], ck = it.r >= 4 ? 'uiChest3' : it.r >= 2 ? 'uiChest2' : 'uiChest1';
-    modal(`<h3>Coffre ${items.length > 1 ? `${j + 1} / ${items.length}` : ''}</h3><div class="chestbox" style="${rcss(it)}"><img src="${IP}${ck}.webp" alt="coffre"></div><p style="text-align:center">Touche le coffre pour l’ouvrir</p>`);
-    SFX.click(); const box = sheet.querySelector('.chestbox'); let opened = false;
-    const open = async () => { if (opened) return; opened = true; SFX.chest(); if (it.r >= 3) SFX.levelup();
-      await itemDecide(it, { title: `Coffre ${items.length > 1 ? `${j + 1} / ${items.length}` : ''}`, keep: j < items.length - 1 ? 'Garder et coffre suivant' : 'Garder dans le sac' });
-      j++; if (j < items.length) show(); else { closeModal(); done(); } };
-    box.addEventListener('click', open); setTimeout(open, 1600); };
-  show(); }); }
+// 1.9.13: one chest after a fight, opened with a show (it shakes, bursts, light rays, the item pops out in its rarity colour).
+// The level still rolls 3 items: the player gets the rarest (then the most useful), and the gold of the 2 others as a bonus.
+const chestImg = it => it.r >= 4 ? 'uiChest3' : it.r >= 2 ? 'uiChest2' : 'uiChest1';
+function chestFx(it, title, bonus = 0) { return new Promise(done => {
+  const sp = Array.from({ length: 16 }, (_, k) => `<i class="sp" style="--a:${k * 22.5 + (k % 2) * 8}deg;--d:${90 + (k % 3) * 28}px"></i>`).join('');
+  modal(`${title ? `<h3>${title}</h3>` : ''}<div class="cfx r${it.r}" data-chpick="0" style="${rcss(it)}"><div class="rays"></div><div class="burst"></div>${sp}<img class="cbox" src="${IP}${chestImg(it)}.webp" alt="coffre">
+    <div class="cfx-item"><img src="${itemImg(it)}" alt=""><b>${it.name}</b><small>${RAR[it.r].n}</small>${bonus ? `<em>💰 +${bonus} or</em>` : ''}</div></div><p class="cfx-hint">Touche le coffre pour l’ouvrir</p>`);
+  const box = sheet.querySelector('.cfx'); let st = 0, t1 = 0;
+  const go = () => { if (st === 0) { st = 1; clearTimeout(t1); box.classList.add('open'); sheet.querySelector('.cfx-hint').textContent = ''; SFX.chest(); if (it.r >= 3) setTimeout(() => SFX.levelup(), 450);
+      t1 = setTimeout(go, it.r >= 3 ? 2300 : 1700); } else if (st === 1) { st = 2; clearTimeout(t1); done(); } };
+  box.addEventListener('click', go); t1 = setTimeout(go, 1500); }); }
+const bestOf = cands => cands.reduce((a, b) => b.r > a.r || (b.r === a.r && bestWearer(b)[1] > bestWearer(a)[1]) ? b : a);
+// the item is granted once the chest has opened (same save that clears the pending entry): an app closed mid-show gets the same chest back
+function chestPick(cands, title) { const it = bestOf(cands); let g = 0; cands.forEach(o => { if (o !== it) g += sellPrice(o); });
+  const grant = () => { S.inv.push(it); gotItem(it); S.gold += g; pendDone(cands); save(); };
+  if (SIM) { grant(); return Promise.resolve(it); }
+  return chestFx(it, title, g).then(() => { grant(); return itemDecide(it, { title }); }).then(() => { closeModal(); return it; }); }
+function openChests(items) { if (SIM || !items.length) return Promise.resolve(); return (async () => {
+  for (let j = 0; j < items.length; j++) { const it = items[j], t = `Coffre ${items.length > 1 ? `${j + 1} / ${items.length}` : ''}`;
+    await chestFx(it, t); await itemDecide(it, { title: t, keep: j < items.length - 1 ? 'Garder et coffre suivant' : 'Garder dans le sac' }); }
+  closeModal(); })(); }
 // ---------- Hero sheet: stats, equipment, skills, bag ----------
 const setSum = st => { const a = Object.entries(st.sets || {}).filter(([, n]) => n >= 2); return a.length ? `<p style="text-align:center;font-size:12.5px;margin:4px 0">${a.map(([k, n]) => `${SETS[k].ic} <b>Set ${SETS[k].de}</b> ${n}/3 : ${SETS[k].b2}${n >= 3 ? ' + ' + SETS[k].b3 : ''}`).join('<br>')}</p>` : ''; };
 function specHtml(id) { const s = S.h[id];
@@ -2182,7 +2214,6 @@ document.addEventListener('click', e => {
   if (d.enfree) { if (S.day !== today() && clockOk()) { S.day = today(); S.en = Math.min(EN_MAX, S.en + EN_MAX / 2); if (S.en >= EN_MAX) S.enT = Date.now(); save(); SFX.win(); toast(`⚡ +${EN_MAX / 2} énergie !`); renderHome(); } return energySheet(); }
   if (d.train != null) { modalCb = null; return playLevel(+d.train, true); }
   if (d.ctr) { ctrSel = ctrSel === d.ctr ? null : d.ctr; SFX.click(); return levelSheet(+d.ctrlv, true); }
-  if (d.chpick != null && chPickNext) return chPickNext(+d.chpick);
   if (d.hist) return histSheet();
   if (d.mute) { setMute(!muted); return soundSheet(); }
   if (d.dtab) return decideAct('tab', d.dtab);
@@ -2259,6 +2290,7 @@ renderHome();
 function afterIntro() { if (S.selLate) { delete S.selLate; save(); return story('selena', afterIntro); } if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.13', t: 'Version 1.9.13 · Un coffre qui en jette', d: `<p>• Après un combat, <b>un seul coffre</b> : il tremble, éclate en lumière et l’objet en jaillit dans la couleur de sa rareté. Tu reçois toujours le meilleur objet du coffre, plus un bonus d’or.</p>`, en: { v: '1.9.13', t: 'Version 1.9.13 · A chest worth opening', d: `<p>• After a fight, <b>a single chest</b>: it shakes, bursts into light and the item leaps out in its rarity colour. You always get the chest’s best item, plus a gold bonus.</p>` }, th: { v: '1.9.13', t: 'เวอร์ชัน 1.9.13 · หีบสมบัติสุดอลัง', d: `<p>• หลังการต่อสู้ มี<b>หีบเพียงใบเดียว</b>: หีบสั่น ระเบิดเป็นแสง และไอเทมพุ่งออกมาในสีของระดับความหายาก คุณจะได้ไอเทมที่ดีที่สุดในหีบเสมอ พร้อมโบนัสทอง</p>` } },
   { v: '1.9.12', t: 'Version 1.9.12 · Compétences niveau 8', d: `<p>• Les compétences montent maintenant jusqu’au <b>rang 8</b> (au lieu de 5) : +70 % de puissance au maximum (Ultime +84 %). Tes héros déjà au maximum retrouvent des points à dépenser.</p><p>• La Maîtrise 🏅 prend le relais une fois les 5 compétences au rang 8 (vers le niveau 71).</p>`, en: { v: '1.9.12', t: 'Version 1.9.12 · Skills up to rank 8', d: `<p>• Skills now go up to <b>rank 8</b> (instead of 5): up to +70% power (Ultimate +84%). Heroes who were already maxed get points to spend again.</p><p>• Mastery 🏅 takes over once all 5 skills reach rank 8 (around level 71).</p>` }, th: { v: '1.9.12', t: 'เวอร์ชัน 1.9.12 · สกิลถึงระดับ 8', d: `<p>• ตอนนี้สกิลอัปได้ถึง<b>ระดับ 8</b> (จากเดิม 5): พลังสูงสุด +70 % (อัลติเมต +84 %) ฮีโร่ที่สกิลเต็มแล้วจะได้แต้มกลับมาใช้</p><p>• ความชำนาญ 🏅 จะเริ่มทำงานเมื่อสกิลทั้ง 5 ถึงระดับ 8 (ประมาณเลเวล 71)</p>` } },
   { v: '1.9.11', t: 'Version 1.9.11 · Accueil et boutique', d: `<p>• Boutique : les boutons d’achat de l’équipement s’affichent correctement.</p><p>• Accueil plus aéré : boutons plus grands, le bouton Nouveautés disparaît (les nouveautés s’affichent toujours une fois après une mise à jour).</p>`, en: { v: '1.9.11', t: 'Version 1.9.11 · Home and shop', d: `<p>• Shop: the gear buy buttons now display correctly.</p><p>• Roomier home screen: bigger buttons, the What’s new button is gone (news still shows once after an update).</p>` }, th: { v: '1.9.11', t: 'เวอร์ชัน 1.9.11 · หน้าหลักและร้านค้า', d: `<p>• ร้านค้า: ปุ่มซื้ออุปกรณ์แสดงผลถูกต้องแล้ว</p><p>• หน้าหลักโปร่งขึ้น: ปุ่มใหญ่ขึ้น ปุ่มมีอะไรใหม่ถูกนำออก (ข่าวยังแสดงหนึ่งครั้งหลังอัปเดต)</p>` } },
   { v: '1.9.10', t: 'Version 1.9.10 · Ardael', d: `<p>• Le jeu a un nouveau nom : <b>Ardael: The Broken Seal</b>, avec son nouveau logo. Ta partie est conservée.</p>`, en: { v: '1.9.10', t: 'Version 1.9.10 · Ardael', d: `<p>• The game has a new name: <b>Ardael: The Broken Seal</b>, with its new logo. Your progress is kept.</p>` }, th: { v: '1.9.10', t: 'เวอร์ชัน 1.9.10 · Ardael', d: `<p>• เกมมีชื่อใหม่: <b>Ardael: The Broken Seal</b> พร้อมโลโก้ใหม่ ความคืบหน้าของคุณยังอยู่ครบ</p>` } },
@@ -2368,7 +2400,7 @@ async function simCampaign(runs = 1, upto = 99, tier = 0, tch = 0) {
 }
 function simSkills() { for (const id of Object.keys(S.own)) { const s = S.h[id]; if (s.lvl >= SPEC_LV && !s.spec) s.spec = pick(SPECS[id])[0]; { const ks = HEROES[id].skills.concat('ult'); s.sk = s.sk || {}; let g = 50; while (ptsLeft(id) > 0 && g--) { const k = pick(ks); if ((s.sk[k] || 1) < SK_MAX) s.sk[k] = (s.sk[k] || 1) + 1; } } } }
 function autoShop() { for (const id of S.team) for (const k of ['w', 'a']) { const c = upCost(S.h[id][k]); if (S.gold >= c + 60) { S.gold -= c; S.h[id][k]++; } } while (S.gold >= 60 && S.items.pot < 3) { S.gold -= 30; S.items.pot++; } }
-window.__db2 = { simCampaign, get B() { return B; }, get S() { return S; }, set S(v) { S = v; }, runLevel, HEROES, MON, SK, LEVELS, setFast: v => { FAST = v; }, SOLO, synergy, setRoute: v => { simRoute = v; }, heroStats, statsWith, itemDecide, openChests, makeItem };
+window.__db2 = { simCampaign, get B() { return B; }, get S() { return S; }, set S(v) { S = v; }, runLevel, HEROES, MON, SK, LEVELS, setFast: v => { FAST = v; }, SOLO, synergy, setRoute: v => { simRoute = v; }, heroStats, statsWith, itemDecide, openChests, makeItem, chestPick, makeChoice };
 })();
 </script>
 </body>

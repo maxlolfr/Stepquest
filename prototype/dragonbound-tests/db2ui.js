@@ -28,7 +28,7 @@ srv.listen(0, async () => {
     if (!shot && await pg.evaluate(() => { const B = window.__db2.B; return B && B.foes.some(f => f.charging && f.hp > 0) && !B.acting; })) { shot = 1; await pg.screenshot({ path: `${OUT}/2-combat.png` }); }
     if (await pg.$('[data-chpick], [data-lpick]')) break; }
   await pg.waitForTimeout(400); await pg.screenshot({ path: `${OUT}/3-butin.png` });
-  if (await pg.$('[data-chpick]')) { await pg.click('[data-chpick="0"]'); await pg.waitForTimeout(1200); await pg.screenshot({ path: `${OUT}/4-objet.png` }); }
+  if (await pg.$('[data-chpick]')) { await pg.click('[data-chpick="0"]'); await pg.waitForTimeout(3200); await pg.screenshot({ path: `${OUT}/4-objet.png` }); }
   for (let t = 0; t < 10 && await pg.$('#modal:not([hidden]) [data-close]') && !(await pg.$('[data-home]')); t++) { await pg.click('#modal:not([hidden]) [data-close]'); await pg.waitForTimeout(400); }
   for (let t = 0; t < 20 && !(await pg.$('[data-home]')); t++) { const n = await pg.$('[data-cnext]'); if (n) await n.click(); await pg.waitForTimeout(700); }
   await pg.screenshot({ path: `${OUT}/5-victoire.png` });

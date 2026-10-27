@@ -18,13 +18,13 @@ srv.listen(0, async () => { const b = await chromium.launch(), errs = [], base =
   await pg.click('.node[data-lv="4"]'); await pg.waitForTimeout(250); await pg.click('[data-play]'); await closeAll();
   await pg.waitForFunction(() => window.__db2.B && window.__db2.B.foes.length, null, { timeout: 15000 }); if (!(await pg.$('#fight.auto'))) await pg.click('#autoBtn');
   for (let k = 0; k < 200 && !(await pg.$('[data-chpick]')); k++) { await pg.evaluate(() => { const B = window.__db2.B; if (B) B.foes.forEach(f => { f.hp = 1; f.def = 0; }); }); await closeAll(); await pg.waitForTimeout(250); }
-  const atChest = !!(await pg.$('[data-chpick]')); ok('Victoire contre le boss 1-5 : écran des coffres affiché', atChest);
+  const atChest = !!(await pg.$('[data-chpick]')); ok('Victoire contre le boss 1-5 : le coffre s’affiche', atChest);
   const s1 = await S(); ok('Butin à choisir sauvegardé avant le choix (coffre + trésor légendaire)', s1.pend && s1.pend.length === 2, `en attente : ${s1.pend ? s1.pend.length : 0}`);
   const inv1 = s1.inv.length, gold1 = s1.gold, stars1 = s1.stars[4];
   await pg.reload(); await pg.click('#title'); await pg.waitForTimeout(600);       // the app was closed on the chest screen
   ok('Après réouverture : le coffre revient', !!(await pg.$('[data-chpick]')));
-  await pg.click('[data-chpick="0"]'); await pg.waitForTimeout(1500); await closeAll();
-  const s2 = await S(); ok('Le coffre choisi est ajouté une seule fois', s2.inv.length === inv1 + 1 && s2.pend.length === 1, `sac ${inv1} → ${s2.inv.length}, en attente ${s2.pend.length}`);
+  await pg.click('[data-chpick="0"]'); await pg.waitForTimeout(3500); await closeAll();
+  const s2 = await S(); ok('Le coffre ouvert est ajouté une seule fois', s2.inv.length === inv1 + 1 && s2.pend.length === 1, `sac ${inv1} → ${s2.inv.length}, en attente ${s2.pend.length}`);
   ok('Or et étoiles de la victoire ni perdus ni doublés', s2.gold >= gold1 && s2.stars[4] === stars1, `or ${gold1} → ${s2.gold}, étoiles ${stars1} → ${s2.stars[4]}`);
   await pg.reload(); await pg.click('#title'); await pg.waitForTimeout(600);       // closed again before the legendary choice
   ok('Après 2e réouverture : le trésor légendaire revient', !!(await pg.$('[data-lpick]')));
