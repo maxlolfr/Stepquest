@@ -5,6 +5,7 @@ import { IMAGES, HERO_SPRITE } from '../assets.js';
 import { loadImage, loadImages } from '../loader.js';
 import { heroFrames, pingPong, drawSprite } from '../sprites.js';
 import { unlock, playMusic, sfx, isMuted, setMuted } from '../audio.js';
+import { h } from '../dom.js';
 
 const BG_HORIZON = 0.68;     // where the floor starts in bg_c7_1 (Dragonbound II level data)
 const BG_POS_Y = 0.62;       // must match object-position in style.css
@@ -18,10 +19,13 @@ const LINEUP = [
   { id: 'orin',   x: 0.73, flip: true },
   { id: 'aldric', x: 0.5, lead: true },
 ];
-const MENU_RESERVE = 205;    // px kept free at the bottom for the menu (2 buttons + version)
+const MENU_RESERVE = 225;    // px kept free at the bottom for the menu
 
-export async function showTitle() {
-  const $ = id => document.getElementById(id);
+const $ = id => document.getElementById(id);
+let started = false, menuFn = null, visible = true;
+
+/** First display (loads images, starts the animation). */
+export async function initTitle() {
   const screen = $('title'), cv = $('titleCv'), cx = cv.getContext('2d'), bgEl = $('titleBg');
   $('kicker').textContent = GAME.kicker;
   $('gameTitle').textContent = GAME.title;
@@ -36,53 +40,51 @@ export async function showTitle() {
   bgEl.classList.add('ready');
   screen.classList.add('ready');
 
-  // ---- sound toggle ----
   const muteBtn = $('mute');
   const paintMute = () => { muteBtn.textContent = isMuted() ? '🔇' : '🔊'; muteBtn.setAttribute('aria-label', isMuted() ? 'Activer le son' : 'Couper le son'); };
   paintMute();
   muteBtn.addEventListener('click', () => { unlock(); setMuted(!isMuted()); paintMute(); });
 
-  // ---- tap to start ----
   playMusic('m_title');
   $('tapStart').addEventListener('click', () => {
     unlock(); sfx('ui_click');
-    $('tapStart').hidden = true; $('menu').hidden = false;
+    started = true; $('tapStart').hidden = true; renderMenu();
   }, { once: true });
 
-  // ---- canvas: heroes + embers ----
   let W = 0, H = 0, dpr = 1, floorY = 0, heroH = 0;
   const layout = () => {
     const r = cv.getBoundingClientRect();
+    if (!r.width) return;
     W = r.width; H = r.height; dpr = Math.min(2, window.devicePixelRatio || 1);
     cv.width = Math.round(W * dpr); cv.height = Math.round(H * dpr);
     const im = bgEl.naturalWidth ? bgEl : null, iw = im ? im.naturalWidth : 1400, ih = im ? im.naturalHeight : 1400;
     const s = Math.max(W / iw, H / ih), dispH = ih * s, offY = (H - dispH) * BG_POS_Y;
     floorY = offY + BG_HORIZON * dispH;
-    heroH = Math.min(H * 0.21, W * 0.44);
+    heroH = Math.min(H * 0.2, W * 0.42);
   };
   layout();
   addEventListener('resize', layout);
 
   const embers = Array.from({ length: reduce ? 10 : 34 }, () => newEmber(true));
   function newEmber(anywhere) {
-    return { x: Math.random(), y: anywhere ? Math.random() : 1.02, v: 0.02 + Math.random() * 0.05, r: 0.8 + Math.random() * 2.2,
-      w: Math.random() * 6.28, gold: Math.random() < 0.3 };
+    return { x: Math.random(), y: anywhere ? Math.random() : 1.02, v: 0.02 + Math.random() * 0.05, r: 0.8 + Math.random() * 2.2, w: Math.random() * 6.28, gold: Math.random() < 0.3 };
   }
 
   let last = performance.now();
   const frame = t => {
+    requestAnimationFrame(frame);
+    if (!visible) return;
+    if (!W || cv.width !== Math.round(cv.getBoundingClientRect().width * dpr)) layout();
     const dt = Math.min(0.05, (t - last) / 1000); last = t;
     cx.setTransform(dpr, 0, 0, dpr, 0, 0);
     cx.clearRect(0, 0, W, H);
-    // stand on the floor, but never under the menu
     const feet = Math.max(floorY + 12, Math.min(floorY + heroH * 0.45, H - MENU_RESERVE));
-    for (const h of heroes) {
-      const size = heroH * (h.lead ? 1.06 : h.back ? 0.8 : 0.94), y = feet - (h.back ? heroH * 0.2 : 0) + (h.lead ? heroH * 0.04 : 0);
-      const x = W * h.x, k = h.frames[reduce ? 0 : pingPong(h.frames.length, t + h.seed * 400, 190)];
-      // soft ground shadow
+    for (const hr of heroes) {
+      const size = heroH * (hr.lead ? 1.06 : hr.back ? 0.8 : 0.94), y = feet - (hr.back ? heroH * 0.2 : 0) + (hr.lead ? heroH * 0.04 : 0);
+      const x = W * hr.x, k = hr.frames[reduce ? 0 : pingPong(hr.frames.length, t + hr.seed * 400, 190)];
       cx.save(); cx.globalAlpha = 0.45; cx.fillStyle = '#000';
       cx.beginPath(); cx.ellipse(x, y, size * 0.26, size * 0.06, 0, 0, Math.PI * 2); cx.fill(); cx.restore();
-      if (!drawSprite(cx, k, x, y, size, { flip: !!h.flip, alpha: h.back ? 0.92 : 1 })) drawSprite(cx, h.base, x, y, size, { flip: !!h.flip });
+      if (!drawSprite(cx, k, x, y, size, { flip: !!hr.flip, alpha: hr.back ? 0.92 : 1 })) drawSprite(cx, hr.base, x, y, size, { flip: !!hr.flip });
     }
     cx.globalCompositeOperation = 'lighter';
     for (const e of embers) {
@@ -93,7 +95,31 @@ export async function showTitle() {
       cx.beginPath(); cx.arc(px, py, e.r, 0, Math.PI * 2); cx.fill();
     }
     cx.globalCompositeOperation = 'source-over';
-    requestAnimationFrame(frame);
   };
   requestAnimationFrame(frame);
+}
+
+function renderMenu() {
+  const menu = $('menu');
+  if (!started || !menuFn) { menu.hidden = true; return; }
+  const items = menuFn();
+  menu.replaceChildren(...items.map(it => h('button.btn' + (it.primary ? '.primary' : ''), { type: 'button', onclick: () => { sfx('ui_click'); it.action(); } },
+    it.label, it.sub ? h('span.soon', it.sub) : null)));
+  menu.hidden = false;
+}
+
+/** Shows the title. menu() returns [{ label, sub, primary, action }]. */
+export function showTitle(menu) {
+  menuFn = menu;
+  visible = true;
+  $('title').hidden = false;
+  $('view').hidden = true;
+  playMusic('m_title');
+  renderMenu();
+}
+
+export function hideTitle() {
+  visible = false;
+  $('title').hidden = true;
+  $('view').hidden = false;
 }

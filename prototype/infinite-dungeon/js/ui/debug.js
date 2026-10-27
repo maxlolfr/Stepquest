@@ -1,0 +1,53 @@
+// Test mode (?debug): pick a seed, a floor, a team and jump straight to a
+// fight; add shards; export or import a save code. Never shown otherwise.
+import { h, toast } from './dom.js';
+import { app, startRun, save, goTitle, route } from './app.js';
+import { HERO_ORDER, HEROES } from '../data/heroes.js';
+import { floorOf } from '../run/run.js';
+import { chooseDoor } from '../run/run.js';
+import { exportCode, importCode } from '../save/storage.js';
+import { missingAssets } from './loader.js';
+import { GAME } from '../config.js';
+
+export function mountDebug() {
+  const box = document.getElementById('debug');
+  box.hidden = false;
+  const info = h('pre.dbg-info');
+  const paint = () => {
+    const miss = missingAssets();
+    info.textContent = `debug · v${GAME.version} · ${innerWidth}×${innerHeight} @${devicePixelRatio}x\n` + (miss.length ? `Fichiers manquants (${miss.length}) :\n${miss.join('\n')}` : 'Tous les fichiers chargés.');
+  };
+  paint(); setInterval(paint, 2000);
+
+  const seed = h('input', { type: 'number', value: '12345', inputmode: 'numeric', 'aria-label': 'Graine' });
+  const floor = h('select', { 'aria-label': 'Étage' }, Array.from({ length: 10 }, (_, i) => h('option', { value: i + 1 }, `Étage ${i + 1}`)));
+  const teamSel = HERO_ORDER.map(id => h('label', h('input', { type: 'checkbox', value: id, checked: ['aldric', 'selena', 'orin'].includes(id) ? true : null }), HEROES[id].name));
+  const team = () => teamSel.map(l => l.firstChild).filter(c => c.checked).map(c => c.value);
+  const go = type => {
+    const ids = team();
+    if (ids.length !== 3) return toast('Coche exactement 3 héros.');
+    const f = type === 'boss' ? 10 : type === 'guardian' ? 5 : +floor.value;
+    startRun(ids, { seed: +seed.value >>> 0, floor: f });
+    const run = app.data.run;
+    if (type !== 'map') {
+      const i = floorOf(run).doors.findIndex(d => d.type === type);
+      if (i < 0) return toast(`Pas de porte « ${type} » à cet étage.`);
+      chooseDoor(run, i); save(); route();
+    }
+    box.classList.remove('open');
+  };
+  const panel = h('div.dbg-panel',
+    h('div.dbg-row', h('span', 'Graine'), seed, floor),
+    h('div.dbg-row.team', teamSel),
+    h('div.dbg-row',
+      h('button', { type: 'button', onclick: () => go('map') }, 'Carte'),
+      h('button', { type: 'button', onclick: () => go('fight') }, 'Combat'),
+      h('button', { type: 'button', onclick: () => go('elite') }, 'Élite'),
+      h('button', { type: 'button', onclick: () => go('guardian') }, 'Gardien'),
+      h('button', { type: 'button', onclick: () => go('boss') }, 'Boss')),
+    h('div.dbg-row',
+      h('button', { type: 'button', onclick: () => { app.data.meta.shards += 100; save(); toast('+100 éclats'); goTitle(); } }, '+100 éclats'),
+      h('button', { type: 'button', onclick: () => { const c = exportCode(app.data); navigator.clipboard && navigator.clipboard.writeText(c).catch(() => {}); window.prompt('Code de sauvegarde (copié) :', c); } }, 'Exporter'),
+      h('button', { type: 'button', onclick: () => { const c = window.prompt('Colle le code de sauvegarde :'); if (!c) return; const d = importCode(c); if (!d) return toast('Code invalide.'); app.data = d; save(); toast('Sauvegarde importée.'); goTitle(); } }, 'Importer')));
+  box.replaceChildren(h('button.dbg-toggle', { type: 'button', onclick: () => box.classList.toggle('open') }, '🛠'), h('div.dbg-body', info, panel));
+}

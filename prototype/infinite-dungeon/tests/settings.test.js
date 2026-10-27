@@ -14,18 +14,19 @@ test('uses its own key, never another game\'s', () => {
 });
 
 test('defaults when nothing is stored', () => {
-  assert.deepEqual(loadSettings(memory()), { v: 1, muted: false });
+  assert.deepEqual(loadSettings(memory()), { v: 1, muted: false, speed: 1 });
 });
 
 test('round trip', () => {
   const s = memory();
-  assert.equal(saveSettings({ muted: true }, s), true);
+  assert.equal(saveSettings({ muted: true, speed: 4 }, s), true);
   assert.equal(loadSettings(s).muted, true);
+  assert.equal(loadSettings(s).speed, 4);
   assert.deepEqual([...s.map.keys()], [SETTINGS_KEY]);
 });
 
 test('corrupted JSON falls back to defaults', () => {
-  assert.deepEqual(loadSettings(memory({ [SETTINGS_KEY]: '{oops' })), { v: 1, muted: false });
+  assert.deepEqual(loadSettings(memory({ [SETTINGS_KEY]: '{oops' })), { v: 1, muted: false, speed: 1 });
 });
 
 test('unknown version falls back to defaults', () => {
@@ -33,7 +34,7 @@ test('unknown version falls back to defaults', () => {
 });
 
 test('storage that throws never crashes', () => {
-  assert.deepEqual(loadSettings(throwing), { v: 1, muted: false });
+  assert.deepEqual(loadSettings(throwing), { v: 1, muted: false, speed: 1 });
   assert.equal(saveSettings({ muted: true }, throwing), false);
-  assert.deepEqual(loadSettings(undefined), { v: 1, muted: false });
+  assert.deepEqual(loadSettings(undefined), { v: 1, muted: false, speed: 1 });
 });

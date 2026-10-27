@@ -3,35 +3,56 @@
 // on GitHub Pages (../dragonbound2/ and ../dragonbound/). If Dragonbound II renames
 // or deletes a file, tests/assets.test.js fails instead of the game breaking silently.
 // Pure module: no DOM access, so Node tests can import it.
-import { ANIM } from '../data/sprite-metrics.js';
+import { ANIM, POSEM } from '../data/sprite-metrics.js';
+import { MONSTERS, ZONES } from '../data/monsters.js';
+import { HEROES } from '../data/heroes.js';
+import { RELICS, CONSUMABLES } from '../data/items.js';
 
 export const DB2 = '../dragonbound2/';
 export const DB1 = '../dragonbound/';
 
 // hero id -> sprite base used by Dragonbound II file names
-export const HERO_SPRITE = { aldric: 'ald', selena: 'sel', orin: 'ori', lyra: 'lyr', nyx: 'nyx' };
+export const HERO_SPRITE = Object.fromEntries(Object.entries(HEROES).map(([id, H]) => [id, H.sprite]));
 
-const heroImages = () => {
-  const out = {};
-  for (const b of Object.values(HERO_SPRITE)) {
-    out[`${b}-face`] = `${DB2}img/${b}-face.webp`;
-    out[b] = `${DB2}img/${b}.webp`;
-    for (const [act, n] of Object.entries(ANIM[b] || {})) {
-      for (let i = 0; i < n; i++) out[`${b}A_${act}${i}`] = `${DB2}img/${b}A_${act}${i}.webp`;
-    }
-  }
-  return out;
-};
+const IMG = {};
+const add = (key, dir) => { IMG[key] = `${dir}img/${key}.webp`; };
 
-// key -> path. Keys match Dragonbound II image names so sprite metrics apply as is.
-export const IMAGES = {
-  bg_title: `${DB2}img/bg_c7_1.webp`,
-  ...heroImages(),
-};
+// heroes: animated frames + fixed poses + portraits + ultimate cut-ins
+for (const [id, b] of Object.entries(HERO_SPRITE)) {
+  add(`${b}-face`, DB2); add(b, DB2); add(`ult_${id}`, DB2);
+  for (const pose of ['win', 'ko', 'hit']) add(`${b}_${pose}`, DB2);
+  for (const [act, n] of Object.entries(ANIM[b] || {})) for (let i = 0; i < n; i++) add(`${b}A_${act}${i}`, DB2);
+}
+// monsters (Dragonbound 1) and the boss (Dragonbound II): every pose that has floor metrics
+for (const [id, M] of Object.entries(MONSTERS)) {
+  const dir = M.dir === 'db2' || M.boss ? DB2 : DB1;
+  for (const k of Object.keys(POSEM)) if (k === id || k.startsWith(id + '_')) add(k, dir);
+}
+// backgrounds
+IMG.bg_title = `${DB2}img/bg_c7_1.webp`;
+for (const z of ZONES) for (const [bg] of z.bgs) add(bg, DB2);
+// effects, gear, interface
+for (const fx of ['fire', 'heal', 'ice', 'slash', 'ult']) add(`fx_${fx}`, DB2);
+for (const hero of Object.keys(HEROES)) for (let r = 1; r <= 3; r++) add(`gw_${hero}_${r}`, DB2);
+for (let i = 0; i <= 8; i++) { add(`ga_${i}`, DB2); add(`gj_${i}`, DB2); }
+for (const k of ['uiGem', 'uiTrophy', 'uiSkull']) add(k, DB2);
+for (const k of ['uiPotion', 'uiGold', 'uiScroll', 'uiDice', 'uiChest1', 'uiChest2', 'uiChest3', 'chestR1', 'chestR2', 'chestR3', 'chestR4']) add(k, DB1);
+for (const R of [...Object.values(RELICS), ...Object.values(CONSUMABLES)]) if (!IMG[R.img]) throw new Error(`asset manquant pour ${R.name}: ${R.img}`);
 
+export const IMAGES = IMG;
+
+const snd = (k, dir = DB2) => `${dir}audio/${k}.mp3`;
 export const AUDIO = {
-  m_title: `${DB2}audio/m_crypt.mp3`,
-  ui_click: `${DB2}audio/ui_click.mp3`,
+  m_title: snd('m_crypt'),
+  ...Object.fromEntries(['m_crypt', 'm_swamp', 'm_necro', 'm_boss', 'm_victory', 'm_defeat', 'm_theme'].map(k => [k, snd(k)])),
+  ...Object.fromEntries([
+    'ald_sword', 'ald_taunt', 'ald_bash', 'ald_whirl', 'sel_mace', 'sel_heal', 'sel_smite', 'sel_raise', 'ori_bolt', 'ori_fire', 'ori_ice',
+    'lyr_arrow', 'lyr_aimed', 'lyr_venom', 'lyr_rain', 'nyx_dagger', 'nyx_blades', 'nyx_assassin', 'nyx_shadow',
+    'crit', 'dodge', 'foe_die', 'hero_hurt', 'poison', 'burn', 'freeze', 'stun', 'aoe_warning', 'boss_phase', 'boss_roar',
+    'ult', 'ult_cutin', 'levelup', 'coin', 'chest', 'equip', 'ui_click', 'enemy_shield', 'enemy_heal',
+  ].map(k => [k, snd(k)])),
+  s_impact: snd('s_impact', DB1),
+  s_clang: snd('s_clang', DB1),
 };
 
 export const FONTS = {
@@ -45,3 +66,6 @@ export const allAssets = () => [
   ...Object.entries(AUDIO).map(([key, path]) => ({ kind: 'audio', key, path })),
   ...Object.entries(FONTS).map(([key, path]) => ({ kind: 'font', key, path })),
 ];
+
+/** Image keys needed to draw a unit (all its poses). */
+export const spriteKeys = base => Object.keys(IMAGES).filter(k => k === base || k.startsWith(base + '_') || k.startsWith(base + 'A_'));

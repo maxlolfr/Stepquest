@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { allAssets, IMAGES } from '../js/ui/assets.js';
+import { allAssets, spriteKeys, HERO_SPRITE } from '../js/ui/assets.js';
+import { MONSTERS } from '../js/data/monsters.js';
 import { POSEM } from '../js/data/sprite-metrics.js';
 
 const GAME_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -31,7 +32,11 @@ test('assets are only read from the other games, never copied here', () => {
   assert.deepEqual(found, []);
 });
 
-test('every hero sprite drawn has floor metrics', () => {
-  const noMetrics = Object.keys(IMAGES).filter(k => !k.startsWith('bg_') && !k.endsWith('-face') && !POSEM[k]);
-  assert.deepEqual(noMetrics, []);
+test('every hero and monster sprite has floor metrics and an idle pose', () => {
+  const bases = [...Object.values(HERO_SPRITE), ...Object.keys(MONSTERS)];
+  for (const b of bases) {
+    const keys = spriteKeys(b).filter(k => !k.endsWith('-face'));
+    assert.ok(keys.includes(b), `${b}: no idle image`);
+    assert.deepEqual(keys.filter(k => !POSEM[k]), [], `${b}: missing metrics`);
+  }
 });

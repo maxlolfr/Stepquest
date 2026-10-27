@@ -1,7 +1,8 @@
-// Browser smoke test: serves prototype/ like GitHub Pages does, opens the game
-// at iPhone sizes, fails on any JavaScript error or file that does not load.
+// Browser test: serves prototype/ like GitHub Pages does, opens the game at
+// iPhone sizes and plays it through the real screens: title, team, map, a
+// fight, a reward, save and reload, the camp, then the boss via ?debug.
+// Fails on any JavaScript error, missing file, text under 14 px or button under 44 px.
 // Usage (from prototype/infinite-dungeon/): NODE_PATH=$(npm root -g) node tests/smoke.js [outDir]
-// Needs Playwright with Chromium (CI installs it; locally: npx playwright install chromium).
 import { createRequire } from 'node:module';
 import http from 'node:http';
 import fs from 'node:fs';
@@ -9,10 +10,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const require = createRequire(import.meta.url);
-const { chromium, webkit } = require('playwright');
+const { chromium } = require('playwright');
 const GAME_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const ROOT = path.resolve(GAME_DIR, '..'); // prototype/ — the game sits next to dragonbound2/ as on Pages
-const OUT = process.argv[2] || path.join(GAME_DIR, 'tests', 'out');
+const ROOT = path.resolve(GAME_DIR, '..');
+const OUT = path.resolve(process.argv[2] || path.join(GAME_DIR, 'tests', 'out'));
 fs.mkdirSync(OUT, { recursive: true });
 
 const MIME = { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.webp': 'image/webp',
@@ -29,49 +30,103 @@ const srv = http.createServer((q, r) => {
 const results = [];
 const check = (name, ok, extra = '') => { if (!ok) process.exitCode = 1; results.push(`${ok ? '✅' : '❌'} ${name}${extra ? ' — ' + extra : ''}`); };
 
+// visible text under 14 px and visible buttons under 44 px
+const auditUi = pg => pg.evaluate(() => {
+  const vis = el => { const r = el.getBoundingClientRect(); return r.width > 0 && r.height > 0 && getComputedStyle(el).visibility !== 'hidden' && !el.closest('[hidden]') && !el.closest('#debug'); };
+  const tiny = [...document.querySelectorAll('body *')].filter(el => vis(el) && [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()) && parseFloat(getComputedStyle(el).fontSize) < 14).map(el => `${el.tagName}.${el.className}`);
+  const small = [...document.querySelectorAll('button')].filter(vis).filter(b => { const r = b.getBoundingClientRect(); return r.height < 44 || r.width < 44; }).map(b => `${b.className || b.id}:${Math.round(b.getBoundingClientRect().height)}`);
+  return { tiny: [...new Set(tiny)].slice(0, 6), small: [...new Set(small)].slice(0, 6) };
+});
+
+async function waitFor(pg, fn, arg, timeout = 30000) { return pg.waitForFunction(fn, arg, { timeout }).then(() => true, () => false); }
+
 srv.listen(0, async () => {
   const base = `http://127.0.0.1:${srv.address().port}/infinite-dungeon/index.html`;
-  const engines = [['chromium', chromium]];
-  if (process.env.SMOKE_WEBKIT) engines.push(['webkit', webkit]);
-  for (const [engine, type] of engines) {
-    const browser = await type.launch();
-    for (const [name, w, h] of [['iphone-se', 375, 667], ['iphone-15', 393, 852], ['iphone-max', 430, 932]]) {
-      const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, hasTouch: true, isMobile: engine === 'chromium' });
-      const pg = await ctx.newPage(), errors = [], failed = [];
-      pg.on('pageerror', e => errors.push(e.message));
-      pg.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
-      pg.on('response', res => { if (res.status() >= 400) failed.push(`${res.status()} ${res.url()}`); });
-      await pg.goto(`${base}?debug`);
-      await pg.waitForFunction(() => window.__sqid && (window.__sqid.ready || window.__sqid.error), null, { timeout: 20000 }).catch(() => {});
-      await pg.waitForTimeout(1300);
-      const state = await pg.evaluate(() => ({ ready: window.__sqid.ready, error: window.__sqid.error || '', missing: window.__sqid.missingAssets(),
-        title: document.getElementById('gameTitle').textContent,
-        tap: getComputedStyle(document.getElementById('tapStart')).display !== 'none',
-        menu: getComputedStyle(document.getElementById('menu')).display !== 'none' }));
-      const tag = `${engine} ${name} ${w}×${h}`;
-      check(`${tag} : écran d'accueil prêt, menu caché avant le toucher`, state.ready && state.title.length > 0 && state.tap && !state.menu, state.error);
-      check(`${tag} : aucun fichier manquant`, state.missing.length === 0 && failed.length === 0, [...state.missing, ...failed].join(', '));
-      await pg.screenshot({ path: path.join(OUT, `${engine}-${name}-1-accueil.png`) });
-      await pg.tap('#tapStart');
-      await pg.waitForTimeout(700);
-      const menu = await pg.evaluate(() => {
-        const m = document.getElementById('menu'), b = [...m.querySelectorAll('button')];
-        const visible = el => getComputedStyle(el).display !== 'none';
-        return { shown: visible(m) && !visible(document.getElementById('tapStart')), buttons: b.length, allDisabled: b.every(x => x.disabled), minH: Math.min(...b.map(x => x.getBoundingClientRect().height)) };
-      });
-      check(`${tag} : menu affiché, boutons ≥ 44 px, fonctions à venir désactivées`, menu.shown && menu.buttons === 2 && menu.allDisabled && menu.minH >= 44, `hauteur ${Math.round(menu.minH)} px`);
-      const tiny = await pg.evaluate(() => [...document.querySelectorAll('#title *')].filter(el => {
-        if (el.hidden || el.closest('[hidden]') || el.id === 'debug' || el.closest('#debug') || !el.childNodes.length) return false;
-        const hasText = [...el.childNodes].some(n => n.nodeType === 3 && n.textContent.trim()); if (!hasText) return false;
-        return parseFloat(getComputedStyle(el).fontSize) < 14;
-      }).map(el => el.tagName + '#' + el.id));
-      check(`${tag} : aucun texte sous 14 px`, tiny.length === 0, tiny.join(', '));
-      check(`${tag} : aucune erreur JavaScript`, errors.length === 0, errors.join(' | '));
-      await pg.screenshot({ path: path.join(OUT, `${engine}-${name}-2-menu.png`) });
-      await ctx.close();
+  const browser = await chromium.launch();
+  for (const [name, w, h, full] of [['iphone-se', 375, 667, false], ['iphone-15', 393, 852, true]]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 2, hasTouch: true, isMobile: true });
+    const pg = await ctx.newPage(), errors = [], failed = [];
+    pg.on('pageerror', e => errors.push(e.message));
+    pg.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+    pg.on('response', res => { if (res.status() >= 400) failed.push(`${res.status()} ${res.url()}`); });
+    pg.on('dialog', d => d.accept());
+    const tag = `${name} ${w}×${h}`, shot = async n => pg.screenshot({ path: path.join(OUT, `${name}-${n}.png`) });
+    const ui = async where => { const a = await auditUi(pg); check(`${tag} : ${where} lisible (texte ≥ 14 px, boutons ≥ 44 px)`, !a.tiny.length && !a.small.length, [...a.tiny, ...a.small].join(', ')); };
+
+    // fast fights for the test
+    await pg.goto(base);
+    await pg.evaluate(() => { localStorage.clear(); localStorage.setItem('sqid.settings.v1', JSON.stringify({ v: 1, muted: true, speed: 4 })); });
+    await pg.goto(base);
+    check(`${tag} : accueil prêt`, await waitFor(pg, () => window.__sqid && window.__sqid.ready), await pg.evaluate(() => window.__sqid && window.__sqid.error || ''));
+    await pg.waitForTimeout(900); await shot('1-accueil');
+    await pg.tap('#tapStart'); await pg.waitForTimeout(400);
+    const menu = await pg.$$eval('#menu button', b => b.map(x => x.textContent));
+    check(`${tag} : menu (nouvelle expédition, camp)`, menu.some(t => /Nouvelle expédition/.test(t)) && menu.some(t => /camp/.test(t)), menu.join(' | '));
+    await ui('accueil'); await shot('2-menu');
+
+    // team
+    await pg.click('#menu button:has-text("Nouvelle expédition")'); await pg.waitForTimeout(300);
+    check(`${tag} : sélection d'équipe (5 héros, 3 choisis)`, (await pg.$$('.hero-pick')).length === 5 && (await pg.$$('.hero-pick.on')).length === 3);
+    await ui('équipe'); await shot('3-equipe');
+    await pg.click('.pfoot .btn.primary'); await pg.waitForTimeout(400);
+
+    // map
+    check(`${tag} : carte de l'étage 1`, await pg.isVisible('.doors') && /Étage 1/.test(await pg.textContent('.ptop h2')));
+    await ui('carte'); await shot('4-carte');
+    await pg.click('.door.fight');
+
+    // fight
+    check(`${tag} : combat lancé`, await waitFor(pg, () => !!document.querySelector('.battle'), null, 15000));
+    await pg.waitForTimeout(1600); await ui('combat'); await shot('5-combat');
+    await pg.click('.round-btn[aria-label="Pause"]'); await pg.waitForTimeout(200);
+    check(`${tag} : pause`, await pg.isVisible('.pause-veil'));
+    await pg.click('.round-btn[aria-label="Reprendre"]');
+    check(`${tag} : reprise après pause`, !(await pg.isVisible('.pause-veil')));
+    const ended = await waitFor(pg, () => !document.querySelector('.battle'), null, 120000);
+    const after = await pg.evaluate(() => window.__sqid.app.data.run && window.__sqid.app.data.run.phase);
+    check(`${tag} : le combat se termine (victoire → récompense, ou défaite → bilan)`, ended && (after === 'reward' || after === null), String(after));
+    if (after === 'reward') {
+      await pg.waitForTimeout(500); await ui('récompense'); await shot('6-recompense');
+      check(`${tag} : 3 récompenses`, (await pg.$$('.cards .card')).length === 3);
+      await pg.click('.cards .card >> nth=0'); await pg.waitForTimeout(400);
+      const run = await pg.evaluate(() => window.__sqid.app.data.run);
+      check(`${tag} : étage 2 atteint`, run && run.floor === 2 && run.phase === 'map');
+      // save and reload
+      await pg.reload(); await waitFor(pg, () => window.__sqid && window.__sqid.ready);
+      await pg.tap('#tapStart'); await pg.waitForTimeout(300);
+      const cont = await pg.$$eval('#menu button', b => b.map(x => x.textContent).join(' | '));
+      check(`${tag} : sauvegarde restaurée après rechargement`, /Continuer/.test(cont) && /Étage 2/.test(cont), cont);
+      await pg.click('#menu button:has-text("Continuer")'); await pg.waitForTimeout(300);
+      check(`${tag} : reprise au bon étage`, /Étage 2/.test(await pg.textContent('.ptop h2')));
     }
-    await browser.close();
+
+    if (full) {
+      // camp
+      await pg.evaluate(() => { const d = window.__sqid.app.data; d.meta.shards = 60; });
+      await pg.click('.ptop .back'); await pg.waitForTimeout(300);
+      await pg.click('#menu button:has-text("camp")'); await pg.waitForTimeout(300);
+      await ui('camp'); await shot('7-camp');
+      await pg.click('.upg .btn.primary >> nth=0'); await pg.waitForTimeout(200);
+      check(`${tag} : amélioration du camp achetée`, await pg.evaluate(() => Object.values(window.__sqid.app.data.meta.upgrades).some(v => v > 0)));
+
+      // boss through the debug panel
+      await pg.goto(`${base}?debug`); await waitFor(pg, () => window.__sqid && window.__sqid.ready);
+      await pg.click('.dbg-toggle'); await pg.click('.dbg-row button:has-text("Boss")');
+      check(`${tag} : combat du boss lancé (mode test)`, await waitFor(pg, () => !!document.querySelector('.battle'), null, 15000));
+      await pg.click('.dbg-toggle').catch(() => {});
+      await pg.evaluate(() => document.getElementById('debug').classList.remove('open'));
+      await pg.waitForTimeout(2500); await shot('8-boss');
+      const bossDone = await waitFor(pg, () => !document.querySelector('.battle'), null, 180000);
+      const st = await pg.evaluate(() => ({ run: window.__sqid.app.data.run, meta: window.__sqid.app.data.meta }));
+      check(`${tag} : le combat du boss se termine et donne un bilan`, bossDone && !st.run && await pg.isVisible('.results'), st.run ? st.run.phase : 'bilan');
+      await pg.waitForTimeout(400); await ui('bilan'); await shot('9-bilan');
+    }
+
+    check(`${tag} : aucun fichier manquant`, failed.length === 0 && (await pg.evaluate(() => window.__sqid.missingAssets())).length === 0, failed.slice(0, 5).join(', '));
+    check(`${tag} : aucune erreur JavaScript`, errors.length === 0, errors.slice(0, 3).join(' | '));
+    await ctx.close();
   }
+  await browser.close();
   srv.close();
   console.log(results.join('\n'));
   console.log(process.exitCode ? '\nÉCHEC' : '\nOK — captures dans ' + OUT);

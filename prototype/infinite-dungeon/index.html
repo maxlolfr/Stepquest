@@ -23,21 +23,13 @@
     <button id="mute" class="icon-btn" type="button" aria-label="Couper le son">🔊</button>
     <div class="bottom">
       <button id="tapStart" class="tap" type="button">Toucher pour commencer</button>
-      <nav id="menu" class="menu" hidden>
-        <button class="btn primary" type="button" disabled aria-describedby="soonExp">
-          Nouvelle expédition
-          <span class="soon" id="soonExp">Arrive à l’étape 4</span>
-        </button>
-        <button class="btn" type="button" disabled aria-describedby="soonCamp">
-          Le camp
-          <span class="soon" id="soonCamp">Arrive à l’étape 8</span>
-        </button>
-      </nav>
+      <nav id="menu" class="menu" hidden></nav>
       <p class="version" id="version"></p>
     </div>
-    <div id="debug" class="debug" hidden></div>
   </section>
+  <section id="view" class="screen view" hidden></section>
 </main>
+<div id="debug" class="debug" hidden></div>
 <noscript><p class="noscript">Ce jeu a besoin de JavaScript.</p></noscript>
 <script type="module" src="js/main.js"></script>
 </body>

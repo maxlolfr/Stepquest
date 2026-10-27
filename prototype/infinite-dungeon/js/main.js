@@ -1,23 +1,18 @@
-// Entry point. Step 1 only has the title screen; later screens plug in here.
-import { showTitle } from './ui/screens/title.js';
+// Entry point.
+import { initTitle } from './ui/screens/title.js';
+import { startApp, app } from './ui/app.js';
 import { missingAssets } from './ui/loader.js';
 import { GAME } from './config.js';
 
 const debug = /[?&]debug\b/.test(location.search);
 
 // Hook for automated tests and the ?debug panel.
-window.__sqid = { version: GAME.version, missingAssets, ready: false };
+window.__sqid = { version: GAME.version, missingAssets, ready: false, app };
 
-showTitle()
-  .then(() => { window.__sqid.ready = true; })
-  .catch(err => { console.error(err); window.__sqid.error = String(err); })
-  .finally(() => {
-    if (!debug) return;
-    const box = document.getElementById('debug');
-    const paint = () => {
-      const miss = missingAssets();
-      box.textContent = `debug · v${GAME.version}\n${innerWidth}×${innerHeight} @${devicePixelRatio}x\n` +
-        (miss.length ? `Fichiers manquants (${miss.length}) :\n${miss.join('\n')}` : 'Tous les fichiers chargés.');
-    };
-    box.hidden = false; paint(); setInterval(paint, 2000);
-  });
+initTitle()
+  .then(() => startApp())
+  .then(async () => {
+    if (debug) (await import('./ui/debug.js')).mountDebug();
+    window.__sqid.ready = true;
+  })
+  .catch(err => { console.error(err); window.__sqid.error = String(err && err.stack || err); });
