@@ -32,7 +32,7 @@ export const RELICS = {
   ignifuge: { name: 'Ignifuge', ic: '🧯', img: 'uiPotion', art: 'relic_ignifuge', desc: 'L’équipe est immunisée à la brûlure.' },
   bourreau: { name: 'Bourreau', ic: '🪓', img: 'uiSkull', art: 'relic_bourreau', desc: '+30 % de dégâts sur les ennemis sous 35 % de vie.' },
   venin:    { name: 'Lame venimeuse', ic: '☠️', img: 'uiSkull', art: 'relic_venin', desc: '+35 % de dégâts sur les ennemis empoisonnés.' },
-  chasse:   { name: 'Œil du chasseur', ic: '🎯', img: 'uiDice', desc: '+30 % de dégâts sur les cibles marquées 🎯.' },
+  chasse:   { name: 'Œil du chasseur', ic: '🎯', img: 'uiDice', art: 'relic_chasse', desc: '+30 % de dégâts sur les cibles marquées 🎯.' },
   bourse:   { name: 'Bourse du pillard', ic: '💰', img: 'uiGold', art: 'relic_bourse', desc: '+30 % d’or gagné.' },
   braises:  { name: 'Braises du camp', ic: '🔥', img: 'uiChest2', art: 'relic_braises', desc: 'Les repos soignent 50 % de plus.' },
   sceau:    { name: 'Sceau du gardien', ic: '🛡️', img: 'uiChest3', desc: 'La Garde peut être utilisée deux fois par combat.' },
