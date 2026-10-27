@@ -65,7 +65,7 @@ export function showResults(root, { summary, team, onCamp }) {
     h('button.btn.primary.wide', { type: 'button', onclick: onCamp }, 'Aller au camp')));
 }
 
-export function showCamp(root, { meta, onBuy, onBack }) {
+export function showCamp(root, { meta, onBuy, onBack, onRefund, onWipe }) {
   const s = meta.stats;
   root.replaceChildren(h('div.page',
     h('header.ptop', h('button.back', { type: 'button', onclick: onBack, 'aria-label': 'Retour' }, '←'), h('h2', 'Le camp')),
@@ -79,5 +79,10 @@ export function showCamp(root, { meta, onBuy, onBack }) {
         h('div.upg-body', h('b', U.name), h('p', lv ? U.desc(lv) : 'Pas encore construit'), h('div.lvl', U.costs.map((_, i) => h('i' + (i < lv ? '.on' : ''))))),
         cost == null ? h('span.max', 'Max') : h('button.btn.small' + (meta.shards >= cost ? '.primary' : ''), { type: 'button', disabled: meta.shards < cost ? true : null, onclick: () => { sfx('levelup'); onBuy(k); } }, `${cost} 💎`, h('span.soon', `→ ${U.desc(lv + 1)}`)));
     })),
-    h('p.dim.stats', `Expéditions : ${s.runs} · victoires : ${s.wins} · retraites : ${s.retreats} · défaites : ${s.defeats} · meilleur étage : ${s.bestFloor} / 100`)));
+    h('p.dim.stats', `Expéditions : ${s.runs} · victoires : ${s.wins} · retraites : ${s.retreats} · défaites : ${s.defeats} · meilleur étage : ${s.bestFloor} / 100`),
+    // prototype: test tools, easy to remove before release
+    h('div.camp-reset',
+      h('p.dim', 'Outils de test (prototype)'),
+      h('button.btn.wide', { type: 'button', onclick: onRefund }, '♻️ Rembourser les améliorations', h('span.soon', 'Remet le camp à zéro et rend tous les éclats dépensés')),
+      h('button.btn.wide.danger', { type: 'button', onclick: onWipe }, '🗑️ Tout effacer', h('span.soon', 'Repartir de zéro : éclats, camp, départs, trophées')))));
 }

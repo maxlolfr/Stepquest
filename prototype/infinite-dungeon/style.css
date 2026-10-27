@@ -337,3 +337,5 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 .relic.unseen{opacity:.75}
 .hero-best{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;text-align:center;font-size:14px}
 .hb{display:flex;flex-direction:column;align-items:center}
+.camp-reset{margin:18px 0 8px;display:grid;gap:8px;padding-top:10px;border-top:1px solid rgba(255,255,255,.12)}
+.btn.danger{border-color:#b0303a;color:#ffb4a8}

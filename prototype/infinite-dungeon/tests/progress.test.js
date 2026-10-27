@@ -90,3 +90,13 @@ test('a fully cursed expedition still ends (simulation)', () => {
   const meta = open();
   for (let i = 0; i < 6; i++) { const r = simulateRun(900 + i, { meta, curses: CURSE_ORDER }); assert.ok(['win', 'lose', 'retreat'].includes(r.outcome)); }
 });
+
+test('test tool: refunding the camp gives every spent shard back', async () => {
+  const { refundUpgrades, buyUpgrade } = await import('../js/run/meta.js');
+  const meta = newMeta(); meta.shards = 1000;
+  for (let i = 0; i < 4; i++) { buyUpgrade(meta, 'vie'); buyUpgrade(meta, 'force'); }
+  assert.ok(meta.shards < 1000);
+  refundUpgrades(meta);
+  assert.equal(meta.shards, 1000);
+  assert.ok(Object.values(meta.upgrades).every(v => v === 0));
+});

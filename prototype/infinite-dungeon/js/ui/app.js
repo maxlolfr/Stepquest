@@ -13,7 +13,7 @@ import { showTrophies } from './screens/trophies.js';
 import { dailyFor, dayKey, ACHIEVEMENTS } from '../data/progress.js';
 import { loadSave, writeSave } from '../save/storage.js';
 import { nightmareOpen, newRun, chooseDoor, battleConfig, finishBattle, pickCard, reroll, rest, buy, resolveEvent, leaveRoom, continueRun, retreat, endRun, currentDoor, refreshTeam, startFloors } from '../run/run.js';
-import { buyUpgrade } from '../run/meta.js';
+import { buyUpgrade, refundUpgrades, newMeta } from '../run/meta.js';
 import { newSeed } from '../core/rng.js';
 import { HEROES } from '../data/heroes.js';
 import { zoneOf } from '../data/monsters.js';
@@ -73,7 +73,9 @@ function goTrophies() {
 
 function goCamp() {
   hideTitle();
-  const draw = () => showCamp(view(), { meta: app.data.meta, onBack: goTitle, onBuy: k => { if (buyUpgrade(app.data.meta, k)) { save(); draw(); } } });
+  const draw = () => showCamp(view(), { meta: app.data.meta, onBack: goTitle, onBuy: k => { if (buyUpgrade(app.data.meta, k)) { save(); draw(); } },
+    onRefund: () => { const back = refundUpgrades(app.data.meta); save(); toast(back ? `Camp remis à zéro : ${back} éclats rendus.` : 'Aucune amélioration à rembourser.'); draw(); },
+    onWipe: () => { if (!window.confirm('Tout effacer et repartir de zéro ?\nÉclats, améliorations, points de départ, trophées et expédition en cours seront supprimés.')) return; app.data = { ...app.data, meta: newMeta(), run: null }; save(); toast('Progression remise à zéro.'); draw(); } });
   playMusic('m_theme');
   draw();
 }

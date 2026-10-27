@@ -43,6 +43,14 @@ export const upgradeCost = (meta, key) => {
   return lv >= c.length ? null : c[lv];
 };
 
+/** Test tool: resets every camp upgrade and gives back the shards spent. */
+export function refundUpgrades(meta) {
+  let back = 0;
+  for (const [k, U] of Object.entries(UPGRADES)) { back += U.costs.slice(0, meta.upgrades[k] || 0).reduce((x, y) => x + y, 0); meta.upgrades[k] = 0; }
+  meta.shards += back;
+  return back;
+}
+
 export function buyUpgrade(meta, key) {
   const cost = upgradeCost(meta, key);
   if (cost == null || meta.shards < cost) return false;
