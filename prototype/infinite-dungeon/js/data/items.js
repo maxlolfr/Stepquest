@@ -40,7 +40,7 @@ export const RELICS = {
   // v0.4: relics that change how a run plays
   riposte:  { tag: 'riposte', name: 'Écu à pointes', ic: '🔰', img: 'uiChest1', art: 'relic_riposte', desc: 'Sous la Garde ou derrière un bouclier 💠, un héros frappé renvoie 40 % du coup à l’attaquant.' },
   pierre:   { tag: 'riposte', name: 'Cœur de pierre', ic: '🪨', img: 'uiChest3', art: 'relic_pierre', desc: 'Sous 35 % de vie, un héros subit 30 % de dégâts en moins et frappe 30 % plus fort.' },
-  brasier:  { tag: 'fleau', name: 'Brasier toxique', ic: '🧪', img: 'uiSkull', desc: 'Un ennemi à la fois empoisonné ☠️ et brûlé 🔥 subit le double de dégâts de ces deux effets.' },
+  brasier:  { tag: 'fleau', name: 'Brasier toxique', ic: '🧪', img: 'uiSkull', art: 'relic_brasier', desc: 'Un ennemi à la fois empoisonné ☠️ et brûlé 🔥 subit le double de dégâts de ces deux effets.' },
   peste:    { tag: 'fleau', name: 'Peste', ic: '🦠', img: 'uiSkull', art: 'relic_peste', desc: 'Quand un ennemi empoisonné meurt, son poison se propage à tous les autres ennemis.' },
   prisme:   { tag: 'arcanes', name: 'Prisme', ic: '🔷', img: 'uiGem', art: 'relic_prisme', desc: 'Frapper une faiblesse fait ×2 dégâts au lieu de ×1,5.' },
   tempete:  { tag: 'arcanes', name: 'Orbe des tempêtes', ic: '🌩️', img: 'uiGem', art: 'relic_tempete', desc: 'Chaque ultime remplit de 25 % la jauge des autres héros.' },
@@ -56,8 +56,7 @@ export const SYNERGIES = {
   riposte: { name: 'Bastion', ic: '🛡️', art: 'syn_riposte', desc: 'La Garde bloque 70 % des dégâts au lieu de 50 %, et chaque héros commence avec un bouclier de 10 %.' },
   fleau:   { name: 'Fléau', ic: '☠️', art: 'syn_fleau', desc: 'Le poison et la brûlure infligent 50 % de dégâts en plus aux ennemis.' },
   arcanes: { name: 'Arcanes', ic: '✨', art: 'syn_arcanes', desc: 'Les jauges d’ultime se remplissent 30 % plus vite.' },
-  lumiere: { name: 'Lumière', ic: '☀️', // art: 'syn_lumiere' (image à venir)
-    desc: 'Les soins sont 25 % plus forts, et l’équipe récupère 10 % de vie de plus après chaque victoire.' },
+  lumiere: { name: 'Lumière', ic: '☀️', art: 'syn_lumiere', desc: 'Les soins sont 25 % plus forts, et l’équipe récupère 10 % de vie de plus après chaque victoire.' },
 };
 export const SYN_NEED = 2;
 export const synergyCount = (keys, tag) => keys.filter(k => RELICS[k] && RELICS[k].tag === tag).length;
@@ -122,28 +121,28 @@ export const EVENTS = [
       { label: 'Offrir son sang', effect: { dmgPct: 0.25, relic: true }, hint: '−25 % de vie · une relique' },
       { label: 'Renverser la coupe', effect: { shards: 6 }, hint: '+6 éclats' },
     ] },
-  { id: 'library', zones: [5, 8], scene: 'bg_c6_3', from: 2, title: 'Bibliothèque oubliée', text: 'Un grimoire flotte au milieu des étagères, ouvert sur une page qui brille.',
+  { id: 'library', art: 'event_library', zones: [5, 8], scene: 'bg_c6_3', from: 2, title: 'Bibliothèque oubliée', text: 'Un grimoire flotte au milieu des étagères, ouvert sur une page qui brille.',
     choices: [
       { label: 'Étudier le grimoire', effect: { upgrade: true }, hint: 'Une compétence améliorée' },
       { label: 'Lire les chroniques', effect: { stat: true }, hint: '+10 % de stat à un héros' },
     ] },
   // v0.4: zone events (zones = where they are 3× more likely; from = first zone where they can appear)
-  { id: 'mushrooms', zones: [1], from: 1, scene: 'bg_c2_2', title: 'Cercle de champignons', text: 'Des champignons bleus brillent en cercle. Un vieil arbre semble sourire dans son sommeil.',
+  { id: 'mushrooms', art: 'event_mushrooms', zones: [1], from: 1, scene: 'bg_c2_2', title: 'Cercle de champignons', text: 'Des champignons bleus brillent en cercle. Un vieil arbre semble sourire dans son sommeil.',
     choices: [
       { label: 'Goûter un champignon', effect: { gamble: { win: { healPct: 0.5 }, lose: { dmgPct: 0.15 }, p: 0.6 } }, hint: '60 % : soigne 50 % · sinon −15 % de vie' },
       { label: 'En cueillir pour plus tard', effect: { item: 'pot' }, hint: '+1 potion' },
     ] },
-  { id: 'cart', zones: [2], from: 2, scene: 'bg_c3_2', title: 'Chariot de cristaux', text: 'Un chariot renversé déborde de cristaux rouges, au bord d’une coulée de lave.',
+  { id: 'cart', art: 'event_cart', zones: [2], from: 2, scene: 'bg_c3_2', title: 'Chariot de cristaux', text: 'Un chariot renversé déborde de cristaux rouges, au bord d’une coulée de lave.',
     choices: [
       { label: 'Fouiller le chariot', effect: { dmgPct: 0.1, gold: 80 }, hint: '−10 % de vie · +80 or' },
       { label: 'Garder un cristal pur', effect: { stat: true }, hint: '+10 % de stat à un héros' },
     ] },
-  { id: 'banquet', zones: [5], from: 5, scene: 'bg_c6_4', title: 'Banquet du Comte', text: 'Une longue table dressée, des coupes de vin rouge… et personne pour les boire.',
+  { id: 'banquet', art: 'event_banquet', zones: [5], from: 5, scene: 'bg_c6_4', title: 'Banquet du Comte', text: 'Une longue table dressée, des coupes de vin rouge… et personne pour les boire.',
     choices: [
       { label: 'Boire le vin', effect: { healPct: 0.5 }, hint: 'Soigne l’équipe de 50 %' },
       { label: 'Voler l’argenterie', effect: { dmgPct: 0.2, gold: 120 }, hint: '−20 % de vie · +120 or' },
     ] },
-  { id: 'pact', zones: [8], from: 8, scene: 'bg_c9_1', title: 'Pacte du Néant', text: 'Un miroir flottant montre ton équipe, plus forte… et plus pâle. Une voix propose un marché.',
+  { id: 'pact', art: 'event_pact', zones: [8], from: 8, scene: 'bg_c9_1', title: 'Pacte du Néant', text: 'Un miroir flottant montre ton équipe, plus forte… et plus pâle. Une voix propose un marché.',
     choices: [
       { label: 'Accepter le pacte', effect: { dmgPct: 0.35, relic: 2 }, hint: '−35 % de vie · 2 reliques' },
       { label: 'Briser le miroir', effect: { shards: 10 }, hint: '+10 éclats' },

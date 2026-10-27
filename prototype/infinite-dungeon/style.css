@@ -284,3 +284,7 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 .res-report b{color:#ffb4a8}
 .res-goal{margin:8px 0;color:#ffd98a;font-weight:800;font-size:15px}
 .card.t-relic:has(.syn.on){border-color:#ffd98a;box-shadow:0 0 18px rgba(255,200,90,.45),0 8px 20px rgba(0,0,0,.45)}
+
+/* v0.4 — full-screen illustrations (results, checkpoint) */
+.results,.checkpoint{position:relative;isolation:isolate}
+.results::before,.checkpoint::before{content:'';position:fixed;inset:0;z-index:-1;background:linear-gradient(rgba(7,6,11,.1),rgba(7,6,11,.35) 40%,rgba(7,6,11,.88)),var(--scr) center/cover no-repeat}

@@ -37,7 +37,7 @@ export function showResults(root, { summary, team, onCamp }) {
   const title = o === 'win' ? 'La tour est vaincue !' : o === 'retreat' ? 'Retour au camp' : 'L’équipe est tombée…';
   const pose = o === 'win' ? 'win' : o === 'retreat' ? 'win' : 'ko';
   playMusic(o === 'win' ? 'm_victory' : o === 'retreat' ? 'm_theme' : 'm_defeat');
-  root.replaceChildren(h('div.page.center.results.' + o,
+  root.replaceChildren(h('div.page.center.results.' + o, { style: { '--scr': `url(img/${o === 'lose' ? 'scr_defeat' : 'scr_victory'}.webp)` } },
     h('div.res-heroes', team.map(id => img(`${HEROES[id].sprite}_${pose}`, 'res-hero'))),
     h('h2', title),
     h('p.lead', o === 'lose' ? `Défaite à l’étage ${summary.floor}.` : o === 'retreat' ? `Expédition terminée à l’étage ${summary.floor}.` : 'Vorthax le Lié est tombé. Les 100 étages sont à toi.'),

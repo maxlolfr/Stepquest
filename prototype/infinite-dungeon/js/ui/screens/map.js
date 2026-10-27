@@ -58,8 +58,7 @@ export function showMap(root, { run, onDoor, onQuit }) {
 }
 
 export function showCheckpoint(root, { run, onContinue, onRetreat }) {
-  root.replaceChildren(h('div.page.center',
-    img(zoneOf(run.floor).levels[0].bg, 'scene-art'),
+  root.replaceChildren(h('div.page.center.checkpoint', { style: { '--scr': 'url(img/scr_checkpoint.webp)' } },
     h('h2', `Victoire : ${BOSSES[zoneOf(run.floor - 1).boss].name} !`),
     h('p.lead', `Tu entres dans ${zoneOf(run.floor).name}.`),
     h('p.lead', `${run.banked} éclats sont désormais à l’abri : tu les garderas même en cas de défaite.`),

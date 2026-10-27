@@ -17,7 +17,7 @@ export const DOOR_INFO = {
   shop:  { name: 'Marchand', ic: '💰', img: 'uiGold', desc: 'Potions, équipement et reliques contre de l’or.' },
   event: { name: 'Événement', ic: '❓', img: 'uiScroll', desc: 'Une rencontre étrange, un choix à faire.' },
   boss:  { name: 'Boss', ic: '👑', img: 'uiTrophy', desc: 'Le maître de la zone. Après lui, tes éclats sont à l’abri.' },
-  cursed: { name: 'Porte maudite', ic: '⛓️', img: 'uiSkull', desc: 'Des élites renforcés. Si tu survis : 1 relique au choix parmi 3.' },
+  cursed: { name: 'Porte maudite', ic: '⛓️', img: 'door_cursed', desc: 'Des élites renforcés. Si tu survis : 1 relique au choix parmi 3.' },
 };
 
 // What each door promises (shown on the map) and how dangerous it is (0-3 skulls)

@@ -43,7 +43,7 @@ for (const k of ['uiPotion', 'uiGold', 'uiScroll', 'uiDice', 'uiChest1', 'uiChes
 // original images of Infinite Dungeon (img/ of this folder)
 for (const R of [...Object.values(RELICS), ...EVENTS, ...Object.values(UPGRADES), ...Object.values(SYNERGIES)]) if (R.art) IMG[R.art] = `img/${R.art}.webp`;
 for (const E of EVENTS) if (E.scene && !IMG[E.scene]) throw new Error(`décor manquant pour l’événement ${E.id}: ${E.scene}`);
-for (const k of ['room_rest', 'room_shop', 'camp_scene', 'bg_menu']) IMG[k] = `img/${k}.webp`;
+for (const k of ['room_rest', 'room_shop', 'camp_scene', 'bg_menu', 'door_cursed', 'chest_boss', 'scr_victory', 'scr_defeat', 'scr_checkpoint']) IMG[k] = `img/${k}.webp`;
 for (const R of [...Object.values(RELICS), ...Object.values(CONSUMABLES)]) if (!IMG[R.img]) throw new Error(`asset manquant pour ${R.name}: ${R.img}`);
 
 export const IMAGES = IMG;

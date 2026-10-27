@@ -59,9 +59,9 @@ export const XP = {
 const costs = (first, n) => Array.from({ length: n }, (_, i) => Math.round(first * 1.4 ** i / 5) * 5);
 export const UPGRADES = {
   vie:     { name: 'Forge du camp', ic: '❤️', art: 'camp_vie', desc: lv => `Vie des héros +${6 * lv} %`, costs: costs(20, 10) },
-  force:   { name: 'Armurerie', ic: '⚔️', desc: lv => `Attaque et magie +${5 * lv} %`, costs: costs(25, 10) },
-  garde:   { name: 'Bastion', ic: '🛡️', desc: lv => `Défense +${6 * lv} %`, costs: costs(20, 10) },
-  ecole:   { name: 'Salle d’entraînement', ic: '📖', desc: lv => `Les héros partent au niveau ${1 + 2 * lv}`, costs: costs(30, 10) },
+  force:   { name: 'Armurerie', ic: '⚔️', art: 'camp_force', desc: lv => `Attaque et magie +${5 * lv} %`, costs: costs(25, 10) },
+  garde:   { name: 'Bastion', ic: '🛡️', art: 'camp_garde', desc: lv => `Défense +${6 * lv} %`, costs: costs(20, 10) },
+  ecole:   { name: 'Salle d’entraînement', ic: '📖', art: 'camp_ecole', desc: lv => `Les héros partent au niveau ${1 + 2 * lv}`, costs: costs(30, 10) },
   or:      { name: 'Coffre de départ', ic: '💰', art: 'camp_or', desc: lv => `+${30 * lv} or au départ`, costs: costs(15, 8) },
   potion:  { name: 'Apothicaire', ic: '🧪', art: 'camp_potion', desc: lv => `+${lv} potion${lv > 1 ? 's' : ''} au départ`, costs: costs(15, 5) },
   relance: { name: 'Oracle', ic: '🎲', art: 'camp_relance', desc: lv => `${lv} relance${lv > 1 ? 's' : ''} de récompense par expédition`, costs: costs(25, 5) },
