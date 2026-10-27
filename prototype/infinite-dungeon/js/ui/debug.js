@@ -7,6 +7,8 @@ import { floorOf } from '../run/run.js';
 import { chooseDoor } from '../run/run.js';
 import { exportCode, importCode } from '../save/storage.js';
 import { missingAssets } from './loader.js';
+import { UPGRADES } from '../data/balance.js';
+import { newMeta } from '../run/meta.js';
 import { GAME } from '../config.js';
 
 export function mountDebug() {
@@ -47,7 +49,10 @@ export function mountDebug() {
       h('button', { type: 'button', onclick: () => go('boss') }, 'Boss')),
     h('div.dbg-row',
       h('button', { type: 'button', onclick: () => { app.data.meta.shards += 500; app.data.meta.unlocked = 91; save(); toast('+500 éclats, départs débloqués'); goTitle(); } }, '+500 éclats'),
-      h('button', { type: 'button', onclick: () => { const c = exportCode(app.data); navigator.clipboard && navigator.clipboard.writeText(c).catch(() => {}); window.prompt('Code de sauvegarde (copié) :', c); } }, 'Exporter'),
+      h('button', { type: 'button', onclick: () => { const m = app.data.meta; let back = 0; for (const [k, U] of Object.entries(UPGRADES)) { back += U.costs.slice(0, m.upgrades[k] || 0).reduce((x, y) => x + y, 0); m.upgrades[k] = 0; } m.shards += back; save(); toast(`Camp remis à zéro : +${back} éclats rendus`); goTitle(); } }, 'Rembourser le camp'),
+      h('button', { type: 'button', onclick: () => { if (!window.confirm('Tout effacer et repartir de zéro ? (camp, éclats, départs, trophées, expédition en cours)')) return; app.data = { v: app.data.v, meta: newMeta(), run: null }; save(); toast('Progression remise à zéro.'); goTitle(); } }, 'Tout effacer')),
+    h('div.dbg-row',
+h('button', { type: 'button', onclick: () => { const c = exportCode(app.data); navigator.clipboard && navigator.clipboard.writeText(c).catch(() => {}); window.prompt('Code de sauvegarde (copié) :', c); } }, 'Exporter'),
       h('button', { type: 'button', onclick: () => { const c = window.prompt('Colle le code de sauvegarde :'); if (!c) return; const d = importCode(c); if (!d) return toast('Code invalide.'); app.data = d; save(); toast('Sauvegarde importée.'); goTitle(); } }, 'Importer')));
   box.replaceChildren(h('button.dbg-toggle', { type: 'button', onclick: () => box.classList.toggle('open') }, '🛠'), h('div.dbg-body', info, panel));
 }

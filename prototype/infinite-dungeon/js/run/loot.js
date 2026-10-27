@@ -103,7 +103,7 @@ export function shopStock(run, rng, floor) {
   const relic = card('relic', run, rng, floor, 'elite');
   const up = card('upgrade', run, rng, floor);
   return [
-    { id: 'pot', type: 'item', key: 'pot', price: P(30), title: 'Potion', ic: '🧪', desc: 'Rend 50 % de vie à l’allié le plus blessé, en combat.' },
+    { id: 'pot', type: 'item', key: 'pot', price: P(30) * (run.curses && run.curses.includes('potion') ? 2 : 1), title: 'Potion', ic: '🧪', desc: 'Rend 50 % de vie à l’allié le plus blessé, en combat.' },
     { id: 'fea', type: 'item', key: 'fea', price: P(70), title: 'Plume de phénix', ic: '🪶', desc: 'Ramène un allié tombé avec 40 % de vie, en combat.' },
     { id: 'heal', type: 'heal', pct: 0.35, price: P(BAL.shop.heal), title: 'Soins', ic: '💚', desc: 'Soigne l’équipe de 35 % et relève les héros tombés.' },
     { id: 'gear', type: 'gear', hero, gear: g, price: P(BAL.shop.gear + 30 * g.r), title: g.name, img: g.img, rarity: g.r, desc: `Pour ${HEROES[hero].name}.` },

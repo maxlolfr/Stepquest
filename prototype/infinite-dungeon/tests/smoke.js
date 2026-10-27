@@ -109,6 +109,21 @@ srv.listen(0, async () => {
       await pg.click('.upg .btn.primary >> nth=0'); await pg.waitForTimeout(200);
       check(`${tag} : amélioration du camp achetée`, await pg.evaluate(() => Object.values(window.__sqid.app.data.meta.upgrades).some(v => v > 0)));
 
+      // v0.5: trophy room and Nightmare picker
+      await pg.evaluate(() => { window.__sqid.app.data.meta.unlocked = 11; });
+      await pg.click('.ptop .back'); await pg.waitForTimeout(300);
+      await pg.click('#menu button:has-text("Trophées")'); await pg.waitForTimeout(400);
+      check(`${tag} : salle des trophées`, await pg.isVisible('.trophies') && (await pg.$$('.daily')).length === 3);
+      await ui('trophées'); await shot('7b-trophees');
+      await pg.click('.ptop .back'); await pg.waitForTimeout(300);
+      pg.once('dialog', d => d.accept());
+      await pg.click('#menu button:has-text("Nouvelle expédition")'); await pg.waitForTimeout(400);
+      check(`${tag} : mode Cauchemar proposé après le 1er boss`, await pg.isVisible('.nightmare-box'));
+      await pg.click('.nightmare-box summary'); await pg.click('.curse-pick >> nth=0'); await pg.click('.curse-pick >> nth=1'); await pg.waitForTimeout(200);
+      await ui('Cauchemar'); await shot('7c-cauchemar');
+      await pg.click('.pfoot .btn.primary'); await pg.waitForTimeout(500);
+      check(`${tag} : expédition maudite lancée`, await pg.evaluate(() => window.__sqid.app.data.run && window.__sqid.app.data.run.curses.length === 2));
+
       // boss through the debug panel
       await pg.goto(`${base}?debug`); await waitFor(pg, () => window.__sqid && window.__sqid.ready);
       await pg.click('.dbg-toggle'); await pg.click('.dbg-row button:has-text("Boss")');

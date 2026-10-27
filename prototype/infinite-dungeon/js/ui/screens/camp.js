@@ -24,6 +24,16 @@ function defeatLines(r) {
   return h('div.res-report', lines);
 }
 
+/** Daily objectives and achievements earned by this expedition. */
+function progressLines(s) {
+  const p = s.progress; if (!p) return null;
+  const rows = [];
+  if (s.nightmareOpened) rows.push(h('p.res-unlock', icon('nm_emblem', '🔥', 'res-ic'), h('span', h('b', 'Mode Cauchemar débloqué ! '), 'Choisis des malédictions au départ pour gagner plus d’éclats.')));
+  for (const o of p.dailies) rows.push(h('p.res-unlock', icon('daily_chest', '📜', 'res-ic'), h('span', h('b', 'Objectif du jour réussi : '), `${o.text} · +${o.reward} 💎`)));
+  for (const a of p.achievements) rows.push(h('p.res-unlock', icon(a.art, a.ic, 'res-ic'), h('span', h('b', `Exploit : ${a.name}`), ` · +${a.reward} 💎`)));
+  return rows.length ? h('div.res-progress', rows) : null;
+}
+
 /** A reachable goal for the next expedition. */
 function nextGoal(summary) {
   const z = Math.min(ZONES.length - 1, Math.floor((summary.floor - 1) / BAL.zoneSize));
@@ -44,11 +54,13 @@ export function showResults(root, { summary, team, onCamp }) {
     summary.record ? h('p.record', `🏆 Nouveau record : étage ${summary.floor} !`) : null,
     summary.unlocked ? h('p.record', `🚩 Nouveau point de départ : étage ${summary.unlocked}`) : null,
     h('div.summary',
-      h('p', h('b', `💎 ${summary.kept} éclats`), ' rapportés au camp'),
+      h('p', h('b', `💎 ${summary.kept + (summary.progress ? summary.progress.shards : 0)} éclats`), ' rapportés au camp'),
+      summary.curses && summary.curses.length ? h('p.dim', `🔥 Cauchemar ${summary.curses.length}`) : null,
       summary.lost ? h('p.dim', `${summary.lost} éclats perdus dans la tour`) : null,
       h('p.dim', `${summary.fights} combat${summary.fights > 1 ? 's' : ''} · ${summary.kills} ennemi${summary.kills > 1 ? 's' : ''} vaincu${summary.kills > 1 ? 's' : ''} · ${summary.bosses || 0} boss vaincu${(summary.bosses || 0) > 1 ? 's' : ''}`),
       summary.relics && summary.relics.length ? h('p.dim', `Reliques : ${summary.relics.map(k => RELICS[k] ? RELICS[k].ic : '').join(' ')}`) : null),
     o === 'lose' ? defeatLines(summary.report) : null,
+    progressLines(summary),
     h('p.res-goal', '🎯 ', nextGoal(summary)),
     h('button.btn.primary.wide', { type: 'button', onclick: onCamp }, 'Aller au camp')));
 }

@@ -30,10 +30,10 @@ function cardValue(run, c) {
 }
 const bestIdx = (run, cards) => cards.reduce((b, c, i) => (cardValue(run, c) > cardValue(run, cards[b]) ? i : b), 0);
 
-export function simulateRun(seed, { team, smart = true, meta = newMeta(), start = 1 } = {}) {
+export function simulateRun(seed, { team, smart = true, meta = newMeta(), start = 1, curses = [] } = {}) {
   const rng = makeRng(seed ^ 0x5bd1e995);
   const ids = team || rng.shuffle(HERO_ORDER).slice(0, 3);
-  const run = newRun(meta, ids, seed, start);
+  const run = newRun(meta, ids, seed, start, curses);
   for (let guard = 0; guard < 1000 && run.phase !== 'over'; guard++) {
     if (run.phase === 'checkpoint') { continueRun(run); continue; }
     if (run.phase === 'map') {

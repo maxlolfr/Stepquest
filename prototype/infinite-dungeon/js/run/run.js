@@ -8,7 +8,9 @@ import { HEROES } from '../data/heroes.js';
 import { gearScore } from './loot.js';
 import { BAL, XP } from '../data/balance.js';
 import { EVENTS, RELICS, eventsForZone, activeSynergies } from '../data/items.js';
-import { zoneOf } from '../data/monsters.js';
+import { zoneOf, MONSTERS } from '../data/monsters.js';
+import { CURSES, NIGHTMARE_UNLOCK, curseBonus, hasCurse } from '../data/progress.js';
+import { recordRun } from './meta.js';
 import { generateDungeon, isFight, isBossFloor } from './dungeon.js';
 import { rewardCards, shopStock, upgradeCard, makeGear, statCard } from './loot.js';
 
@@ -61,7 +63,10 @@ export function refreshTeam(run, meta) {
 
 // ---------------------------------------------------------------- creation
 
-export function newRun(meta, teamIds, seed, start = 1) {
+/** Curses the player may pick (Nightmare mode: after the floor 10 boss). */
+export const nightmareOpen = meta => ((meta && meta.unlocked) || 1) >= NIGHTMARE_UNLOCK;
+
+export function newRun(meta, teamIds, seed, start = 1, curses = []) {
   if (!Array.isArray(teamIds) || teamIds.length !== 3 || new Set(teamIds).size !== 3 || !teamIds.every(id => HEROES[id])) throw new Error('Une équipe de 3 héros différents est nécessaire.');
   const up = meta.upgrades;
   if (!startFloors(meta).includes(start)) start = 1;
@@ -71,8 +76,10 @@ export function newRun(meta, teamIds, seed, start = 1) {
     team: teamIds.map(id => ({ id, hp: 1e9, hpMax: 0, up: {}, bonus: {}, gear: {}, el: 'phys' })),
     gold: BAL.startGold + 30 * up.or, items: { pot: BAL.startItems.pot + up.potion, fea: BAL.startItems.fea },
     relics: [], shards: 0, banked: 0, rerolls: up.relance, rerollN: 0,
-    door: null, pending: null, path: [], outcome: null, stats: { fights: 0, kills: 0 },
+    door: null, pending: null, path: [], outcome: null, stats: { fights: 0, kills: 0, elites: 0, cursedWon: 0, bossIds: [], synMax: 0 },
+    curses: nightmareOpen(meta) ? [...new Set(curses)].filter(k => CURSES[k]) : [],
   };
+  if (hasCurse(run, 'potion')) run.items.pot = 0;
   if (start > 1) { // checkpoint start: catch up with what a run would have gathered
     const k = (start - 1) / 10, Bn = BAL.startBonus(k), rng = makeRng(hashSeed(run.seed, 'start'));
     run.gold += Bn.gold; run.items.pot += Bn.pot; run.lv = Math.max(run.lv, Bn.lv);
@@ -118,9 +125,14 @@ export function chooseDoor(run, idx) {
 /** Arguments for createBattle(). */
 export function battleConfig(run, meta) {
   const d = currentDoor(run);
+  let foes = d.foes.map(f => ({ ...f }));
+  if (hasCurse(run, 'rage')) for (const f of foes) f.atkMul *= 1.2;
+  if (hasCurse(run, 'crown')) for (const f of foes) if (f.boss) f.hpMul *= 1.3;
+  if (hasCurse(run, 'horde') && !foes.some(f => f.boss)) while (foes.length < 3) foes.push({ ...foes[0], elite: undefined, id: foes[foes.length - 1].id });
   return {
     heroes: run.team.map(h => ({ id: h.id, ...heroStats(h, meta, run.lv), hp: h.hp, el: h.el, up: h.up })),
-    foes: d.foes,
+    foes,
+    curses: (run.curses || []).slice(),
     relics: run.relics.slice(),
     items: run.items, // shared: potions used in combat are gone
     seed: hashSeed(run.seed, run.floor, run.door, d.seed),
@@ -135,14 +147,18 @@ export function finishBattle(run, result, heroesAfter, kills = 0, meta = null, r
   if (result !== 'win') { run.phase = 'over'; run.outcome = 'lose'; run.report = report ? { ...report, floor: run.floor } : null; return; }
   for (const h of run.team) {
     if (h.hp <= 0) h.hp = Math.max(1, Math.round(h.hpMax * 0.2)); // fallen heroes get back up after a victory
-    else h.hp = Math.min(h.hpMax, h.hp + Math.round(h.hpMax * (BAL.afterFightHeal + (activeSynergies(run.relics).includes('lumiere') ? 0.1 : 0)))); // catch one's breath
+    else if (!hasCurse(run, 'fire')) h.hp = Math.min(h.hpMax, h.hp + Math.round(h.hpMax * (BAL.afterFightHeal + (activeSynergies(run.relics).includes('lumiere') ? 0.1 : 0)))); // catch one's breath
   }
   const kind = d.type === 'fight' ? 'normal' : d.type, zm = BAL.zoneMul(zoneOf(run.floor).index);
   const [g0, g1] = BAL.gold[kind];
   const rng = rngFor(run, 'loot');
-  const goldMul = (run.relics.includes('bourse') ? 1.3 : 1) * (d.foes.some(f => f.elite === 'gold') ? 2 : 1);
+  const goldMul = (run.relics.includes('bourse') ? 1.3 : 1) * (d.foes.some(f => f.elite === 'gold') ? 2 : 1) * (hasCurse(run, 'gold') ? 0.6 : 1);
   run.gold += Math.round(rng.int(g0, g1) * BAL.goldMul(zoneOf(run.floor).index) * goldMul);
-  run.shards += Math.round(BAL.shards[kind] * zm);
+  run.shards += Math.round(BAL.shards[kind] * zm * (1 + curseBonus(run.curses)));
+  const st = run.stats;
+  if (kind === 'elite') st.elites = (st.elites || 0) + 1;
+  if (kind === 'cursed') st.cursedWon = (st.cursedWon || 0) + 1;
+  if (kind === 'boss') (st.bossIds = st.bossIds || []).push(d.foes[0].id);
   gainXp(run, XP.gain[kind], meta);
   if (d.type === 'boss') {
     run.bosses = (run.bosses || 0) + 1;
@@ -162,7 +178,7 @@ export function applyCard(run, c, meta) {
     case 'upgrade': h.up[c.skill] = (h.up[c.skill] || 0) + 1; break;
     case 'element': h.el = c.el; break;
     case 'gear': h.gear[c.gear.slot] = c.gear; break;
-    case 'relic': if (!run.relics.includes(c.key) && RELICS[c.key]) run.relics.push(c.key); break;
+    case 'relic': if (!run.relics.includes(c.key) && RELICS[c.key]) { run.relics.push(c.key); run.stats.synMax = Math.max(run.stats.synMax || 0, activeSynergies(run.relics).length); } break;
     case 'item': run.items[c.key] = (run.items[c.key] || 0) + 1; break;
     default: throw new Error(`Carte inconnue : ${c.type}`);
   }
@@ -187,7 +203,7 @@ export function reroll(run) {
 
 // ---------------------------------------------------------------- rooms
 
-export const restHealPct = run => BAL.restHeal * (run.relics.includes('braises') ? 1.5 : 1);
+export const restHealPct = run => BAL.restHeal * (run.relics.includes('braises') ? 1.5 : 1) * (hasCurse(run, 'fire') ? 0.5 : 1);
 
 export function rest(run, choice, meta) {
   const p = run.pending;
@@ -300,10 +316,11 @@ export function retreat(run) {
 export function endRun(meta, run) {
   const o = run.outcome;
   let kept;
-  if (o === 'win') kept = run.banked + run.shards + BAL.shards.victory;
+  const victory = Math.round(BAL.shards.victory * (1 + curseBonus(run.curses)));
+  if (o === 'win') kept = run.banked + run.shards + victory;
   else if (o === 'retreat') kept = run.banked + run.shards;
   else kept = run.banked + Math.floor(run.shards * BAL.defeatKeep);
-  const lost = run.banked + run.shards + (o === 'win' ? BAL.shards.victory : 0) - kept;
+  const lost = run.banked + run.shards + (o === 'win' ? victory : 0) - kept;
   meta.shards += kept;
   const s = meta.stats;
   s.runs++; s.shardsEarned += kept;
@@ -315,5 +332,10 @@ export function endRun(meta, run) {
   const lastBoss = o === 'win' ? BAL.floors : Math.floor((run.floor - 1) / BAL.zoneSize) * BAL.zoneSize;
   const before = meta.unlocked || 1;
   meta.unlocked = Math.max(before, ...BAL.startFloors.filter(f => f - 1 <= lastBoss && f <= BAL.floors));
-  return { outcome: o, kept, lost, banked: run.banked, floor: reached, bosses: run.bosses || 0, report: run.report || null, relics: run.relics.slice(), start: run.start || 1, record, unlocked: meta.unlocked > before ? meta.unlocked : 0, fights: run.stats.fights, kills: run.stats.kills };
+  const st = run.stats;
+  const summary = { outcome: o, kept, lost, banked: run.banked, floor: reached, bosses: run.bosses || 0, report: run.report || null, relics: run.relics.slice(), start: run.start || 1, record, unlocked: meta.unlocked > before ? meta.unlocked : 0, fights: st.fights, kills: st.kills,
+    elites: st.elites || 0, cursedWon: st.cursedWon || 0, bossIds: (st.bossIds || []).slice(), synergies: st.synMax || 0, team: run.team.map(h => h.id), curses: (run.curses || []).slice(),
+    nightmareOpened: before < NIGHTMARE_UNLOCK && meta.unlocked >= NIGHTMARE_UNLOCK };
+  summary.progress = recordRun(meta, summary); // achievements, daily objectives, journal
+  return summary;
 }

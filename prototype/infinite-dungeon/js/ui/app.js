@@ -9,15 +9,17 @@ import { showMap, showCheckpoint } from './screens/map.js';
 import { showCards, showRest, showShop, showEvent } from './screens/rooms.js';
 import { showResults, showCamp } from './screens/camp.js';
 import { runBattle } from './screens/battle.js';
+import { showTrophies } from './screens/trophies.js';
+import { dailyFor, dayKey, ACHIEVEMENTS } from '../data/progress.js';
 import { loadSave, writeSave } from '../save/storage.js';
-import { newRun, chooseDoor, battleConfig, finishBattle, pickCard, reroll, rest, buy, resolveEvent, leaveRoom, continueRun, retreat, endRun, currentDoor, refreshTeam, startFloors } from '../run/run.js';
+import { nightmareOpen, newRun, chooseDoor, battleConfig, finishBattle, pickCard, reroll, rest, buy, resolveEvent, leaveRoom, continueRun, retreat, endRun, currentDoor, refreshTeam, startFloors } from '../run/run.js';
 import { buyUpgrade } from '../run/meta.js';
 import { newSeed } from '../core/rng.js';
 import { HEROES } from '../data/heroes.js';
 import { zoneOf } from '../data/monsters.js';
 
 const view = () => document.getElementById('view');
-export const app = { data: null, lastTeam: ['aldric', 'selena', 'orin'], saveFailed: false };
+export const app = { data: null, lastTeam: ['aldric', 'selena', 'orin'], lastCurses: [], saveFailed: false };
 
 export function save() {
   const ok = writeSave(app.data);
@@ -39,8 +41,10 @@ export function goTitle() {
   showTitle(() => {
     const { run, meta } = app.data, items = [];
     if (run) items.push({ label: 'Continuer l’expédition', sub: `Étage ${run.floor} · ${run.team.map(t => HEROES[t.id].name).join(', ')}`, primary: true, action: () => route() });
-    items.push({ label: 'Nouvelle expédition', sub: run ? 'Abandonne l’expédition en cours' : '3 héros · 100 étages · 10 boss', primary: !run, action: newExpedition });
+    items.push({ label: 'Nouvelle expédition', sub: run ? 'Abandonne l’expédition en cours' : 'Équipe de 3 parmi 5 héros · 100 étages', primary: !run, action: newExpedition });
     items.push({ label: 'Le camp', sub: `💎 ${meta.shards} éclats`, action: goCamp });
+    const daily = dailyFor(dayKey(), { nightmare: nightmareOpen(meta) }), done = daily.filter(o => meta.daily.day === dayKey() && meta.daily.done.includes(o.key)).length;
+    items.push({ label: 'Trophées', sub: `📜 Objectifs du jour ${done}/3 · 🏆 ${meta.ach.length}/${ACHIEVEMENTS.length} exploits`, action: goTrophies });
     return items;
   });
 }
@@ -49,16 +53,22 @@ function newExpedition() {
   if (app.data.run && !window.confirm('Abandonner l’expédition en cours ? Elle compte comme une défaite (la moitié des éclats non sécurisés est gardée).')) return;
   if (app.data.run) { app.data.run.outcome = 'lose'; endRun(app.data.meta, app.data.run); app.data.run = null; save(); }
   hideTitle();
-  showTeam(view(), { initial: app.lastTeam, starts: startFloors(app.data.meta), onBack: goTitle, onStart: (ids, start) => startRun(ids, { start }) });
+  showTeam(view(), { initial: app.lastTeam, starts: startFloors(app.data.meta), nightmare: nightmareOpen(app.data.meta), curses: app.lastCurses, onBack: goTitle, onStart: (ids, start, curses) => startRun(ids, { start, curses }) });
 }
 
-export function startRun(ids, { seed = newSeed(), floor = 0, start = 1 } = {}) {
-  app.lastTeam = ids;
-  const run = newRun(app.data.meta, ids, seed, start);
+export function startRun(ids, { seed = newSeed(), floor = 0, start = 1, curses = [] } = {}) {
+  app.lastTeam = ids; app.lastCurses = curses;
+  const run = newRun(app.data.meta, ids, seed, start, curses);
   if (floor) run.floor = floor; // debug panel
   app.data.run = run;
   save();
   route();
+}
+
+function goTrophies() {
+  hideTitle();
+  playMusic('m_theme');
+  showTrophies(view(), { meta: app.data.meta, onBack: goTitle });
 }
 
 function goCamp() {

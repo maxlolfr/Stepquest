@@ -18,9 +18,9 @@ import { BAL } from '../data/balance.js';
  * foes:   [{ id, hpMul, atkMul, defMul, elite?: affixKey, boss? }]
  * relics: array of relic keys. items: { pot, fea } (shared with the run, mutated).
  */
-export function createBattle({ heroes, foes, relics = [], items = { pot: 0, fea: 0 }, seed = 1 }) {
+export function createBattle({ heroes, foes, relics = [], items = { pot: 0, fea: 0 }, seed = 1, curses = [] }) {
   const rng = makeRng(seed), R = new Set(relics);
-  const B = { rng, relics: R, syn: new Set(activeSynergies(relics)), items, round: 0, queue: [], units: [], over: null, uidN: 0, guardLeft: R.has('sceau') ? 2 : 1, guardUntil: -1,
+  const B = { rng, curses: new Set(curses), relics: R, syn: new Set(activeSynergies(relics)), items, round: 0, queue: [], units: [], over: null, uidN: 0, guardLeft: R.has('sceau') ? 2 : 1, guardUntil: -1,
     seleneSave: true, starSave: R.has('etoile'), log: [], foeTurns: 0, stats: { dealt: 0, taken: 0 },
     report: { by: {}, last: null, ko: null, potUsed: 0 } }; // why a fight was lost (defeat screen)
   heroes.forEach((h, i) => B.units.push(makeHero(B, h, i)));
@@ -478,6 +478,7 @@ function foeStrike(B, ev, f, t, mult, name) {
     if (f.trait === 'poison') addStatus(B, ev, t, 'poison', f.atk * 0.18, f);
     if (f.trait === 'burn') addStatus(B, ev, t, 'burn', f.atk * 0.22, f);
     if (f.trait === 'chill' && B.rng.chance(0.2)) addStatus(B, ev, t, 'freeze', 1, f);
+    if (B.curses.has('venom') && f.trait !== 'poison' && alive(t) && B.rng.chance(1 / 3)) addStatus(B, ev, t, 'poison', f.atk * 0.15, f); // Nightmare curse
   }
   return d;
 }

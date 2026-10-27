@@ -8,6 +8,7 @@ import { MONSTERS, BOSSES, ZONES, ZONE_MUSIC } from '../data/monsters.js';
 import { HEROES } from '../data/heroes.js';
 import { RELICS, CONSUMABLES, EVENTS, SYNERGIES } from '../data/items.js';
 import { UPGRADES } from '../data/balance.js';
+import { CURSES, ACHIEVEMENTS } from '../data/progress.js';
 
 export const DB2 = '../dragonbound2/';
 export const DB1 = '../dragonbound/';
@@ -44,6 +45,8 @@ for (const k of ['uiPotion', 'uiGold', 'uiScroll', 'uiDice', 'uiChest1', 'uiChes
 for (const R of [...Object.values(RELICS), ...EVENTS, ...Object.values(UPGRADES), ...Object.values(SYNERGIES)]) if (R.art) IMG[R.art] = `img/${R.art}.webp`;
 for (const E of EVENTS) if (E.scene && !IMG[E.scene]) throw new Error(`décor manquant pour l’événement ${E.id}: ${E.scene}`);
 for (const k of ['room_rest', 'room_shop', 'camp_scene', 'bg_menu', 'door_cursed', 'chest_boss', 'scr_victory', 'scr_defeat', 'scr_checkpoint']) IMG[k] = `img/${k}.webp`;
+// v0.5: Nightmare curses, trophies, daily objectives
+for (const k of ['scr_trophies', 'scr_nightmare', 'nm_emblem', 'daily_quest', 'daily_chest', 'ach_mystery', ...Object.values(CURSES).map(c => c.art), ...ACHIEVEMENTS.map(a => a.art)]) IMG[k] = `img/${k}.webp`;
 for (const R of [...Object.values(RELICS), ...Object.values(CONSUMABLES)]) if (!IMG[R.img]) throw new Error(`asset manquant pour ${R.name}: ${R.img}`);
 
 export const IMAGES = IMG;

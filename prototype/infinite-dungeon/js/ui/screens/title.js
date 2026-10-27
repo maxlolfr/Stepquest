@@ -28,10 +28,11 @@ let started = false, menuFn = null, visible = true;
 export async function initTitle() {
   const screen = $('title'), cv = $('titleCv'), cx = cv.getContext('2d'), bgEl = $('titleBg');
   $('kicker').textContent = GAME.kicker;
+  $('kicker').hidden = !GAME.kicker;
   $('gameTitle').textContent = GAME.title;
   $('tagline').textContent = GAME.tagline;
   $('version').textContent = `${GAME.stage} · v${GAME.version}`;
-  document.title = `${GAME.title} — ${GAME.kicker}`;
+  document.title = GAME.kicker ? `${GAME.title} — ${GAME.kicker}` : GAME.title;
 
   const heroes = LINEUP.map((p, i) => ({ ...p, base: HERO_SPRITE[p.id], seed: i * 1.7, frames: heroFrames(HERO_SPRITE[p.id], 'idle') }));
   const bgImg = loadImage('bg_title');
