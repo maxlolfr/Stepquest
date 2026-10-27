@@ -42,5 +42,15 @@ srv.listen(0, async () => { const b = await chromium.launch(), errs = [], miss =
   ok('Ancienne partie sans langue : reste en français', await p2.evaluate(() => document.documentElement.lang !== 'en'));
   await p2.evaluate(() => localStorage.clear()); await p2.goto(u); await p2.waitForTimeout(400);
   ok('Nouveau joueur avec un téléphone en anglais : jeu en anglais', await p2.evaluate(() => document.documentElement.lang === 'en'));
+  // Thai: a new player with a Thai phone gets the Thai text; home, help and a level sheet have no French left
+  const c3 = await b.newContext({ locale: 'th-TH', viewport: { width: 390, height: 844 } }); const p3 = await c3.newPage(); p3.on('pageerror', e => errs.push(e.message));
+  await p3.goto(u); await p3.evaluate(() => localStorage.setItem('dragonbound2.v2', JSON.stringify({ v: 2, m20: 1, m30: 1, lang: 'th', gold: 50, seen: { in: 1, vid: 1, vid2: 1, in2: 1, ver: 'x' }, mute: true }))); await p3.goto(u); await p3.click('#title').catch(() => {}); await p3.waitForTimeout(600);
+  for (let k = 0; k < 6 && await p3.$('#modal:not([hidden]) [data-close]'); k++) { await p3.click('#modal:not([hidden]) [data-close]'); await p3.waitForTimeout(200); }
+  await p3.click('#helpBtn', { force: true }).catch(() => {}); await p3.waitForTimeout(300); await p3.click('#modal:not([hidden]) [data-close]').catch(() => {});
+  await p3.click('.node[data-lv="0"]', { force: true }).catch(() => {}); await p3.waitForTimeout(300);
+  const th = await p3.evaluate(() => ({ lang: document.documentElement.lang, txt: document.body.innerText, miss: [...window.__tmiss] }));
+  ok('Thaï : jeu en thaï, aucun texte français oublié (accueil, aide, niveau)', th.lang === 'th' && th.txt.includes('ทีมของคุณ') && !th.miss.length, th.miss.slice(0, 8).join(' | '));
+  await p3.evaluate(() => localStorage.clear()); await p3.goto(u); await p3.waitForTimeout(300);
+  ok('Nouveau joueur avec un téléphone en thaï : jeu en thaï', await p3.evaluate(() => document.documentElement.lang === 'th'));
   ok('Aucune erreur JavaScript', !errs.length, errs.slice(0, 3).join(' | '));
   await b.close(); srv.close(); process.exit(fails ? 1 : 0); });

@@ -345,11 +345,16 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 <audio id="bgm" preload="auto" loop></audio>
 
-<script src="lang-en.js"></script>
+<script>
+// language: ?lang=, then the saved choice, then French for an existing game, then the phone's language. Only that language's text file is loaded.
+window.DB2_LANG = (() => { const q = /[?&]lang=(fr|en|th)\b/.exec(location.search); if (q) return q[1]; try { const s = JSON.parse(localStorage.getItem('dragonbound2.v2') || 'null'); if (s && s.lang) return s.lang; if (s) return 'fr'; } catch (e) {}
+  const n = (navigator.language || 'fr').toLowerCase(); return n.startsWith('fr') ? 'fr' : n.startsWith('th') ? 'th' : 'en'; })();
+if (window.DB2_LANG !== 'fr') document.write('<script src="lang-' + window.DB2_LANG + '.js"><\/script>');
+</script>
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.9.8 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.9.9 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
@@ -365,12 +370,11 @@ const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = id => document.getElementById(id);
 // 2.0 lot 6: English. The French text stays in the code; T() translates a fragment through lang-en.js (exact text, then templates
 // with {n} slots whose captured parts are translated too). Everything shown goes through it: DOM nodes (observer), canvas text.
-const LANG = (() => { const q = /[?&]lang=(fr|en)\b/.exec(location.search); if (q) return q[1]; try { const s = JSON.parse(localStorage.getItem('dragonbound2.v2') || 'null'); if (s && s.lang) return s.lang; if (s) return 'fr'; } catch (e) {}
-  return /^fr/i.test(navigator.language || 'fr') ? 'fr' : 'en'; })();
-const TMISS = new Set(), TCACHE = new Map(), EN_OK = LANG === 'en' && window.EN_DICT, TEN = new Set(EN_OK ? Object.values(EN_DICT.x) : []);
-const TPAT = EN_OK ? EN_DICT.p.map(([fr, en]) => { const ids = []; const re = new RegExp('^' + fr.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{(\d+)\}/g, (_, k) => { ids.push(k); return '([\\s\\S]*?)'; }) + '$'); return { re, ids, en }; }) : [];
+const LANG = window.DB2_LANG || 'fr';
+const TMISS = new Set(), TCACHE = new Map(), EN_OK = LANG !== 'fr' && window.I18N, TEN = new Set(EN_OK ? Object.values(I18N.x) : []);
+const TPAT = EN_OK ? I18N.p.map(([fr, en]) => { const ids = []; const re = new RegExp('^' + fr.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{(\d+)\}/g, (_, k) => { ids.push(k); return '([\\s\\S]*?)'; }) + '$'); return { re, ids, en }; }) : [];
 function T(s, d = 0) { if (!EN_OK || s == null) return s; const str = String(s); if (!/[A-Za-zÀ-ÿ]/.test(str)) return str; const hit = TCACHE.get(str); if (hit !== undefined) return hit;
-  const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(str), core = m[2]; let r = EN_DICT.x[core];
+  const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(str), core = m[2]; let r = I18N.x[core];
   // first, a known text with emoji / numbering / punctuation around it ("⚡ Châtiment", ": Coup d’épée", "4-1. Le ponton", "Dodge !")
   if (r == null && d < 3) { const q = /^([^A-Za-zÀ-ÿ]*)([A-Za-zÀ-ÿ][\s\S]*?)([\s!?.…:)»]*)$/.exec(core);
     if (q && q[1]) { const t = T(q[2] + q[3], d + 1); if (t !== q[2] + q[3] || TEN.has(t)) r = q[1] + t; }
@@ -386,7 +390,7 @@ function T(s, d = 0) { if (!EN_OK || s == null) return s; const str = String(s);
 window.__tmiss = TMISS; window.__T = T;
 function trNode(n) { if (n.nodeType === 3) { if (n.parentElement && n.parentElement.closest('[translate="no"]')) return; const t = T(n.data); if (t !== n.data) n.data = t; return; } if (n.nodeType !== 1 || /^(SCRIPT|STYLE|TEXTAREA|CANVAS|VIDEO)$/.test(n.tagName) || n.getAttribute('translate') === 'no') return;
   for (const a of ['aria-label', 'placeholder', 'title', 'alt']) { const v = n.getAttribute(a); if (v) { const t = T(v); if (t !== v) n.setAttribute(a, t); } } for (const c of n.childNodes) trNode(c); }
-if (EN_OK) { document.documentElement.lang = 'en'; document.title = T(document.title); trNode(document.body);
+if (EN_OK) { document.documentElement.lang = LANG; document.title = T(document.title); trNode(document.body);
   new MutationObserver(ms => { for (const m of ms) { if (m.type === 'characterData') trNode(m.target); else m.addedNodes.forEach(trNode); } }).observe(document.body, { childList: true, subtree: true, characterData: true }); }
 const _confirm = window.confirm.bind(window), askOk = q => _confirm(T(q));
 const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
@@ -2233,7 +2237,7 @@ function importSave(v) { let o = null; try { o = JSON.parse(decodeURIComponent(e
   try { localStorage.setItem(SKEY, JSON.stringify(o)); } catch (e) { toast('Impossible d’écrire la sauvegarde.'); return false; } return true; }
 $('snd').addEventListener('click', () => { ac(); soundSheet(); });
 // language choice: its own button on the home screen; each language is written in itself and the current one is marked
-const LANGS = [['fr', '🇫🇷', 'Français'], ['en', '🇬🇧', 'English']];
+const LANGS = [['fr', '🇫🇷', 'Français'], ['en', '🇬🇧', 'English'], ['th', '🇹🇭', 'ไทย']];
 function langSheet() { modal(`<h3>🌐 Langue</h3><div translate="no">${LANGS.map(([k, f, n]) => `<button class="btn ${k === LANG ? '' : 'alt'}" type="button" data-lang="${k}">${f} ${n}${k === LANG ? ' ✓' : ''}</button>`).join('')}</div><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
 $('langBtn').addEventListener('click', () => { ac(); langSheet(); });
 sheet.addEventListener('input', e => { const k = e.target.dataset && e.target.dataset.vol; if (!k) return; VOL[k] = +e.target.value / 100; $('vol_' + k).textContent = e.target.value + ' %'; S.vol = { ...VOL }; save();
@@ -2253,6 +2257,7 @@ renderHome();
 function afterIntro() { if (S.selLate) { delete S.selLate; save(); return story('selena', afterIntro); } if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.9', t: 'Version 1.9.9 · ไทย', d: `<p>• Le jeu est maintenant <b>disponible en thaï</b> (bouton 🌐 de l’accueil).</p>`, en: { v: '1.9.9', t: 'Version 1.9.9 · ไทย', d: `<p>• The game is now <b>available in Thai</b> (🌐 button on the home screen).</p>` }, th: { v: '1.9.9', t: 'เวอร์ชัน 1.9.9 · ภาษาไทย', d: `<p>• ตอนนี้เกม<b>มีภาษาไทยแล้ว</b> (ปุ่ม 🌐 ที่หน้าหลัก)</p>` } },
   { v: '1.9.8', t: 'Version 1.9.8 · Bouton langue', d: `<p>• Nouveau bouton <b>🌐</b> en haut de l’accueil, à côté du son, pour choisir la langue du jeu.</p>`, en: { v: '1.9.8', t: 'Version 1.9.8 · Language button', d: `<p>• New <b>🌐</b> button at the top of the home screen, next to the sound, to choose the game’s language.</p>` } },
   { v: '1.9.7', t: 'Version 1.9.7 · English', d: `<p>• Le jeu est maintenant <b>disponible en anglais</b>. Change de langue dans le menu du son (🌐). Ta partie est conservée.</p><p>• Nouvelle icône du jeu.</p>`, en: { v: '1.9.7', t: 'Version 1.9.7 · English', d: `<p>• The game is now <b>available in English</b>. Switch language from the sound menu (🌐). Your progress is kept.</p><p>• New game icon.</p>` } },
   { v: '1.9.6', t: 'Version 1.9.6 · Finitions', d: `<p>• <b>Icône du jeu</b> : Aldric sur ton écran d’accueil quand tu ajoutes le jeu (Partager → Sur l’écran d’accueil).</p><p>• Les polices sont intégrées au jeu : même rendu partout, même sans connexion.</p><p>• Nouvel écran <b>Crédits</b> en bas de l’accueil.</p>` },
@@ -2325,8 +2330,8 @@ const CHANGELOG = [
   <p>• <b>Contrats</b> : un défi facultatif avant chaque niveau.</p>` },
 ];
 const VER = CHANGELOG[0].v;
-function newsSheet(cb) { const c = LANG === 'en' ? (CHANGELOG.find(x => x.en) || CHANGELOG[0]).en || CHANGELOG[0] : CHANGELOG[0]; modal(`<div translate="no"><h3>${c.t}</h3>${c.d}</div><button class="btn" type="button" data-close="1">À l’aventure !</button><button class="btn alt" type="button" data-hist="1">Toutes les versions</button>`, cb); }
-function histSheet() { modal(`<h3>Nouveautés</h3>${(LANG === 'en' ? CHANGELOG.filter(x => x.en).map(x => x.en) : CHANGELOG).map((c, k) => `<details ${k ? '' : 'open'} class="hist" translate="no"><summary>${c.t}</summary>${c.d}</details>`).join('')}<button class="btn" type="button" data-close="1">Fermer</button>`); }
+function newsSheet(cb) { const c = LANG === 'fr' ? CHANGELOG[0] : CHANGELOG[0][LANG] || CHANGELOG[0].en || CHANGELOG[0]; modal(`<div translate="no"><h3>${c.t}</h3>${c.d}</div><button class="btn" type="button" data-close="1">À l’aventure !</button><button class="btn alt" type="button" data-hist="1">Toutes les versions</button>`, cb); }
+function histSheet() { modal(`<h3>Nouveautés</h3>${(LANG === 'fr' ? CHANGELOG : CHANGELOG.filter(x => x[LANG] || x.en).map(x => x[LANG] || x.en)).map((c, k) => `<details ${k ? '' : 'open'} class="hist" translate="no"><summary>${c.t}</summary>${c.d}</details>`).join('')}<button class="btn" type="button" data-close="1">Fermer</button>`); }
 function playIntro(then) { const v = $('video'), box = $('vid'); bgm.pause(); if (!v.src) v.src = 'intro.mp4'; v.currentTime = 0; v.muted = muted; box.hidden = false;
   const end = () => { v.pause(); box.hidden = true; v.onended = null; S.seen.vid = 1; S.seen.vid2 = 1; save(); if (!muted) music('m_theme'); if (then) then(); };
   v.onended = end; $('skipVid').onclick = end; v.play().catch(() => end()); }
