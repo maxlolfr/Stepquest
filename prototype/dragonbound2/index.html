@@ -150,6 +150,7 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 .ski { display: block; font-size: 13px; line-height: 1.3; } .ski b { font-size: 15px; } .ski i { font-style: normal; font-size: 11.5px; border-radius: 99px; padding: 0 6px; margin-left: 2px; white-space: nowrap; }
 .skc { background: #10305a; border: 1px solid #6aa8ff; } .skt { background: rgba(255,215,106,.15); border: 1px solid rgba(255,215,106,.6); }
 .skh { display: block; font-size: 12px; color: var(--gold2); margin-top: 2px; }
+.lchips { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin-top: 8px; } .lchip { font-size: 12.5px; padding: 3px 9px; border-radius: 99px; border: 2px solid var(--rc); background: rgba(var(--rg), .18); color: #fff; }
 .stm { font-style: normal; font-size: 11px; color: var(--gold2); margin-left: 2px; }
 #pop .pt { font-size: 10.5px; line-height: 1.2; color: #d8c8b0; }
 .act i img.poti { object-fit: contain; padding: 4px; }
@@ -344,7 +345,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.9.4 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.9.5 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
@@ -1258,7 +1259,7 @@ function summon(id, f) { if (livingF().length >= 3) return null; const i = B.foe
   s.slot = BSLOT[[1, 2].find(j => !B.foes.some(x => alive(x) && x.slot === BSLOT[j])) || 1]; s.alpha = 0; if (i >= 0) B.foes[i] = s; else B.foes.push(s); tween(s, { alpha: 1 }, 400); return s; }
 async function hagAct(f) {
   const p = px(f);
-  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { toxic: true }; f.needBurn = 1; B.toxic = Math.round(f.atk * .1); say('Morgane renverse son chaudron : <b>le marais devient toxique</b> (la Défense protège) et sa vapeur <b>la soigne à chaque tour… sauf si elle brûle 🔥</b> !'); setPose(f, 'rage', 1400); SFX.roar(); B.shake = { t0: now(), amp: 6 };
+  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { toxic: true }; f.needBurn = 1; B.toxic = Math.round(f.atk * .1); say('Le marais devient <b>toxique</b> (la Défense protège) et Morgane se soigne chaque tour… <b>sauf si elle brûle 🔥</b>.'); setPose(f, 'rage', 1400); SFX.roar(); B.shake = { t0: now(), amp: 6 };
     sparks(p.x, p.y - p.h * .3, 40, ['#8ad040', '#c8f070', '#3a6a20'], 1.6, .05); await wait(800); if (summon('zombie', f)) say('Un noyé sort de la vase !'); refresh(); await wait(400); return; }
   if (f.ph && f.hp < f.hpMax) { if (f.st.burn) txt(p.x, p.y - p.h - 30, '🔥 Soin bloqué', '#ffb347', true); else { txt(p.x, p.y - p.h - 30, 'La vapeur la soigne… brûle-la !', '#8fe07a', true); await heal(f, f.hpMax * .045); } }
   if (f.charging) { f.charging = false; say('<b>Chaudron empoisonné !</b>'); setPose(f, 'spe', 900); SFX.magic(); B.shake = { t0: now(), amp: 6 }; await wait(250);
@@ -1269,7 +1270,7 @@ async function hagAct(f) {
 }
 async function queenAct(f) {
   const p = px(f);
-  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { winter: true }; say('<b>Hiver éternel !</b> Le froid vide votre mana, et sa Prison de glace enferme <b>votre héros le plus fort</b> : un soin ou une potion le libère.'); setPose(f, 'rage', 1400); SFX.ice(); B.shake = { t0: now(), amp: 6 };
+  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { winter: true }; say('<b>Hiver éternel !</b> Le froid vide votre mana. Sa Prison de glace vise ton héros le plus fort : <b>un soin le libère</b>.'); setPose(f, 'rage', 1400); SFX.ice(); B.shake = { t0: now(), amp: 6 };
     for (let i = 0; i < 4; i++) snowFx(rnd(0, VW), VH * .4); await wait(800); if (summon('spirit', f)) say('Un esprit de glace apparaît !'); refresh(); await wait(400); return; }
   if (f.ph) for (const h of livingH()) { const l = Math.round(h.mpMax * .1); h.mp = Math.max(0, h.mp - l); }
   if (f.charging) { f.charging = false; const t = f.prison; say(`<b>Prison de glace</b> sur ${t.name} !`); setPose(f, 'freeze', 900); SFX.ice(); await wait(250);
@@ -1297,7 +1298,7 @@ async function dragonAct(f) {
 }
 async function witchAct(f) {
   const p = px(f);
-  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { thorns: true, t: 0 }; say('Sylvaine s’entoure de <b>ronces maudites</b> ! Un tour sur deux, elles renvoient <b>la moitié des coups au corps à corps</b> : frappe quand elles sont baissées.');
+  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { thorns: true, t: 0 }; say('Sylvaine se couvre de <b>ronces</b> : un tour sur deux, elles renvoient les coups au corps à corps. <b>Frappe quand elles sont baissées.</b>');
     setPose(f, 'rage', 1400); SFX.roar(); B.shake = { t0: now(), amp: 6 }; sparks(p.x, p.y - p.h * .5, 40, ['#5ac040', '#a8f070', '#2a6a20'], 1.6, .05); await wait(800);
     if (livingF().length < 3) { const i = B.foes.findIndex(x => !alive(x) && !x.boss); const s = mkFoe('wolf', 1, B.lvIdx, true, 3, 0); s.slot = BSLOT[[1, 2].find(j => !B.foes.some(x => alive(x) && x.slot === BSLOT[j])) || 1]; s.alpha = 0;
       if (i >= 0) B.foes[i] = s; else B.foes.push(s); say('Un loup accourt à l’appel de Sylvaine !'); await tween(s, { alpha: 1 }, 400); }
@@ -1312,7 +1313,7 @@ async function witchAct(f) {
 }
 async function vampAct(f) {
   const p = px(f);
-  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { swarm: true }; say('Le Comte appelle sa <b>nuée</b> : <b>tant que ses chauves-souris vivent</b>, il esquive souvent et se soigne à chaque tour. Abats-les d’abord !'); setPose(f, 'rage', 1400); SFX.roar(); B.shake = { t0: now(), amp: 6 };
+  if (f.phPending && !f.ph) { f.phPending = false; f.ph = { swarm: true }; say('Le Comte appelle sa <b>nuée</b> : tant que ses chauves-souris vivent, il esquive et se soigne. <b>Abats-les d’abord !</b>'); setPose(f, 'rage', 1400); SFX.roar(); B.shake = { t0: now(), amp: 6 };
     sparks(p.x, p.y - p.h * .5, 40, ['#c8203a', '#3a0a14', '#ff6a8a'], 1.6, .02); await wait(800); if (summon('vbat', f)) say('Une chauve-souris vampire accourt !'); refresh(); await wait(400); return; }
   if (f.ph) { const bats = livingF().filter(x => x.id === 'vbat'); bats.forEach(x => { x.prio = 1; }); f.ph.swarm = bats.length > 0;
     if (bats.length && f.hp < f.hpMax) { txt(p.x, p.y - p.h - 30, `🦇 ×${bats.length} : il se soigne`, '#ff6a8a', true); await heal(f, f.hpMax * .03 * bats.length); }
@@ -1345,8 +1346,8 @@ async function bossUlt(f) { const [n, m, st, col] = BULT[f.id] || ['Attaque ulti
   refresh(); await wait(500); }
 // ---------- Chapters 7-10 bosses share one behaviour, set by BOSSX ----------
 const BOSSX = {
-  bossLich: { ph: 'Le Roi-Liche brise son sceau : son <b>phylactère</b> le ramènera à la vie avec la moitié de ses PV… <b>sauf s’il brûle 🔥 au moment de tomber</b> !', minion: 'lich', charge: ['Nova de givre', 'all', 1.05, 'freeze'], drain: .08, prep: 'Le Roi-Liche lève son sceptre…' },
-  bossRat: { ph: 'La Reine des Rats appelle <b>la marée</b> : <b>tant qu’un rat vit</b>, elle ne prend presque aucun dégât et se régénère. Tue les rats d’abord !', minion: 'prat', charge: ['Morsure de peste', 'one', 2.0, 'poison'], every: 3, prep: 'La Reine des Rats montre les crocs…' },
+  bossLich: { ph: 'Le Roi-Liche reviendra à la vie avec la moitié de ses PV… <b>sauf s’il brûle 🔥 au moment de tomber</b> !', minion: 'lich', charge: ['Nova de givre', 'all', 1.05, 'freeze'], drain: .08, prep: 'Le Roi-Liche lève son sceptre…' },
+  bossRat: { ph: 'Tant qu’un rat vit, la Reine ne prend presque aucun dégât et se soigne. <b>Tue les rats d’abord !</b>', minion: 'prat', charge: ['Morsure de peste', 'one', 2.0, 'poison'], every: 3, prep: 'La Reine des Rats montre les crocs…' },
   bossVoid: { ph: 'Le Seigneur du Néant se fond dans la faille : <b>un tour sur deux, seule la magie le touche</b> !', minion: 'warlock', charge: ['Rayon du Néant', 'one', 2.2, null], prep: 'Le Seigneur du Néant concentre le vide…' },
   bossVort: { ph: '<b>Une chaîne de Vorthax se brise !</b> Il agit deux fois par tour. À 25 %, la dernière cédera…', minion: 'drake', charge: ['Souffle du Dragon-Roi', 'all', 1.2, 'burn'], double: true, prep: 'Vorthax inspire profondément…' },
 };
@@ -1597,7 +1598,11 @@ function spdUi() { if (!SPDS.includes(S.spd || 1)) S.spd = SPDS.at(-1); $('spdBt
 $('takeBtn').addEventListener('click', () => { if (B && B.auto) $('autoBtn').click(); });
 $('autoBtn').addEventListener('click', () => { if (!B) return; B.auto = !B.auto; autoPref = B.auto; refresh(); if (B.auto && pending) finish(aiHero(pending.h)); });
 $('fleeBtn').addEventListener('click', () => { if (!B) return; modal(`<h3>Quitter le combat ?</h3><p>Tu ne gagnes rien en fuyant.</p><button class="btn red" type="button" data-flee="1">Fuir</button><button class="btn alt" type="button" data-close="1">Continuer</button>`); });
-function toast(h) { const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = h; const n = document.querySelectorAll('.toast').length; t.style.marginTop = `${n * 62}px`; document.body.appendChild(t); setTimeout(() => t.remove(), 2600 + n * 400); }
+// 2.0 lot 4: at most two notifications on screen; the others wait their turn instead of covering the victory screen
+const TQ = []; let tOn = 0;
+function toast(h) { TQ.push(h); tPump(); }
+function tPump() { while (tOn < 2 && TQ.length) { const t = document.createElement('div'); t.className = 'toast'; t.innerHTML = TQ.shift(); const slot = [0, 1].find(k => !document.querySelector(`.toast[data-s="${k}"]`)) || 0; t.dataset.s = slot; t.style.marginTop = `${slot * 62}px`; document.body.appendChild(t); tOn++;
+  setTimeout(() => { t.remove(); tOn--; tPump(); }, TQ.length > 2 ? 1500 : 2300); } }
 
 // ---------- Rendering ----------
 let dust = [];
@@ -1627,7 +1632,8 @@ function draw(t) {
   c.save(); c.translate(VW / 2 + sx, VH / 2 + sy); c.scale(cam.z, cam.z); c.translate(-cam.x, -cam.y);
   if (!reduce) { if (dust.length < 26) dust.push({ x: rnd(0, VW), y: rnd(VH * .2, VH), v: rnd(.1, .35), r: rnd(1, 2.4), p: rnd(0, 6) }); for (const d of dust) { d.y -= d.v; d.x += Math.sin(t / 1200 + d.p) * .2; if (d.y < 0) { d.y = VH; d.x = rnd(0, VW); } c.fillStyle = `rgba(200,210,255,${.25 + .2 * Math.sin(t / 500 + d.p)})`; c.beginPath(); c.arc(d.x, d.y, d.r, 0, 7); c.fill(); } }
   BARS = []; const units = [...B.party, ...B.foes].sort((a, b) => px(a).y - px(b).y), sel = pending && pending.sel;
-  for (const u of units) drawUnit(c, u, t, sel);
+  for (const u of units) drawUnit(c, u, t, sel, 0); // 2.0 lot 4: bodies first, then every header on top, so no sprite hides a health bar
+  for (const u of units) drawUnit(c, u, t, sel, 1);
   drawFx(c, t);
   c.restore();
   const bs = B.foes.find(f => f.boss && alive(f)); if (bs) { const w = Math.min(300, VW - 120), x = (VW - w) / 2, y = $('fWave').getBoundingClientRect().bottom - cv.getBoundingClientRect().top + 24;
@@ -1637,12 +1643,13 @@ function draw(t) {
   drawScreenFx(c);
 }
 function rr(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
-function drawUnit(c, u, t, sel) {
+function drawUnit(c, u, t, sel, pass) {
   if (!u.slot) return;
   const p = px(u), dead = !alive(u), n = now();
   const fm = u.fadeMs || 1300; if (dead && u.side === 'f' && u.deadT && n - u.deadT > fm) return;
   const a = u.alpha * (dead ? (u.side === 'h' ? .6 : Math.max(0, 1 - (n - u.deadT) / fm)) : 1); if (a <= 0) return;
   const bob = reduce || dead ? 0 : Math.sin(t / (u.side === 'h' ? 520 : 430) + u.seed), fly = (u.m && u.m.fly && !dead ? p.h * .55 + bob * 6 : 0) + (u.ph && u.ph.fly && !dead ? p.h * .25 + bob * 10 : 0);
+  if (!pass) {
   c.save(); const sw = p.h * (u.boss ? .42 : .3); { const g = c.createRadialGradient(p.x, p.y, 1, p.x, p.y, sw * 1.35); g.addColorStop(0, `rgba(0,0,0,${a * (fly ? .3 : .55)})`); g.addColorStop(1, 'rgba(0,0,0,0)'); c.fillStyle = g; c.beginPath(); c.ellipse(p.x, p.y, sw * 1.35, p.h * .11, 0, 0, 7); c.fill(); }
   c.globalAlpha = a * (fly ? .25 : .6); c.fillStyle = '#000'; c.beginPath(); c.ellipse(p.x, p.y, sw * (fly ? .7 : .85), p.h * .05, 0, 0, 7); c.fill(); c.restore();
   if (B.turn === u && !dead) { c.save(); c.globalCompositeOperation = 'lighter'; c.strokeStyle = `rgba(255,210,90,${.6 + .3 * Math.sin(t / 200)})`; c.lineWidth = 3; c.beginPath(); c.ellipse(p.x, p.y, p.h * .34, p.h * .09, 0, 0, 7); c.stroke(); c.restore(); }
@@ -1658,20 +1665,24 @@ function drawUnit(c, u, t, sel) {
   if (u.ph && u.ph.shield > 0) { c.save(); c.globalAlpha = a * .5; c.strokeStyle = '#f2ead8'; c.lineWidth = 3; c.setLineDash([10, 7]); c.beginPath(); c.ellipse(p.x, p.y - p.h * .5, p.h * .5, p.h * .62, 0, 0, 7); c.stroke(); c.restore(); }
   if (u.side === 'h' && u.lb >= 100 && !dead && !reduce) { c.save(); c.globalCompositeOperation = 'lighter'; c.globalAlpha = .35 + .2 * Math.sin(t / 150); const g = c.createRadialGradient(p.x, p.y - p.h * .5, 4, p.x, p.y - p.h * .5, p.h * .65); g.addColorStop(0, 'rgba(255,190,70,.8)'); g.addColorStop(1, 'rgba(255,150,30,0)'); c.fillStyle = g; c.fillRect(p.x - p.h, p.y - p.h * 1.2, p.h * 2, p.h * 1.4); c.restore(); }
   drawSprite(c, u.sprite, pose, p.x + recoil, p.y - fly, p.h, flash, 1 + sq, 1 + br - sq * .6, u.elite ? u.elite.col : null, u);
-  c.restore();
-  if (dead) return;
+  c.restore(); }
+  if (dead || !pass) return;
   const bw = Math.max(54, Math.min(92, p.h * .55)); let by = p.y - fly - p.h * (u.boss ? .98 : 1.02) - 10;
-  // 1.6: enemy HP bars never stack on top of each other (crowded waves, bosses with guards)
-  if (u.side === 'f' && alive(u)) { for (let k = 0; k < 4; k++) { const hit = BARS.find(b => Math.abs(b.x - p.x) < (b.w + bw) / 2 + 2 && Math.abs(b.y - by) < 20); if (!hit) break; by = hit.y - 21; } BARS.push({ x: p.x, y: by, w: bw }); }
+  // 2.0 lot 4: one compact header per unit (warning, status icons, HP bar) and whole headers never overlap each other
+  const icA = [u.st.poison ? '☠️' : '', u.st.burn ? '🔥' : '', u.st.stun ? '💫' : '', u.st.freeze || u.st.ice ? '❄️' : '', u.st.taunt ? '🛡️' : '', u.st.mark ? '🎯' : '', u.st.fort ? '🪨' : '', u.side === 'f' && u.m.sup ? { heal: '💚', guard: '💠', fort: '🪨', aoe: '⚠️' }[u.m.sup] : '', u.st.sh ? '🌑' + u.st.sh : '', u.shield ? '💠' : ''].filter(Boolean);
+  const icS = icA.length > 3 ? icA.slice(0, 2).join('') + '+' + (icA.length - 2) : icA.join('');
+  const tgt = u.intent && u.intent.includes('→') ? u.intent.split('→').pop().trim() : '', warn = u.charging && u.intent ? (u.ultReady ? '⚠️ ULTIME' : tgt ? `⚠️ → ${tgt}` : '⚠️ ' + u.intent) : '';
+  c.font = '14px "Lilita One", sans-serif'; const ww = warn ? c.measureText(warn).width + 14 : 0, hHead = (icS ? 17 : 0) + (warn ? 27 : 0), boxW = Math.max(bw, ww);
+  if (u.side === 'f' && alive(u)) { for (let k = 0; k < 6; k++) { const y1 = by - hHead - 2, y2 = by + 16, hit = BARS.find(b => Math.abs(b.x - p.x) < (b.w + boxW) / 2 + 2 && y1 < b.y2 && y2 > b.y1); if (!hit) break; by = hit.y1 - 18; }
+    BARS.push({ x: p.x, w: boxW, y1: by - hHead - 2, y2: by + 16 }); }
   if (!u.boss) { const bh = u.side === 'f' ? 14 : 8; c.fillStyle = 'rgba(0,0,0,.7)'; rr(c, p.x - bw / 2 - 2, by - 2, bw + 4, bh + 4, 5); c.fill(); c.fillStyle = u.side === 'h' ? '#5cd65c' : u.hp < u.hpMax * .35 ? '#ff8a3c' : '#e0413b'; rr(c, p.x - bw / 2, by, Math.max(2, bw * u.hp / u.hpMax), bh, 3); c.fill();
     if (u.side === 'f' && u.shield > 0) { c.fillStyle = '#bfe0ff'; rr(c, p.x - bw / 2, by + bh - 3, bw * Math.min(1, u.shield / u.hpMax), 3, 1.5); c.fill(); }
     if (u.side === 'f') { c.font = 'bold 12px system-ui'; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = '#000'; c.strokeText(u.hp, p.x, by + 11.5); c.fillStyle = '#fff'; c.fillText(u.hp, p.x, by + 11.5); } }
-  if (u.elite) { c.font = '11px "Lilita One", sans-serif'; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = '#000'; c.fillStyle = `rgb(${u.elite.col})`; const s = `⭐ ${u.elite.n}`; c.strokeText(s, p.x, by - 5); c.fillText(s, p.x, by - 5); }
-  const ic = [u.st.poison ? '☠️' : '', u.st.burn ? '🔥' : '', u.st.stun ? '💫' : '', u.st.freeze || u.st.ice ? '❄️' : '', u.st.taunt ? '🛡️' : '', u.st.mark ? '🎯' : '', u.st.fort ? '🛡️' : '', u.side === 'f' && u.m.sup ? { heal: '💚', guard: '💠', fort: '🪨', aoe: '⚠️' }[u.m.sup] : '', u.st.sh ? '🌑' + u.st.sh : '', u.shield ? '💠' : ''].join('');
-  if (ic) { c.font = '15px system-ui'; c.textAlign = 'center'; c.fillText(ic, p.x, by - (u.elite ? 19 : 5)); }
-  if (u.charging && u.intent) { const ty = by - (u.elite ? 34 : ic ? 22 : 10) - (u.boss ? 0 : 4), s = '⚠️ ' + u.intent; c.font = '15px "Lilita One", sans-serif'; c.textAlign = 'center'; const w = c.measureText(s).width + 14, pul = .75 + .25 * Math.sin(t / 140);
-    const cx0 = Math.max(w / 2 + 4, Math.min(VW - w / 2 - 4, p.x)); c.fillStyle = `rgba(120,20,20,${.85 * pul})`; rr(c, cx0 - w / 2, ty - 19, w, 24, 11); c.fill(); c.strokeStyle = '#ffd76a'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#fff'; c.fillText(s, cx0, ty - 1.5); }
-  if (B.turn === u && !reduce) { const ay = by - 16 + Math.sin(t / 180) * 4; c.fillStyle = '#ffd76a'; c.strokeStyle = '#4a2a06'; c.lineWidth = 2; c.beginPath(); c.moveTo(p.x - 9, ay - 10); c.lineTo(p.x + 9, ay - 10); c.lineTo(p.x, ay); c.closePath(); c.fill(); c.stroke(); }
+  if (u.elite) { c.font = '15px system-ui'; c.textAlign = 'center'; c.lineWidth = 3; c.strokeStyle = '#000'; c.fillStyle = `rgb(${u.elite.col})`; c.strokeText('★', p.x - bw / 2 - 11, by + 12); c.fillText('★', p.x - bw / 2 - 11, by + 12); }
+  if (icS) { c.font = '13px system-ui'; c.textAlign = 'center'; c.fillStyle = '#fff'; c.fillText(icS, p.x, by - 5); }
+  if (warn) { const ty = by - (icS ? 17 : 0) - 8, pul = .75 + .25 * Math.sin(t / 140), cam = B.cam || { x: VW / 2, z: 1 }, z = Math.max(1, cam.z || 1), lo = cam.x - VW / 2 / z, hi = cam.x + VW / 2 / z;
+    const cx0 = Math.max(lo + ww / 2 + 4, Math.min(hi - ww / 2 - 4, p.x)); c.font = '14px "Lilita One", sans-serif'; c.textAlign = 'center'; c.fillStyle = `rgba(120,20,20,${.88 * pul})`; rr(c, cx0 - ww / 2, ty - 17, ww, 22, 10); c.fill(); c.strokeStyle = '#ffd76a'; c.lineWidth = 2; c.stroke(); c.fillStyle = '#fff'; c.fillText(warn, cx0, ty - 1); }
+  if (B.turn === u && !reduce) { const ay = by - hHead - 6 + Math.sin(t / 180) * 4; c.fillStyle = '#ffd76a'; c.strokeStyle = '#4a2a06'; c.lineWidth = 2; c.beginPath(); c.moveTo(p.x - 9, ay - 10); c.lineTo(p.x + 9, ay - 10); c.lineTo(p.x, ay); c.closePath(); c.fill(); c.stroke(); }
 }
 function drawFx(c) {
   const n = now();
@@ -1840,7 +1851,7 @@ async function victory(i, res) {
   if (!train && B.kills.some(f => f.champ) && !B.kos) trc('champNoKo');
   trCheck();
   if (newTier) { SFX.win(); toast(`${DIFF[t + 1].ic} <b>${DIFF[t + 1].n}</b> débloqué pour ce chapitre !`); }
-  await openChests(loot);
+  // 2.0 lot 4: bonus chests no longer open one screen at a time; their items are listed on the victory screen
   if (ups.some(u => u[2])) setTimeout(SFX.levelup, 300);
   const nIt = train ? 0 : 1 + loot.length + (cFirst ? 1 : 0) + (legend ? 1 : 0);
   modal(`<h3>${train ? 'Entraînement réussi' : 'Victoire !'}</h3>${train ? '' : `<p style="text-align:center;font-size:30px;color:#c07a12;letter-spacing:4px">${'★'.repeat(st)}<span style="opacity:.25">${'★'.repeat(3 - st)}</span></p>
@@ -1848,7 +1859,7 @@ async function victory(i, res) {
     ${ups.map(([id, g, up]) => { const H = HEROES[id], s = S.h[id]; return `<div class="row"><img class="f" src="${FP}${H.face}.webp" alt=""><div class="grow"><b>${H.name}</b> +${g} XP ${up ? `<span class="lvup">· Niveau ${s.lvl} !</span>` : ''}<div class="xpb"><i style="width:${s.xp / xpNeed(s.lvl) * 100}%"></i></div></div></div>`; }).join('')}
     <p style="text-align:center;margin-top:10px">+${gold} <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"> ${drops.map(k => `· <img class="poti ${ITEMS[k].cls}" src="${IP}uiPotion.webp" style="width:22px;vertical-align:-5px" alt=""> ${ITEMS[k].name}`).join(' ')}${defiGold ? ` · Défi : +${defiGold} or` : ''}${route !== 'safe' && !train ? `<br><small>${ROUTES[route].ic} ${ROUTES[route].n}</small>` : ''}</p>
     ${C ? `<p style="text-align:center;font-size:13px;margin-top:6px">${C.ic} Contrat <b>${C.n}</b> : ${cOk ? `réussi ! +${cGold} or${cFirst ? ' + un objet rare' : ''}` : 'raté.'}</p>` : ''}
-    ${nIt ? `<p style="text-align:center;font-size:13px;margin-top:8px">🎁 ${nIt} objet${nIt > 1 ? 's' : ''} ajouté${nIt > 1 ? 's' : ''} à ton sac · <b>Héros &amp; équipement</b> sur la carte</p>` : ''}
+    ${loot.length ? `<div class="lchips">${loot.map(it => `<span class="lchip" style="${rcss(it)}">🎁 ${it.name}</span>`).join('')}</div>` : ''}${nIt ? `<p style="text-align:center;font-size:13px;margin-top:8px">🎁 ${nIt} objet${nIt > 1 ? 's' : ''} ajouté${nIt > 1 ? 's' : ''} à ton sac · <b>Héros &amp; équipement</b> sur la carte</p>` : ''}
     ${rec ? `<div class="row" style="background:rgba(255,215,106,.5)"><img class="f" src="${FP}${HEROES[rec].face}.webp" alt=""><div class="grow"><b>${HEROES[rec].name} rejoint l’équipe !</b><small>${HEROES[rec].desc}</small></div></div>` : ''}
     <button class="btn" type="button" data-home="1">Continuer</button>${train ? `<button class="btn alt" type="button" data-train="${i}">Rejouer en entraînement</button>` : `<button class="btn alt" type="button" data-play="${i}">Rejouer</button>`}`);
   const endK = CHAPTERS[LEVELS[i].ch].end, q = []; if (first && !t && STORY['v' + i]) q.push('v' + i); if (LEVELS[i].boss && first && !t) q.push(endK); if (rec) q.push(rec);
@@ -2198,6 +2209,7 @@ renderHome();
 function afterIntro() { if (S.selLate) { delete S.selLate; save(); return story('selena', afterIntro); } if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.5', t: 'Version 1.9.5 · Plus lisible', d: `<p>• <b>Combats chargés lisibles</b> : alertes, icônes et barres de vie ne se chevauchent plus, et aucun monstre ne cache une barre. L’alerte indique simplement la cible (⚠️ → Aldric), les élites ont une étoile ★ colorée.</p><p>• <b>Victoire en un seul écran</b> : les coffres bonus sont listés directement, plus besoin de les ouvrir un par un.</p><p>• Les notifications arrivent deux par deux au lieu de recouvrir l’écran, et les annonces des boss sont plus courtes.</p>` },
   { v: '1.9.4', t: 'Version 1.9.4 · Le jeu complet, sans attente', d: `<p>• <b>Plus d’énergie ni de gemmes</b> : joue autant que tu veux. Tes gemmes ont été converties en or (40 or chacune).</p><p>• <b>3 difficultés</b> : Normal, Difficile, Cauchemar. Bats le boss d’un chapitre pour ouvrir la suivante. Ta progression en Héroïque compte pour Difficile, celle en Enfer pour Cauchemar.</p><p>• <b>Séléna arrive plus tôt</b>, dès la fin de l’Ossuaire (1-3). Le premier boss est un peu plus fort en conséquence.</p><p>• <b>Boutique</b> : 4 pièces d’équipement à acheter avec ton or, renouvelées toutes les 3 victoires.</p><p>• <b>Sauvegarde</b> : bouton 🔊 puis « Sauvegarde » pour copier un code et retrouver ta partie n’importe où.</p><p>• Accueil allégé : plus de cadeau du jour ni de bouton Histoire (les scènes se jouent toujours pendant l’aventure).</p>` },
   { v: '1.9.3', t: 'Version 1.9.3 · Plus fiable', d: `<p>• <b>Ton butin est protégé</b> : si le jeu se ferme pendant le choix d’un coffre ou du trésor d’un boss, il t’attend à la réouverture. Rien n’est perdu, rien n’est doublé.</p>` },
   { v: '1.9.2', t: 'Version 1.9.2 · Plus fluide', d: `<p>• Toutes les images sont préparées dès le chargement du niveau : plus de petit gel la première fois qu’un ultime, un effet ou un boss apparaît.</p>` },
