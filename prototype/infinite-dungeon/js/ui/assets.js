@@ -6,7 +6,7 @@
 import { ANIM, POSEM } from '../data/sprite-metrics.js';
 import { MONSTERS, BOSSES, ZONES, ZONE_MUSIC } from '../data/monsters.js';
 import { HEROES } from '../data/heroes.js';
-import { RELICS, CONSUMABLES, EVENTS } from '../data/items.js';
+import { RELICS, CONSUMABLES, EVENTS, SYNERGIES } from '../data/items.js';
 import { UPGRADES } from '../data/balance.js';
 
 export const DB2 = '../dragonbound2/';
@@ -41,7 +41,7 @@ for (let i = 0; i <= 8; i++) { add(`ga_${i}`, DB2); add(`gj_${i}`, DB2); }
 for (const k of ['uiGem', 'uiTrophy', 'uiSkull']) add(k, DB2);
 for (const k of ['uiPotion', 'uiGold', 'uiScroll', 'uiDice', 'uiChest1', 'uiChest2', 'uiChest3', 'chestR1', 'chestR2', 'chestR3', 'chestR4']) add(k, DB1);
 // original images of Infinite Dungeon (img/ of this folder)
-for (const R of [...Object.values(RELICS), ...EVENTS, ...Object.values(UPGRADES)]) if (R.art) IMG[R.art] = `img/${R.art}.webp`;
+for (const R of [...Object.values(RELICS), ...EVENTS, ...Object.values(UPGRADES), ...Object.values(SYNERGIES)]) if (R.art) IMG[R.art] = `img/${R.art}.webp`;
 for (const E of EVENTS) if (E.scene && !IMG[E.scene]) throw new Error(`décor manquant pour l’événement ${E.id}: ${E.scene}`);
 for (const k of ['room_rest', 'room_shop', 'camp_scene', 'bg_menu']) IMG[k] = `img/${k}.webp`;
 for (const R of [...Object.values(RELICS), ...Object.values(CONSUMABLES)]) if (!IMG[R.img]) throw new Error(`asset manquant pour ${R.name}: ${R.img}`);
