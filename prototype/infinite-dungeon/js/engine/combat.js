@@ -232,9 +232,13 @@ function startTurn(B, ev, u) {
   endCheck(B, ev);
   if (!alive(u) || B.over) return false;
   if (u.side === 'f') {
-    if (u.trait === 'regen' && !u.st.burn) heal(B, ev, u, Math.round(u.hpMax * 0.08));
-    if (u.aff === 'regen') heal(B, ev, u, Math.round(u.hpMax * 0.1));
-    if (u.regenPct && !u.st.burn) heal(B, ev, u, Math.round(u.hpMax * u.regenPct));
+    // Regeneration (v0.5.1, was 8 % + 10 %): burning stops it, poison halves it, and it
+    // fades as the fight drags on, so a regenerating enemy can always be worn down.
+    if (!u.st.burn) {
+      const pct = (u.trait === 'regen' ? BAL.regen.trait : 0) + (u.aff === 'regen' ? BAL.regen.affix : 0) + (u.regenPct || 0);
+      const k = (u.st.poison ? 0.5 : 1) * Math.max(0.25, 1 - Math.max(0, B.round - BAL.regen.fadeFrom) * BAL.regen.fade);
+      if (pct > 0) heal(B, ev, u, Math.round(u.hpMax * pct * k));
+    }
   }
   if (u.st.mark > 0) u.st.mark--;
   if (u.st.taunt > 0) u.st.taunt--;

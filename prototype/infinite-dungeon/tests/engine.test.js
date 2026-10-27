@@ -202,3 +202,14 @@ test('auto mode: ultimate when full, potion when a hero is low, nothing otherwis
   const p = autoNext(B); assert.ok(p); p();
   assert.ok(h.hp > 1); assert.equal(B.items.pot, 0);
 });
+
+test('regenerating elites can always be worn down (v0.5.1)', () => {
+  let wins = 0;
+  for (let s = 1; s <= 20; s++) {
+    const B = createBattle({ heroes: heroArgs(['aldric', 'selena', 'orin']), foes: [{ id: 'frog', hpMul: 6, atkMul: 0.5, elite: 'regen' }, { id: 'zombie', hpMul: 6, atkMul: 0.5 }], items: { pot: 2, fea: 1 }, seed: s });
+    autoFight(B);
+    if (B.over === 'win') wins++;
+    assert.ok(B.round <= BAL.maxRounds);
+  }
+  assert.ok(wins >= 15, `only ${wins}/20 won against regenerating foes`);
+});

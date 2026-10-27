@@ -29,6 +29,8 @@ export const BAL = {
   bossHp: f => 1.6 * climb(prog(f), 1.2, 1.05),
   bossAtk: f => 0.9 * climb(prog(f), 1.12, 1.033),
   maxRounds: 60,
+  // enemy regeneration per turn (share of max life): stopped by burn, halved by poison, fades after round 8
+  regen: { trait: 0.04, affix: 0.05, fadeFrom: 8, fade: 0.1 },
   ultGainAct: 14, ultGainHit: 6, ultMax: 100,
   healMult: 1.3, // Séléna's Soin (was 1.9 in v0.2)
   // rewards (gold and shards grow with the zone: zoneMul)

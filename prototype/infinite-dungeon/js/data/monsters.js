@@ -83,7 +83,7 @@ export const AFFIXES = {
   thorns: { n: 'épineux', col: '90,230,90', tip: 'renvoie 25 % des coups au corps à corps', ok: m => !m.fly },
   ghost:  { n: 'spectral', col: '120,170,255', tip: 'esquive un coup sur quatre' },
   gold:   { n: 'doré', col: '255,205,60', tip: 'rapporte le double d’or' },
-  regen:  { n: 'régénérant', col: '120,255,170', tip: 'récupère 10 % de vie à chaque tour', ok: m => m.trait !== 'regen' },
+  regen:  { n: 'régénérant', col: '120,255,170', tip: 'récupère 5 % de vie à chaque tour (la brûlure l’arrête, le poison la réduit)', ok: m => m.trait !== 'regen' },
   vamp:   { n: 'vampirique', col: '200,40,90', tip: 'se soigne de la moitié des dégâts qu’il inflige', ok: m => m.trait !== 'drain' },
   armor:  { n: 'blindé', col: '170,190,210', tip: 'protégé par un bouclier de 30 % de sa vie', ok: m => !m.fly },
   bomb:   { n: 'explosif', col: '255,140,30', tip: 'explose à sa mort : 15 % de dégâts à toute l’équipe' },
