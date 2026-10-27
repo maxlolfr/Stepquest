@@ -31,12 +31,10 @@ jobs:
         run: |
           export NODE_PATH=$(npm root -g)
           mkdir -p out
-          node db2check.js out
-          node db211.js
-          node db212.js
-          node db151.js
-          node db2close.js
-          node db2lot2.js
-          node db2lot3.js
-          node db2ui.js out
-          node db2lang.js
+          fail=0
+          # every test runs; a failing one is reported as an annotation (readable from the API) with its first error lines
+          for t in "db2check.js out" db211.js db212.js db151.js db2close.js db2lot2.js db2lot3.js "db2ui.js out" db2lang.js; do
+            if node $t > log.txt 2>&1; then echo "OK $t"; else fail=1; echo "::error title=$t::$(grep -m4 -E '❌|Error|Timeout|waiting for' log.txt | tr '\n' ' ' | cut -c1-900)"; fi
+            cat log.txt
+          done
+          exit $fail
