@@ -1,7 +1,7 @@
 // Combat engine rules.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { createBattle, step, autoFight, castUltimate, useGuard, canGuard, useItem, heroesOf, foesOf, alive } from '../js/engine/combat.js';
+import { createBattle, step, autoFight, autoNext, castUltimate, useGuard, canGuard, useItem, heroesOf, foesOf, alive } from '../js/engine/combat.js';
 import { HEROES, HERO_ORDER } from '../js/data/heroes.js';
 import { BAL } from '../js/data/balance.js';
 import { BOSSES, ZONES, AFFIXES, MONSTERS, affixesFor } from '../js/data/monsters.js';
@@ -189,4 +189,16 @@ test('a real dungeon fight can be built from a run', () => {
   assert.ok(foesOf(B).length >= 2);
   autoFight(B);
   assert.ok(B.over);
+});
+
+test('auto mode: ultimate when full, potion when a hero is low, nothing otherwise', () => {
+  const B = fight(5);
+  assert.equal(autoNext(B), null);
+  const h = heroesOf(B)[0];
+  h.ult = BAL.ultMax;
+  const a = autoNext(B); assert.ok(a);
+  a(); assert.equal(h.ult, 0);
+  B.items.pot = 1; h.hp = 1;
+  const p = autoNext(B); assert.ok(p); p();
+  assert.ok(h.hp > 1); assert.equal(B.items.pot, 0);
 });

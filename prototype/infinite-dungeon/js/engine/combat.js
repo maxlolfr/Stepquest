@@ -526,16 +526,26 @@ export function heroResults(B) {
 
 /** Runs a whole fight with the default AI (tests and simulations). Player uses ultimates
  *  as soon as ready and Guard against announced attacks when `smart` is true. */
+/**
+ * Auto mode (also the simulator's player): the next action a careful player
+ * would take now, as a function returning its events, or null.
+ * Ultimates as soon as they are full, Guard against an announced team-wide
+ * attack, a potion under 30 % life, a phoenix feather on a fallen hero.
+ */
+export function autoNext(B) {
+  if (B.over) return null;
+  const h = heroesOf(B).find(x => canUlt(B, x));
+  if (h) return () => castUltimate(B, h.uid);
+  if (canGuard(B) && foesOf(B).some(f => alive(f) && f.charge && f.charge.kind === 'special' && f.charge.target === 'all')) return () => useGuard(B);
+  if (canItem(B, 'pot') && livingH(B).some(x => pct(x) < 0.3)) return () => useItem(B, 'pot');
+  if (canItem(B, 'fea')) return () => useItem(B, 'fea');
+  return null;
+}
+
 export function autoFight(B, { smart = true } = {}) {
   let n = 0;
   while (!B.over && n++ < 5000) {
-    if (smart) {
-      for (const h of heroesOf(B)) if (canUlt(B, h)) castUltimate(B, h.uid);
-      if (foesOf(B).some(f => alive(f) && f.charge && f.charge.kind === 'special' && f.charge.target === 'all') && canGuard(B)) useGuard(B);
-      const low = livingH(B).find(h => pct(h) < 0.3);
-      if (low && canItem(B, 'pot')) useItem(B, 'pot');
-      if (canItem(B, 'fea')) useItem(B, 'fea');
-    }
+    if (smart) for (let a, k = 0; k < 6 && (a = autoNext(B)); k++) a();
     step(B);
   }
   return B.over;

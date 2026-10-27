@@ -39,7 +39,7 @@ export function goTitle() {
   showTitle(() => {
     const { run, meta } = app.data, items = [];
     if (run) items.push({ label: 'Continuer l’expédition', sub: `Étage ${run.floor} · ${run.team.map(t => HEROES[t.id].name).join(', ')}`, primary: true, action: () => route() });
-    items.push({ label: 'Nouvelle expédition', sub: run ? 'Abandonne l’expédition en cours' : '3 héros · 50 étages · 10 boss', primary: !run, action: newExpedition });
+    items.push({ label: 'Nouvelle expédition', sub: run ? 'Abandonne l’expédition en cours' : '3 héros · 100 étages · 10 boss', primary: !run, action: newExpedition });
     items.push({ label: 'Le camp', sub: `💎 ${meta.shards} éclats`, action: goCamp });
     return items;
   });

@@ -1,13 +1,13 @@
 // Rewards: the 3 cards after a fight, chest contents, gear stats, shop stock.
 import { HEROES, SKILLS } from '../data/heroes.js';
 import { RELICS, RARITY, WEAPONS, ARMORS, JEWELS } from '../data/items.js';
-import { BAL } from '../data/balance.js';
+import { BAL, prog } from '../data/balance.js';
 import { zoneOf } from '../data/monsters.js';
 
 const zoneIdx = floor => (floor <= 15 ? 0 : floor <= 32 ? 1 : 2); // gear name tier
 
-export function makeGear(slot, r, floor, hero) {
-  const m = RARITY[r].m, z = zoneIdx(floor), st = {};
+export function makeGear(slot, r, floorN, hero) {
+  const floor = prog(floorN), m = RARITY[r].m, z = zoneIdx(floor), st = {};
   let name, img;
   if (slot === 'w') {
     const v = Math.round((3 + 0.8 * floor) * m);
@@ -20,7 +20,7 @@ export function makeGear(slot, r, floor, hero) {
     st.crit = +(0.03 * m).toFixed(3); st.hp = Math.round((5 + 1.8 * floor) * m);
     [name] = JEWELS[z]; img = `gj_${JEWELS[z][1] + r}`;
   }
-  return { slot, r, hero, st, name, img, floor };
+  return { slot, r, hero, st, name, img, floor: floorN };
 }
 
 /** Score used to compare two pieces of gear for one hero. */

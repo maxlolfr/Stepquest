@@ -13,15 +13,15 @@ import { ZONES, zoneOf, levelOf } from '../js/data/monsters.js';
 import { EVENTS } from '../js/data/items.js';
 import { startFloors, migrateRun, gainXp, RUN_VERSION } from '../js/run/run.js';
 
-test('1000 seeds: 50 floors, a boss every 5 floors, rest + shop before it, a normal fight on every mixed floor', () => {
+test('1000 seeds: 100 floors, a boss every 10 floors, rest + shop on floors 5 and 9 of each zone, a normal fight on every mixed floor', () => {
   for (let s = 1; s <= 1000; s++) {
     const d = generateDungeon(s);
-    assert.equal(d.length, 51);
-    for (let f = 1; f <= 50; f++) {
-      const types = d[f].doors.map(x => x.type), k = (f - 1) % 5 + 1;
+    assert.equal(d.length, 101);
+    for (let f = 1; f <= 100; f++) {
+      const types = d[f].doors.map(x => x.type), k = (f - 1) % 10 + 1;
       assert.ok(types.length >= 1 && types.length <= 3, `seed ${s} floor ${f}`);
-      if (k === 5) { assert.deepEqual(types, ['boss']); assert.equal(d[f].doors[0].foes[0].id, ZONES[(f - 5) / 5].boss); }
-      else if (k === 4) { assert.ok(types.includes('rest') && types.includes('shop'), `seed ${s} floor ${f}`); }
+      if (k === 10) { assert.deepEqual(types, ['boss']); assert.equal(d[f].doors[0].foes[0].id, ZONES[f / 10 - 1].boss); }
+      else if (k === 5 || k === 9) { assert.ok(types.includes('rest') && types.includes('shop'), `seed ${s} floor ${f}`); }
       else if (k === 1) assert.deepEqual(types, ['fight', 'fight']);
       else assert.ok(types.includes('fight'), `seed ${s} floor ${f}: no normal fight`);
       if (f < 3) assert.ok(!types.includes('elite'));
@@ -83,7 +83,7 @@ test('loss rules: victory, retreat, defeat before and after the checkpoint', () 
 });
 
 test('every zone boss is a checkpoint: shards are banked and retreat is possible', () => {
-  for (const f of [5, 25, 45]) {
+  for (const f of [10, 50, 90]) {
     const meta = newMeta(), run = newRun(meta, ['aldric', 'selena', 'orin'], 8);
     run.floor = f; run.shards = 12;
     chooseDoor(run, 0);
@@ -103,14 +103,14 @@ test('every zone boss is a checkpoint: shards are banked and retreat is possible
   }
 });
 
-test('beating the floor 50 boss wins the run; floor 10 boss unlocks the start at floor 11', () => {
+test('beating the floor 100 boss wins the run; floor 10 boss unlocks the start at floor 11', () => {
   const meta = newMeta(), run = newRun(meta, ['aldric', 'selena', 'orin'], 9);
-  run.floor = 50; chooseDoor(run, 0);
+  run.floor = 100; chooseDoor(run, 0);
   finishBattle(run, 'win', run.team.map(h => ({ id: h.id, hp: h.hp })), 1, meta);
   assert.equal(run.outcome, 'win');
   const sum = endRun(meta, run);
-  assert.equal(sum.floor, 50);
-  assert.equal(meta.unlocked, 41);
+  assert.equal(sum.floor, 100);
+  assert.equal(meta.unlocked, 91);
   const m2 = newMeta(), r2 = newRun(m2, ['aldric', 'selena', 'orin'], 9);
   r2.floor = 11; r2.phase = 'checkpoint'; retreat(r2);
   assert.equal(endRun(m2, r2).unlocked, 11);
@@ -202,7 +202,7 @@ test('whole expeditions can be played to the end (simulation)', () => {
   assert.ok(out.some(r => r.floor > 5), 'first boss never beaten');
   assert.ok(out.some(r => r.outcome === 'lose'), 'never lost: too easy');
   const med = out.map(r => r.floor).sort((a, b) => a - b)[30];
-  assert.ok(med >= 8 && med <= 35, `median floor ${med} with an empty camp`);
+  assert.ok(med >= 11 && med <= 60, `median floor ${med} with an empty camp`);
 });
 
 // ---- save
@@ -250,6 +250,24 @@ test('finished runs are not restored; bad meta values are repaired', () => {
   assert.equal(data.meta.shards, 0);
   assert.equal(data.meta.upgrades.vie, 10);
   assert.equal(data.meta.unlocked, 1);
+});
+
+test('each level of Dragonbound II is used for two floors', () => {
+  assert.equal(levelOf(1).bg, levelOf(2).bg);
+  assert.notEqual(levelOf(2).bg, levelOf(3).bg);
+  assert.equal(levelOf(100).bg, ZONES[9].levels[4].bg);
+});
+
+test('a v0.3.0 save (run version 2, 5-floor zones) continues on the map', () => {
+  const s = memory(), meta = newMeta();
+  const old = newRun(meta, ['nyx', 'lyra', 'selena'], 12);
+  Object.assign(old, { v: 2, floor: 6, phase: 'checkpoint', lv: 9 });
+  s.setItem(SAVE_KEY, JSON.stringify({ v: 1, meta, run: old }));
+  const { data } = loadSave(s);
+  assert.equal(data.run.v, RUN_VERSION);
+  assert.equal(data.run.phase, 'map');
+  assert.equal(data.run.floor, 6);
+  assert.equal(data.run.lv, 9);
 });
 
 test('a v0.2 save (run version 1) continues in the Tower', () => {

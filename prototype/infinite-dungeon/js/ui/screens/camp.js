@@ -13,7 +13,7 @@ export function showResults(root, { summary, team, onCamp }) {
   root.replaceChildren(h('div.page.center.results.' + o,
     h('div.res-heroes', team.map(id => img(`${HEROES[id].sprite}_${pose}`, 'res-hero'))),
     h('h2', title),
-    h('p.lead', o === 'lose' ? `Défaite à l’étage ${summary.floor}.` : o === 'retreat' ? `Expédition terminée à l’étage ${summary.floor}.` : 'Vorthax le Lié est tombé. Les 50 étages sont à toi.'),
+    h('p.lead', o === 'lose' ? `Défaite à l’étage ${summary.floor}.` : o === 'retreat' ? `Expédition terminée à l’étage ${summary.floor}.` : 'Vorthax le Lié est tombé. Les 100 étages sont à toi.'),
     summary.record ? h('p.record', `🏆 Nouveau record : étage ${summary.floor} !`) : null,
     summary.unlocked ? h('p.record', `🚩 Nouveau point de départ : étage ${summary.unlocked}`) : null,
     h('div.summary',
@@ -37,5 +37,5 @@ export function showCamp(root, { meta, onBuy, onBack }) {
         h('div.upg-body', h('b', U.name), h('p', lv ? U.desc(lv) : 'Pas encore construit'), h('div.lvl', U.costs.map((_, i) => h('i' + (i < lv ? '.on' : ''))))),
         cost == null ? h('span.max', 'Max') : h('button.btn.small' + (meta.shards >= cost ? '.primary' : ''), { type: 'button', disabled: meta.shards < cost ? true : null, onclick: () => { sfx('levelup'); onBuy(k); } }, `${cost} 💎`, h('span.soon', `→ ${U.desc(lv + 1)}`)));
     })),
-    h('p.dim.stats', `Expéditions : ${s.runs} · victoires : ${s.wins} · retraites : ${s.retreats} · défaites : ${s.defeats} · meilleur étage : ${s.bestFloor} / 50`)));
+    h('p.dim.stats', `Expéditions : ${s.runs} · victoires : ${s.wins} · retraites : ${s.retreats} · défaites : ${s.defeats} · meilleur étage : ${s.bestFloor} / 100`)));
 }

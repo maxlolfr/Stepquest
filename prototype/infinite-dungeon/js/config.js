@@ -2,7 +2,7 @@
 export const GAME = {
   kicker: 'StepQuest',
   title: 'Infinite Dungeon',
-  tagline: '3 héros · 50 étages · 10 boss',
-  version: '0.3.0',
+  tagline: '3 héros · 100 étages · 10 boss',
+  version: '0.3.1',
   stage: 'Prototype jouable',
 };

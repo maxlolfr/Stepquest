@@ -9,9 +9,9 @@ import { sfx, playMusic } from '../audio.js';
 import { HEROES } from '../../data/heroes.js';
 import { BAL } from '../../data/balance.js';
 import { doorName } from '../../run/dungeon.js';
-import { createBattle, step, castUltimate, canUlt, useGuard, canGuard, useItem, canItem, heroesOf, foesOf, alive, unitByUid, heroResults } from '../../engine/combat.js';
+import { createBattle, step, autoNext, castUltimate, canUlt, useGuard, canGuard, useItem, canItem, heroesOf, foesOf, alive, unitByUid, heroResults } from '../../engine/combat.js';
 
-const SPEEDS = [1, 2, 4];
+const SPEEDS = [1, 2, 4, 10]; // ×10: for testing for now (could become a premium option later)
 const EL_COL = { feu: '#ff8a3d', glace: '#8fd8ff', poison: '#9dff6a', foudre: '#ffe46b', phys: '#ffffff' };
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
@@ -36,6 +36,9 @@ export async function runBattle(root, { config, door, floor, settings }) {
   const cutin = h('div.cutin', { hidden: true });
   const pauseBtn = h('button.round-btn', { type: 'button', 'aria-label': 'Pause' }, 'II');
   const speedBtn = h('button.round-btn.speed', { type: 'button', 'aria-label': 'Vitesse' }, `×${speed}`);
+  let auto = settings.auto !== false;
+  const autoBtn = h('button.round-btn.auto' + (auto ? '.on' : ''), { type: 'button', 'aria-label': 'Mode auto', 'aria-pressed': String(auto) }, 'AUTO');
+  autoBtn.addEventListener('click', () => { auto = !auto; settings.auto = auto; autoBtn.classList.toggle('on', auto); autoBtn.setAttribute('aria-pressed', String(auto)); settings.onChange && settings.onChange(); sfx('ui_click'); kick(); });
   const roundLbl = h('span.round', 'Tour 1');
   const pauseVeil = h('div.pause-veil', { hidden: true }, h('p', 'Pause'), h('p.small', 'Touche l’écran pour reprendre'));
   const heroCards = heroesOf(B).map(u => {
@@ -56,8 +59,8 @@ export async function runBattle(root, { config, door, floor, settings }) {
   pauseVeil.addEventListener('click', togglePause);
   speedBtn.addEventListener('click', () => { speed = SPEEDS[(SPEEDS.indexOf(speed) + 1) % SPEEDS.length]; settings.speed = speed; speedBtn.textContent = `×${speed}`; view.speed = speed; settings.onChange && settings.onChange(); });
 
-  root.replaceChildren(h('div.battle',
-    h('header.btop', h('div.floor', h('b', `Étage ${floor}`), h('span', ` · ${info.name}`)), roundLbl, h('div.btns', speedBtn, pauseBtn)),
+  root.replaceChildren(h('div.battle' + (B.units.some(u => u.boss) ? '.boss' : ''),
+    h('header.btop', h('div.floor', { 'aria-label': `Étage ${floor} · ${info.name}` }, h('b', `Étage ${floor}`)), roundLbl, h('div.btns', autoBtn, speedBtn, pauseBtn)),
     h('div.stage', canvas, banner, cutin, pauseVeil),
     h('div.bpanel', h('div.hcards', heroCards.map(c => c.el)), h('div.acts', guardBtn, potBtn, feaBtn)),
   ));
@@ -170,7 +173,8 @@ export async function runBattle(root, { config, door, floor, settings }) {
   await sleep(500);
   while (!B.over) {
     while (paused) await new Promise(r => { wake = r; });
-    const ev = actions.length ? actions.shift()() : step(B);
+    const a = !actions.length && auto ? autoNext(B) : null;
+    const ev = actions.length ? actions.shift()() : a ? a() : step(B);
     await play(ev);
     refresh();
     if (!actions.length) await wait(B.units.some(u => u.boss) ? 240 : 170);

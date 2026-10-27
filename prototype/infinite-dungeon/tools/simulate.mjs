@@ -6,7 +6,7 @@
 //   TEAMS=1 / HEROES=1 / RELICS=1           extra breakdowns
 import { makeRng } from '../js/core/rng.js';
 import { HERO_ORDER, HEROES } from '../js/data/heroes.js';
-import { UPGRADES } from '../js/data/balance.js';
+import { UPGRADES, BAL } from '../js/data/balance.js';
 import { createBattle, autoFight, heroResults, foesOf } from '../js/engine/combat.js';
 import { newRun, chooseDoor, battleConfig, finishBattle, pickCard, rest, buy, resolveEvent, leaveRoom, continueRun, floorOf, endRun, startFloors, canAfford } from '../js/run/run.js';
 import { gearScore } from '../js/run/loot.js';
@@ -104,9 +104,9 @@ if (import.meta.url === `file://${process.argv[1]}`) {
     const start = +(process.env.START || 1);
     const res = Array.from({ length: n }, (_, i) => simulateRun(1000 + i, { start, smart: process.env.SMART !== '0' }));
     const byZone = {};
-    for (const r of res) { const z = Math.floor((r.floor - 1) / 5) + 1; byZone[z] = (byZone[z] || 0) + 1; }
+    for (const r of res) { const z = Math.floor((r.floor - 1) / BAL.zoneSize) + 1; byZone[z] = (byZone[z] || 0) + 1; }
     console.log(`${n} expéditions depuis l’étage ${start} (camp vide) : étage médian ${median(res.map(r => r.floor))}, victoires ${res.filter(r => r.outcome === 'win').length}`);
-    console.log('Fin par zone :', JSON.stringify(byZone), '· boss 1 battu :', Math.round(100 * res.filter(r => r.floor > 5).length / n) + ' %', '· boss 2 :', Math.round(100 * res.filter(r => r.floor > 10).length / n) + ' %');
+    console.log('Fin par zone :', JSON.stringify(byZone), '· boss 1 battu :', Math.round(100 * res.filter(r => r.floor > BAL.zoneSize).length / n) + ' %', '· boss 2 :', Math.round(100 * res.filter(r => r.floor > 2 * BAL.zoneSize).length / n) + ' %');
     if (process.env.HEROES) console.log('Étage médian par héros :', HERO_ORDER.map(h => `${HEROES[h].name} ${median(res.filter(r => r.team.includes(h)).map(r => r.floor))} (moy ${(res.filter(r => r.team.includes(h)).reduce((a, r) => a + r.floor, 0) / res.filter(r => r.team.includes(h)).length).toFixed(1)})`).join(' · '));
   }
 }

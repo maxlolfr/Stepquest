@@ -4,7 +4,7 @@
 // Reading or writing may fail (private browsing, full storage): the game keeps
 // running with defaults in that case.
 export const SETTINGS_KEY = 'sqid.settings.v1';
-const DEFAULTS = { v: 1, muted: false, speed: 1 };
+const DEFAULTS = { v: 1, muted: false, speed: 1, auto: true };
 
 export function loadSettings(storage = globalThis.localStorage) {
   try {
@@ -12,7 +12,7 @@ export function loadSettings(storage = globalThis.localStorage) {
     if (!raw) return { ...DEFAULTS };
     const s = JSON.parse(raw);
     if (!s || typeof s !== 'object' || s.v !== 1) return { ...DEFAULTS };
-    return { ...DEFAULTS, muted: !!s.muted, speed: [1, 2, 4].includes(s.speed) ? s.speed : 1 };
+    return { ...DEFAULTS, muted: !!s.muted, speed: [1, 2, 4, 10].includes(s.speed) ? s.speed : 1, auto: s.auto !== false };
   } catch {
     return { ...DEFAULTS };
   }
@@ -20,7 +20,7 @@ export function loadSettings(storage = globalThis.localStorage) {
 
 export function saveSettings(s, storage = globalThis.localStorage) {
   try {
-    storage.setItem(SETTINGS_KEY, JSON.stringify({ v: 1, muted: !!s.muted, speed: [1, 2, 4].includes(s.speed) ? s.speed : 1 }));
+    storage.setItem(SETTINGS_KEY, JSON.stringify({ v: 1, muted: !!s.muted, speed: [1, 2, 4, 10].includes(s.speed) ? s.speed : 1, auto: s.auto !== false }));
     return true;
   } catch {
     return false;

@@ -41,8 +41,8 @@ export function showMap(root, { run, onDoor, onQuit }) {
       h('div.door-body', h('b', doorName(d, run.floor)), h('p', boss ? boss.tip : I.desc), isFight(d.type) && !boss ? h('p.foes', foeLine(d)) : null));
   });
   const preview = next ? h('p.next', 'Étage suivant : ', next.doors.map(d => h('span', { title: DOOR_INFO[d.type].name }, `${DOOR_INFO[d.type].ic} ${doorName(d, run.floor + 1)}`))) : null;
-  const z = zoneOf(run.floor), z0 = z.index * 5;
-  const pips = h('div.pips', z.floors.map(f => h('i' + (f < run.floor ? '.done' : f === run.floor ? '.now' : '') + (f === z0 + 5 ? '.boss' : ''))));
+  const z = zoneOf(run.floor), z0 = z.index * BAL.zoneSize;
+  const pips = h('div.pips', z.floors.map(f => h('i' + (f < run.floor ? '.done' : f === run.floor ? '.now' : '') + (f === z0 + BAL.zoneSize ? '.boss' : ''))));
   root.replaceChildren(h('div.page.map',
     h('header.ptop', h('button.back', { type: 'button', onclick: onQuit, 'aria-label': 'Menu' }, '☰'), h('h2', `Étage ${run.floor} / ${BAL.floors}`), h('span.zone', `Zone ${z.index + 1} / ${ZONES.length}`)),
     h('div.zone-banner', img(fl.doors[0].bg, 'zone-bg'), h('div.zone-txt', h('b', fl.zone), h('span', fl.level))),

@@ -1,4 +1,5 @@
-// The Tower: 50 floors = the 50 levels of Dragonbound II, in 10 zones of 5 floors.
+// The Tower: 100 floors in 10 zones of 10 floors = the 10 chapters of Dragonbound II;
+// each chapter's 5 levels (names and backgrounds) are used for two floors each.
 // Monster names, base stats, traits, weaknesses (w) and resistances (r), level
 // names and backgrounds come from Dragonbound II (generated file db2-data.js).
 // Floor scaling is applied in balance.js. Boss stats and mechanics are this
@@ -25,7 +26,7 @@ export const BOSSES = {
     { name: 'Jugement des ronces', target: 'all', mult: 1.15, status: 'poison', chance: 1 },
     { kind: 'thorns', pct: 0.35, text: 'se couvre de ronces : les coups au corps à corps sont renvoyés !' },
     'Empoisonne toute l’équipe avec le Jugement des ronces. À mi-vie, ses ronces renvoient 35 % des coups au corps à corps : misez sur la magie et les flèches.'),
-  bossDragon: B('bossDragon', { hp: 1050, atk: 50, def: 12 },
+  bossDragon: B('bossDragon', { hp: 1050, atk: 50, def: 12, h: 0.52 },
     { name: 'Souffle de feu', target: 'all', mult: 1.35, status: 'burn', chance: 0.6 },
     { kind: 'enrage', atkMul: 1.3, text: 'rugit de fureur : ses attaques deviennent bien plus fortes !' },
     'Son Souffle de feu brûle l’équipe. À mi-vie, il enrage (+30 % d’attaque) : finissez-le vite.'),
@@ -59,21 +60,22 @@ export const BOSSES = {
     'Le Dragon-Roi. Son souffle brûle toute l’équipe. À mi-vie, une chaîne cède : il agit deux fois par tour.'),
 };
 
+export const ZONE_SIZE = 10;
 export const ZONE_MUSIC = ['m_crypt', 'm_forest', 'm_mines', 'm_swamp', 'm_ice', 'm_vampire', 'm_necro', 'm_sewers', 'm_void', 'm_vorthax'];
 
-// 10 zones: 4 monsters of the chapter, 5 floors with their own level name and background.
+// 10 zones: 4 monsters of the chapter, 10 floors; floors 2k-1 and 2k share level k.
 export const ZONES = DB2_CHAPTERS.map((c, z) => ({
   index: z,
   name: c.name,
   boss: c.boss,
   pool: REGULAR.slice(z * 4, z * 4 + 4),
-  floors: [1, 2, 3, 4, 5].map(k => z * 5 + k),
+  floors: Array.from({ length: ZONE_SIZE }, (_, k) => z * ZONE_SIZE + k + 1),
   levels: DB2_LEVELS.filter(l => l.ch === z),
   music: ZONE_MUSIC[z],
 }));
-export const TOWER_FLOORS = ZONES.length * 5;
-export const zoneOf = floor => ZONES[Math.min(ZONES.length - 1, Math.max(0, Math.floor((floor - 1) / 5)))];
-export const levelOf = floor => { const z = zoneOf(floor); return z.levels[(floor - 1) % 5] || z.levels[0]; };
+export const TOWER_FLOORS = ZONES.length * ZONE_SIZE;
+export const zoneOf = floor => ZONES[Math.min(ZONES.length - 1, Math.max(0, Math.floor((floor - 1) / ZONE_SIZE)))];
+export const levelOf = floor => { const z = zoneOf(floor); return z.levels[Math.floor(((floor - 1) % ZONE_SIZE) / 2)] || z.levels[0]; };
 
 // Elite affixes (Dragonbound II AFFIX). col = tint around the sprite.
 export const AFFIXES = {

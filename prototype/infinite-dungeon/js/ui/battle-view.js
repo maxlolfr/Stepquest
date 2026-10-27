@@ -39,7 +39,7 @@ export function createView(canvas, B, door) {
     const [sx, v] = s, a = st(u);
     const fly = u.fly && alive(u) ? V.H * 0.06 + Math.sin(performance.now() / 380 + a.seed) * 4 : 0;
     const base = Math.min(V.H, V.W * 1.3); // narrow phones: size from the width so the trio does not overlap
-    return { x: sx * V.W + a.ox, y: V.GY + (V.H - V.GY) * (0.28 + 0.62 * v) + a.oy, fly, h: base * (u.h || 0.25) * persp(v) * (u.elite && !u.boss ? 1.12 : 1), v };
+    return { x: sx * V.W + a.ox, y: V.GY + (V.H - V.GY) * (0.28 + 0.62 * v) + a.oy, fly, h: base * (u.boss ? Math.max(u.h || 0.4, 0.46) * 1.2 : (u.h || 0.25) * (u.elite ? 1.12 : 1)) * persp(v), v }; // bosses: drawn bigger than in Dragonbound II
   }
   V.pos = pos;
   V.center = u => { const p = pos(u); return { x: p.x, y: p.y - p.fly - p.h * 0.5 }; };
@@ -48,10 +48,16 @@ export function createView(canvas, B, door) {
   function drawBg() {
     const im = getImage(door.bg);
     if (!im) { cx.fillStyle = '#16121f'; cx.fillRect(0, 0, V.W, V.H); return; }
-    const iw = im.naturalWidth, ih = im.naturalHeight, hz = door.hz;
-    const s = Math.max(V.W / iw, V.GY / (hz * ih), (V.H - V.GY) / ((1 - hz) * ih)) * 1.02;
-    const w = iw * s, top = V.GY - hz * ih * s;
-    cx.drawImage(im, (V.W - w) / 2, top, w, ih * s);
+    // Same layout as Dragonbound II: the whole picture width is shown and its floor
+    // line lands on GY; the floor band is then stretched down to the bottom of the
+    // stage (reads like a lower camera) instead of zooming into the picture.
+    const iw = im.naturalWidth, ih = im.naturalHeight, hzPx = door.hz * ih;
+    const s = Math.max(V.W / iw, V.GY / hzPx) * 1.02, w = iw * s, x0 = (V.W - w) / 2, top = V.GY - hzPx * s;
+    cx.fillStyle = '#0c0810'; cx.fillRect(0, 0, V.W, V.H);
+    cx.drawImage(im, 0, 0, iw, hzPx, x0, top, w, hzPx * s);
+    const fb = ih - hzPx, need = V.H - V.GY + 2;
+    if (fb * s >= need) cx.drawImage(im, 0, hzPx, iw, need / s, x0, V.GY, w, need);
+    else cx.drawImage(im, 0, hzPx, iw, fb * 0.92, x0, V.GY, w, need);
     const g = cx.createLinearGradient(0, 0, 0, V.H); // readability: darker top and bottom
     g.addColorStop(0, 'rgba(0,0,0,.35)'); g.addColorStop(0.25, 'rgba(0,0,0,0)'); g.addColorStop(0.85, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.45)');
     cx.fillStyle = g; cx.fillRect(0, 0, V.W, V.H);

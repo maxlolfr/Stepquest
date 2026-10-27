@@ -262,3 +262,7 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 .record{font-weight:800;color:#ffd98a;font-size:16px;margin:4px 0}
 .upg .lvl{flex-wrap:wrap;max-width:180px}
 .upg .lvl i{width:12px}
+.round-btn.auto{font-size:14px;letter-spacing:.5px;opacity:.55}
+.round-btn.auto.on{opacity:1;color:#1a1208;background:#e0b04a;border-color:#ffd98a}
+.btop .round{white-space:nowrap}
+.battle.boss .banner{top:128px}

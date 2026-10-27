@@ -130,11 +130,11 @@ srv.listen(0, async () => {
 
       // top of the tower: map of floor 50 and its boss door
       await pg.goto(`${base}?debug`); await waitFor(pg, () => window.__sqid && window.__sqid.ready);
-      await pg.click('.dbg-toggle'); await pg.selectOption('.dbg-row select', '50'); await pg.click('.dbg-row button:has-text("Carte")');
+      await pg.click('.dbg-toggle'); await pg.selectOption('.dbg-row select', '100'); await pg.click('.dbg-row button:has-text("Carte")');
       await pg.evaluate(() => document.getElementById('debug').classList.remove('open'));
       await pg.waitForTimeout(500);
-      check(`${tag} : carte de l'étage 50 avec le dernier boss`, /Étage 50/.test(await pg.textContent('.ptop h2')) && /Vorthax/.test(await pg.textContent('.doors')));
-      await ui('carte 50'); await shot('10-etage50');
+      check(`${tag} : carte de l'étage 100 avec le dernier boss`, /Étage 100/.test(await pg.textContent('.ptop h2')) && /Vorthax/.test(await pg.textContent('.doors')));
+      await ui('carte 100'); await shot('10-etage100');
     }
 
     check(`${tag} : aucun fichier manquant`, failed.length === 0 && (await pg.evaluate(() => window.__sqid.missingAssets())).length === 0, failed.slice(0, 5).join(', '));

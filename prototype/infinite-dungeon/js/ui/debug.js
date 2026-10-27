@@ -20,13 +20,13 @@ export function mountDebug() {
   paint(); setInterval(paint, 2000);
 
   const seed = h('input', { type: 'number', value: '12345', inputmode: 'numeric', 'aria-label': 'Graine' });
-  const floor = h('select', { 'aria-label': 'Étage' }, Array.from({ length: 50 }, (_, i) => h('option', { value: i + 1 }, `Étage ${i + 1}`)));
+  const floor = h('select', { 'aria-label': 'Étage' }, Array.from({ length: 100 }, (_, i) => h('option', { value: i + 1 }, `Étage ${i + 1}`)));
   const teamSel = HERO_ORDER.map(id => h('label', h('input', { type: 'checkbox', value: id, checked: ['aldric', 'selena', 'orin'].includes(id) ? true : null }), HEROES[id].name));
   const team = () => teamSel.map(l => l.firstChild).filter(c => c.checked).map(c => c.value);
   const go = type => {
     const ids = team();
     if (ids.length !== 3) return toast('Coche exactement 3 héros.');
-    const f = type === 'boss' ? Math.ceil(+floor.value / 5) * 5 : +floor.value;
+    const f = type === 'boss' ? Math.ceil(+floor.value / 10) * 10 : +floor.value;
     startRun(ids, { seed: +seed.value >>> 0, floor: f });
     const run = app.data.run;
     if (type !== 'map') {
@@ -45,7 +45,7 @@ export function mountDebug() {
       h('button', { type: 'button', onclick: () => go('elite') }, 'Élite'),
       h('button', { type: 'button', onclick: () => go('boss') }, 'Boss')),
     h('div.dbg-row',
-      h('button', { type: 'button', onclick: () => { app.data.meta.shards += 500; app.data.meta.unlocked = 41; save(); toast('+500 éclats, départs débloqués'); goTitle(); } }, '+500 éclats'),
+      h('button', { type: 'button', onclick: () => { app.data.meta.shards += 500; app.data.meta.unlocked = 91; save(); toast('+500 éclats, départs débloqués'); goTitle(); } }, '+500 éclats'),
       h('button', { type: 'button', onclick: () => { const c = exportCode(app.data); navigator.clipboard && navigator.clipboard.writeText(c).catch(() => {}); window.prompt('Code de sauvegarde (copié) :', c); } }, 'Exporter'),
       h('button', { type: 'button', onclick: () => { const c = window.prompt('Colle le code de sauvegarde :'); if (!c) return; const d = importCode(c); if (!d) return toast('Code invalide.'); app.data = d; save(); toast('Sauvegarde importée.'); goTitle(); } }, 'Importer')));
   box.replaceChildren(h('button.dbg-toggle', { type: 'button', onclick: () => box.classList.toggle('open') }, '🛠'), h('div.dbg-body', info, panel));

@@ -12,17 +12,19 @@ import { zoneOf } from '../data/monsters.js';
 import { generateDungeon, isFight, isBossFloor } from './dungeon.js';
 import { rewardCards, shopStock, upgradeCard, makeGear, statCard } from './loot.js';
 
-export const RUN_VERSION = 2;
+export const RUN_VERSION = 3;
 
-/** v1 runs (10-floor dungeon, v0.2) continue in the Tower at the same floor, back on the map. */
+/** Older runs continue at the same floor, back on the map (the tower layout changed):
+ *  v1 = 10-floor dungeon (v0.2), v2 = 50-floor tower with 5-floor zones (v0.3.0). */
 export function migrateRun(r) {
   if (!r || typeof r !== 'object') return r;
-  if (r.v === 1) {
-    r.v = 2;
+  if (r.v === 1 || r.v === 2) {
     if (!['map', 'checkpoint', 'over'].includes(r.phase)) r.phase = 'map';
     r.door = null; r.pending = null; r.rerollN = 0;
-    r.start = 1; r.bosses = 0; r.lv = 1 + 2 * (r.floor - 1); r.xp = 0;
-    r.floor = Math.max(1, Math.min(10, r.floor | 0));
+    if (r.v === 1) { r.start = 1; r.bosses = 0; r.lv = 1 + 2 * Math.max(0, (r.floor | 0) - 1); r.xp = 0; r.floor = Math.max(1, Math.min(10, r.floor | 0)); }
+    if (r.phase === 'checkpoint' && r.floor % 10 !== 1) r.phase = 'map'; // checkpoints are now every 10 floors
+    r.start = r.start || 1; r.lv = r.lv || 1; r.xp = r.xp || 0;
+    r.v = 3;
   }
   return r;
 }
