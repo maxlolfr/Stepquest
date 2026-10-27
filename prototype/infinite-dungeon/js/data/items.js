@@ -97,27 +97,27 @@ export const EVENTS = [
       { label: 'Lui indiquer la sortie', effect: { shards: 4 }, hint: '+4 éclats' },
     ] },
   // v0.3: scenes are Dragonbound II backgrounds (scene) until their own art exists (art)
-  { id: 'forge', zones: [2, 9], scene: 'bg_c3_4', from: 2, title: 'Forge de lave', text: 'Une enclume abandonnée au bord d’une rivière de lave. Le feu y brûle encore.',
+  { id: 'forge', art: 'event_forge', zones: [2, 9], scene: 'bg_c3_4', from: 2, title: 'Forge de lave', text: 'Une enclume abandonnée au bord d’une rivière de lave. Le feu y brûle encore.',
     choices: [
       { label: 'Forger (60 or)', cost: { gold: 60 }, effect: { gear: true }, hint: 'Un équipement rare pour un héros' },
       { label: 'Tremper une arme dans la lave', effect: { dmgPct: 0.1, element: 'feu' }, hint: '−10 % de vie · une arme de feu' },
     ] },
-  { id: 'obelisk', zones: [6], scene: 'bg_c7_4', from: 4, title: 'Obélisque murmurant', text: 'Des runes violettes pulsent sur la pierre noire. Une voix promet la force… à un prix.',
+  { id: 'obelisk', art: 'event_obelisk', zones: [6], scene: 'bg_c7_4', from: 4, title: 'Obélisque murmurant', text: 'Des runes violettes pulsent sur la pierre noire. Une voix promet la force… à un prix.',
     choices: [
       { label: 'Toucher les runes', effect: { gamble: { win: { stat: true }, lose: { dmgPct: 0.2 }, p: 0.65 } }, hint: '65 % : +10 % de stat à un héros · sinon −20 % de vie' },
       { label: 'S’éloigner', effect: {}, hint: 'Rien ne se passe' },
     ] },
-  { id: 'gambler', zones: [7], scene: 'bg_c8_3', from: 3, title: 'Parieur du marché noir', text: 'Un parieur encapuchonné agite trois dés d’os. « Double ou rien, l’ami ? »',
+  { id: 'gambler', art: 'event_gambler', zones: [7], scene: 'bg_c8_3', from: 3, title: 'Parieur du marché noir', text: 'Un parieur encapuchonné agite trois dés d’os. « Double ou rien, l’ami ? »',
     choices: [
       { label: 'Parier 50 or', cost: { gold: 50 }, effect: { gamble: { win: { gold: 110 }, lose: {}, p: 0.5 } }, hint: '50 % : 110 or · sinon rien' },
       { label: 'Vendre une potion', cost: { item: 'pot' }, effect: { gold: 40 }, hint: '−1 potion · +40 or' },
     ] },
-  { id: 'frozen', zones: [4], scene: 'bg_c5_3', from: 3, title: 'Aventurier gelé', text: 'Un aventurier est pris dans la glace, son sac encore à l’épaule.',
+  { id: 'frozen', art: 'event_frozen', zones: [4], scene: 'bg_c5_3', from: 3, title: 'Aventurier gelé', text: 'Un aventurier est pris dans la glace, son sac encore à l’épaule.',
     choices: [
       { label: 'Briser la glace', effect: { dmgPct: 0.08, gear: true }, hint: '−8 % de vie · son équipement' },
       { label: 'Prendre sa fiole', effect: { item: 'pot' }, hint: '+1 potion' },
     ] },
-  { id: 'blood', zones: [5], scene: 'bg_c6_5', from: 4, title: 'Autel de sang', text: 'Une coupe de sang sombre repose sur l’autel. Le Comte récompense les offrandes.',
+  { id: 'blood', art: 'event_blood_altar', zones: [5], scene: 'bg_c6_5', from: 4, title: 'Autel de sang', text: 'Une coupe de sang sombre repose sur l’autel. Le Comte récompense les offrandes.',
     choices: [
       { label: 'Offrir son sang', effect: { dmgPct: 0.25, relic: true }, hint: '−25 % de vie · une relique' },
       { label: 'Renverser la coupe', effect: { shards: 6 }, hint: '+6 éclats' },
