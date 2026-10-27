@@ -77,8 +77,9 @@ h2 button { font-family: var(--fb); font-size: 13px; background: var(--panel2); 
 .bench { margin-top: 8px; font-size: 12px; color: var(--muted); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .bench img { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--line); object-fit: cover; background: #2a1a24; }
 .menu { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: 14px; }
-.big { display: flex; align-items: center; gap: 10px; background: linear-gradient(#4a3226, #2c1c16); border: 3px solid var(--gold); border-radius: 16px; padding: 10px 12px; box-shadow: 0 4px 0 #160c06; font-family: var(--fd); font-size: 19px; }
-.big img { width: 40px; height: 40px; object-fit: contain; }
+.big { display: flex; align-items: center; gap: 10px; background: linear-gradient(#4a3226, #2c1c16); border: 3px solid var(--gold); border-radius: 16px; padding: 16px 12px; min-height: 76px; box-shadow: 0 4px 0 #160c06; font-family: var(--fd); font-size: 19px; }
+.big img { width: 50px; height: 50px; object-fit: contain; flex: none; }
+.dot[hidden] { display: none !important; }
 .big:active, .act:active:not(:disabled), .btn:active { transform: translateY(2px); }
 .ver { text-align: center; color: #6a5a6a; font-size: 12px; margin-top: 22px; }
 
@@ -242,7 +243,8 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 .dbtns { display: grid; gap: 6px; } .btn.sellb { background: linear-gradient(#f2b632, #c07a12); border-color: #6a3b0a; color: #2a1406; }
 .item .btns { display: flex; flex-direction: column; gap: 4px; flex: none; }
 .item .btns button { padding: 6px 9px; border-radius: 10px; background: linear-gradient(#5cb85c, #2f7a3a); border: 2px solid #1e4a22; color: #fff; font-weight: 900; font-size: 12.5px; }
-.item .btns button.sell { background: linear-gradient(#f2b632, #c07a12); border-color: #6a3b0a; color: #2a1406; }
+.item .btns button { display: inline-flex; align-items: center; justify-content: center; gap: 4px; } .item .btns button img { width: 18px; height: 18px; object-fit: contain; flex: none; } .item .btns button:disabled { filter: grayscale(1); opacity: .6; }
+.item .btns button.sell, .item .btns button.buy { background: linear-gradient(#f2b632, #c07a12); border-color: #6a3b0a; color: #2a1406; }
 .item.eq { outline: 3px solid #2f7a3a; }
 .chestbox { display: grid; place-items: center; min-height: 230px; }
 .chestbox img { width: 170px; height: 170px; object-fit: contain; animation: shake .8s ease-in-out infinite; filter: drop-shadow(0 0 22px rgba(var(--rg), .9)); }
@@ -316,7 +318,6 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
     <button class="big" type="button" id="shopBtn"><img src="../dragonbound/img/uiPotion.webp" alt="">Boutique</button>
     <button class="big" type="button" id="helpBtn"><img src="../dragonbound/img/uiQuest.webp" alt="">Comment jouer</button>
     <button class="big" type="button" id="trBtn" style="position:relative"><img src="img/uiTrophy.webp" alt="">Trophées<span class="dot" id="trDot" hidden></span></button>
-    <button class="big" type="button" id="newsBtn"><img src="../dragonbound/img/uiScroll.webp" alt="">Nouveautés</button>
   </div>
   <div class="ver" id="ver"></div>
 </div>
@@ -354,7 +355,7 @@ if (window.DB2_LANG !== 'fr') document.write('<script src="lang-' + window.DB2_L
 <script>
 (() => {
 'use strict';
-const VERSION = 'Ardael · Version 1.9.10 (10 chapitres)';
+const VERSION = 'Ardael · Version 1.9.11 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
@@ -2133,7 +2134,7 @@ function shopStock() { if (!S.shop || !S.shop.l || (S.shopW || 0) >= SHOP_EVERY)
     S.shop = { l: ['w', 'a', 'j', ['w', 'a', 'j'][Math.floor(Math.random() * 3)]].map((slot, k) => makeItem(slot, Math.min(4, rs[k] + (top >= 25 ? 1 : 0)), top + 1, pick(S.team))) }; S.shopW = 0; save(); }
   return S.shop.l; }
 function shopSheet() { const stock = shopStock(), left = SHOP_EVERY - (S.shopW || 0);
-  modal(`<h3>Boutique</h3><p style="text-align:center;font-size:13px;margin:0 0 6px"><b>Équipement</b> · nouveau stock dans ${left} victoire${left > 1 ? 's' : ''}</p>${stock.length ? stock.map((it, k) => itemHtml(it, null, `<button type="button" data-bgear="${k}" ${S.gold >= shopPrice(it) ? '' : 'disabled'}>${shopPrice(it)}<img src="${IP}uiGold.webp" alt=""></button>`)).join('') : '<p style="text-align:center;font-size:13px">Tout est vendu ! Reviens après quelques victoires.</p>'}
+  modal(`<h3>Boutique</h3><p style="text-align:center;font-size:13px;margin:0 0 6px"><b>Équipement</b> · nouveau stock dans ${left} victoire${left > 1 ? 's' : ''}</p>${stock.length ? stock.map((it, k) => itemHtml(it, null, `<button class="buy" type="button" data-bgear="${k}" ${S.gold >= shopPrice(it) ? '' : 'disabled'}>${shopPrice(it)}<img src="${IP}uiGold.webp" alt=""></button>`)).join('') : '<p style="text-align:center;font-size:13px">Tout est vendu ! Reviens après quelques victoires.</p>'}
     <p style="text-align:center;font-size:13px;margin:12px 0 0"><b>Potions</b></p>${Object.entries(ITEMS).map(([k, I]) => `<div class="row"><img class="f poti ${I.cls}" src="${IP}uiPotion.webp" alt="" style="border:0;border-radius:0;object-fit:contain;background:none"><div class="grow"><b>${I.name}</b> ×${S.items[k]}<small>${I.tip}</small></div><button type="button" data-buy="${k}" ${S.gold >= I.price ? '' : 'disabled'}>${I.price}<img src="${IP}uiGold.webp" alt=""></button></div>`).join('')}
     <p style="text-align:center;font-size:13px;margin:12px 0 0"><b>Coffres</b></p>${Object.entries(SHOPCH).map(([k, C]) => `<div class="row"><img class="f" src="${IP}${C.img}.webp" alt="" style="border:0;border-radius:0;object-fit:contain;background:none"><div class="grow"><b>${C.n}</b><small>${C.d}</small></div><button type="button" data-bchest="${k}" ${S.gold >= C.price ? '' : 'disabled'}>${C.price}<img src="${IP}uiGold.webp" alt=""></button></div>`).join('')}
     <p style="text-align:center;margin-top:10px"><b>${S.gold}</b> <img src="${IP}uiGold.webp" style="width:20px;vertical-align:-4px" alt="or"></p><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
@@ -2220,7 +2221,7 @@ $('ver').addEventListener('click', e => { if (e.target.id === 'replayIntro') pla
 $('forgeBtn').addEventListener('click', forgeSheet);
 $('shopBtn').addEventListener('click', shopSheet);
 $('helpBtn').addEventListener('click', helpSheet);
-$('newsBtn').addEventListener('click', () => { SFX.click(); histSheet(); });
+
 $('heroesBtn').addEventListener('click', () => heroSheet(S.team[0], 'eq'));
 
 function setMute(m) { muted = m; S.mute = muted; save(); if (muted) bgm.pause(); else { ac(); music(bgm.dataset.k || 'm_theme'); } renderHome(); }
@@ -2257,6 +2258,7 @@ renderHome();
 function afterIntro() { if (S.selLate) { delete S.selLate; save(); return story('selena', afterIntro); } if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.11', t: 'Version 1.9.11 · Accueil et boutique', d: `<p>• Boutique : les boutons d’achat de l’équipement s’affichent correctement.</p><p>• Accueil plus aéré : boutons plus grands, le bouton Nouveautés disparaît (les nouveautés s’affichent toujours une fois après une mise à jour).</p>`, en: { v: '1.9.11', t: 'Version 1.9.11 · Home and shop', d: `<p>• Shop: the gear buy buttons now display correctly.</p><p>• Roomier home screen: bigger buttons, the What’s new button is gone (news still shows once after an update).</p>` }, th: { v: '1.9.11', t: 'เวอร์ชัน 1.9.11 · หน้าหลักและร้านค้า', d: `<p>• ร้านค้า: ปุ่มซื้ออุปกรณ์แสดงผลถูกต้องแล้ว</p><p>• หน้าหลักโปร่งขึ้น: ปุ่มใหญ่ขึ้น ปุ่มมีอะไรใหม่ถูกนำออก (ข่าวยังแสดงหนึ่งครั้งหลังอัปเดต)</p>` } },
   { v: '1.9.10', t: 'Version 1.9.10 · Ardael', d: `<p>• Le jeu a un nouveau nom : <b>Ardael: The Broken Seal</b>, avec son nouveau logo. Ta partie est conservée.</p>`, en: { v: '1.9.10', t: 'Version 1.9.10 · Ardael', d: `<p>• The game has a new name: <b>Ardael: The Broken Seal</b>, with its new logo. Your progress is kept.</p>` }, th: { v: '1.9.10', t: 'เวอร์ชัน 1.9.10 · Ardael', d: `<p>• เกมมีชื่อใหม่: <b>Ardael: The Broken Seal</b> พร้อมโลโก้ใหม่ ความคืบหน้าของคุณยังอยู่ครบ</p>` } },
   { v: '1.9.9', t: 'Version 1.9.9 · ไทย', d: `<p>• Le jeu est maintenant <b>disponible en thaï</b> (bouton 🌐 de l’accueil).</p>`, en: { v: '1.9.9', t: 'Version 1.9.9 · ไทย', d: `<p>• The game is now <b>available in Thai</b> (🌐 button on the home screen).</p>` }, th: { v: '1.9.9', t: 'เวอร์ชัน 1.9.9 · ภาษาไทย', d: `<p>• ตอนนี้เกม<b>มีภาษาไทยแล้ว</b> (ปุ่ม 🌐 ที่หน้าหลัก)</p>` } },
   { v: '1.9.8', t: 'Version 1.9.8 · Bouton langue', d: `<p>• Nouveau bouton <b>🌐</b> en haut de l’accueil, à côté du son, pour choisir la langue du jeu.</p>`, en: { v: '1.9.8', t: 'Version 1.9.8 · Language button', d: `<p>• New <b>🌐</b> button at the top of the home screen, next to the sound, to choose the game’s language.</p>` } },
