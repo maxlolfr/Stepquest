@@ -22,18 +22,19 @@ export const JEWELS = [['Amulette des morts', 0], ['Œil du marais', 3], ['Âme 
 export const SLOT_NAMES = { w: 'Arme', a: 'Armure', j: 'Bijou' };
 export const STAT_NAMES = { atk: ['⚔️', 'Attaque'], mag: ['✨', 'Magie'], hp: ['❤️', 'Vie'], def: ['🛡️', 'Défense'], crit: ['🎯', 'Critique'] };
 
+// art = original icon of this game (img/relic_*.webp); missing art falls back to the emoji
 export const RELICS = {
-  vampire:  { name: 'Soif de sang', ic: '🩸', img: 'uiGem', desc: 'Les héros récupèrent 10 % des dégâts qu’ils infligent.' },
-  colere:   { name: 'Colère', ic: '🌟', img: 'uiTrophy', desc: 'Chaque combat commence avec les jauges d’ultime à 30 %.' },
-  clarte:   { name: 'Clarté', ic: '🔮', img: 'uiScroll', desc: 'Les compétences sont prêtes dès le début de chaque combat.' },
-  rempart:  { name: 'Rempart', ic: '💠', img: 'uiChest1', desc: 'Chaque héros commence les combats avec un bouclier de 15 % de sa vie.' },
-  antidote: { name: 'Antidote', ic: '🧪', img: 'uiPotion', desc: 'L’équipe est immunisée au poison.' },
-  ignifuge: { name: 'Ignifuge', ic: '🧯', img: 'uiPotion', desc: 'L’équipe est immunisée à la brûlure.' },
-  bourreau: { name: 'Bourreau', ic: '🪓', img: 'uiSkull', desc: '+30 % de dégâts sur les ennemis sous 35 % de vie.' },
-  venin:    { name: 'Lame venimeuse', ic: '☠️', img: 'uiSkull', desc: '+35 % de dégâts sur les ennemis empoisonnés.' },
+  vampire:  { name: 'Soif de sang', ic: '🩸', img: 'uiGem', art: 'relic_vampire', desc: 'Les héros récupèrent 10 % des dégâts qu’ils infligent.' },
+  colere:   { name: 'Colère', ic: '🌟', img: 'uiTrophy', art: 'relic_colere', desc: 'Chaque combat commence avec les jauges d’ultime à 30 %.' },
+  clarte:   { name: 'Clarté', ic: '🔮', img: 'uiScroll', art: 'relic_clarte', desc: 'Les compétences sont prêtes dès le début de chaque combat.' },
+  rempart:  { name: 'Rempart', ic: '💠', img: 'uiChest1', art: 'relic_rempart', desc: 'Chaque héros commence les combats avec un bouclier de 15 % de sa vie.' },
+  antidote: { name: 'Antidote', ic: '🧪', img: 'uiPotion', art: 'relic_antidote', desc: 'L’équipe est immunisée au poison.' },
+  ignifuge: { name: 'Ignifuge', ic: '🧯', img: 'uiPotion', art: 'relic_ignifuge', desc: 'L’équipe est immunisée à la brûlure.' },
+  bourreau: { name: 'Bourreau', ic: '🪓', img: 'uiSkull', art: 'relic_bourreau', desc: '+30 % de dégâts sur les ennemis sous 35 % de vie.' },
+  venin:    { name: 'Lame venimeuse', ic: '☠️', img: 'uiSkull', art: 'relic_venin', desc: '+35 % de dégâts sur les ennemis empoisonnés.' },
   chasse:   { name: 'Œil du chasseur', ic: '🎯', img: 'uiDice', desc: '+30 % de dégâts sur les cibles marquées 🎯.' },
-  bourse:   { name: 'Bourse du pillard', ic: '💰', img: 'uiGold', desc: '+30 % d’or gagné.' },
-  braises:  { name: 'Braises du camp', ic: '🔥', img: 'uiChest2', desc: 'Les repos soignent 50 % de plus.' },
+  bourse:   { name: 'Bourse du pillard', ic: '💰', img: 'uiGold', art: 'relic_bourse', desc: '+30 % d’or gagné.' },
+  braises:  { name: 'Braises du camp', ic: '🔥', img: 'uiChest2', art: 'relic_braises', desc: 'Les repos soignent 50 % de plus.' },
   sceau:    { name: 'Sceau du gardien', ic: '🛡️', img: 'uiChest3', desc: 'La Garde peut être utilisée deux fois par combat.' },
 };
 

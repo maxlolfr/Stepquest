@@ -37,6 +37,8 @@ for (const hero of Object.keys(HEROES)) for (let r = 1; r <= 3; r++) add(`gw_${h
 for (let i = 0; i <= 8; i++) { add(`ga_${i}`, DB2); add(`gj_${i}`, DB2); }
 for (const k of ['uiGem', 'uiTrophy', 'uiSkull']) add(k, DB2);
 for (const k of ['uiPotion', 'uiGold', 'uiScroll', 'uiDice', 'uiChest1', 'uiChest2', 'uiChest3', 'chestR1', 'chestR2', 'chestR3', 'chestR4']) add(k, DB1);
+// original images of Infinite Dungeon (img/ of this folder)
+for (const R of Object.values(RELICS)) if (R.art) IMG[R.art] = `img/${R.art}.webp`;
 for (const R of [...Object.values(RELICS), ...Object.values(CONSUMABLES)]) if (!IMG[R.img]) throw new Error(`asset manquant pour ${R.name}: ${R.img}`);
 
 export const IMAGES = IMG;

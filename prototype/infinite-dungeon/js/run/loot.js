@@ -55,7 +55,7 @@ function card(type, run, rng, floor, rarityKind) {
       const free = Object.keys(RELICS).filter(k => !run.relics.includes(k));
       if (!free.length) return null;
       const key = rng.pick(free), R = RELICS[key];
-      return { type, key, title: R.name, ic: R.ic, desc: R.desc };
+      return { type, key, title: R.name, ic: R.ic, img: R.art, desc: R.desc };
     }
     default: return null;
   }

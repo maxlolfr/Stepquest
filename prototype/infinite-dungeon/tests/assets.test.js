@@ -4,6 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
+import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { allAssets, spriteKeys, HERO_SPRITE } from '../js/ui/assets.js';
 import { MONSTERS } from '../js/data/monsters.js';
@@ -25,11 +26,14 @@ test('every url() in style.css exists', () => {
   assert.deepEqual(missing, []);
 });
 
-test('assets are only read from the other games, never copied here', () => {
-  const media = /\.(webp|png|jpe?g|gif|mp3|ogg|wav|m4a|mp4|woff2?)$/i, found = [];
-  const walk = d => { for (const f of readdirSync(d)) { const p = path.join(d, f); if (statSync(p).isDirectory()) walk(p); else if (media.test(f)) found.push(path.relative(GAME_DIR, p)); } };
-  walk(GAME_DIR);
-  assert.deepEqual(found, []);
+test('no image or sound of the other games is copied here (only original art in img/)', () => {
+  const media = /\.(webp|png|jpe?g|gif|mp3|ogg|wav|m4a|mp4|woff2?)$/i;
+  const walk = (d, out = []) => { for (const f of readdirSync(d)) { const p = path.join(d, f); if (statSync(p).isDirectory()) walk(p, out); else if (media.test(f)) out.push(p); } return out; };
+  const mine = walk(GAME_DIR);
+  assert.ok(mine.every(p => path.relative(GAME_DIR, p).startsWith('img' + path.sep)), 'media outside img/');
+  const hash = p => createHash('sha1').update(readFileSync(p)).digest('hex');
+  const theirs = new Set([...walk(path.join(GAME_DIR, '../dragonbound2')), ...walk(path.join(GAME_DIR, '../dragonbound'))].map(hash));
+  assert.deepEqual(mine.filter(p => theirs.has(hash(p))).map(p => path.basename(p)), [], 'copied file');
 });
 
 test('every hero and monster sprite has floor metrics and an idle pose', () => {

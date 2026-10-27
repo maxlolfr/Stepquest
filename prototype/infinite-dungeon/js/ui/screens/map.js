@@ -21,7 +21,7 @@ export function runHeader(run, { title } = {}) {
     return h('div.tm' + (t.hp <= 0 ? '.dead' : ''), img(`${H.sprite}-face`, 'tface'),
       h('div.tm-body', h('b', H.name), bar(t.hp / t.hpMax, 'hp'), h('span.num', `${Math.max(0, t.hp)} / ${t.hpMax}`)));
   }));
-  const relics = run.relics.length ? h('div.relics', run.relics.map(k => h('button.relic', { type: 'button', 'aria-label': RELICS[k].name, onclick: () => toast(`${RELICS[k].name} : ${RELICS[k].desc}`) }, RELICS[k].ic))) : null;
+  const relics = run.relics.length ? h('div.relics', run.relics.map(k => h('button.relic', { type: 'button', 'aria-label': RELICS[k].name, onclick: () => toast(`${RELICS[k].name} : ${RELICS[k].desc}`) }, icon(RELICS[k].art, RELICS[k].ic, 'relic-img')))) : null;
   return h('div.runhead', title ? h('h2', title) : null, res, team, relics);
 }
 
