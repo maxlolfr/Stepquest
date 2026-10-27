@@ -39,3 +39,4 @@ jobs:
           node db2lot2.js
           node db2lot3.js
           node db2ui.js out
+          node db2lang.js

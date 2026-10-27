@@ -344,10 +344,11 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 <audio id="bgm" preload="auto" loop></audio>
 
+<script src="lang-en.js"></script>
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.9.6 (10 chapitres)';
+const VERSION = 'Dragonbound II · Version 1.9.7 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
@@ -361,6 +362,32 @@ const Q = new URLSearchParams(location.search), SIM = Q.has('sim');
 let FAST = SIM;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const $ = id => document.getElementById(id);
+// 2.0 lot 6: English. The French text stays in the code; T() translates a fragment through lang-en.js (exact text, then templates
+// with {n} slots whose captured parts are translated too). Everything shown goes through it: DOM nodes (observer), canvas text.
+const LANG = (() => { const q = /[?&]lang=(fr|en)\b/.exec(location.search); if (q) return q[1]; try { const s = JSON.parse(localStorage.getItem('dragonbound2.v2') || 'null'); if (s && s.lang) return s.lang; if (s) return 'fr'; } catch (e) {}
+  return /^fr/i.test(navigator.language || 'fr') ? 'fr' : 'en'; })();
+const TMISS = new Set(), TCACHE = new Map(), EN_OK = LANG === 'en' && window.EN_DICT, TEN = new Set(EN_OK ? Object.values(EN_DICT.x) : []);
+const TPAT = EN_OK ? EN_DICT.p.map(([fr, en]) => { const ids = []; const re = new RegExp('^' + fr.replace(/[.*+?^$()|[\]\\]/g, '\\$&').replace(/\{(\d+)\}/g, (_, k) => { ids.push(k); return '([\\s\\S]*?)'; }) + '$'); return { re, ids, en }; }) : [];
+function T(s, d = 0) { if (!EN_OK || s == null) return s; const str = String(s); if (!/[A-Za-zÀ-ÿ]/.test(str)) return str; const hit = TCACHE.get(str); if (hit !== undefined) return hit;
+  const m = /^(\s*)([\s\S]*?)(\s*)$/.exec(str), core = m[2]; let r = EN_DICT.x[core];
+  // first, a known text with emoji / numbering / punctuation around it ("⚡ Châtiment", ": Coup d’épée", "4-1. Le ponton", "Dodge !")
+  if (r == null && d < 3) { const q = /^([^A-Za-zÀ-ÿ]*)([A-Za-zÀ-ÿ][\s\S]*?)([\s!?.…:)»]*)$/.exec(core);
+    if (q && q[1]) { const t = T(q[2] + q[3], d + 1); if (t !== q[2] + q[3] || TEN.has(t)) r = q[1] + t; }
+    if (r == null) { const z = /^([\s:·•]+)([\s\S]+)$/.exec(core); if (z) { const t = T(z[2], d + 1); if (t !== z[2] || TEN.has(t)) r = z[1] + t; } }
+    }
+  if (r == null && d < 3) for (const P of TPAT) { const g = P.re.exec(core); if (!g) continue; const v = {}; P.ids.forEach((k, j) => { v[k] = T(g[j + 1], d + 1); }); r = P.en.replace(/\{(\d+)\}/g, (_, k) => v[k] != null ? v[k] : ''); break; }
+  // fallbacks: emoji / numbering / punctuation around a known text, then several known sentences glued together
+
+  if (r == null && d < 3) { const q = /^([^A-Za-zÀ-ÿ]*)([A-Za-zÀ-ÿ][\s\S]*?)([\s!?.…:)»·]*)$/.exec(core); if (q && (q[1] || q[3])) { const t = T(q[2], d + 1); if (t !== q[2] || TEN.has(t)) r = q[1] + t + q[3].replace(/^\s+(?=[!?:])/, ''); } }
+  if (r == null && d < 2 && /, /.test(core) && core.length < 60) { const parts = core.split(', '), tr = parts.map(x => T(x, d + 1)); if (tr.some((x, j) => x !== parts[j])) r = tr.join(', '); }
+  if (r == null && d < 2) { const parts = core.split(/(?<=[.!?…])\s+/); if (parts.length > 1) { const tr = parts.map(x => T(x, d + 1)); if (tr.some((x, j) => x !== parts[j])) r = tr.join(' '); } }
+  const out = r == null ? (d || TEN.has(core) || TEN.has(str) || TMISS.add(core), str) : m[1] + r + m[3]; if (r != null && TEN.size < 20000) TEN.add(out); if (TCACHE.size < 5000) TCACHE.set(str, out); return out; }
+window.__tmiss = TMISS; window.__T = T;
+function trNode(n) { if (n.nodeType === 3) { if (n.parentElement && n.parentElement.closest('[translate="no"]')) return; const t = T(n.data); if (t !== n.data) n.data = t; return; } if (n.nodeType !== 1 || /^(SCRIPT|STYLE|TEXTAREA|CANVAS|VIDEO)$/.test(n.tagName) || n.getAttribute('translate') === 'no') return;
+  for (const a of ['aria-label', 'placeholder', 'title', 'alt']) { const v = n.getAttribute(a); if (v) { const t = T(v); if (t !== v) n.setAttribute(a, t); } } for (const c of n.childNodes) trNode(c); }
+if (EN_OK) { document.documentElement.lang = 'en'; document.title = T(document.title); trNode(document.body);
+  new MutationObserver(ms => { for (const m of ms) { if (m.type === 'characterData') trNode(m.target); else m.addedNodes.forEach(trNode); } }).observe(document.body, { childList: true, subtree: true, characterData: true }); }
+const _confirm = window.confirm.bind(window), askOk = q => _confirm(T(q));
 const rnd = (a, b) => a + Math.random() * (b - a), pick = a => a[Math.floor(Math.random() * a.length)];
 
 // ---------- Images (shared with Dragonbound) ----------
@@ -934,6 +961,7 @@ function stepTime() {
 // ---------- Battle state & stage geometry ----------
 let B = null;
 const cv = $('cv'), cx = cv.getContext('2d');
+if (EN_OK) for (const f of ['fillText', 'strokeText', 'measureText']) { const o = cx[f].bind(cx); cx[f] = (t, ...a) => o(T(t), ...a); } // canvas text in English too
 let VW = 390, VH = 500, GY = 220; // GY: where the floor starts on the stage
 // slots: [x 0..1, depth 0 (back) .. 1 (front) inside the floor band]
 const HSLOT = [[[.3, .6]], [[.32, .42], [.19, .88]], [[.37, .52], [.13, .2], [.23, .96]]]; // 1.6: trio spread out (less overlap)
@@ -2006,7 +2034,7 @@ function adminSheet() { modal(`<h3>⚙️ Menu test</h3><p style="text-align:cen
   <button class="btn alt" type="button" data-adm="gold">💰 +1 000 or</button>
   <button class="btn alt" type="button" data-adm="all">🔓 Tout débloquer (héros niv. 25)</button><button class="btn alt" type="button" data-adm="tiers">💀 Ouvrir toutes les difficultés</button><button class="btn alt" type="button" data-adm="gem">💎 +50 gemmes</button><button class="btn alt" type="button" data-adm="day">📅 Rendre le cadeau du jour à nouveau disponible</button><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
 function admin(k) {
-  if (k === 'reset') { if (!confirm('Effacer la sauvegarde et recommencer au début ?')) return; try { localStorage.removeItem(SKEY); } catch (e) {} location.reload(); return; }
+  if (k === 'reset') { if (!askOk('Effacer la sauvegarde et recommencer au début ?')) return; try { localStorage.removeItem(SKEY); } catch (e) {} location.reload(); return; }
   if (k === 'en') { S.en = EN_MAX; S.enT = Date.now(); toast('⚡ Énergie pleine'); }
   if (k === 'gold') { S.gold += 1000; toast('💰 +1 000 or'); }
   if (k === 'gem') { S.gem = (S.gem || 0) + 50; toast('💎 +50 gemmes'); }
@@ -2139,9 +2167,10 @@ document.addEventListener('click', e => {
   if (d.hsback) return heroSheet();
   if (d.tcat) return trophySheet(d.tcat);
   if (d.login) return claimLogin();
+  if (d.lang) { S.lang = d.lang; save(); location.reload(); return; }
   if (d.svsheet) { SFX.click(); return saveSheet(); }
   if (d.svcopy) { const t = $('svOut'); t.select(); const done = () => toast('📋 Code copié'); if (navigator.clipboard) navigator.clipboard.writeText(t.value).then(done, () => { document.execCommand('copy'); done(); }); else { document.execCommand('copy'); done(); } return; }
-  if (d.svimp) { const v = $('svIn').value.trim(); if (!v) return toast('Colle d’abord ton code.'); if (!confirm('Remplacer ta partie actuelle par celle de ce code ?')) return; if (importSave(v)) location.reload(); return; }
+  if (d.svimp) { const v = $('svIn').value.trim(); if (!v) return toast('Colle d’abord ton code.'); if (!askOk('Remplacer ta partie actuelle par celle de ce code ?')) return; if (importSave(v)) location.reload(); return; }
   if (d.gemen) { if ((S.gem || 0) >= 15) { S.gem -= 15; enTick(); S.en = Math.max(S.en, EN_MAX); S.enT = Date.now(); save(); SFX.win(); toast('⚡ Énergie pleine !'); renderHome(); } return energySheet(); }
   if (d.enfree) { if (S.day !== today() && clockOk()) { S.day = today(); S.en = Math.min(EN_MAX, S.en + EN_MAX / 2); if (S.en >= EN_MAX) S.enT = Date.now(); save(); SFX.win(); toast(`⚡ +${EN_MAX / 2} énergie !`); renderHome(); } return energySheet(); }
   if (d.train != null) { modalCb = null; return playLevel(+d.train, true); }
@@ -2191,7 +2220,7 @@ $('heroesBtn').addEventListener('click', () => heroSheet(S.team[0], 'eq'));
 
 function setMute(m) { muted = m; S.mute = muted; save(); if (muted) bgm.pause(); else { ac(); music(bgm.dataset.k || 'm_theme'); } renderHome(); }
 function soundSheet() { const sl = (k, n) => `<label class="vol"><span>${n}</span><input type="range" min="0" max="100" step="5" value="${Math.round(VOL[k] * 100)}" data-vol="${k}"><b id="vol_${k}">${Math.round(VOL[k] * 100)} %</b></label>`;
-  modal(`<h3>Son</h3>${sl('m', '🎵 Musique')}${sl('s', '💥 Bruitages')}<button class="btn alt" type="button" data-mute="1">${muted ? '🔊 Réactiver le son' : '🔇 Couper tout le son'}</button><button class="btn alt" type="button" data-svsheet="1">💾 Sauvegarde : copier / restaurer</button><button class="btn" type="button" data-close="1">OK</button>`); }
+  modal(`<h3>Son</h3>${sl('m', '🎵 Musique')}${sl('s', '💥 Bruitages')}<button class="btn alt" type="button" data-mute="1">${muted ? '🔊 Réactiver le son' : '🔇 Couper tout le son'}</button><button class="btn alt" type="button" data-svsheet="1">💾 Sauvegarde : copier / restaurer</button><button class="btn alt" type="button" data-lang="${LANG === 'en' ? 'fr' : 'en'}">🌐 ${LANG === 'en' ? 'Français' : 'English'}</button><button class="btn" type="button" data-close="1">OK</button>`); }
 // 2.0 lot 2: the save lives in the browser and can be wiped; a copyable code lets the player keep it and restore it anywhere
 const saveCode = () => btoa(unescape(encodeURIComponent(JSON.stringify(S))));
 function saveSheet() { save(); modal(`<h3>💾 Sauvegarde</h3><p style="font-size:13px;text-align:center">Copie ce code et garde-le (Notes, e-mail). Il permet de retrouver ta partie sur un autre appareil ou si le navigateur l’efface.</p>
@@ -2219,6 +2248,7 @@ renderHome();
 function afterIntro() { if (S.selLate) { delete S.selLate; save(); return story('selena', afterIntro); } if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.7', t: 'Version 1.9.7 · English', d: `<p>• Le jeu est maintenant <b>disponible en anglais</b>. Change de langue dans le menu du son (🌐). Ta partie est conservée.</p><p>• Nouvelle icône du jeu.</p>`, en: { v: '1.9.7', t: 'Version 1.9.7 · English', d: `<p>• The game is now <b>available in English</b>. Switch language from the sound menu (🌐). Your progress is kept.</p><p>• New game icon.</p>` } },
   { v: '1.9.6', t: 'Version 1.9.6 · Finitions', d: `<p>• <b>Icône du jeu</b> : Aldric sur ton écran d’accueil quand tu ajoutes le jeu (Partager → Sur l’écran d’accueil).</p><p>• Les polices sont intégrées au jeu : même rendu partout, même sans connexion.</p><p>• Nouvel écran <b>Crédits</b> en bas de l’accueil.</p>` },
   { v: '1.9.5', t: 'Version 1.9.5 · Plus lisible', d: `<p>• <b>Combats chargés lisibles</b> : alertes, icônes et barres de vie ne se chevauchent plus, et aucun monstre ne cache une barre. L’alerte indique simplement la cible (⚠️ → Aldric), les élites ont une étoile ★ colorée.</p><p>• <b>Victoire en un seul écran</b> : les coffres bonus sont listés directement, plus besoin de les ouvrir un par un.</p><p>• Les notifications arrivent deux par deux au lieu de recouvrir l’écran, et les annonces des boss sont plus courtes.</p>` },
   { v: '1.9.4', t: 'Version 1.9.4 · Le jeu complet, sans attente', d: `<p>• <b>Plus d’énergie ni de gemmes</b> : joue autant que tu veux. Tes gemmes ont été converties en or (40 or chacune).</p><p>• <b>3 difficultés</b> : Normal, Difficile, Cauchemar. Bats le boss d’un chapitre pour ouvrir la suivante. Ta progression en Héroïque compte pour Difficile, celle en Enfer pour Cauchemar.</p><p>• <b>Séléna arrive plus tôt</b>, dès la fin de l’Ossuaire (1-3). Le premier boss est un peu plus fort en conséquence.</p><p>• <b>Boutique</b> : 4 pièces d’équipement à acheter avec ton or, renouvelées toutes les 3 victoires.</p><p>• <b>Sauvegarde</b> : bouton 🔊 puis « Sauvegarde » pour copier un code et retrouver ta partie n’importe où.</p><p>• Accueil allégé : plus de cadeau du jour ni de bouton Histoire (les scènes se jouent toujours pendant l’aventure).</p>` },
@@ -2289,8 +2319,8 @@ const CHANGELOG = [
   <p>• <b>Contrats</b> : un défi facultatif avant chaque niveau.</p>` },
 ];
 const VER = CHANGELOG[0].v;
-function newsSheet(cb) { const c = CHANGELOG[0]; modal(`<h3>${c.t}</h3>${c.d}<button class="btn" type="button" data-close="1">À l’aventure !</button><button class="btn alt" type="button" data-hist="1">Toutes les versions</button>`, cb); }
-function histSheet() { modal(`<h3>Nouveautés</h3>${CHANGELOG.map((c, k) => `<details ${k ? '' : 'open'} class="hist"><summary>${c.t}</summary>${c.d}</details>`).join('')}<button class="btn" type="button" data-close="1">Fermer</button>`); }
+function newsSheet(cb) { const c = LANG === 'en' ? (CHANGELOG.find(x => x.en) || CHANGELOG[0]).en || CHANGELOG[0] : CHANGELOG[0]; modal(`<div translate="no"><h3>${c.t}</h3>${c.d}</div><button class="btn" type="button" data-close="1">À l’aventure !</button><button class="btn alt" type="button" data-hist="1">Toutes les versions</button>`, cb); }
+function histSheet() { modal(`<h3>Nouveautés</h3>${(LANG === 'en' ? CHANGELOG.filter(x => x.en).map(x => x.en) : CHANGELOG).map((c, k) => `<details ${k ? '' : 'open'} class="hist" translate="no"><summary>${c.t}</summary>${c.d}</details>`).join('')}<button class="btn" type="button" data-close="1">Fermer</button>`); }
 function playIntro(then) { const v = $('video'), box = $('vid'); bgm.pause(); if (!v.src) v.src = 'intro.mp4'; v.currentTime = 0; v.muted = muted; box.hidden = false;
   const end = () => { v.pause(); box.hidden = true; v.onended = null; S.seen.vid = 1; S.seen.vid2 = 1; save(); if (!muted) music('m_theme'); if (then) then(); };
   v.onended = end; $('skipVid').onclick = end; v.play().catch(() => end()); }
