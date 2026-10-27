@@ -109,7 +109,7 @@ async function fight() {
   preloadSfx(['s_impact', 'crit', 'foe_die', 'hero_hurt', 'dodge', 'ald_sword', 'sel_mace', 'ori_bolt', 'lyr_arrow', 'nyx_dagger', 'aoe_warning', 'ult_cutin', 'poison', 'burn']);
   view().replaceChildren(h('div.loading', 'Le combat se prépare…'));
   const res = await runBattle(view(), { config: battleConfig(run, meta), door, floor: run.floor, settings });
-  finishBattle(run, res.result, res.heroes, res.kills, app.data.meta);
+  finishBattle(run, res.result, res.heroes, res.kills, app.data.meta, res.report);
   if (run.lvUp && run.phase !== 'over') { sfx('levelup'); toast(`Niveau ${run.lv} ! Les héros sont plus forts.`); }
   save();
   route();

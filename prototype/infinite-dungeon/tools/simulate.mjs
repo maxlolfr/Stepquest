@@ -38,7 +38,7 @@ export function simulateRun(seed, { team, smart = true, meta = newMeta(), start 
     if (run.phase === 'checkpoint') { continueRun(run); continue; }
     if (run.phase === 'map') {
       const doors = floorOf(run).doors, hp = teamHp(run);
-      const want = hp < 0.5 ? ['rest', 'event', 'chest', 'shop', 'fight'] : hp > 0.75 ? ['elite', 'chest', 'event', 'fight', 'shop', 'rest'] : ['chest', 'event', 'fight', 'shop', 'rest', 'elite'];
+      const want = hp < 0.5 ? ['rest', 'event', 'chest', 'shop', 'fight'] : hp > 0.85 ? ['cursed', 'elite', 'chest', 'event', 'fight', 'shop', 'rest'] : hp > 0.75 ? ['elite', 'chest', 'event', 'fight', 'shop', 'rest'] : ['chest', 'event', 'fight', 'shop', 'rest', 'elite'];
       let i = -1;
       for (const t of want) { i = doors.findIndex(d => d.type === t); if (i >= 0) break; }
       chooseDoor(run, i < 0 ? 0 : i);

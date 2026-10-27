@@ -9,7 +9,8 @@ import { sfx, playMusic } from '../audio.js';
 import { HEROES } from '../../data/heroes.js';
 import { BAL } from '../../data/balance.js';
 import { doorName } from '../../run/dungeon.js';
-import { createBattle, step, autoNext, castUltimate, canUlt, useGuard, canGuard, useItem, canItem, heroesOf, foesOf, alive, unitByUid, heroResults } from '../../engine/combat.js';
+import { SYNERGIES } from '../../data/items.js';
+import { createBattle, step, autoNext, castUltimate, canUlt, useGuard, canGuard, useItem, canItem, heroesOf, foesOf, alive, unitByUid, heroResults, fightReport } from '../../engine/combat.js';
 
 const SPEEDS = [1, 2, 4, 10]; // ×10: for testing for now (could become a premium option later)
 const EL_COL = { feu: '#ff8a3d', glace: '#8fd8ff', poison: '#9dff6a', foudre: '#ffe46b', phys: '#ffffff' };
@@ -129,7 +130,7 @@ export async function runBattle(root, { config, door, floor, settings }) {
           const t = u; if (!t) break;
           const col = e.thorns ? '#9dff6a' : t.side === 'h' ? '#ff6b5e' : e.crit ? '#ffd23f' : EL_COL[e.el] || '#fff';
           const txt = e.amt > 0 ? `${e.crit ? '' : ''}${e.amt}${e.crit ? '!' : ''}` : (e.absorbed ? `(${e.absorbed})` : '0');
-          view.text(t, txt, col, e.crit);
+          view.text(t, e.riposte ? `↩ ${txt}` : txt, col, e.crit || e.combo);
           if (e.weak) view.text(t, 'Faible !', '#ffd23f');
           if (e.resist) view.text(t, 'Résiste', '#aab');
           if (!e.dot) {
@@ -171,6 +172,7 @@ export async function runBattle(root, { config, door, floor, settings }) {
 
   refresh();
   await sleep(500);
+  if (B.syn.size) { say([...B.syn].map(t => `${SYNERGIES[t].ic} ${SYNERGIES[t].name}`).join(' · ') + ' : synergie active', 'skill', 1800); await wait(500); }
   while (!B.over) {
     while (paused) await new Promise(r => { wake = r; });
     const a = !actions.length && auto ? autoNext(B) : null;
@@ -184,5 +186,5 @@ export async function runBattle(root, { config, door, floor, settings }) {
   playMusic(B.over === 'win' ? 'm_victory' : 'm_defeat');
   await sleep(1500);
   view.stop();
-  return { B, result: B.over, heroes: heroResults(B), kills: foesOf(B).filter(f => !alive(f)).length };
+  return { B, result: B.over, heroes: heroResults(B), kills: foesOf(B).filter(f => !alive(f)).length, report: fightReport(B) };
 }

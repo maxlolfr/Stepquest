@@ -17,23 +17,25 @@ export const BAL = {
   startFloors: [1, 11, 21, 31, 41, 51, 61, 71, 81, 91], // checkpoints, unlocked by beating the boss just before
   // Monster base stats already grow zone after zone (Dragonbound II values);
   // these multipliers follow the heroes' growth (levels, gear, cards, relics).
-  foeHp: f => 1.4 * climb(prog(f), 1.17, 1.06),
-  foeAtk: f => 1.1 * climb(prog(f), 1.1, 1.04),
+  foeHp: f => 1.4 * climb(prog(f), 1.18, 1.063),
+  foeAtk: f => 1.1 * climb(prog(f), 1.105, 1.043),
   foeDef: f => 1,
   foeCount: (f, rng) => ((f - 1) % ZONE_SIZE < 2 ? 2 : rng.int(2, 3)),
   elite: { hp: 1.7, atk: 1.2 },
+  cursedHp: 1.2, // cursed doors: their two elites have 20 % more life
+  cursedChance: 0.22, // per mixed floor
   boss: { hp: 1, atk: 1 },
   // bosses: their own stats (monsters.js) times a climb along the tower
-  bossHp: f => 1.6 * climb(prog(f), 1.17, 1.06),
-  bossAtk: f => 0.9 * climb(prog(f), 1.1, 1.04),
+  bossHp: f => 1.6 * climb(prog(f), 1.18, 1.063),
+  bossAtk: f => 0.9 * climb(prog(f), 1.105, 1.043),
   maxRounds: 60,
   ultGainAct: 14, ultGainHit: 6, ultMax: 100,
   healMult: 1.3, // Séléna's Soin (was 1.9 in v0.2)
   // rewards (gold and shards grow with the zone: zoneMul)
   zoneMul: z => 1 + 0.2 * z, // shards
   goldMul: z => 1 + 0.15 * z,
-  gold: { normal: [18, 28], elite: [45, 60], boss: [80, 80] },
-  shards: { normal: 1, elite: 3, boss: 10, victory: 100 },
+  gold: { normal: [18, 28], elite: [45, 60], cursed: [70, 90], boss: [80, 80] },
+  shards: { normal: 1, elite: 3, cursed: 5, boss: 10, victory: 100 },
   defeatKeep: 0.5,
   restHeal: 0.4,
   afterFightHeal: 0.1, // every standing hero after a victory
@@ -48,7 +50,7 @@ export const BAL = {
 
 // Hero levels inside an expedition (shared by the team): XP from each fight won.
 export const XP = {
-  gain: { normal: 5, elite: 11, boss: 25 }, // a zone has ~2× more fights than in v0.3.0
+  gain: { normal: 5, elite: 11, cursed: 16, boss: 25 }, // a zone has ~2× more fights than in v0.3.0
   need: lv => Math.round(10 + 0.6 * lv), // XP from level lv to lv+1
   max: 80,
 };

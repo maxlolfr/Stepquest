@@ -7,7 +7,7 @@ import { makeRng, hashSeed } from '../core/rng.js';
 import { HEROES } from '../data/heroes.js';
 import { gearScore } from './loot.js';
 import { BAL, XP } from '../data/balance.js';
-import { EVENTS, RELICS, eventsForZone } from '../data/items.js';
+import { EVENTS, RELICS, eventsForZone, activeSynergies } from '../data/items.js';
 import { zoneOf } from '../data/monsters.js';
 import { generateDungeon, isFight, isBossFloor } from './dungeon.js';
 import { rewardCards, shopStock, upgradeCard, makeGear, statCard } from './loot.js';
@@ -111,7 +111,7 @@ export function chooseDoor(run, idx) {
   if (d.type === 'chest') run.pending = { kind: 'chest', cards: rewardCards(run, rng, run.floor, 'chest') };
   else if (d.type === 'rest') run.pending = { kind: 'rest' };
   else if (d.type === 'shop') run.pending = { kind: 'shop', stock: shopStock(run, rng, run.floor), bought: [] };
-  else if (d.type === 'event') run.pending = { kind: 'event', event: rng.pick(eventsForZone(zoneOf(run.floor).index)).id };
+  else if (d.type === 'event') run.pending = { kind: 'event', event: rng.weighted(eventsForZone(zoneOf(run.floor).index)).id };
   return d;
 }
 
@@ -128,14 +128,14 @@ export function battleConfig(run, meta) {
 }
 
 /** Called when a fight ends. heroesAfter = heroResults(B). */
-export function finishBattle(run, result, heroesAfter, kills = 0, meta = null) {
+export function finishBattle(run, result, heroesAfter, kills = 0, meta = null, report = null) {
   const d = currentDoor(run);
   run.stats.fights++; run.stats.kills += kills;
   for (const r of heroesAfter) { const h = run.team.find(x => x.id === r.id); if (h) h.hp = r.hp; }
-  if (result !== 'win') { run.phase = 'over'; run.outcome = 'lose'; return; }
+  if (result !== 'win') { run.phase = 'over'; run.outcome = 'lose'; run.report = report ? { ...report, floor: run.floor } : null; return; }
   for (const h of run.team) {
     if (h.hp <= 0) h.hp = Math.max(1, Math.round(h.hpMax * 0.2)); // fallen heroes get back up after a victory
-    else h.hp = Math.min(h.hpMax, h.hp + Math.round(h.hpMax * BAL.afterFightHeal)); // catch one's breath
+    else h.hp = Math.min(h.hpMax, h.hp + Math.round(h.hpMax * (BAL.afterFightHeal + (activeSynergies(run.relics).includes('lumiere') ? 0.1 : 0)))); // catch one's breath
   }
   const kind = d.type === 'fight' ? 'normal' : d.type, zm = BAL.zoneMul(zoneOf(run.floor).index);
   const [g0, g1] = BAL.gold[kind];
@@ -234,7 +234,7 @@ export function resolveEvent(run, choiceIdx, meta) {
     if (e.gold) { run.gold += e.gold; out.push(`+${e.gold} or.`); }
     if (e.shards) { run.shards += e.shards; out.push(`+${e.shards} éclats.`); }
     if (e.item) { run.items[e.item]++; out.push(e.item === 'pot' ? '+1 potion.' : '+1 plume de phénix.'); }
-    if (e.relic) { const free = Object.keys(RELICS).filter(k => !run.relics.includes(k)); if (free.length) { const k = rng.pick(free); applyCard(run, { type: 'relic', key: k }, meta); out.push(`Relique obtenue : ${RELICS[k].name}.`); } else { run.gold += 40; out.push('L’autel rend ton or.'); } }
+    for (let n = 0; n < (e.relic === true ? 1 : e.relic || 0); n++) { const free = Object.keys(RELICS).filter(k => !run.relics.includes(k)); if (free.length) { const k = rng.pick(free); applyCard(run, { type: 'relic', key: k }, meta); out.push(`Relique obtenue : ${RELICS[k].name}.`); } else { run.gold += 40; out.push('Plus aucune relique à gagner : +40 or.'); } }
     if (e.stat) { const c2 = statCard(run, rng); applyCard(run, c2, meta); out.push(c2.desc); }
     if (e.gear) {
       const hero = rng.pick(run.team.map(h => h.id)), g = makeGear(rng.pick(['w', 'a', 'j']), rng.weighted([[1, 70], [2, 30]]), run.floor, hero);
@@ -315,5 +315,5 @@ export function endRun(meta, run) {
   const lastBoss = o === 'win' ? BAL.floors : Math.floor((run.floor - 1) / BAL.zoneSize) * BAL.zoneSize;
   const before = meta.unlocked || 1;
   meta.unlocked = Math.max(before, ...BAL.startFloors.filter(f => f - 1 <= lastBoss && f <= BAL.floors));
-  return { outcome: o, kept, lost, banked: run.banked, floor: reached, start: run.start || 1, record, unlocked: meta.unlocked > before ? meta.unlocked : 0, fights: run.stats.fights, kills: run.stats.kills };
+  return { outcome: o, kept, lost, banked: run.banked, floor: reached, bosses: run.bosses || 0, report: run.report || null, relics: run.relics.slice(), start: run.start || 1, record, unlocked: meta.unlocked > before ? meta.unlocked : 0, fights: run.stats.fights, kills: run.stats.kills };
 }

@@ -1,5 +1,5 @@
 // Cards (reward, chest, training), rest, shop and event screens.
-import { h, img, icon } from '../dom.js';
+import { h, img, icon, toast } from '../dom.js';
 import { sfx } from '../audio.js';
 import { HEROES } from '../../data/heroes.js';
 import { RARITY, STAT_NAMES, SLOT_NAMES, EVENTS } from '../../data/items.js';
@@ -20,15 +20,21 @@ function cardEl(c, run, { onPick, price, sold, afford = true }) {
   const face = c.hero ? img(`${HEROES[c.hero].sprite}-face`, 'card-face') : null;
   const el = h('button.card' + (rar ? '.r' + c.rarity : '') + (c.type ? '.t-' + c.type : ''), { type: 'button', disabled: sold || !afford ? true : null, style: rar ? { '--rc': rar.col } : null },
     h('div.card-top', art, face),
-    h('div.card-body', rar ? h('span.rar', rar.n) : null, h('b.card-title', c.title), h('p', c.desc), extra),
+    h('div.card-body', rar ? h('span.rar', rar.n) : null, h('b.card-title', c.title), h('p', c.desc), extra,
+      c.syn ? h('p.syn' + (c.syn.completes ? '.on' : ''), `${c.syn.ic} Style ${c.syn.name} ${c.syn.n}/${c.syn.need}`, c.syn.completes ? h('span', ` · active la synergie : ${c.syn.desc}`) : null) : null),
     price != null ? h('span.price' + (afford ? '' : '.no'), sold ? 'Vendu' : `💰 ${price}`) : null);
-  el.addEventListener('click', () => { sfx(c.type === 'gear' ? 'equip' : c.type === 'relic' ? 'chest' : 'levelup', 0.6); onPick(); });
+  el.addEventListener('click', () => {
+    sfx(c.type === 'gear' ? 'equip' : c.type === 'relic' ? 'chest' : 'levelup', 0.6);
+    if (c.syn && c.syn.completes && !run.relics.includes(c.key)) { sfx('ult', 0.7); toast(`${c.syn.ic} Synergie ${c.syn.name} activée ! ${c.syn.desc}`, 4200); }
+    onPick();
+  });
   return el;
 }
 
 export function showCards(root, { run, kind, onPick, onReroll, onSkip }) {
   const p = run.pending;
-  const title = { reward: 'Victoire ! Choisis ta récompense', chest: 'Le coffre s’ouvre', train: 'Entraînement' }[kind];
+  const relicChoice = kind === 'reward' && p.cards.every(c => c.type === 'relic');
+  const title = relicChoice ? 'Trésor : choisis une relique' : { reward: 'Victoire ! Choisis ta récompense', chest: 'Le coffre s’ouvre', train: 'Entraînement' }[kind];
   root.replaceChildren(h('div.page',
     h('header.ptop', h('h2', title)),
     kind === 'chest' ? img('chestR2', 'chest-art') : null,

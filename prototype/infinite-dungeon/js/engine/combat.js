@@ -8,6 +8,7 @@
 import { makeRng } from '../core/rng.js';
 import { HEROES, SKILLS } from '../data/heroes.js';
 import { AFFIXES, unitDef } from '../data/monsters.js';
+import { activeSynergies } from '../data/items.js';
 import { BAL } from '../data/balance.js';
 
 // ---------------------------------------------------------------- setup
@@ -19,8 +20,9 @@ import { BAL } from '../data/balance.js';
  */
 export function createBattle({ heroes, foes, relics = [], items = { pot: 0, fea: 0 }, seed = 1 }) {
   const rng = makeRng(seed), R = new Set(relics);
-  const B = { rng, relics: R, items, round: 0, queue: [], units: [], over: null, uidN: 0, guardLeft: R.has('sceau') ? 2 : 1, guardUntil: -1,
-    seleneSave: true, log: [], foeTurns: 0, stats: { dealt: 0, taken: 0 } };
+  const B = { rng, relics: R, syn: new Set(activeSynergies(relics)), items, round: 0, queue: [], units: [], over: null, uidN: 0, guardLeft: R.has('sceau') ? 2 : 1, guardUntil: -1,
+    seleneSave: true, starSave: R.has('etoile'), log: [], foeTurns: 0, stats: { dealt: 0, taken: 0 },
+    report: { by: {}, last: null, ko: null, potUsed: 0 } }; // why a fight was lost (defeat screen)
   heroes.forEach((h, i) => B.units.push(makeHero(B, h, i)));
   foes.forEach((f, i) => B.units.push(makeFoe(B, f, i, foes.length)));
   return B;
@@ -37,6 +39,7 @@ function makeHero(B, h, slot) {
   for (const k of u.skills) u.cd[k] = B.relics.has('clarte') ? 0 : Math.floor(SKILLS[k].cd / 2);
   if (B.relics.has('colere')) u.ult = 30;
   if (B.relics.has('rempart') && u.hp > 0) u.shield = Math.round(u.hpMax * 0.15);
+  if (B.syn.has('riposte') && u.hp > 0) u.shield += Math.round(u.hpMax * 0.1);
   return u;
 }
 
@@ -78,7 +81,7 @@ function endCheck(B, ev) {
   else if (!livingH(B).length) { B.over = 'lose'; ev.push({ t: 'end', result: 'lose' }); }
 }
 
-function gainUlt(u, n) { if (u.side === 'h' && alive(u)) u.ult = Math.min(BAL.ultMax, u.ult + n); }
+function gainUlt(u, n, B) { if (u.side === 'h' && alive(u)) u.ult = Math.min(BAL.ultMax, u.ult + n * (B && B.syn.has('arcanes') ? 1.3 : 1)); }
 
 // ---------------------------------------------------------------- damage
 
@@ -87,17 +90,21 @@ function calc(B, a, t, pow, stat = 'atk', el = 'phys', { forceCrit = false, crit
   if (a.side === 'f' && a.aff === 'enrage') d *= 1 + (1 - pct(a)) * 0.8;
   let weak = false, resist = false;
   if (t.side === 'f') {
-    if (t.w.includes(el)) { d *= 1.5; weak = true; } else if (t.r.includes(el)) { d *= 0.5; resist = true; }
+    if (t.w.includes(el)) { d *= B.relics.has('prisme') ? 2 : 1.5; weak = true; } else if (t.r.includes(el)) { d *= 0.5; resist = true; }
     if (t.st.mark) d *= 1.2;
     if (B.relics.has('bourreau') && pct(t) < 0.35) d *= 1.3;
     if (B.relics.has('venin') && t.st.poison) d *= 1.35;
     if (B.relics.has('chasse') && t.st.mark) d *= 1.3;
   }
-  const crit = forceCrit || B.rng.chance(a.crit + critBonus);
-  if (crit) d *= 1.6;
+  let first = false;
+  if (a.side === 'h' && B.relics.has('duel') && !a.dueled) { a.dueled = true; first = true; } // Lame de duel
+  if (a.side === 'h' && B.relics.has('pierre') && pct(a) < 0.35) d *= 1.3;
+  const crit = forceCrit || first || B.rng.chance(a.crit + critBonus + (a.side === 'h' && B.syn.has('crit') ? 0.1 : 0));
+  if (crit) d *= a.side === 'h' && B.relics.has('assassin') ? 2 : 1.6;
   if (t.side === 'h') {
-    if (B.round <= B.guardUntil) d *= 0.5;
+    if (B.round <= B.guardUntil) d *= B.syn.has('riposte') ? 0.3 : 0.5;
     if (t.st.taunt) d *= 0.8;
+    if (B.relics.has('pierre') && pct(t) < 0.35) d *= 0.7;
   }
   return { d: Math.max(1, Math.round(d)), crit, weak, resist, el, stat };
 }
@@ -115,11 +122,13 @@ function hit(B, ev, a, t, r, { melee = false, noShadow = false } = {}) {
     t.wall -= take; absorbed += take / eff; d -= take / eff; d = Math.round(d);
     if (t.wall <= 0) ev.push({ t: 'say', text: `La protection de ${t.name} cède !`, uid: t.uid, big: true });
   }
+  const guarded = t.side === 'h' && (B.round <= B.guardUntil || t.shield > 0);
   if (t.shield > 0 && d > 0) { const s = Math.min(t.shield, d); t.shield -= s; d -= s; absorbed += s; }
   t.hp = Math.max(0, t.hp - d);
+  if (t.side === 'h' && a.side === 'f') { const k = a.name; B.report.by[k] = (B.report.by[k] || 0) + d; B.report.last = { by: a.name, atk: B.curAtk || 'Attaque', boss: !!a.boss }; }
   B.stats[a.side === 'h' ? 'dealt' : 'taken'] += d;
   ev.push({ t: 'dmg', uid: t.uid, src: a.uid, amt: d, absorbed: Math.round(absorbed), crit: r.crit, weak: r.weak, resist: r.resist, el: r.el });
-  if (t.side === 'h') { gainUlt(t, BAL.ultGainHit); if (t.id === 'aldric') t.rage = Math.min(5, t.rage + 1); }
+  if (t.side === 'h') { gainUlt(t, BAL.ultGainHit, B); if (t.id === 'aldric') t.rage = Math.min(5, t.rage + 1); }
   if (a.side === 'h') {
     if (a.id === 'nyx' && !noShadow && alive(t)) t.st.shadow = Math.min(3, t.st.shadow + 1);
     if (B.relics.has('vampire') && d > 0) heal(B, ev, a, Math.round(d * 0.1), { quiet: true });
@@ -127,6 +136,11 @@ function hit(B, ev, a, t, r, { melee = false, noShadow = false } = {}) {
   } else {
     if ((a.trait === 'drain' || a.aff === 'vamp') && d > 0) heal(B, ev, a, Math.round(d * 0.5), { quiet: true });
     if (a.trait === 'steal' && d > 0 && !a.stolen && B.items.pot > 0 && B.rng.chance(0.4)) { B.items.pot--; a.stolen++; ev.push({ t: 'say', text: `${a.name} vole une potion ! Tue-le pour la récupérer.`, uid: a.uid }); }
+    // Écu à pointes: a guarded or shielded hero sends 40 % of the blow back (direct damage, no chain)
+    if (guarded && B.relics.has('riposte') && alive(a) && alive(t)) {
+      const back = Math.max(1, Math.round(r.d * 0.4)); a.hp = Math.max(0, a.hp - back);
+      ev.push({ t: 'dmg', uid: a.uid, src: t.uid, amt: back, el: 'phys', thorns: true, riposte: true }); checkKo(B, ev, a);
+    }
   }
   checkKo(B, ev, t);
   if (t.boss && t.phase === 1 && alive(t) && pct(t) <= 0.5 && t.phaseDef && t.phaseDef.kind !== 'rise') bossPhase2(B, ev, t);
@@ -147,6 +161,19 @@ function checkKo(B, ev, t) {
     if (t.boss) { t.phase = 2; ev.push({ t: 'phase', uid: t.uid, text: `${t.name} ${t.phaseDef.text}` }); }
     return;
   }
+  if (t.side === 'h' && B.starSave) {
+    B.starSave = false; t.hp = Math.round(t.hpMax * 0.4);
+    ev.push({ t: 'revive', uid: t.uid, hp: t.hp, text: `⭐ L’Étoile du matin relève ${t.name} !` });
+    return;
+  }
+  if (t.side === 'h' && !B.report.ko) B.report.ko = { hero: t.name, ...(B.report.last || {}) };
+  if (t.side === 'f' && t.st.poison && B.relics.has('peste')) {
+    const others = livingF(B).filter(f => f !== t);
+    if (others.length) {
+      ev.push({ t: 'say', text: '🦠 La peste se propage !', uid: t.uid });
+      for (const f of others) addStatus(B, ev, f, 'poison', t.st.poison.dmg, null);
+    }
+  }
   if (t.side === 'f' && t.stolen) { B.items.pot += t.stolen; ev.push({ t: 'say', text: `Potion récupérée ×${t.stolen} !`, uid: t.uid }); t.stolen = 0; }
   if (t.side === 'f' && t.aff === 'bomb') {
     ev.push({ t: 'say', text: `${t.name} explose !`, uid: t.uid, big: true });
@@ -158,10 +185,11 @@ function checkKo(B, ev, t) {
 
 function heal(B, ev, u, amt, { overShield = false, quiet = false } = {}) {
   if (!alive(u) || amt <= 0) return 0;
+  if (u.side === 'h') amt = Math.round(amt * (B.relics.has('calice') ? 1.3 : 1) * (B.syn.has('lumiere') ? 1.25 : 1));
   const room = u.hpMax - u.hp, g = Math.min(room, amt);
   u.hp += g;
   if (g > 0 || !quiet) ev.push({ t: 'heal', uid: u.uid, amt: g, quiet });
-  if (overShield && amt > g) { const s = Math.round((amt - g) * 0.6); u.shield = Math.min(Math.round(u.hpMax * 0.4), u.shield + s); ev.push({ t: 'shield', uid: u.uid, amt: s }); }
+  if (overShield && amt > g) { const s = Math.round((amt - g) * 0.6); u.shield = Math.min(Math.round(u.hpMax * (B.relics.has('calice') ? 0.6 : 0.4)), u.shield + s); ev.push({ t: 'shield', uid: u.uid, amt: s }); }
   return g;
 }
 
@@ -197,8 +225,10 @@ export const upcoming = B => B.queue.map(uid => byUid(B, uid)).filter(u => u && 
 // start-of-turn: damage over time, regeneration, timers. Returns false if the unit can't act.
 function startTurn(B, ev, u) {
   const p = u.st.poison;
-  if (p) { const d = p.dmg * p.stacks; u.hp = Math.max(0, u.hp - d); ev.push({ t: 'dmg', uid: u.uid, amt: d, el: 'poison', dot: true }); if (--p.t <= 0) u.st.poison = null; checkKo(B, ev, u); }
-  if (alive(u) && u.st.burn) { const b = u.st.burn; u.hp = Math.max(0, u.hp - b.dmg); ev.push({ t: 'dmg', uid: u.uid, amt: b.dmg, el: 'feu', dot: true }); if (--b.t <= 0) u.st.burn = null; checkKo(B, ev, u); }
+  // Fléau synergy (+50 %) and Brasier toxique (×2 when poisoned AND burning) on enemies
+  const dot = u.side === 'f' ? (B.syn.has('fleau') ? 1.5 : 1) * (B.relics.has('brasier') && u.st.poison && u.st.burn ? 2 : 1) : 1;
+  if (p) { const d = Math.round(p.dmg * p.stacks * dot); u.hp = Math.max(0, u.hp - d); ev.push({ t: 'dmg', uid: u.uid, amt: d, el: 'poison', dot: true }); if (--p.t <= 0) u.st.poison = null; checkKo(B, ev, u); }
+  if (alive(u) && u.st.burn) { const b = u.st.burn, bd = Math.round(b.dmg * dot); u.hp = Math.max(0, u.hp - bd); ev.push({ t: 'dmg', uid: u.uid, amt: bd, el: 'feu', dot: true, combo: dot >= 2 }); if (--b.t <= 0) u.st.burn = null; checkKo(B, ev, u); }
   endCheck(B, ev);
   if (!alive(u) || B.over) return false;
   if (u.side === 'f') {
@@ -241,6 +271,7 @@ export function castUltimate(B, uid) {
   if (!canUlt(B, u)) return ev;
   u.ult = 0;
   ULTS[u.id](B, ev, u);
+  if (B.relics.has('tempete')) for (const h of livingH(B)) if (h !== u) gainUlt(h, 25, B);
   endCheck(B, ev);
   return ev;
 }
@@ -309,13 +340,13 @@ function basic(B, ev, u, t) {
   if (alive(t) && u.el === 'feu' && B.rng.chance(0.2)) addStatus(B, ev, t, 'burn', u[stat] * 0.3, u);
   if (alive(t) && u.el === 'glace' && B.rng.chance(0.1)) addStatus(B, ev, t, 'freeze', 1, u);
   if (u.id === 'lyra' && alive(t)) { t.st.mark = 3; ev.push({ t: 'status', uid: t.uid, st: 'mark' }); }
-  gainUlt(u, BAL.ultGainAct);
+  gainUlt(u, BAL.ultGainAct, B);
 }
 
 function heroTurn(B, ev, u) {
   const fs = livingF(B), hs = livingH(B);
   if (!fs.length) return;
-  const act = (k, targets, extra = {}) => { const S = SKILLS[k]; useSkill(B, u, k); ev.push({ t: 'act', uid: u.uid, kind: 'skill', key: k, name: S.name, ic: S.ic, targets: targets.map(x => x.uid), sfx: S.sfx, fx: S.fx || (S.el === 'foudre' ? 'slash' : S.tgt === 'ally' ? 'heal' : 'slash'), pose: 'cast', melee: u.melee && S.tgt === 'foe' && !S.el, ...extra }); gainUlt(u, BAL.ultGainAct); };
+  const act = (k, targets, extra = {}) => { const S = SKILLS[k]; useSkill(B, u, k); ev.push({ t: 'act', uid: u.uid, kind: 'skill', key: k, name: S.name, ic: S.ic, targets: targets.map(x => x.uid), sfx: S.sfx, fx: S.fx || (S.el === 'foudre' ? 'slash' : S.tgt === 'ally' ? 'heal' : 'slash'), pose: 'cast', melee: u.melee && S.tgt === 'foe' && !S.el, ...extra }); gainUlt(u, BAL.ultGainAct, B); };
   const charging = fs.find(f => f.charge);
   switch (u.id) {
     case 'aldric': {
@@ -440,6 +471,7 @@ function pickTarget(B) {
 }
 
 function foeStrike(B, ev, f, t, mult, name) {
+  B.curAtk = name;
   ev.push({ t: 'act', uid: f.uid, kind: 'foe', name, targets: [t.uid], pose: 'atk', melee: true, sfx: f.boss ? 'boss_roar' : null });
   const d = hit(B, ev, f, t, calc(B, f, t, mult, 'atk', 'phys'));
   if (d > 0 && alive(t)) {
@@ -480,7 +512,7 @@ function bossAct(B, ev, f, extra = false) {
     if (f.intangible) ev.push({ t: 'say', text: `${f.name} devient intangible : seule la magie le touche vraiment !`, uid: f.uid });
   }
   if (f.charge) {
-    const c = f.charge; f.charge = null;
+    const c = f.charge; f.charge = null; B.curAtk = c.name;
     const targets = c.target === 'all' ? livingH(B) : [pickTarget(B)];
     ev.push({ t: 'act', uid: f.uid, kind: 'foe', name: c.name, targets: targets.map(h => h.uid), pose: 'blast', big: true, sfx: 'boss_roar' });
     for (const h of targets) {
@@ -522,6 +554,18 @@ function bossPhase2(B, ev, f) {
 /** Snapshot of the heroes after the fight, for the run. */
 export function heroResults(B) {
   return heroesOf(B).map(h => ({ id: h.id, hp: h.hp }));
+}
+
+/** Why the fight went the way it did (defeat screen). */
+export function fightReport(B) {
+  const top = Object.entries(B.report.by).sort((a, b) => b[1] - a[1])[0];
+  const boss = foesOf(B).find(f => f.boss);
+  return {
+    result: B.over, rounds: B.round, timeout: B.round > BAL.maxRounds,
+    ko: B.report.ko, top: top ? { name: top[0], dmg: top[1] } : null,
+    potLeft: B.items.pot || 0, feaLeft: B.items.fea || 0, guardLeft: B.guardLeft,
+    boss: boss ? { id: boss.id, name: boss.name, hpPct: Math.round(100 * boss.hp / boss.hpMax), tip: boss.m.tip || '' } : null,
+  };
 }
 
 /** Runs a whole fight with the default AI (tests and simulations). Player uses ultimates

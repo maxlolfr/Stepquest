@@ -120,11 +120,14 @@ srv.listen(0, async () => {
       const st = await pg.evaluate(() => ({ run: window.__sqid.app.data.run, meta: window.__sqid.app.data.meta }));
       if (st.run) { // boss beaten: reward, then the checkpoint between two zones
         check(`${tag} : boss vaincu → récompense`, bossDone && st.run.phase === 'reward', st.run.phase);
+        check(`${tag} : le boss offre 1 relique au choix parmi 3`, st.run.pending.cards.length === 3 && st.run.pending.cards.every(c => c.type === 'relic'));
+        await pg.waitForTimeout(600); await ui('trésor du boss'); await shot('9-tresor');
         await pg.click('.cards .card >> nth=0'); await pg.waitForTimeout(400);
-        check(`${tag} : point de passage après le boss`, /vaincu/.test(await pg.textContent('#view h2')));
+        check(`${tag} : point de passage après le boss`, /Victoire/.test(await pg.textContent('#view h2')));
         await shot('9-checkpoint');
       } else {
         check(`${tag} : défaite contre le boss → bilan`, bossDone && await pg.isVisible('.results'));
+        check(`${tag} : le bilan explique la défaite`, await pg.isVisible('.res-report') && await pg.isVisible('.res-goal'));
         await pg.waitForTimeout(400); await ui('bilan'); await shot('9-bilan');
       }
 

@@ -4,7 +4,7 @@
 //  - 5th floor: rest and shop; 9th floor: rest and shop (from zone 2, sometimes an elite too)
 //  - other floors: 2-3 doors, always including a normal fight, so an elite is never forced
 //  - 10th floor: the zone boss
-//  - elites from floor 3; same seed = same tower, monsters included
+//  - elites from floor 3, cursed doors (never forced) from floor 4; same seed = same tower, monsters included
 import { makeRng, hashSeed } from '../core/rng.js';
 import { BAL } from '../data/balance.js';
 import { zoneOf, levelOf, affixesFor, MONSTERS, BOSSES } from '../data/monsters.js';
@@ -17,10 +17,24 @@ export const DOOR_INFO = {
   shop:  { name: 'Marchand', ic: '💰', img: 'uiGold', desc: 'Potions, équipement et reliques contre de l’or.' },
   event: { name: 'Événement', ic: '❓', img: 'uiScroll', desc: 'Une rencontre étrange, un choix à faire.' },
   boss:  { name: 'Boss', ic: '👑', img: 'uiTrophy', desc: 'Le maître de la zone. Après lui, tes éclats sont à l’abri.' },
+  cursed: { name: 'Porte maudite', ic: '⛓️', img: 'uiSkull', desc: 'Des élites renforcés. Si tu survis : 1 relique au choix parmi 3.' },
 };
+
+// What each door promises (shown on the map) and how dangerous it is (0-3 skulls)
+export const DOOR_REWARD = {
+  fight: '3 cartes · or', elite: 'Carte rare · relique fréquente · or ×2', cursed: '1 relique au choix parmi 3 · or ×3',
+  chest: 'Équipement ou relique, sans combat', rest: 'Soigner ou s’entraîner', shop: 'Achats contre de l’or',
+  event: 'Un choix, avec un risque', boss: '1 relique au choix parmi 3 · éclats à l’abri',
+};
+export function doorDanger(d) {
+  if (d.type === 'boss' || d.type === 'cursed') return 3;
+  if (d.type === 'elite') return 2;
+  if (d.type === 'fight') return d.foes.length >= 3 ? 2 : 1;
+  return d.type === 'event' ? 1 : 0;
+}
 export const doorName = (d, floor) => (d.type === 'boss' ? BOSSES[zoneOf(floor).boss].name : DOOR_INFO[d.type].name);
 
-const FIGHTS = new Set(['fight', 'elite', 'boss']);
+const FIGHTS = new Set(['fight', 'elite', 'boss', 'cursed']);
 export const isFight = type => FIGHTS.has(type);
 export const isBossFloor = floor => floor % BAL.zoneSize === 0;
 
@@ -31,6 +45,10 @@ function foesFor(type, floor, rng) {
   const n = BAL.foeCount(floor, rng), out = [];
   for (let i = 0; i < n; i++) out.push({ id: rng.pick(pool), ...mul });
   if (type === 'elite') { out[0].elite = rng.pick(affixesFor(MONSTERS[out[0].id])); if (out.length > 2) out.pop(); }
+  if (type === 'cursed') {
+    while (out.length < 3) out.push({ id: rng.pick(pool), ...mul });
+    for (const f of out.slice(0, 2)) { f.elite = rng.pick(affixesFor(MONSTERS[f.id])); f.hpMul *= BAL.cursedHp; }
+  }
   return out;
 }
 
@@ -56,6 +74,7 @@ export function generateDungeon(seed) {
       const pool = [['elite', f >= 3 ? 3 : 0], ['chest', 2], ['event', 3.5], ['shop', 0.4]].filter(([, w]) => w > 0);
       types = ['fight'];
       while (types.length < n) types.push(rng.weighted(pool.filter(([t]) => !types.includes(t))));
+      if (f >= 4 && rng.chance(BAL.cursedChance)) { if (types.length >= 3) types.pop(); types.push('cursed'); }
       types = rng.shuffle(types);
     }
     floors.push({ n: f, zone: z.name, zi: z.index, level: levelOf(f).name, doors: types.map(t => door(t, f, rng)) });

@@ -4,6 +4,33 @@ import { sfx, playMusic } from '../audio.js';
 import { UPGRADES } from '../../data/balance.js';
 import { upgradeCost } from '../../run/meta.js';
 import { HEROES } from '../../data/heroes.js';
+import { ZONES, BOSSES } from '../../data/monsters.js';
+import { BAL } from '../../data/balance.js';
+import { RELICS } from '../../data/items.js';
+
+/** Why the team fell, in one or two sentences, with a tip. */
+function defeatLines(r) {
+  if (!r) return null;
+  const lines = [];
+  if (r.timeout) lines.push(h('p', h('b', 'Combat trop long : '), 'les héros se sont épuisés après 60 tours. Il manquait des dégâts.'));
+  else if (r.ko) lines.push(h('p', h('b', 'Premier tombé : '), `${r.ko.hero}, par ${r.ko.by}${r.ko.atk && r.ko.atk !== 'Attaque' ? ` (${r.ko.atk})` : ''}.`));
+  if (r.top) lines.push(h('p', h('b', 'Le plus dangereux : '), `${r.top.name} (${r.top.dmg} dégâts).`));
+  if (r.boss) lines.push(h('p', h('b', `${r.boss.name} : `), `il lui restait ${r.boss.hpPct} % de vie. ${r.boss.tip}`));
+  const tip = r.boss && r.boss.hpPct > 70 ? 'Ce boss est encore trop fort pour l’équipe : améliore le camp ou gagne des niveaux et des reliques dans les étages d’avant.'
+    : r.potLeft > 0 ? `Il te restait ${r.potLeft} potion${r.potLeft > 1 ? 's' : ''} : utilise-les plus tôt, ou laisse le mode AUTO le faire.`
+    : r.guardLeft > 0 && r.boss ? 'La Garde n’a pas servi : garde-la pour l’attaque annoncée du boss.'
+    : 'Au camp, la Forge (vie) et le Bastion (défense) aident à tenir plus longtemps.';
+  lines.push(h('p.dim', '💡 ', tip));
+  return h('div.res-report', lines);
+}
+
+/** A reachable goal for the next expedition. */
+function nextGoal(summary) {
+  const z = Math.min(ZONES.length - 1, Math.floor((summary.floor - 1) / BAL.zoneSize));
+  const bossFloor = (z + 1) * BAL.zoneSize;
+  if (summary.outcome === 'win') return 'La tour est vaincue. Le mode Cauchemar arrive bientôt…';
+  return `Prochain objectif : vaincre ${BOSSES[ZONES[z].boss].name} à l’étage ${bossFloor}.`;
+}
 
 export function showResults(root, { summary, team, onCamp }) {
   const o = summary.outcome;
@@ -19,7 +46,10 @@ export function showResults(root, { summary, team, onCamp }) {
     h('div.summary',
       h('p', h('b', `💎 ${summary.kept} éclats`), ' rapportés au camp'),
       summary.lost ? h('p.dim', `${summary.lost} éclats perdus dans la tour`) : null,
-      h('p.dim', `${summary.fights} combats · ${summary.kills} ennemis vaincus`)),
+      h('p.dim', `${summary.fights} combat${summary.fights > 1 ? 's' : ''} · ${summary.kills} ennemi${summary.kills > 1 ? 's' : ''} vaincu${summary.kills > 1 ? 's' : ''} · ${summary.bosses || 0} boss vaincu${(summary.bosses || 0) > 1 ? 's' : ''}`),
+      summary.relics && summary.relics.length ? h('p.dim', `Reliques : ${summary.relics.map(k => RELICS[k] ? RELICS[k].ic : '').join(' ')}`) : null),
+    o === 'lose' ? defeatLines(summary.report) : null,
+    h('p.res-goal', '🎯 ', nextGoal(summary)),
     h('button.btn.primary.wide', { type: 'button', onclick: onCamp }, 'Aller au camp')));
 }
 

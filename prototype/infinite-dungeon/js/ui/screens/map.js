@@ -4,9 +4,9 @@ import { h, img, icon, bar, toast } from '../dom.js';
 import { sfx } from '../audio.js';
 import { HEROES } from '../../data/heroes.js';
 import { unitDef, AFFIXES, BOSSES, zoneOf, ZONES } from '../../data/monsters.js';
-import { RELICS } from '../../data/items.js';
+import { RELICS, SYNERGIES, activeSynergies, synergyCount } from '../../data/items.js';
 import { BAL, XP } from '../../data/balance.js';
-import { DOOR_INFO, isFight, doorName } from '../../run/dungeon.js';
+import { DOOR_INFO, DOOR_REWARD, doorDanger, isFight, doorName } from '../../run/dungeon.js';
 import { floorOf, dungeonOf } from '../../run/run.js';
 
 /** Resources + team strip shared by run screens. */
@@ -22,8 +22,10 @@ export function runHeader(run, { title } = {}) {
     return h('div.tm' + (t.hp <= 0 ? '.dead' : ''), img(`${H.sprite}-face`, 'tface'),
       h('div.tm-body', h('b', H.name), bar(t.hp / t.hpMax, 'hp'), h('span.num', `${Math.max(0, t.hp)} / ${t.hpMax}`)));
   }));
-  const relics = run.relics.length ? h('div.relics', run.relics.map(k => h('button.relic', { type: 'button', 'aria-label': RELICS[k].name, onclick: () => toast(`${RELICS[k].name} : ${RELICS[k].desc}`) }, icon(RELICS[k].art, RELICS[k].ic, 'relic-img')))) : null;
-  return h('div.runhead', title ? h('h2', title) : null, res, team, relics);
+  const relics = run.relics.length ? h('div.relics', run.relics.map(k => h('button.relic' + (RELICS[k].tag && activeSynergies(run.relics).includes(RELICS[k].tag) ? '.syn-on' : ''), { type: 'button', 'aria-label': RELICS[k].name, onclick: () => toast(`${RELICS[k].name} : ${RELICS[k].desc}${RELICS[k].tag ? ` (style ${SYNERGIES[RELICS[k].tag].name} ${Math.min(2, synergyCount(run.relics, RELICS[k].tag))}/2)` : ''}`, 4000) }, icon(RELICS[k].art, RELICS[k].ic, 'relic-img')))) : null;
+  const syns = activeSynergies(run.relics);
+  const synRow = syns.length ? h('div.syns', syns.map(t => h('button.synchip', { type: 'button', onclick: () => toast(`${SYNERGIES[t].ic} ${SYNERGIES[t].name} : ${SYNERGIES[t].desc}`, 4200) }, icon(SYNERGIES[t].art, SYNERGIES[t].ic, 'syn-img'), SYNERGIES[t].name))) : null;
+  return h('div.runhead', title ? h('h2', title) : null, res, team, synRow, relics);
 }
 
 const foeLine = d => {
@@ -38,7 +40,9 @@ export function showMap(root, { run, onDoor, onQuit }) {
     const I = DOOR_INFO[d.type], boss = d.type === 'boss' && BOSSES[d.foes[0].id];
     return h('button.door.' + d.type, { type: 'button', onclick: () => { sfx('ui_click'); onDoor(i); } },
       h('div.door-ic' + (isFight(d.type) ? '.mon' : ''), isFight(d.type) ? img(d.foes[0].id, 'dmon') : icon(I.img, I.ic, 'dimg')),
-      h('div.door-body', h('b', doorName(d, run.floor)), h('p', boss ? boss.tip : I.desc), isFight(d.type) && !boss ? h('p.foes', foeLine(d)) : null));
+      h('div.door-body', h('div.door-head', h('b', doorName(d, run.floor)), h('span.danger', { 'aria-label': `Danger ${doorDanger(d)} sur 3` }, '💀'.repeat(doorDanger(d)) || '🕊️')),
+        h('p', boss ? boss.tip : I.desc), isFight(d.type) && !boss ? h('p.foes', foeLine(d)) : null,
+        h('p.gain', '🎁 ', DOOR_REWARD[d.type])));
   });
   const preview = next ? h('p.next', 'Étage suivant : ', next.doors.map(d => h('span', { title: DOOR_INFO[d.type].name }, `${DOOR_INFO[d.type].ic} ${doorName(d, run.floor + 1)}`))) : null;
   const z = zoneOf(run.floor), z0 = z.index * BAL.zoneSize;
@@ -56,7 +60,7 @@ export function showMap(root, { run, onDoor, onQuit }) {
 export function showCheckpoint(root, { run, onContinue, onRetreat }) {
   root.replaceChildren(h('div.page.center',
     img(zoneOf(run.floor).levels[0].bg, 'scene-art'),
-    h('h2', `${BOSSES[zoneOf(run.floor - 1).boss].name} est vaincu !`),
+    h('h2', `Victoire : ${BOSSES[zoneOf(run.floor - 1).boss].name} !`),
     h('p.lead', `Tu entres dans ${zoneOf(run.floor).name}.`),
     h('p.lead', `${run.banked} éclats sont désormais à l’abri : tu les garderas même en cas de défaite.`),
     runHeader(run),

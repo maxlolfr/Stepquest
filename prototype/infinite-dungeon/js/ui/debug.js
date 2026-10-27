@@ -43,6 +43,7 @@ export function mountDebug() {
       h('button', { type: 'button', onclick: () => go('map') }, 'Carte'),
       h('button', { type: 'button', onclick: () => go('fight') }, 'Combat'),
       h('button', { type: 'button', onclick: () => go('elite') }, 'Élite'),
+      h('button', { type: 'button', onclick: () => go('cursed') }, 'Maudite'),
       h('button', { type: 'button', onclick: () => go('boss') }, 'Boss')),
     h('div.dbg-row',
       h('button', { type: 'button', onclick: () => { app.data.meta.shards += 500; app.data.meta.unlocked = 91; save(); toast('+500 éclats, départs débloqués'); goTitle(); } }, '+500 éclats'),

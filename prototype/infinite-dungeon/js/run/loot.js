@@ -1,6 +1,6 @@
 // Rewards: the 3 cards after a fight, chest contents, gear stats, shop stock.
 import { HEROES, SKILLS } from '../data/heroes.js';
-import { RELICS, RARITY, WEAPONS, ARMORS, JEWELS } from '../data/items.js';
+import { RELICS, RARITY, WEAPONS, ARMORS, JEWELS, SYNERGIES, SYN_NEED, synergyCount } from '../data/items.js';
 import { BAL, prog } from '../data/balance.js';
 import { zoneOf } from '../data/monsters.js';
 
@@ -26,7 +26,15 @@ export function makeGear(slot, r, floorN, hero) {
 /** Score used to compare two pieces of gear for one hero. */
 export const gearScore = g => (g ? (g.st.atk || 0) * 2 + (g.st.mag || 0) * 2 + (g.st.hp || 0) * 0.35 + (g.st.def || 0) * 2 + (g.st.crit || 0) * 120 : 0);
 
-function card(type, run, rng, floor, rarityKind) {
+/** Card for one relic, with its build style and how close the synergy is. */
+export function relicCard(run, key) {
+  const R = RELICS[key], S = R.tag && SYNERGIES[R.tag];
+  const n = S ? synergyCount(run.relics, R.tag) + 1 : 0;
+  return { type: 'relic', key, title: R.name, ic: R.ic, img: R.art, desc: R.desc,
+    syn: S ? { tag: R.tag, name: S.name, ic: S.ic, n: Math.min(n, SYN_NEED), need: SYN_NEED, completes: n === SYN_NEED, desc: S.desc } : null };
+}
+
+function card(type, run, rng, floor, rarityKind, exclude) {
   const team = run.team.map(h => h.id), hero = rng.pick(team);
   switch (type) {
     case 'heal': return { type, pct: 0.3, title: 'Source de vie', ic: '💚', desc: 'Soigne toute l’équipe de 30 % et relève les héros tombés à 30 %.' };
@@ -53,17 +61,25 @@ function card(type, run, rng, floor, rarityKind) {
       return { type, hero, gear: g, title: g.name, img: g.img, rarity: r, desc: `Pour ${HEROES[hero].name}.` };
     }
     case 'relic': {
-      const free = Object.keys(RELICS).filter(k => !run.relics.includes(k));
+      const free = Object.keys(RELICS).filter(k => !run.relics.includes(k) && !(exclude && exclude.includes(k)));
       if (!free.length) return null;
-      const key = rng.pick(free), R = RELICS[key];
-      return { type, key, title: R.name, ic: R.ic, img: R.art, desc: R.desc };
+      // relics of a style the team already started come up 3× more often: builds form
+      const key = rng.weighted(free.map(k => [k, RELICS[k].tag && synergyCount(run.relics, RELICS[k].tag) > 0 ? 3 : 1]));
+      return relicCard(run, key);
     }
     default: return null;
   }
 }
 
-/** Three cards of different kinds. kind: normal | elite | boss | chest */
+/** Three cards of different kinds. kind: normal | elite | boss | cursed | chest */
 export function rewardCards(run, rng, floor, kind = 'normal') {
+  // bosses and cursed doors: choose 1 relic out of 3 (topped up with other cards if the catalogue runs out)
+  if (kind === 'boss' || kind === 'cursed') {
+    const out = [];
+    for (let i = 0; i < 3; i++) { const c = card('relic', run, rng, floor, 'elite', out.map(x => x.key)); if (c) out.push(c); }
+    while (out.length < 3) out.push(card(out.length % 2 ? 'gear' : 'upgrade', run, rng, floor, 'elite'));
+    return out;
+  }
   const hurt = run.team.some(h => h.hp < h.hpMax * 0.75);
   const weights = kind === 'chest'
     ? [['gear', 5], ['relic', 3]]
@@ -77,8 +93,6 @@ export function rewardCards(run, rng, floor, kind = 'normal') {
     if (out.some(o => o.type === c.type && o.key === c.key && o.hero === c.hero && o.title === c.title)) continue;
     used.add(t); out.push(c);
   }
-  // elite and guardian rewards: one better card
-  if (kind === 'boss' && !out.some(c => c.type === 'relic')) { const c = card('relic', run, rng, floor, 'elite'); if (c) out[2] = c; }
   return out;
 }
 

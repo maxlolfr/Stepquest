@@ -266,3 +266,21 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 .round-btn.auto.on{opacity:1;color:#1a1208;background:#e0b04a;border-color:#ffd98a}
 .btop .round{white-space:nowrap}
 .battle.boss .banner{top:128px}
+
+/* v0.4 — synergies, doors */
+.card .syn{margin-top:6px;font-size:14px;font-weight:800;color:#bfe3ff}
+.card .syn.on{color:#ffd98a}
+.card .syn span{font-weight:600;color:#efe6d6}
+.syns{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0}
+.synchip{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border-radius:22px;border:1px solid #ffd98a;background:linear-gradient(#5a3d10,#2a1b08);color:#ffe7a3;font:800 15px Nunito,sans-serif}
+.synchip .syn-img,.synchip .emoji{width:26px;height:26px;font-size:20px;line-height:26px}
+.relic.syn-on{box-shadow:0 0 0 2px #ffd98a,0 0 12px rgba(255,200,90,.6)}
+.door-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.door .danger{font-size:15px;white-space:nowrap}
+.door .gain{color:#ffd98a;font-weight:700;font-size:14px;margin-top:4px}
+.door.cursed{border-color:#b0303a;background:linear-gradient(135deg,rgba(80,10,20,.85),rgba(20,8,14,.9))}
+.door.cursed b{color:#ff8a8a}
+.res-report{margin:10px 0;padding:10px 12px;border-radius:12px;background:rgba(60,10,10,.55);border:1px solid rgba(255,100,90,.35);text-align:left;font-size:15px;line-height:1.4}
+.res-report b{color:#ffb4a8}
+.res-goal{margin:8px 0;color:#ffd98a;font-weight:800;font-size:15px}
+.card.t-relic:has(.syn.on){border-color:#ffd98a;box-shadow:0 0 18px rgba(255,200,90,.45),0 8px 20px rgba(0,0,0,.45)}
