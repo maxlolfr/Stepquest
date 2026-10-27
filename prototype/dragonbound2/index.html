@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
-<title>Dragonbound II</title>
+<title>Ardael: The Broken Seal</title>
 <meta name="theme-color" content="#140d18">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Dragonbound II">
+<meta name="apple-mobile-web-app-title" content="Ardael">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <link rel="apple-touch-icon" href="icon-180.png">
 <link rel="icon" type="image/png" href="icon-192.png">
@@ -37,7 +37,7 @@ img { -webkit-user-drag: none; user-select: none; }
 /* ---------- Home ---------- */
 .top { display: flex; align-items: center; gap: 8px; }
 .logo { flex: 1; display: flex; align-items: center; gap: 8px; min-width: 0; }
-.logo img { height: 44px; filter: drop-shadow(0 2px 4px #000); }
+.logo img { height: 48px; max-width: 100%; object-fit: contain; object-position: left; filter: drop-shadow(0 2px 4px #000); }
 .logo .two { font-family: var(--fd); font-size: 26px; color: var(--gold2); text-shadow: 0 2px 0 #6a3b0a, 0 0 12px rgba(255,180,60,.5); }
 .pill { display: inline-flex; align-items: center; gap: 4px; background: rgba(0,0,0,.45); border: 2px solid var(--line); border-radius: 99px; padding: 3px 10px 3px 4px; font-size: 14px; }
 .pill img { width: 22px; height: 22px; object-fit: contain; }
@@ -295,7 +295,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
 <body>
 <div class="app" id="home">
   <div class="top">
-    <div class="logo"><img src="../dragonbound/img/logo.webp" alt="Dragonbound"><span class="two">II</span></div>
+    <div class="logo"><img src="img/logo-ardael-s.webp" alt="Ardael: The Broken Seal"></div>
 
     <span class="pill"><img src="../dragonbound/img/uiGold.webp" alt="or"><span id="gold">0</span></span>
     <button class="iconbtn" id="langBtn" type="button" aria-label="Langue">🌐</button>
@@ -340,7 +340,7 @@ table.cmp .up { color: #2f7a3a; font-weight: 900; } table.cmp .down { color: #b5
   </div>
 </div>
 
-<div id="title" hidden><img src="../dragonbound/img/logo.webp" alt="Dragonbound"><span class="two">II</span><p>Touche pour commencer</p></div>
+<div id="title" hidden><img src="img/logo-ardael.webp" alt="Ardael: The Broken Seal"><p>Touche pour commencer</p></div>
 <div id="vid" hidden><video id="video" playsinline preload="auto" poster="img/intro-end.jpg"></video><button type="button" id="skipVid">Passer ⏭</button></div>
 <div class="modal" id="modal" hidden><div class="sheet" id="sheet"></div></div>
 <audio id="bgm" preload="auto" loop></audio>
@@ -354,7 +354,7 @@ if (window.DB2_LANG !== 'fr') document.write('<script src="lang-' + window.DB2_L
 <script>
 (() => {
 'use strict';
-const VERSION = 'Dragonbound II · Version 1.9.9 (10 chapitres)';
+const VERSION = 'Ardael · Version 1.9.10 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
@@ -803,7 +803,7 @@ const STORY = {
     ['orin', 'Et personne n’a fait exploser la montagne. Je considère cela comme une victoire personnelle.'],
     ['nyx', 'Tu as quand même failli faire sauter trois portes.'],
     ['narr', 'Aldric rentre à Aube-Claire avec ses compagnons. Il n’a pas répété l’histoire d’Ardaël : il a aidé le monde à en sortir.'],
-    ['narr', 'FIN · Merci d’avoir joué à DRAGONBOUND II. Les difficultés supérieures vous attendent !']],
+    ['narr', 'FIN · Merci d’avoir joué à ARDAEL: THE BROKEN SEAL. Les difficultés supérieures vous attendent !']],
 };
 const ITEMS = {
   pot: { name: 'Potion', short: 'Vie', cls: '', tgt: 'ally', price: 30, tip: 'Rend 50 % de vie à un allié.' },
@@ -2143,7 +2143,7 @@ function demoSheet() { const done = S.stars[DEMO_CH * 5 - 1] > 0;
     <p style="text-align:center;font-size:13px">Ta progression, tes héros et ton équipement sont conservés.</p>
     <button class="btn" type="button" disabled>⭐ Débloquer le jeu complet · bientôt</button><button class="btn alt" type="button" data-close="1">Fermer</button>`); }
 // 2.0 lot 5: credits — who made what, and the tools and licences behind the art, sound and fonts
-function creditsSheet() { modal(`<h3>Crédits</h3><p style="text-align:center;font-size:14px"><b>Dragonbound II</b><br>${VERSION.split('·')[1] || ''}</p>
+function creditsSheet() { modal(`<h3>Crédits</h3><p style="text-align:center;font-size:14px"><b>Ardael: The Broken Seal</b><br>${VERSION.split('·')[1] || ''}</p>
   <p style="font-size:13px"><b>Création, direction artistique et histoire</b><br>Maxlolfr</p>
   <p style="font-size:13px"><b>Programmation</b><br>Maxlolfr, avec l’assistant IA Claude (Anthropic)</p>
   <p style="font-size:13px"><b>Illustrations, personnages et décors</b><br>Créés par Maxlolfr avec les outils d’IA Gemini (Google) et ChatGPT (OpenAI)</p>
@@ -2257,6 +2257,7 @@ renderHome();
 function afterIntro() { if (S.selLate) { delete S.selLate; save(); return story('selena', afterIntro); } if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.10', t: 'Version 1.9.10 · Ardael', d: `<p>• Le jeu a un nouveau nom : <b>Ardael: The Broken Seal</b>, avec son nouveau logo. Ta partie est conservée.</p>`, en: { v: '1.9.10', t: 'Version 1.9.10 · Ardael', d: `<p>• The game has a new name: <b>Ardael: The Broken Seal</b>, with its new logo. Your progress is kept.</p>` }, th: { v: '1.9.10', t: 'เวอร์ชัน 1.9.10 · Ardael', d: `<p>• เกมมีชื่อใหม่: <b>Ardael: The Broken Seal</b> พร้อมโลโก้ใหม่ ความคืบหน้าของคุณยังอยู่ครบ</p>` } },
   { v: '1.9.9', t: 'Version 1.9.9 · ไทย', d: `<p>• Le jeu est maintenant <b>disponible en thaï</b> (bouton 🌐 de l’accueil).</p>`, en: { v: '1.9.9', t: 'Version 1.9.9 · ไทย', d: `<p>• The game is now <b>available in Thai</b> (🌐 button on the home screen).</p>` }, th: { v: '1.9.9', t: 'เวอร์ชัน 1.9.9 · ภาษาไทย', d: `<p>• ตอนนี้เกม<b>มีภาษาไทยแล้ว</b> (ปุ่ม 🌐 ที่หน้าหลัก)</p>` } },
   { v: '1.9.8', t: 'Version 1.9.8 · Bouton langue', d: `<p>• Nouveau bouton <b>🌐</b> en haut de l’accueil, à côté du son, pour choisir la langue du jeu.</p>`, en: { v: '1.9.8', t: 'Version 1.9.8 · Language button', d: `<p>• New <b>🌐</b> button at the top of the home screen, next to the sound, to choose the game’s language.</p>` } },
   { v: '1.9.7', t: 'Version 1.9.7 · English', d: `<p>• Le jeu est maintenant <b>disponible en anglais</b>. Change de langue dans le menu du son (🌐). Ta partie est conservée.</p><p>• Nouvelle icône du jeu.</p>`, en: { v: '1.9.7', t: 'Version 1.9.7 · English', d: `<p>• The game is now <b>available in English</b>. Switch language from the sound menu (🌐). Your progress is kept.</p><p>• New game icon.</p>` } },
