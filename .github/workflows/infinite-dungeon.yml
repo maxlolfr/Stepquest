@@ -1,0 +1,43 @@
+name: Infinite Dungeon tests
+
+# Separate from the Dragonbound II workflow. Also runs when Dragonbound II or
+# Dragonbound 1 change, because Infinite Dungeon reads their images and sounds.
+on:
+  push:
+    paths:
+      - 'prototype/infinite-dungeon/**'
+      - 'prototype/dragonbound2/**'
+      - 'prototype/dragonbound/**'
+      - '.github/workflows/infinite-dungeon.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: prototype/infinite-dungeon
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Unit tests
+        run: node --test tests/*.test.js
+      - name: Install Playwright
+        run: |
+          npm install -g playwright@1.63.0
+          npx -y playwright@1.63.0 install --with-deps chromium
+      - name: Browser smoke test
+        run: |
+          export NODE_PATH=$(npm root -g)
+          node tests/smoke.js out
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: infinite-dungeon-screens
+          path: prototype/infinite-dungeon/out

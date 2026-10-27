@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#07060b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Infinite Dungeon</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main id="app">
+  <section id="title" class="screen" aria-label="Accueil">
+    <img id="titleBg" class="bg" alt="">
+    <canvas id="titleCv" aria-hidden="true"></canvas>
+    <div class="shade"></div>
+    <header class="logo">
+      <p class="kicker" id="kicker"></p>
+      <h1 id="gameTitle"></h1>
+      <p class="tagline" id="tagline"></p>
+    </header>
+    <button id="mute" class="icon-btn" type="button" aria-label="Couper le son">🔊</button>
+    <div class="bottom">
+      <button id="tapStart" class="tap" type="button">Toucher pour commencer</button>
+      <nav id="menu" class="menu" hidden>
+        <button class="btn primary" type="button" disabled aria-describedby="soonExp">
+          Nouvelle expédition
+          <span class="soon" id="soonExp">Arrive à l’étape 4</span>
+        </button>
+        <button class="btn" type="button" disabled aria-describedby="soonCamp">
+          Le camp
+          <span class="soon" id="soonCamp">Arrive à l’étape 8</span>
+        </button>
+      </nav>
+      <p class="version" id="version"></p>
+    </div>
+    <div id="debug" class="debug" hidden></div>
+  </section>
+</main>
+<noscript><p class="noscript">Ce jeu a besoin de JavaScript.</p></noscript>
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
