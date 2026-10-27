@@ -82,8 +82,8 @@ export function rewardCards(run, rng, floor, kind = 'normal') {
   }
   const hurt = run.team.some(h => h.hp < h.hpMax * 0.75);
   const weights = kind === 'chest'
-    ? [['gear', 5], ['relic', 3]]
-    : [['heal', hurt ? 3 : 0.5], ['stat', 3], ['upgrade', 3], ['element', run.team.some(h => h.el === 'phys') ? 2 : 0.3], ['gear', 3], ['relic', kind === 'normal' ? 0.6 : 3]];
+    ? [['gear', 5], ['relic', BAL.relicWeight.chest]]
+    : [['heal', hurt ? 3 : 0.5], ['stat', 3], ['upgrade', 3], ['element', run.team.some(h => h.el === 'phys') ? 2 : 0.3], ['gear', 3], ['relic', kind === 'normal' ? BAL.relicWeight.normal : BAL.relicWeight.elite]];
   const rarityKind = kind === 'normal' ? 'normal' : kind === 'chest' ? 'chest' : 'elite';
   const out = [], used = new Set();
   for (let tries = 0; out.length < 3 && tries < 40; tries++) {

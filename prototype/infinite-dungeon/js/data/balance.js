@@ -17,8 +17,8 @@ export const BAL = {
   startFloors: [1, 11, 21, 31, 41, 51, 61, 71, 81, 91], // checkpoints, unlocked by beating the boss just before
   // Monster base stats already grow zone after zone (Dragonbound II values);
   // these multipliers follow the heroes' growth (levels, gear, cards, relics).
-  foeHp: f => 1.4 * climb(prog(f), 1.18, 1.063),
-  foeAtk: f => 1.1 * climb(prog(f), 1.105, 1.043),
+  foeHp: f => 1.4 * climb(prog(f), 1.2, 1.05),
+  foeAtk: f => 1.1 * climb(prog(f), 1.12, 1.033),
   foeDef: f => 1,
   foeCount: (f, rng) => ((f - 1) % ZONE_SIZE < 2 ? 2 : rng.int(2, 3)),
   elite: { hp: 1.7, atk: 1.2 },
@@ -26,15 +26,17 @@ export const BAL = {
   cursedChance: 0.22, // per mixed floor
   boss: { hp: 1, atk: 1 },
   // bosses: their own stats (monsters.js) times a climb along the tower
-  bossHp: f => 1.6 * climb(prog(f), 1.18, 1.063),
-  bossAtk: f => 0.9 * climb(prog(f), 1.105, 1.043),
+  bossHp: f => 1.6 * climb(prog(f), 1.2, 1.05),
+  bossAtk: f => 0.9 * climb(prog(f), 1.12, 1.033),
   maxRounds: 60,
   ultGainAct: 14, ultGainHit: 6, ultMax: 100,
   healMult: 1.3, // Séléna's Soin (was 1.9 in v0.2)
   // rewards (gold and shards grow with the zone: zoneMul)
   zoneMul: z => 1 + 0.2 * z, // shards
   goldMul: z => 1 + 0.15 * z,
-  gold: { normal: [18, 28], elite: [45, 60], cursed: [70, 90], boss: [80, 80] },
+  gold: { normal: [12, 18], elite: [30, 40], cursed: [50, 60], boss: [60, 60] },
+  // v0.4.1: relics are rarer, so a run builds 1-2 styles instead of collecting everything
+  relicWeight: { normal: 0.2, elite: 1.2, chest: 1.2 },
   shards: { normal: 1, elite: 3, cursed: 5, boss: 10, victory: 100 },
   defeatKeep: 0.5,
   restHeal: 0.4,
@@ -44,7 +46,7 @@ export const BAL = {
   // bonus when starting from a checkpoint (k = number of zones skipped)
   startBonus: k => ({ gold: 60 * k, pot: k, stat: 0.08 * k, gearFloor: 18 * k, lv: 1 + 8 * k, relics: Math.min(4, k) }),
   rarityWeights: { normal: [[0, 70], [1, 25], [2, 5]], elite: [[0, 30], [1, 50], [2, 20]], chest: [[0, 25], [1, 50], [2, 25]] },
-  shop: { gear: 70, relic: 110, upgrade: 60, heal: 35 },
+  shop: { gear: 70, relic: 180, upgrade: 60, heal: 35 },
   shopMul: z => 1 + 0.15 * z,
 };
 

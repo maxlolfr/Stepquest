@@ -45,10 +45,11 @@ Battre le boss de l'étage 10 (20, 30… 90) permet de commencer les expédition
 Pour compenser les étages sautés, l'équipe part avec des niveaux, de l'or, des potions, une arme rare,
 une armure et une relique par zone sautée (4 au plus).
 
-### Équilibrage simulé (v0.4, mode AUTO, à confirmer en jouant)
+### Équilibrage simulé (v0.4.1, mode AUTO, à confirmer en jouant)
 
-- Camp vide, départ à l'étage 1 : étage médian 38 ; le 1er boss (étage 10) tombe environ 9 fois sur 10.
-- Joueur qui enchaîne les expéditions et améliore le camp : tour terminée en 32 expéditions environ (simulateur), plus en vrai.
+- v0.4.1 (plus dur, il faut farmer) : camp vide, étage médian 20 ; 1er boss battu 8 fois sur 10, 2e boss 1 fois sur 2.
+- Reliques plus rares (une partie construit 1 ou 2 styles, plus toute la collection) et moins d'or.
+- Joueur qui enchaîne les expéditions et améliore le camp : tour terminée en 40 expéditions environ (simulateur), plus en vrai.
 - Sans mode AUTO ni intervention, la plupart des expéditions s'arrêtent au 1er boss.
 - Soin de Séléna réduit (×1,3 au lieu de ×1,9), soin de groupe du Châtiment réduit, ultime 30 % sans bouclier.
   Les équipes avec Séléna restent les plus solides (étage médian ≈ 30 contre ≈ 22).
