@@ -116,7 +116,6 @@ srv.listen(0, async () => {
       check(`${tag} : salle des trophées`, await pg.isVisible('.trophies') && (await pg.$$('.daily')).length === 3);
       await ui('trophées'); await shot('7b-trophees');
       await pg.click('.ptop .back'); await pg.waitForTimeout(300);
-      pg.once('dialog', d => d.accept());
       await pg.click('#menu button:has-text("Nouvelle expédition")'); await pg.waitForTimeout(400);
       check(`${tag} : mode Cauchemar proposé après le 1er boss`, await pg.isVisible('.nightmare-box'));
       await pg.click('.nightmare-box summary'); await pg.click('.curse-pick >> nth=0'); await pg.click('.curse-pick >> nth=1'); await pg.waitForTimeout(200);

@@ -1,8 +1,17 @@
-# StepQuest: Infinite Dungeon (prototype)
+# Infinite Dungeon (prototype)
 
 Roguelite fantasy mobile, nom de travail. Jeu indépendant de Dragonbound II / Ardael :
 aucun fichier de `prototype/dragonbound2/`, `prototype/dragonbound/` ni `prototype/dragonbound-tests/` n'est modifié.
 Le plan complet (audit, architecture, MVP) est dans le document « Infinite Dungeon — Audit et plan (phase 1) ».
+
+## Version 0.5 « Revenir »
+
+- **Mode Cauchemar** (débloqué par le boss de l'étage 10) : 8 malédictions à choisir au départ (Fureur, Tyrans, Horde, Crocs venimeux, Fioles fêlées, Bourse percée, Feu éteint, Brume), chacune donne +10 à +25 % d'éclats.
+- **Objectifs du jour** : 3 défis tirés à partir de la date (aucun serveur, aucune série, aucune pénalité), payés en éclats.
+- **13 exploits** payés une fois, et **salle des trophées** : boss vaincus, reliques découvertes, record par héros.
+- Le bilan de fin montre les objectifs réussis, les exploits et le déblocage du Cauchemar.
+- Mode test (`?debug`) : « Rembourser le camp » et « Tout effacer ».
+- Simulation (camp à moitié amélioré) : sans malédiction ~115 éclats par expédition ; Fureur + Tyrans ~148 ; 4 malédictions ~175 (étage médian 36 au lieu de 40) ; les 8 ensemble rapportent moins (trop dur), volontairement.
 
 ## État — version 0.4 « Chaque partie est différente »
 
