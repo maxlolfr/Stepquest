@@ -63,7 +63,10 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 }
 
 /* ---------- Shared run screens ---------- */
-.view { overflow-y: auto; -webkit-overflow-scrolling: touch; background: radial-gradient(ellipse at 50% 0%, #2a1d3a 0%, #120d1b 55%, var(--night) 100%); }
+.view { overflow-y: auto; -webkit-overflow-scrolling: touch; background: linear-gradient(rgba(7,6,11,.55), rgba(7,6,11,.82) 45%, rgba(7,6,11,.94)), url('img/bg_menu.webp') center top / cover no-repeat fixed, var(--night); }
+.scene-art { display: block; width: 100%; aspect-ratio: 3 / 2; object-fit: cover; border-radius: 16px; border: 1px solid rgba(243,197,90,.3); box-shadow: 0 8px 24px rgba(0,0,0,.55); flex: none; }
+.page.center .scene-art { margin-top: 4px; }
+.upg-img { width: 48px; height: 48px; object-fit: contain; }
 .page { min-height: 100%; padding: calc(var(--safe-t) + 10px) 16px calc(var(--safe-b) + 18px); display: flex; flex-direction: column; gap: 12px; }
 .page.center { align-items: stretch; text-align: center; justify-content: center; }
 .ptop { display: flex; align-items: center; gap: 10px; min-height: 48px; }
@@ -176,7 +179,7 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 .shards { margin: 0; font-family: 'Lilita One', sans-serif; font-size: 26px; color: #9fe7ff; }
 .upgrades { display: grid; gap: 10px; }
 .upg { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 16px; background: rgba(20,15,30,.85); border: 1px solid rgba(255,255,255,.1); }
-.upg-ic { font-size: 30px; width: 44px; text-align: center; font-family: system-ui, 'Apple Color Emoji', sans-serif; }
+.upg-ic { display: grid; place-items: center; font-size: 30px; width: 52px; text-align: center; font-family: system-ui, 'Apple Color Emoji', sans-serif; }
 .upg-body { flex: 1; min-width: 0; }
 .upg-body b { font-size: 17px; }
 .upg-body p { margin: 2px 0 4px; font-size: 14px; color: var(--ink-soft); }

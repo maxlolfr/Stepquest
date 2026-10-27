@@ -27,8 +27,8 @@ export const BAL = {
 
 // Camp upgrades, bought with shards, kept forever.
 export const UPGRADES = {
-  vie:     { name: 'Forge du camp', ic: '❤️', desc: lv => `Vie des héros +${8 * lv} %`, costs: [20, 45, 90] },
-  or:      { name: 'Coffre de départ', ic: '💰', desc: lv => `+${30 * lv} or au départ`, costs: [15, 35, 70] },
-  potion:  { name: 'Apothicaire', ic: '🧪', desc: lv => `+${lv} potion${lv > 1 ? 's' : ''} au départ`, costs: [15, 35, 70] },
-  relance: { name: 'Oracle', ic: '🎲', desc: lv => `${lv} relance${lv > 1 ? 's' : ''} de récompense par expédition`, costs: [25, 50, 100] },
+  vie:     { name: 'Forge du camp', ic: '❤️', art: 'camp_vie', desc: lv => `Vie des héros +${8 * lv} %`, costs: [20, 45, 90] },
+  or:      { name: 'Coffre de départ', ic: '💰', art: 'camp_or', desc: lv => `+${30 * lv} or au départ`, costs: [15, 35, 70] },
+  potion:  { name: 'Apothicaire', ic: '🧪', art: 'camp_potion', desc: lv => `+${lv} potion${lv > 1 ? 's' : ''} au départ`, costs: [15, 35, 70] },
+  relance: { name: 'Oracle', ic: '🎲', art: 'camp_relance', desc: lv => `${lv} relance${lv > 1 ? 's' : ''} de récompense par expédition`, costs: [25, 50, 100] },
 };

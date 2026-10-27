@@ -41,7 +41,7 @@ export function showCards(root, { run, kind, onPick, onReroll, onSkip }) {
 export function showRest(root, { run, onHeal, onTrain, onRetreat }) {
   const pct = Math.round(restHealPct(run) * 100);
   root.replaceChildren(h('div.page.center',
-    h('div.card-emoji.huge', '🔥'),
+    img('room_rest', 'scene-art') || h('div.card-emoji.huge', '🔥'),
     h('h2', 'Feu de camp'),
     h('p.lead', 'Le donjon se tait un instant. Que fait l’équipe ?'),
     runHeader(run),
@@ -55,6 +55,7 @@ export function showShop(root, { run, onBuy, onLeave }) {
   const p = run.pending;
   root.replaceChildren(h('div.page',
     h('header.ptop', h('h2', 'Marchand')),
+    img('room_shop', 'scene-art'),
     h('p.lead', 'Un marchand encapuchonné étale sa marchandise sur une caisse.'),
     runHeader(run),
     h('div.cards.shop', p.stock.map(it => cardEl(it, run, { price: it.price, sold: p.bought.includes(it.id), afford: run.gold >= it.price, onPick: () => onBuy(it.id) }))),
@@ -65,7 +66,7 @@ export function showEvent(root, { run, onChoice, onLeave }) {
   const p = run.pending, E = EVENTS.find(e => e.id === p.event);
   const done = p.kind === 'event-done';
   root.replaceChildren(h('div.page.center',
-    icon('uiScroll', '📜', 'big-art'),
+    img(E.art, 'scene-art') || icon('uiScroll', '📜', 'big-art'),
     h('h2', E.title),
     h('p.lead', E.text),
     runHeader(run),

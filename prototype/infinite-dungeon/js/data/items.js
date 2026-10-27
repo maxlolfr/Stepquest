@@ -35,7 +35,7 @@ export const RELICS = {
   chasse:   { name: 'Œil du chasseur', ic: '🎯', img: 'uiDice', art: 'relic_chasse', desc: '+30 % de dégâts sur les cibles marquées 🎯.' },
   bourse:   { name: 'Bourse du pillard', ic: '💰', img: 'uiGold', art: 'relic_bourse', desc: '+30 % d’or gagné.' },
   braises:  { name: 'Braises du camp', ic: '🔥', img: 'uiChest2', art: 'relic_braises', desc: 'Les repos soignent 50 % de plus.' },
-  sceau:    { name: 'Sceau du gardien', ic: '🛡️', img: 'uiChest3', desc: 'La Garde peut être utilisée deux fois par combat.' },
+  sceau:    { name: 'Sceau du gardien', ic: '🛡️', img: 'uiChest3', art: 'relic_sceau', desc: 'La Garde peut être utilisée deux fois par combat.' },
 };
 
 export const CONSUMABLES = {
@@ -45,27 +45,27 @@ export const CONSUMABLES = {
 
 // Special events: each choice returns an outcome resolved in run.js.
 export const EVENTS = [
-  { id: 'shrine', title: 'Autel oublié', text: 'Un autel couvert de runes brille faiblement. Une coupe d’or y attend une offrande.',
+  { id: 'shrine', art: 'event_shrine', title: 'Autel oublié', text: 'Un autel couvert de runes brille faiblement. Une coupe d’or y attend une offrande.',
     choices: [
       { label: 'Offrir 40 or', cost: { gold: 40 }, effect: { relic: true }, hint: 'Une relique au hasard' },
       { label: 'Prier sans rien donner', effect: { healPct: 0.25 }, hint: 'Soigne l’équipe de 25 %' },
     ] },
-  { id: 'chest', title: 'Coffre piégé', text: 'Un coffre de fer, entrouvert. Un mécanisme grince à l’intérieur.',
+  { id: 'chest', art: 'event_chest', title: 'Coffre piégé', text: 'Un coffre de fer, entrouvert. Un mécanisme grince à l’intérieur.',
     choices: [
       { label: 'Forcer le coffre', effect: { gamble: { win: { gold: 90 }, lose: { dmgPct: 0.2 }, p: 0.6 } }, hint: '60 % : 90 or · sinon −20 % de vie' },
       { label: 'Passer son chemin', effect: {}, hint: 'Rien ne se passe' },
     ] },
-  { id: 'spring', title: 'Source pure', text: 'Une source claire coule entre les pierres. L’air y est étrangement calme.',
+  { id: 'spring', art: 'event_spring', title: 'Source pure', text: 'Une source claire coule entre les pierres. L’air y est étrangement calme.',
     choices: [
       { label: 'Boire', effect: { healPct: 0.4 }, hint: 'Soigne l’équipe de 40 %' },
       { label: 'Remplir une fiole', effect: { item: 'pot' }, hint: '+1 potion' },
     ] },
-  { id: 'trainer', title: 'Fantôme d’un maître d’armes', text: 'Un spectre en armure lève son épée : « Prouve ta valeur, et je t’enseignerai. »',
+  { id: 'trainer', art: 'event_trainer', title: 'Fantôme d’un maître d’armes', text: 'Un spectre en armure lève son épée : « Prouve ta valeur, et je t’enseignerai. »',
     choices: [
       { label: 'Accepter l’épreuve', effect: { dmgPct: 0.15, upgrade: true }, hint: '−15 % de vie · une compétence améliorée' },
       { label: 'Refuser poliment', effect: {}, hint: 'Rien ne se passe' },
     ] },
-  { id: 'merchant_ghost', title: 'Colporteur égaré', text: 'Un colporteur perdu propose d’échanger ses provisions contre un peu d’or.',
+  { id: 'merchant_ghost', art: 'event_peddler', title: 'Colporteur égaré', text: 'Un colporteur perdu propose d’échanger ses provisions contre un peu d’or.',
     choices: [
       { label: 'Acheter une plume (50 or)', cost: { gold: 50 }, effect: { item: 'fea' }, hint: '+1 plume de phénix' },
       { label: 'Lui indiquer la sortie', effect: { shards: 4 }, hint: '+4 éclats' },
