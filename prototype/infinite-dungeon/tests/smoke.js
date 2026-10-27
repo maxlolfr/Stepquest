@@ -118,8 +118,23 @@ srv.listen(0, async () => {
       await pg.waitForTimeout(2500); await shot('8-boss');
       const bossDone = await waitFor(pg, () => !document.querySelector('.battle'), null, 180000);
       const st = await pg.evaluate(() => ({ run: window.__sqid.app.data.run, meta: window.__sqid.app.data.meta }));
-      check(`${tag} : le combat du boss se termine et donne un bilan`, bossDone && !st.run && await pg.isVisible('.results'), st.run ? st.run.phase : 'bilan');
-      await pg.waitForTimeout(400); await ui('bilan'); await shot('9-bilan');
+      if (st.run) { // boss beaten: reward, then the checkpoint between two zones
+        check(`${tag} : boss vaincu → récompense`, bossDone && st.run.phase === 'reward', st.run.phase);
+        await pg.click('.cards .card >> nth=0'); await pg.waitForTimeout(400);
+        check(`${tag} : point de passage après le boss`, /vaincu/.test(await pg.textContent('#view h2')));
+        await shot('9-checkpoint');
+      } else {
+        check(`${tag} : défaite contre le boss → bilan`, bossDone && await pg.isVisible('.results'));
+        await pg.waitForTimeout(400); await ui('bilan'); await shot('9-bilan');
+      }
+
+      // top of the tower: map of floor 50 and its boss door
+      await pg.goto(`${base}?debug`); await waitFor(pg, () => window.__sqid && window.__sqid.ready);
+      await pg.click('.dbg-toggle'); await pg.selectOption('.dbg-row select', '50'); await pg.click('.dbg-row button:has-text("Carte")');
+      await pg.evaluate(() => document.getElementById('debug').classList.remove('open'));
+      await pg.waitForTimeout(500);
+      check(`${tag} : carte de l'étage 50 avec le dernier boss`, /Étage 50/.test(await pg.textContent('.ptop h2')) && /Vorthax/.test(await pg.textContent('.doors')));
+      await ui('carte 50'); await shot('10-etage50');
     }
 
     check(`${tag} : aucun fichier manquant`, failed.length === 0 && (await pg.evaluate(() => window.__sqid.missingAssets())).length === 0, failed.slice(0, 5).join(', '));

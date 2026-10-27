@@ -3,6 +3,7 @@ import { h, img, icon } from '../dom.js';
 import { sfx } from '../audio.js';
 import { HEROES } from '../../data/heroes.js';
 import { RARITY, STAT_NAMES, SLOT_NAMES, EVENTS } from '../../data/items.js';
+import { canAfford } from '../../run/run.js';
 import { runHeader } from './map.js';
 import { canReroll, restHealPct, canRetreat } from '../../run/run.js';
 
@@ -43,7 +44,7 @@ export function showRest(root, { run, onHeal, onTrain, onRetreat }) {
   root.replaceChildren(h('div.page.center',
     img('room_rest', 'scene-art') || h('div.card-emoji.huge', '🔥'),
     h('h2', 'Feu de camp'),
-    h('p.lead', 'Le donjon se tait un instant. Que fait l’équipe ?'),
+    h('p.lead', 'La tour se tait un instant. Que fait l’équipe ?'),
     runHeader(run),
     h('div.choice-list',
       h('button.btn.primary.wide', { type: 'button', onclick: onHeal }, 'Se reposer', h('span.soon', `Soigne l’équipe de ${pct} % et relève les héros tombés`)),
@@ -66,10 +67,10 @@ export function showEvent(root, { run, onChoice, onLeave }) {
   const p = run.pending, E = EVENTS.find(e => e.id === p.event);
   const done = p.kind === 'event-done';
   root.replaceChildren(h('div.page.center',
-    img(E.art, 'scene-art') || icon('uiScroll', '📜', 'big-art'),
+    img(E.art || E.scene, 'scene-art') || icon('uiScroll', '📜', 'big-art'),
     h('h2', E.title),
     h('p.lead', E.text),
     runHeader(run),
     done ? h('div.choice-list', h('p.result', p.text), h('button.btn.primary.wide', { type: 'button', onclick: onLeave }, 'Continuer'))
-      : h('div.choice-list', E.choices.map((c, i) => h('button.btn.wide', { type: 'button', disabled: c.cost && c.cost.gold > run.gold ? true : null, onclick: () => onChoice(i) }, c.label, h('span.soon', c.hint))))));
+      : h('div.choice-list', E.choices.map((c, i) => h('button.btn.wide', { type: 'button', disabled: canAfford(run, c.cost) ? null : true, onclick: () => onChoice(i) }, c.label, h('span.soon', c.hint))))));
 }

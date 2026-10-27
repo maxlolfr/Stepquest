@@ -2,21 +2,22 @@
 import { HEROES, SKILLS } from '../data/heroes.js';
 import { RELICS, RARITY, WEAPONS, ARMORS, JEWELS } from '../data/items.js';
 import { BAL } from '../data/balance.js';
+import { zoneOf } from '../data/monsters.js';
 
-const zoneIdx = floor => (floor <= 3 ? 0 : floor <= 6 ? 1 : 2);
+const zoneIdx = floor => (floor <= 15 ? 0 : floor <= 32 ? 1 : 2); // gear name tier
 
 export function makeGear(slot, r, floor, hero) {
   const m = RARITY[r].m, z = zoneIdx(floor), st = {};
   let name, img;
   if (slot === 'w') {
-    const v = Math.round((3 + 1.3 * floor) * m);
+    const v = Math.round((3 + 0.8 * floor) * m);
     if (hero === 'orin') st.mag = v; else if (hero === 'selena') { st.atk = Math.round(v * 0.7); st.mag = Math.round(v * 0.7); } else st.atk = v;
     name = WEAPONS[hero][r]; img = `gw_${hero}_${r + 1}`;
   } else if (slot === 'a') {
-    st.hp = Math.round((10 + 5 * floor) * m); st.def = Math.round((1 + 0.5 * floor) * m);
+    st.hp = Math.round((10 + 3 * floor) * m); st.def = Math.round((1 + 0.3 * floor) * m);
     [name] = ARMORS[z]; img = `ga_${ARMORS[z][1] + r}`;
   } else {
-    st.crit = +(0.03 * m).toFixed(3); st.hp = Math.round((5 + 3 * floor) * m);
+    st.crit = +(0.03 * m).toFixed(3); st.hp = Math.round((5 + 1.8 * floor) * m);
     [name] = JEWELS[z]; img = `gj_${JEWELS[z][1] + r}`;
   }
   return { slot, r, hero, st, name, img, floor };
@@ -61,12 +62,12 @@ function card(type, run, rng, floor, rarityKind) {
   }
 }
 
-/** Three cards of different kinds. kind: normal | elite | guardian | chest */
+/** Three cards of different kinds. kind: normal | elite | boss | chest */
 export function rewardCards(run, rng, floor, kind = 'normal') {
   const hurt = run.team.some(h => h.hp < h.hpMax * 0.75);
   const weights = kind === 'chest'
     ? [['gear', 5], ['relic', 3]]
-    : [['heal', hurt ? 3 : 0.5], ['stat', 3], ['upgrade', 3], ['element', run.team.some(h => h.el === 'phys') ? 2 : 0.3], ['gear', 3], ['relic', kind === 'normal' ? 1 : 3]];
+    : [['heal', hurt ? 3 : 0.5], ['stat', 3], ['upgrade', 3], ['element', run.team.some(h => h.el === 'phys') ? 2 : 0.3], ['gear', 3], ['relic', kind === 'normal' ? 0.6 : 3]];
   const rarityKind = kind === 'normal' ? 'normal' : kind === 'chest' ? 'chest' : 'elite';
   const out = [], used = new Set();
   for (let tries = 0; out.length < 3 && tries < 40; tries++) {
@@ -77,24 +78,28 @@ export function rewardCards(run, rng, floor, kind = 'normal') {
     used.add(t); out.push(c);
   }
   // elite and guardian rewards: one better card
-  if (kind === 'guardian' && !out.some(c => c.type === 'relic')) { const c = card('relic', run, rng, floor, 'elite'); if (c) out[2] = c; }
+  if (kind === 'boss' && !out.some(c => c.type === 'relic')) { const c = card('relic', run, rng, floor, 'elite'); if (c) out[2] = c; }
   return out;
 }
 
 export function shopStock(run, rng, floor) {
+  const pm = BAL.shopMul(zoneOf(floor).index), P = n => Math.round(n * pm / 5) * 5;
   const hero = rng.pick(run.team.map(h => h.id));
   const g = makeGear(rng.pick(['w', 'a', 'j']), rng.weighted([[1, 70], [2, 30]]), floor, hero);
   const relic = card('relic', run, rng, floor, 'elite');
   const up = card('upgrade', run, rng, floor);
   return [
-    { id: 'pot', type: 'item', key: 'pot', price: 30, title: 'Potion', ic: '🧪', desc: 'Rend 50 % de vie à l’allié le plus blessé, en combat.' },
-    { id: 'fea', type: 'item', key: 'fea', price: 70, title: 'Plume de phénix', ic: '🪶', desc: 'Ramène un allié tombé avec 40 % de vie, en combat.' },
-    { id: 'heal', type: 'heal', pct: 0.35, price: BAL.shop.heal, title: 'Soins', ic: '💚', desc: 'Soigne l’équipe de 35 % et relève les héros tombés.' },
-    { id: 'gear', type: 'gear', hero, gear: g, price: BAL.shop.gear + 30 * g.r, title: g.name, img: g.img, rarity: g.r, desc: `Pour ${HEROES[hero].name}.` },
-    relic && { id: 'relic', ...relic, price: BAL.shop.relic },
-    up && { id: 'up', ...up, price: BAL.shop.upgrade },
+    { id: 'pot', type: 'item', key: 'pot', price: P(30), title: 'Potion', ic: '🧪', desc: 'Rend 50 % de vie à l’allié le plus blessé, en combat.' },
+    { id: 'fea', type: 'item', key: 'fea', price: P(70), title: 'Plume de phénix', ic: '🪶', desc: 'Ramène un allié tombé avec 40 % de vie, en combat.' },
+    { id: 'heal', type: 'heal', pct: 0.35, price: P(BAL.shop.heal), title: 'Soins', ic: '💚', desc: 'Soigne l’équipe de 35 % et relève les héros tombés.' },
+    { id: 'gear', type: 'gear', hero, gear: g, price: P(BAL.shop.gear + 30 * g.r), title: g.name, img: g.img, rarity: g.r, desc: `Pour ${HEROES[hero].name}.` },
+    relic && { id: 'relic', ...relic, price: P(BAL.shop.relic) },
+    up && { id: 'up', ...up, price: P(BAL.shop.upgrade) },
   ].filter(Boolean);
 }
 
 /** One skill-upgrade card (rest "train" choice, trainer event). */
 export const upgradeCard = (run, rng, floor) => card('upgrade', run, rng, floor);
+
+/** One stat card (events). */
+export const statCard = (run, rng) => card('stat', run, rng, run.floor);

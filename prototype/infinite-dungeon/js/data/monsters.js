@@ -1,54 +1,95 @@
-// Monsters: names, base stats, size, traits, weaknesses (w) and resistances (r)
-// copied from Dragonbound II 1.9.11 (MON). Sprites: Dragonbound 1 img/ for
-// monsters, Dragonbound II img/ for bosses. Stats are scaled per floor in balance.js.
-// Traits used here: regen, poison, double, rise, howl, burn, slow, drain, evade, chill.
+// The Tower: 50 floors = the 50 levels of Dragonbound II, in 10 zones of 5 floors.
+// Monster names, base stats, traits, weaknesses (w) and resistances (r), level
+// names and backgrounds come from Dragonbound II (generated file db2-data.js).
+// Floor scaling is applied in balance.js. Boss stats and mechanics are this
+// game's own (Dragonbound II bosses were tuned for another progression), but
+// each keeps the identity described in Dragonbound II.
+import { DB2_MON, DB2_CHAPTERS, DB2_LEVELS } from './db2-data.js';
 
-export const MONSTERS = {
-  // Zone 1 — crypt (floors 1-3)
-  slime:  { name: 'Gluant vert', hp: 80, atk: 16, def: 2, h: 0.17, trait: 'regen', w: ['feu'], r: ['poison'], tip: 'Se régénère à chaque tour.' },
-  rat:    { name: 'Rat des égouts', hp: 72, atk: 17, def: 2, h: 0.18, trait: 'poison', w: ['glace'], r: ['poison'], tip: 'Sa morsure empoisonne.' },
-  bat:    { name: 'Chauve-souris', hp: 60, atk: 14, def: 1, h: 0.15, fly: true, trait: 'double', w: ['foudre'], r: [], tip: 'Rapide : frappe deux fois.' },
-  skel:   { name: 'Squelette', hp: 112, atk: 23, def: 5, h: 0.25, trait: 'rise', w: ['feu', 'foudre'], r: ['poison'], tip: 'Se relève une fois… sauf s’il brûle.' },
-  wolf:   { name: 'Loup gris', hp: 120, atk: 27, def: 6, h: 0.21, trait: 'howl', w: ['feu'], r: [], tip: 'Hurle, puis mord très fort au tour suivant.' },
-  spider: { name: 'Araignée géante', hp: 105, atk: 26, def: 5, h: 0.19, trait: 'poison', w: ['feu'], r: ['poison'], tip: 'Son venin empoisonne.' },
-  shroom: { name: 'Champignon furieux', hp: 140, atk: 23, def: 8, h: 0.21, trait: 'regen', w: ['feu'], r: ['poison'], tip: 'Ses spores le soignent à chaque tour.' },
-  // Zone 2 — swamp (floors 4-6)
-  frog:   { name: 'Crapaud toxique', hp: 120, atk: 22, def: 8, h: 0.18, trait: 'poison', w: ['glace'], r: ['poison'], tip: 'Sa langue gluante empoisonne.' },
-  wisp:   { name: 'Feu follet', hp: 95, atk: 25, def: 6, h: 0.16, fly: true, trait: 'evade', w: ['foudre'], r: ['feu', 'poison'], tip: 'Esprit fragile, esquive un coup sur quatre.' },
-  zombie: { name: 'Noyé des marais', hp: 160, atk: 24, def: 10, h: 0.24, trait: 'regen', w: ['feu'], r: ['poison'], tip: 'Il se recompose à chaque tour.' },
-  vine:   { name: 'Liane carnivore', hp: 135, atk: 21, def: 9, h: 0.23, trait: 'double', w: ['feu'], r: ['poison'], tip: 'Ses lianes frappent deux fois.' },
-  imp:    { name: 'Diablotin', hp: 95, atk: 26, def: 6, h: 0.2, trait: 'burn', w: ['glace'], r: ['feu'], tip: 'Il t’enflamme : brûlure 3 tours.' },
-  golem:  { name: 'Golem de lave', hp: 190, atk: 30, def: 14, h: 0.3, trait: 'slow', w: ['glace'], r: ['feu', 'poison'], tip: 'Lent : il charge un tour, puis frappe très fort.' },
-  // Zone 3 — necropolis (floors 7-9)
-  ghoul:  { name: 'Goule', hp: 230, atk: 33, def: 14, h: 0.27, trait: 'regen', w: ['feu'], r: ['poison'], tip: 'Elle se recompose à chaque tour.' },
-  banshee:{ name: 'Banshee', hp: 140, atk: 35, def: 10, h: 0.26, fly: true, trait: 'evade', w: ['foudre'], r: ['glace', 'poison'], tip: 'Insaisissable : esquive un coup sur quatre.' },
-  necro:  { name: 'Nécromancien', hp: 160, atk: 37, def: 11, h: 0.28, trait: 'burn', w: ['phys', 'feu'], r: ['poison'], tip: 'Ses flammes vertes brûlent 3 tours.' },
-  vampire:{ name: 'Vampire', hp: 170, atk: 35, def: 12, h: 0.29, trait: 'drain', w: ['feu'], r: ['poison', 'glace'], tip: 'Elle se soigne en te mordant.' },
-  werewolf:{ name: 'Loup-garou', hp: 215, atk: 37, def: 13, h: 0.3, trait: 'howl', w: ['feu'], r: [], tip: 'Il hurle, puis frappe très fort.' },
-  armor:  { name: 'Armure hantée', hp: 200, atk: 31, def: 20, h: 0.29, trait: 'double', w: ['foudre'], r: ['poison', 'glace'], tip: 'Sa hallebarde frappe deux fois. Très résistante.' },
-  // Guardian of floor 5 (always elite)
-  knight: { name: 'Chevalier noir', hp: 260, atk: 40, def: 22, h: 0.29, trait: 'double', w: ['foudre'], r: ['poison'], tip: 'Armure presque impénétrable, frappe deux fois.' },
-  // Final boss (floor 10)
-  bossBone: { name: 'Roi des Os', boss: true, hp: 1000, atk: 43, def: 10, h: 0.46, w: ['feu'], r: ['poison'], dir: 'db2',
-    tip: 'Prépare une Faux macabre sur toute l’équipe : utilise la Garde ou étourdis-le avec la Charge d’Aldric ! À mi-vie, une muraille d’os le protège : le feu la brise deux fois plus vite.' },
+// Regular monsters (4 per chapter, in Dragonbound II order)
+const REGULAR = Object.keys(DB2_MON).filter(k => !DB2_MON[k].boss);
+export const MONSTERS = {};
+for (const k of REGULAR) MONSTERS[k] = { ...DB2_MON[k], trait: DB2_MON[k].trait || '', w: DB2_MON[k].w || [], r: DB2_MON[k].r || [] };
+
+// Bosses: one telegraphed special attack (announced a turn before; answer =
+// Guard, or Aldric's Charge which interrupts it) and one change at half life.
+//   special: { name, target: 'all' | 'one', mult, status?, chance? }
+//   phase:   { kind, text, ... }  kinds: wall, thorns, enrage, regen, summonShield, rise, intangible, double
+const B = (id, stats, special, phase, tip) => ({ ...DB2_MON[id], ...stats, boss: true, dir: 'db2', special, phase, tip });
+export const BOSSES = {
+  bossBone: B('bossBone', { hp: 1000, atk: 43, def: 10 },
+    { name: 'Faux macabre', target: 'all', mult: 1.5 },
+    { kind: 'wall', pct: 0.25, weak: 'feu', summon: ['skel', 'skel'], text: 's’entoure d’une muraille d’os ! Le feu la brise deux fois plus vite.' },
+    'Prépare une Faux macabre sur toute l’équipe : Garde, ou Charge d’Aldric pour l’interrompre. À mi-vie : muraille d’os (le feu la brise ×2) et 2 squelettes.'),
+  bossWitch: B('bossWitch', { hp: 1080, atk: 44, def: 11 },
+    { name: 'Jugement des ronces', target: 'all', mult: 1.15, status: 'poison', chance: 1 },
+    { kind: 'thorns', pct: 0.35, text: 'se couvre de ronces : les coups au corps à corps sont renvoyés !' },
+    'Empoisonne toute l’équipe avec le Jugement des ronces. À mi-vie, ses ronces renvoient 35 % des coups au corps à corps : misez sur la magie et les flèches.'),
+  bossDragon: B('bossDragon', { hp: 1050, atk: 50, def: 12 },
+    { name: 'Souffle de feu', target: 'all', mult: 1.35, status: 'burn', chance: 0.6 },
+    { kind: 'enrage', atkMul: 1.3, text: 'rugit de fureur : ses attaques deviennent bien plus fortes !' },
+    'Son Souffle de feu brûle l’équipe. À mi-vie, il enrage (+30 % d’attaque) : finissez-le vite.'),
+  bossHag: B('bossHag', { hp: 1150, atk: 45, def: 12 },
+    { name: 'Chaudron toxique', target: 'all', mult: 1.1, status: 'poison', chance: 1 },
+    { kind: 'regen', pct: 0.03, text: 'puise dans le marais : elle se soigne à chaque tour… sauf si elle brûle !' },
+    'Son chaudron empoisonne l’équipe. À mi-vie, elle se soigne de 3 % à chaque tour, sauf si elle brûle 🔥.'),
+  bossQueen: B('bossQueen', { hp: 1100, atk: 47, def: 13 },
+    { name: 'Blizzard royal', target: 'all', mult: 1.25, status: 'freeze', chance: 0.3 },
+    { kind: 'wall', pct: 0.22, weak: 'feu', text: 'se couvre d’une armure de givre ! Le feu la fait fondre deux fois plus vite.' },
+    'Son Blizzard royal peut geler vos héros. À mi-vie, armure de givre : le feu la fait fondre ×2.'),
+  bossVamp: B('bossVamp', { hp: 1150, atk: 48, def: 12, trait: 'drain' },
+    { name: 'Nuée de sang', target: 'all', mult: 1.25 },
+    { kind: 'summonShield', summon: ['vbat', 'vbat'], taken: 0.4, text: 'appelle ses chauves-souris : tant qu’elles vivent, il ne prend presque aucun dégât !' },
+    'Se soigne en mordant. À mi-vie, ses chauves-souris le protègent : abattez-les d’abord.'),
+  bossLich: B('bossLich', { hp: 1100, atk: 50, def: 13 },
+    { name: 'Rayon glacial', target: 'one', mult: 2.2, status: 'freeze', chance: 1 },
+    { kind: 'rise', text: 'se relève grâce à son phylactère !' },
+    'Son Rayon glacial gèle un héros. Son phylactère le ramène une fois à la vie avec la moitié de ses PV… sauf s’il brûle 🔥 au moment de tomber.'),
+  bossRat: B('bossRat', { hp: 1200, atk: 47, def: 12 },
+    { name: 'Morsure pestilente', target: 'one', mult: 2, status: 'poison', chance: 1 },
+    { kind: 'summonShield', summon: ['prat', 'prat'], taken: 0.4, text: 'appelle ses rats : tant qu’un rat vit, elle ne prend presque aucun dégât !' },
+    'Sa morsure empoisonne. À mi-vie, ses rats la protègent : tuez les rats d’abord.'),
+  bossVoid: B('bossVoid', { hp: 1150, atk: 52, def: 14 },
+    { name: 'Rayon du Néant', target: 'one', mult: 2.4 },
+    { kind: 'intangible', text: 'devient intangible un tour sur deux : seule la magie le touche vraiment !' },
+    'Son Rayon du Néant vise un héros. À mi-vie, un tour sur deux il devient intangible : les attaques physiques ne font presque rien.'),
+  bossVort: B('bossVort', { hp: 1400, atk: 55, def: 15 },
+    { name: 'Souffle du Dragon-Roi', target: 'all', mult: 1.45, status: 'burn', chance: 0.7 },
+    { kind: 'double', text: 'brise une chaîne : il agit désormais deux fois par tour !' },
+    'Le Dragon-Roi. Son souffle brûle toute l’équipe. À mi-vie, une chaîne cède : il agit deux fois par tour.'),
 };
 
-export const ZONES = [
-  { floors: [1, 2, 3], name: 'Crypte oubliée', pool: ['slime', 'rat', 'bat', 'skel', 'wolf', 'spider', 'shroom'], bgs: [['bg_c1_1', 0.5], ['bg_c1_2', 0.5], ['bg_c1_4', 0.5]], music: 'm_crypt' },
-  { floors: [4, 5, 6], name: 'Marais putride', pool: ['frog', 'wisp', 'zombie', 'vine', 'imp', 'golem'], bgs: [['bg_c4_2', 0.66], ['bg_c4_3', 0.63], ['bg_c4_4', 0.65]], music: 'm_swamp' },
-  { floors: [7, 8, 9], name: 'Nécropole', pool: ['ghoul', 'banshee', 'necro', 'vampire', 'werewolf', 'armor'], bgs: [['bg_c7_2', 0.66], ['bg_c7_3', 0.67], ['bg_c7_4', 0.66]], music: 'm_necro' },
-  { floors: [10], name: 'Trône des Os', pool: ['skel'], bgs: [['bg_c1_5', 0.47]], music: 'm_boss' },
-];
-export const zoneOf = floor => ZONES.find(z => z.floors.includes(floor)) || ZONES[0];
+export const ZONE_MUSIC = ['m_crypt', 'm_forest', 'm_mines', 'm_swamp', 'm_ice', 'm_vampire', 'm_necro', 'm_sewers', 'm_void', 'm_vorthax'];
 
-// Elite affixes (subset of Dragonbound II AFFIX). col = tint shown on the sprite.
+// 10 zones: 4 monsters of the chapter, 5 floors with their own level name and background.
+export const ZONES = DB2_CHAPTERS.map((c, z) => ({
+  index: z,
+  name: c.name,
+  boss: c.boss,
+  pool: REGULAR.slice(z * 4, z * 4 + 4),
+  floors: [1, 2, 3, 4, 5].map(k => z * 5 + k),
+  levels: DB2_LEVELS.filter(l => l.ch === z),
+  music: ZONE_MUSIC[z],
+}));
+export const TOWER_FLOORS = ZONES.length * 5;
+export const zoneOf = floor => ZONES[Math.min(ZONES.length - 1, Math.max(0, Math.floor((floor - 1) / 5)))];
+export const levelOf = floor => { const z = zoneOf(floor); return z.levels[(floor - 1) % 5] || z.levels[0]; };
+
+// Elite affixes (Dragonbound II AFFIX). col = tint around the sprite.
 export const AFFIXES = {
   enrage: { n: 'enragé', col: '255,70,50', tip: 'frappe plus fort quand il est blessé' },
-  thorns: { n: 'épineux', col: '90,230,90', tip: 'renvoie 25 % des coups au corps à corps' },
-  regen:  { n: 'régénérant', col: '120,255,170', tip: 'récupère 10 % de vie à chaque tour' },
-  vamp:   { n: 'vampirique', col: '200,40,90', tip: 'se soigne de la moitié des dégâts qu’il inflige' },
-  armor:  { n: 'blindé', col: '170,190,210', tip: 'protégé par un bouclier de 30 % de sa vie' },
+  thorns: { n: 'épineux', col: '90,230,90', tip: 'renvoie 25 % des coups au corps à corps', ok: m => !m.fly },
+  ghost:  { n: 'spectral', col: '120,170,255', tip: 'esquive un coup sur quatre' },
+  gold:   { n: 'doré', col: '255,205,60', tip: 'rapporte le double d’or' },
+  regen:  { n: 'régénérant', col: '120,255,170', tip: 'récupère 10 % de vie à chaque tour', ok: m => m.trait !== 'regen' },
+  vamp:   { n: 'vampirique', col: '200,40,90', tip: 'se soigne de la moitié des dégâts qu’il inflige', ok: m => m.trait !== 'drain' },
+  armor:  { n: 'blindé', col: '170,190,210', tip: 'protégé par un bouclier de 30 % de sa vie', ok: m => !m.fly },
+  bomb:   { n: 'explosif', col: '255,140,30', tip: 'explose à sa mort : 15 % de dégâts à toute l’équipe' },
 };
+export const affixesFor = m => Object.keys(AFFIXES).filter(k => !AFFIXES[k].ok || AFFIXES[k].ok(m));
 
 export const ELEMENTS = { phys: '⚔️', feu: '🔥', glace: '❄️', poison: '☠️', foudre: '⚡' };
 export const ELEMENT_NAMES = { phys: 'Physique', feu: 'Feu', glace: 'Glace', poison: 'Poison', foudre: 'Foudre' };
+
+/** Monster or boss definition by id. */
+export const unitDef = id => BOSSES[id] || MONSTERS[id];

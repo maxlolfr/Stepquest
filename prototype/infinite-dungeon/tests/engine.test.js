@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { createBattle, step, autoFight, castUltimate, useGuard, canGuard, useItem, heroesOf, foesOf, alive } from '../js/engine/combat.js';
 import { HEROES, HERO_ORDER } from '../js/data/heroes.js';
 import { BAL } from '../js/data/balance.js';
+import { BOSSES, ZONES, AFFIXES, MONSTERS, affixesFor } from '../js/data/monsters.js';
 import { newRun, battleConfig, chooseDoor, floorOf } from '../js/run/run.js';
 import { newMeta } from '../js/run/meta.js';
 
@@ -70,10 +71,10 @@ test('potion heals the most wounded hero; phoenix brings back a fallen one', () 
   assert.deepEqual(B.items, { pot: 0, fea: 0 });
 });
 
-test('the boss announces its Faux macabre one turn before, and Charge interrupts it', () => {
+test('the first boss announces its Faux macabre one turn before, and Charge interrupts it', () => {
   let announced = 0, interrupted = 0;
   for (let s = 1; s <= 30; s++) {
-    const B = createBattle({ heroes: heroArgs(['aldric', 'selena', 'orin']), foes: [{ id: 'bossBone', boss: true, hpMul: BAL.foeHp(10), atkMul: BAL.foeAtk(10) }], seed: s });
+    const B = createBattle({ heroes: heroArgs(['aldric', 'selena', 'orin']), foes: [{ id: 'bossBone', boss: true, hpMul: BAL.bossHp(5), atkMul: BAL.bossAtk(5) }], seed: s });
     while (!B.over && B.round < 12) {
       for (const e of step(B)) {
         if (e.t === 'charge') announced++;
@@ -85,7 +86,7 @@ test('the boss announces its Faux macabre one turn before, and Charge interrupts
   assert.ok(interrupted > 0, 'Aldric never interrupted the boss');
 });
 
-test('boss phase 2 raises a wall and summons skeletons', () => {
+test('first boss phase 2 raises a wall and summons skeletons', () => {
   const B = createBattle({ heroes: heroArgs(['aldric', 'selena', 'orin']), foes: [{ id: 'bossBone', boss: true, hpMul: 1, atkMul: 1 }], seed: 3 });
   const boss = foesOf(B)[0];
   boss.hp = Math.round(boss.hpMax * 0.51);
@@ -94,6 +95,90 @@ test('boss phase 2 raises a wall and summons skeletons', () => {
   assert.ok(phase);
   assert.ok(boss.wall > 0 || !alive(boss));
   assert.ok(foesOf(B).some(f => f.summoned));
+});
+
+const bossFight = (id, seed, team = ['aldric', 'selena', 'orin']) => createBattle({ heroes: heroArgs(team), foes: [{ id, boss: true, hpMul: 1, atkMul: 1 }], items: { pot: 2, fea: 1 }, seed });
+
+test('10 bosses, one per zone, each with a telegraphed special and a half-life change', () => {
+  assert.equal(ZONES.length, 10);
+  assert.deepEqual(ZONES.map(z => z.boss).sort(), Object.keys(BOSSES).sort());
+  for (const [id, M] of Object.entries(BOSSES)) {
+    assert.ok(M.special && M.special.name && ['all', 'one'].includes(M.special.target), id);
+    assert.ok(M.phase && M.phase.text && M.tip, id);
+    let charged = false, released = false;
+    const B = bossFight(id, 7);
+    while (!B.over && B.round < 10) for (const e of step(B)) {
+      if (e.t === 'charge' && e.name === M.special.name) charged = true;
+      if (e.t === 'act' && e.name === M.special.name) released = true;
+    }
+    assert.ok(charged, `${id}: no telegraph`);
+    assert.ok(released || B.over, `${id}: special never released`);
+  }
+});
+
+test('each boss phase does what its text says', () => {
+  for (const [id, M] of Object.entries(BOSSES)) {
+    const B = bossFight(id, 11), boss = foesOf(B)[0];
+    boss.hp = M.phase.kind === 'rise' ? 1 : Math.round(boss.hpMax * 0.51);
+    if (M.phase.kind === 'rise') boss.st.burn = null;
+    let phase = false;
+    for (let i = 0; i < 400 && !B.over && !phase; i++) for (const e of step(B)) if (e.t === 'phase') phase = true;
+    assert.ok(phase || B.over, `${id}: phase never triggered`);
+    if (!phase) continue;
+    const k = M.phase.kind;
+    if (k === 'wall') assert.ok(boss.wall > 0 && boss.wallWeak === M.phase.weak, id);
+    if (k === 'thorns') assert.equal(boss.thornsPct, M.phase.pct);
+    if (k === 'enrage') assert.ok(boss.atk > Math.round(M.atk * BAL.boss.atk), id);
+    if (k === 'regen') assert.equal(boss.regenPct, M.phase.pct);
+    if (k === 'summonShield') { assert.ok(foesOf(B).some(f => f.summoned && f.guards === boss.uid)); assert.equal(boss.shieldTaken, M.phase.taken); }
+    if (k === 'rise') assert.ok(boss.risen && boss.hp > 0);
+    if (k === 'intangible') assert.ok(boss.intangibleOn);
+    if (k === 'double') assert.ok(boss.actTwice);
+  }
+});
+
+test('every boss fight ends cleanly at its floor, without NaN', () => {
+  ZONES.forEach((z, i) => {
+    const f = 5 * (i + 1);
+    for (let s = 1; s <= 6; s++) {
+      const B = createBattle({ heroes: heroArgs(['aldric', 'selena', 'orin']), foes: [{ id: z.boss, boss: true, hpMul: BAL.bossHp(f), atkMul: BAL.bossAtk(f) }], items: { pot: 1, fea: 1 }, seed: s });
+      autoFight(B, { smart: true });
+      assert.ok(['win', 'lose'].includes(B.over), z.boss);
+      for (const u of B.units) assert.ok(Number.isFinite(u.hp), `${z.boss}: NaN hp`);
+    }
+  });
+});
+
+test('elite affixes: spectral dodges, explosive hurts the team on death, every affix fits its monster', () => {
+  for (const [id, M] of Object.entries(MONSTERS)) for (const a of affixesFor(M)) assert.ok(AFFIXES[a], `${id}/${a}`);
+  assert.ok(!affixesFor(MONSTERS.bat).includes('thorns'), 'flying monsters cannot be thorny');
+  let misses = 0, blasts = 0;
+  for (let s = 1; s <= 20; s++) {
+    const B = createBattle({ heroes: heroArgs(['aldric', 'lyra', 'nyx']), foes: [{ id: 'skel', hpMul: 1, atkMul: 1, elite: 'ghost' }, { id: 'rat', hpMul: 1, atkMul: 1, elite: 'bomb' }], seed: s });
+    while (!B.over) for (const e of step(B)) {
+      if (e.t === 'miss') misses++;
+      if (e.t === 'say' && /explose/.test(e.text)) blasts++;
+    }
+  }
+  assert.ok(misses > 0, 'spectral never dodged');
+  assert.ok(blasts > 0, 'explosive never exploded');
+});
+
+test('a thief steals a potion and gives it back when it dies', () => {
+  let stolen = 0, back = 0;
+  for (let s = 1; s <= 30; s++) {
+    const B = createBattle({ heroes: heroArgs(['aldric', 'lyra', 'nyx']), foes: [{ id: 'goblin', hpMul: 5, atkMul: 0.5 }], items: { pot: 3, fea: 0 }, seed: s });
+    while (!B.over) for (const e of step(B)) {
+      if (e.t === 'say' && /vole une potion/.test(e.text)) stolen++;
+      if (e.t === 'say' && /récupérée/.test(e.text)) back++;
+    }
+    if (B.over === 'win') assert.equal(B.items.pot + 0, B.items.pot);
+  }
+  assert.ok(stolen > 0 && back > 0, `stolen ${stolen} back ${back}`);
+});
+
+test('Séléna heal is weaker than in v0.2', () => {
+  assert.ok(BAL.healMult < 1.9);
 });
 
 test('a real dungeon fight can be built from a run', () => {

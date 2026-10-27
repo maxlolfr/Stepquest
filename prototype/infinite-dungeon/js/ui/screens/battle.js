@@ -8,7 +8,7 @@ import { spriteKeys, IMAGES } from '../assets.js';
 import { sfx, playMusic } from '../audio.js';
 import { HEROES } from '../../data/heroes.js';
 import { BAL } from '../../data/balance.js';
-import { DOOR_INFO } from '../../run/dungeon.js';
+import { doorName } from '../../run/dungeon.js';
 import { createBattle, step, castUltimate, canUlt, useGuard, canGuard, useItem, canItem, heroesOf, foesOf, alive, unitByUid, heroResults } from '../../engine/combat.js';
 
 const SPEEDS = [1, 2, 4];
@@ -28,7 +28,7 @@ export async function runBattle(root, { config, door, floor, settings }) {
 
   let speed = SPEEDS.includes(settings.speed) ? settings.speed : 1, paused = false, wake = null;
   const actions = [];
-  const info = DOOR_INFO[door.type];
+  const info = { name: doorName(door, floor) };
 
   // ---- DOM
   const canvas = h('canvas.stage-cv', { 'aria-label': 'Combat' });

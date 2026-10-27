@@ -2,27 +2,47 @@
 // it can be saved after every step. The dungeon itself is not saved: it is
 // rebuilt from run.seed, identical every time.
 //
-// Phases: map -> (battle -> reward | room) -> map … ; floor 5 -> checkpoint ; over
+// Phases: map -> (battle -> reward | room) -> map … ; after each zone boss -> checkpoint ; over
 import { makeRng, hashSeed } from '../core/rng.js';
 import { HEROES } from '../data/heroes.js';
-import { BAL } from '../data/balance.js';
-import { EVENTS, RELICS } from '../data/items.js';
-import { generateDungeon, isFight } from './dungeon.js';
-import { rewardCards, shopStock, upgradeCard } from './loot.js';
+import { gearScore } from './loot.js';
+import { BAL, XP } from '../data/balance.js';
+import { EVENTS, RELICS, eventsForZone } from '../data/items.js';
+import { zoneOf } from '../data/monsters.js';
+import { generateDungeon, isFight, isBossFloor } from './dungeon.js';
+import { rewardCards, shopStock, upgradeCard, makeGear, statCard } from './loot.js';
 
-export const RUN_VERSION = 1;
+export const RUN_VERSION = 2;
+
+/** v1 runs (10-floor dungeon, v0.2) continue in the Tower at the same floor, back on the map. */
+export function migrateRun(r) {
+  if (!r || typeof r !== 'object') return r;
+  if (r.v === 1) {
+    r.v = 2;
+    if (!['map', 'checkpoint', 'over'].includes(r.phase)) r.phase = 'map';
+    r.door = null; r.pending = null; r.rerollN = 0;
+    r.start = 1; r.bosses = 0; r.lv = 1 + 2 * (r.floor - 1); r.xp = 0;
+    r.floor = Math.max(1, Math.min(10, r.floor | 0));
+  }
+  return r;
+}
+
+/** Start floors the player may choose (checkpoints unlocked in meta). */
+export const startFloors = meta => BAL.startFloors.filter(f => f <= ((meta && meta.unlocked) || 1));
 
 // ---------------------------------------------------------------- stats
 
-export function heroStats(h, meta) {
+export function heroStats(h, meta, lv = 1) {
   const S = HEROES[h.id].stats, b = h.bonus || {}, g = Object.values(h.gear || {});
   const sum = k => g.reduce((n, x) => n + (x.st[k] || 0), 0);
-  const vie = 1 + 0.08 * ((meta && meta.upgrades.vie) || 0);
+  const U = (meta && meta.upgrades) || {}, L = Math.max(0, (lv || 1) - 1);
+  const base = k => S[k] + S.gr[k] * L; // level growth (Dragonbound II curves)
+  const vie = 1 + 0.06 * (U.vie || 0), force = 1 + 0.05 * (U.force || 0), garde = 1 + 0.06 * (U.garde || 0);
   return {
-    hpMax: Math.round((S.hp * (1 + (b.hp || 0)) + sum('hp')) * vie),
-    atk: Math.round(S.atk * (1 + (b.atk || 0)) + sum('atk')),
-    mag: Math.round(S.mag * (1 + (b.mag || 0)) + sum('mag')),
-    def: Math.round(S.def * (1 + (b.def || 0)) + sum('def')),
+    hpMax: Math.round((base('hp') * (1 + (b.hp || 0)) + sum('hp')) * vie),
+    atk: Math.round((base('atk') * (1 + (b.atk || 0)) + sum('atk')) * force),
+    mag: Math.round((base('mag') * (1 + (b.mag || 0)) + sum('mag')) * force),
+    def: Math.round((base('def') * (1 + (b.def || 0)) + sum('def')) * garde),
     crit: +(S.crit + sum('crit')).toFixed(3),
     spd: S.spd,
   };
@@ -30,7 +50,7 @@ export function heroStats(h, meta) {
 
 export function refreshTeam(run, meta) {
   for (const h of run.team) {
-    const s = heroStats(h, meta), old = h.hpMax || s.hpMax;
+    const s = heroStats(h, meta, run.lv), old = h.hpMax || s.hpMax;
     h.hpMax = s.hpMax;
     if (s.hpMax > old && h.hp > 0) h.hp += s.hpMax - old; // max HP gains also heal
     h.hp = Math.max(0, Math.min(h.hpMax, Math.round(h.hp)));
@@ -39,16 +59,28 @@ export function refreshTeam(run, meta) {
 
 // ---------------------------------------------------------------- creation
 
-export function newRun(meta, teamIds, seed) {
+export function newRun(meta, teamIds, seed, start = 1) {
   if (!Array.isArray(teamIds) || teamIds.length !== 3 || new Set(teamIds).size !== 3 || !teamIds.every(id => HEROES[id])) throw new Error('Une équipe de 3 héros différents est nécessaire.');
   const up = meta.upgrades;
+  if (!startFloors(meta).includes(start)) start = 1;
   const run = {
-    v: RUN_VERSION, seed: seed >>> 0, floor: 1, phase: 'map',
+    v: RUN_VERSION, seed: seed >>> 0, floor: start, start, bosses: 0, phase: 'map',
+    lv: 1 + 2 * (up.ecole || 0), xp: 0,
     team: teamIds.map(id => ({ id, hp: 1e9, hpMax: 0, up: {}, bonus: {}, gear: {}, el: 'phys' })),
     gold: BAL.startGold + 30 * up.or, items: { pot: BAL.startItems.pot + up.potion, fea: BAL.startItems.fea },
     relics: [], shards: 0, banked: 0, rerolls: up.relance, rerollN: 0,
     door: null, pending: null, path: [], outcome: null, stats: { fights: 0, kills: 0 },
   };
+  if (start > 1) { // checkpoint start: catch up with what a run would have gathered
+    const k = (start - 1) / 10, Bn = BAL.startBonus(k), rng = makeRng(hashSeed(run.seed, 'start'));
+    run.gold += Bn.gold; run.items.pot += Bn.pot; run.lv = Math.max(run.lv, Bn.lv);
+    run.relics = rng.shuffle(Object.keys(RELICS)).slice(0, Bn.relics);
+    for (const h of run.team) {
+      for (const st of ['hp', 'atk', 'mag', 'def']) h.bonus[st] = +Bn.stat.toFixed(3);
+      h.gear.w = makeGear('w', 1, Bn.gearFloor, h.id);
+      h.gear.a = makeGear('a', rng.chance(0.5) ? 1 : 0, Bn.gearFloor, h.id);
+    }
+  }
   refreshTeam(run, meta);
   for (const h of run.team) h.hp = h.hpMax;
   return run;
@@ -77,7 +109,7 @@ export function chooseDoor(run, idx) {
   if (d.type === 'chest') run.pending = { kind: 'chest', cards: rewardCards(run, rng, run.floor, 'chest') };
   else if (d.type === 'rest') run.pending = { kind: 'rest' };
   else if (d.type === 'shop') run.pending = { kind: 'shop', stock: shopStock(run, rng, run.floor), bought: [] };
-  else if (d.type === 'event') run.pending = { kind: 'event', event: rng.pick(EVENTS).id };
+  else if (d.type === 'event') run.pending = { kind: 'event', event: rng.pick(eventsForZone(zoneOf(run.floor).index)).id };
   return d;
 }
 
@@ -85,7 +117,7 @@ export function chooseDoor(run, idx) {
 export function battleConfig(run, meta) {
   const d = currentDoor(run);
   return {
-    heroes: run.team.map(h => ({ id: h.id, ...heroStats(h, meta), hp: h.hp, el: h.el, up: h.up })),
+    heroes: run.team.map(h => ({ id: h.id, ...heroStats(h, meta, run.lv), hp: h.hp, el: h.el, up: h.up })),
     foes: d.foes,
     relics: run.relics.slice(),
     items: run.items, // shared: potions used in combat are gone
@@ -94,18 +126,26 @@ export function battleConfig(run, meta) {
 }
 
 /** Called when a fight ends. heroesAfter = heroResults(B). */
-export function finishBattle(run, result, heroesAfter, kills = 0) {
+export function finishBattle(run, result, heroesAfter, kills = 0, meta = null) {
   const d = currentDoor(run);
   run.stats.fights++; run.stats.kills += kills;
   for (const r of heroesAfter) { const h = run.team.find(x => x.id === r.id); if (h) h.hp = r.hp; }
   if (result !== 'win') { run.phase = 'over'; run.outcome = 'lose'; return; }
-  for (const h of run.team) if (h.hp <= 0) h.hp = Math.max(1, Math.round(h.hpMax * 0.2)); // fallen heroes get back up after a victory
-  const kind = d.type === 'fight' ? 'normal' : d.type;
+  for (const h of run.team) {
+    if (h.hp <= 0) h.hp = Math.max(1, Math.round(h.hpMax * 0.2)); // fallen heroes get back up after a victory
+    else h.hp = Math.min(h.hpMax, h.hp + Math.round(h.hpMax * BAL.afterFightHeal)); // catch one's breath
+  }
+  const kind = d.type === 'fight' ? 'normal' : d.type, zm = BAL.zoneMul(zoneOf(run.floor).index);
   const [g0, g1] = BAL.gold[kind];
   const rng = rngFor(run, 'loot');
-  run.gold += Math.round(rng.int(g0, g1) * (run.relics.includes('bourse') ? 1.3 : 1));
-  run.shards += BAL.shards[kind];
-  if (d.type === 'boss') { run.phase = 'over'; run.outcome = 'win'; return; }
+  const goldMul = (run.relics.includes('bourse') ? 1.3 : 1) * (d.foes.some(f => f.elite === 'gold') ? 2 : 1);
+  run.gold += Math.round(rng.int(g0, g1) * BAL.goldMul(zoneOf(run.floor).index) * goldMul);
+  run.shards += Math.round(BAL.shards[kind] * zm);
+  gainXp(run, XP.gain[kind], meta);
+  if (d.type === 'boss') {
+    run.bosses = (run.bosses || 0) + 1;
+    if (run.floor >= BAL.floors) { run.phase = 'over'; run.outcome = 'win'; return; }
+  }
   run.pending = { kind: 'reward', cards: rewardCards(run, rngFor(run, 'reward', run.rerollN), run.floor, kind) };
   run.phase = 'reward';
 }
@@ -171,12 +211,20 @@ export function buy(run, id, meta) {
   return true;
 }
 
+export function canAfford(run, cost) {
+  if (!cost) return true;
+  if (cost.gold && cost.gold > run.gold) return false;
+  if (cost.item && !(run.items[cost.item] > 0)) return false;
+  return true;
+}
+
 export function resolveEvent(run, choiceIdx, meta) {
   const p = run.pending, E = p && EVENTS.find(e => e.id === p.event);
   if (!E) throw new Error('Pas d’événement');
   const c = E.choices[choiceIdx];
-  if (c.cost && c.cost.gold > run.gold) return { ok: false, text: 'Pas assez d’or.' };
-  if (c.cost) run.gold -= c.cost.gold;
+  if (!canAfford(run, c.cost)) return { ok: false, text: c.cost.item ? 'Tu n’en as pas.' : 'Pas assez d’or.' };
+  if (c.cost && c.cost.gold) run.gold -= c.cost.gold;
+  if (c.cost && c.cost.item) run.items[c.cost.item]--;
   const rng = rngFor(run, 'event', choiceIdx), out = [];
   const apply = e => {
     if (e.healPct) { applyCard(run, { type: 'heal', pct: e.healPct }, meta); out.push(`L’équipe récupère ${Math.round(e.healPct * 100)} % de vie.`); }
@@ -185,6 +233,17 @@ export function resolveEvent(run, choiceIdx, meta) {
     if (e.shards) { run.shards += e.shards; out.push(`+${e.shards} éclats.`); }
     if (e.item) { run.items[e.item]++; out.push(e.item === 'pot' ? '+1 potion.' : '+1 plume de phénix.'); }
     if (e.relic) { const free = Object.keys(RELICS).filter(k => !run.relics.includes(k)); if (free.length) { const k = rng.pick(free); applyCard(run, { type: 'relic', key: k }, meta); out.push(`Relique obtenue : ${RELICS[k].name}.`); } else { run.gold += 40; out.push('L’autel rend ton or.'); } }
+    if (e.stat) { const c2 = statCard(run, rng); applyCard(run, c2, meta); out.push(c2.desc); }
+    if (e.gear) {
+      const hero = rng.pick(run.team.map(h => h.id)), g = makeGear(rng.pick(['w', 'a', 'j']), rng.weighted([[1, 70], [2, 30]]), run.floor, hero);
+      const h = run.team.find(x => x.id === hero), old = h.gear[g.slot];
+      if (!old || gearBetter(g, old)) { applyCard(run, { type: 'gear', gear: g, hero }, meta); out.push(`${g.name} équipé.`); }
+      else { run.gold += 50; out.push(`${g.name} : moins bon que l’équipement actuel, revendu 50 or.`); }
+    }
+    if (e.element) {
+      const free = run.team.filter(h => h.el !== e.element), h = free.length ? rng.pick(free) : null;
+      if (h) { h.el = e.element; out.push(`L’attaque de base de ${HEROES[h.id].name} devient de type feu.`); }
+    }
     if (e.upgrade) { const c2 = upgradeCard(run, rng, run.floor); applyCard(run, c2, meta); out.push(c2.desc); }
     if (e.gamble) { const won = rng.chance(e.gamble.p); out.push(won ? 'Le coffre s’ouvre !' : 'Un piège se déclenche !'); apply(won ? e.gamble.win : e.gamble.lose); }
   };
@@ -199,11 +258,24 @@ export function leaveRoom(run) {
   advance(run);
 }
 
+/** Team XP; returns the number of levels gained (also kept in run.lvUp for the UI). */
+export function gainXp(run, n, meta) {
+  let ups = 0;
+  run.xp += n;
+  while (run.lv < XP.max && run.xp >= XP.need(run.lv)) { run.xp -= XP.need(run.lv); run.lv++; ups++; }
+  if (run.lv >= XP.max) run.xp = 0;
+  run.lvUp = ups;
+  if (ups) refreshTeam(run, meta);
+  return ups;
+}
+
+const gearBetter = (g, old) => gearScore(g) > gearScore(old);
+
 // ---------------------------------------------------------------- progress
 
 export function advance(run) {
   run.pending = null; run.door = null; run.rerollN = 0;
-  if (run.floor === BAL.guardianFloor) {
+  if (isBossFloor(run.floor) && run.floor < BAL.floors) {
     run.banked += run.shards; run.shards = 0; // checkpoint: shards are safe
     run.floor++; run.phase = 'checkpoint';
     return;
@@ -233,7 +305,13 @@ export function endRun(meta, run) {
   meta.shards += kept;
   const s = meta.stats;
   s.runs++; s.shardsEarned += kept;
-  s.bestFloor = Math.max(s.bestFloor, o === 'win' ? BAL.floors : Math.min(BAL.floors, run.floor));
+  const reached = o === 'win' ? BAL.floors : Math.min(BAL.floors, run.floor);
+  const record = reached > s.bestFloor;
+  s.bestFloor = Math.max(s.bestFloor, reached);
   if (o === 'win') s.wins++; else if (o === 'retreat') s.retreats++; else s.defeats++;
-  return { outcome: o, kept, lost, banked: run.banked, floor: run.floor, fights: run.stats.fights, kills: run.stats.kills };
+  // checkpoints: beating the boss of floor 10, 20… unlocks a start at 11, 21…
+  const lastBoss = o === 'win' ? BAL.floors : Math.floor((run.floor - 1) / BAL.zoneSize) * BAL.zoneSize;
+  const before = meta.unlocked || 1;
+  meta.unlocked = Math.max(before, ...BAL.startFloors.filter(f => f - 1 <= lastBoss && f <= BAL.floors));
+  return { outcome: o, kept, lost, banked: run.banked, floor: reached, start: run.start || 1, record, unlocked: meta.unlocked > before ? meta.unlocked : 0, fights: run.stats.fights, kills: run.stats.kills };
 }

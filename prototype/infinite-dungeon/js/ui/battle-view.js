@@ -137,7 +137,7 @@ export function createView(canvas, B, door) {
     cx.fillStyle = 'rgba(0,0,0,.75)'; rr(x - 3, y + 24, w + 6, 18, 8); cx.fill();
     cx.fillStyle = b.charge ? `rgb(${200 + 55 * Math.sin(now / 100)},40,30)` : '#c02a22'; rr(x, y + 27, w * b.hp / b.hpMax, 12, 6); cx.fill();
     if (b.wall > 0) { cx.fillStyle = '#e8dcc0'; rr(x, y + 27, w * Math.min(1, b.wall / b.hpMax), 5, 3); cx.fill(); }
-    cx.font = '700 14px Nunito, sans-serif'; cx.fillStyle = '#fff'; cx.fillText(`${b.hp} / ${b.hpMax}${b.wall > 0 ? `  · muraille ${Math.round(b.wall)}` : ''}`, V.W / 2, y + 60);
+    cx.font = '700 14px Nunito, sans-serif'; cx.fillStyle = '#fff'; cx.fillText(`${b.hp} / ${b.hpMax}${b.wall > 0 ? `  · protection ${Math.round(b.wall)}` : ''}`, V.W / 2, y + 60);
   }
 
   function drawFx(now) {

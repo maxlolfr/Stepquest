@@ -1,34 +1,60 @@
-// Every tuning number of Infinite Dungeon in one place (tuned by tests/sim.test.js).
+// Every tuning number of Infinite Dungeon in one place (tuned with tools/simulate.mjs).
 
+// Growth along the tower: rate r1 per floor up to floor 20, then r2 (heroes
+// grow fast early with cards and gear, then mostly with levels and the camp).
+export const climb = (f, r1, r2, knee = 20) => r1 ** (Math.min(f, knee) - 1) * r2 ** Math.max(0, f - knee);
+
+// The Tower: 10 zones of 5 floors. Floor 5 of each zone is its boss.
 export const BAL = {
-  floors: 10,
-  guardianFloor: 5,
-  bossFloor: 10,
-  // monster scaling per floor (1..10)
-  foeHp: f => 1.25 + 0.2 * (f - 1),
-  foeAtk: f => 1.0 + 0.08 * (f - 1),
-  foeDef: f => 1 + 0.06 * (f - 1),
-  foeCount: (f, rng) => (f <= 1 ? 2 : f <= 3 ? rng.int(2, 3) : 3),
+  floors: 50,
+  zoneSize: 5,
+  startFloors: [1, 11, 21, 31, 41], // checkpoints, unlocked by beating the boss just before
+  // Monster base stats already grow zone after zone (Dragonbound II values);
+  // these multipliers follow the heroes' growth (levels, gear, cards, relics).
+  foeHp: f => 1.4 * climb(f, 1.1, 1.065),
+  foeAtk: f => 1.1 * climb(f, 1.07, 1.045),
+  foeDef: f => 1,
+  foeCount: (f, rng) => ((f - 1) % 5 === 0 ? 2 : rng.int(2, 3)),
   elite: { hp: 1.7, atk: 1.2 },
-  guardian: { hp: 1.5, atk: 0.95 },
-  boss: { hp: 1.35, atk: 0.85 },
+  boss: { hp: 1, atk: 1 },
+  // bosses: their own stats (monsters.js) times a climb along the tower
+  bossHp: f => 1.6 * climb(f, 1.1, 1.065),
+  bossAtk: f => 0.9 * climb(f, 1.07, 1.045),
   maxRounds: 60,
   ultGainAct: 14, ultGainHit: 6, ultMax: 100,
-  // rewards
-  gold: { normal: [18, 28], elite: [45, 60], guardian: [70, 70], boss: [0, 0] },
-  shards: { normal: 3, elite: 8, guardian: 15, boss: 40, victory: 20 },
+  healMult: 1.3, // Séléna's Soin (was 1.9 in v0.2)
+  // rewards (gold and shards grow with the zone: zoneMul)
+  zoneMul: z => 1 + 0.2 * z, // shards
+  goldMul: z => 1 + 0.15 * z,
+  gold: { normal: [18, 28], elite: [45, 60], boss: [80, 80] },
+  shards: { normal: 1, elite: 3, boss: 10, victory: 100 },
   defeatKeep: 0.5,
   restHeal: 0.4,
+  afterFightHeal: 0.1, // every standing hero after a victory
   startGold: 40,
   startItems: { pot: 2, fea: 1 },
+  // bonus when starting from a checkpoint (k = number of 10-floor blocks skipped)
+  startBonus: k => ({ gold: 60 * k, pot: k, stat: 0.08 * k, gearFloor: 9 * k, lv: 1 + 8 * k, relics: k }),
   rarityWeights: { normal: [[0, 70], [1, 25], [2, 5]], elite: [[0, 30], [1, 50], [2, 20]], chest: [[0, 25], [1, 50], [2, 25]] },
   shop: { gear: 70, relic: 110, upgrade: 60, heal: 35 },
+  shopMul: z => 1 + 0.15 * z,
 };
 
-// Camp upgrades, bought with shards, kept forever.
+// Hero levels inside an expedition (shared by the team): XP from each fight won.
+export const XP = {
+  gain: { normal: 10, elite: 22, boss: 40 },
+  need: lv => Math.round(10 + 0.6 * lv), // XP from level lv to lv+1
+  max: 80,
+};
+
+// Camp upgrades, bought with shards, kept forever. Costs grow ×1.4 per level.
+const costs = (first, n) => Array.from({ length: n }, (_, i) => Math.round(first * 1.4 ** i / 5) * 5);
 export const UPGRADES = {
-  vie:     { name: 'Forge du camp', ic: '❤️', art: 'camp_vie', desc: lv => `Vie des héros +${8 * lv} %`, costs: [20, 45, 90] },
-  or:      { name: 'Coffre de départ', ic: '💰', art: 'camp_or', desc: lv => `+${30 * lv} or au départ`, costs: [15, 35, 70] },
-  potion:  { name: 'Apothicaire', ic: '🧪', art: 'camp_potion', desc: lv => `+${lv} potion${lv > 1 ? 's' : ''} au départ`, costs: [15, 35, 70] },
-  relance: { name: 'Oracle', ic: '🎲', art: 'camp_relance', desc: lv => `${lv} relance${lv > 1 ? 's' : ''} de récompense par expédition`, costs: [25, 50, 100] },
+  vie:     { name: 'Forge du camp', ic: '❤️', art: 'camp_vie', desc: lv => `Vie des héros +${6 * lv} %`, costs: costs(20, 10) },
+  force:   { name: 'Armurerie', ic: '⚔️', desc: lv => `Attaque et magie +${5 * lv} %`, costs: costs(25, 10) },
+  garde:   { name: 'Bastion', ic: '🛡️', desc: lv => `Défense +${6 * lv} %`, costs: costs(20, 10) },
+  ecole:   { name: 'Salle d’entraînement', ic: '📖', desc: lv => `Les héros partent au niveau ${1 + 2 * lv}`, costs: costs(30, 10) },
+  or:      { name: 'Coffre de départ', ic: '💰', art: 'camp_or', desc: lv => `+${30 * lv} or au départ`, costs: costs(15, 8) },
+  potion:  { name: 'Apothicaire', ic: '🧪', art: 'camp_potion', desc: lv => `+${lv} potion${lv > 1 ? 's' : ''} au départ`, costs: costs(15, 5) },
+  relance: { name: 'Oracle', ic: '🎲', art: 'camp_relance', desc: lv => `${lv} relance${lv > 1 ? 's' : ''} de récompense par expédition`, costs: costs(25, 5) },
 };

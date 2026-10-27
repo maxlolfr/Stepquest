@@ -8,25 +8,31 @@ import { rewardCards } from '../js/run/loot.js';
 import { makeRng } from '../js/core/rng.js';
 import { loadSave, writeSave, SAVE_KEY, BACKUP_KEY, exportCode, importCode } from '../js/save/storage.js';
 import { simulateRun } from '../tools/simulate.mjs';
-import { BAL } from '../js/data/balance.js';
+import { BAL, XP } from '../js/data/balance.js';
+import { ZONES, zoneOf, levelOf } from '../js/data/monsters.js';
+import { EVENTS } from '../js/data/items.js';
+import { startFloors, migrateRun, gainXp, RUN_VERSION } from '../js/run/run.js';
 
-test('1000 seeds: 10 floors, valid doors, fixed guardian and boss, a normal fight on every mixed floor', () => {
+test('1000 seeds: 50 floors, a boss every 5 floors, rest + shop before it, a normal fight on every mixed floor', () => {
   for (let s = 1; s <= 1000; s++) {
     const d = generateDungeon(s);
-    assert.equal(d.length, 11);
-    let shop = false;
-    for (let f = 1; f <= 10; f++) {
-      const types = d[f].doors.map(x => x.type);
+    assert.equal(d.length, 51);
+    for (let f = 1; f <= 50; f++) {
+      const types = d[f].doors.map(x => x.type), k = (f - 1) % 5 + 1;
       assert.ok(types.length >= 1 && types.length <= 3, `seed ${s} floor ${f}`);
-      if (f === 5) assert.deepEqual(types, ['guardian']);
-      else if (f === 10) assert.deepEqual(types, ['boss']);
-      else if (f === 9) assert.deepEqual(types.slice().sort(), ['rest', 'shop']);
+      if (k === 5) { assert.deepEqual(types, ['boss']); assert.equal(d[f].doors[0].foes[0].id, ZONES[(f - 5) / 5].boss); }
+      else if (k === 4) { assert.ok(types.includes('rest') && types.includes('shop'), `seed ${s} floor ${f}`); }
+      else if (k === 1) assert.deepEqual(types, ['fight', 'fight']);
       else assert.ok(types.includes('fight'), `seed ${s} floor ${f}: no normal fight`);
       if (f < 3) assert.ok(!types.includes('elite'));
-      if (f >= 6 && f <= 8 && types.includes('shop')) shop = true;
-      for (const door of d[f].doors) if (isFight(door.type)) assert.ok(door.foes.length >= 1);
+      for (const door of d[f].doors) {
+        assert.equal(door.bg, levelOf(f).bg);
+        if (isFight(door.type)) {
+          assert.ok(door.foes.length >= 1);
+          for (const x of door.foes) if (!x.boss) assert.ok(zoneOf(f).pool.includes(x.id), `floor ${f}: ${x.id} out of zone`);
+        }
+      }
     }
-    assert.ok(shop, `seed ${s}: no shop on floors 6-8`);
   }
 });
 
@@ -72,25 +78,78 @@ test('loss rules: victory, retreat, defeat before and after the checkpoint', () 
   const play = (outcome, banked, shards) => { const m = newMeta(), r = newRun(m, ['aldric', 'orin', 'lyra'], 3); r.banked = banked; r.shards = shards; r.outcome = outcome; return endRun(m, r).kept; };
   assert.equal(play('win', 15, 30), 15 + 30 + BAL.shards.victory);
   assert.equal(play('retreat', 15, 30), 45);
-  assert.equal(play('lose', 0, 30), 15);           // before floor 5: half of the unbanked shards
+  assert.equal(play('lose', 0, 30), 15);           // before the first boss: half of the unbanked shards
   assert.equal(play('lose', 20, 31), 20 + 15);     // after: banked kept, half of the rest (rounded down)
 });
 
-test('floor 5 is a checkpoint: shards are banked and retreat is possible', () => {
-  const meta = newMeta(), run = newRun(meta, ['aldric', 'selena', 'orin'], 8);
-  run.floor = 5; run.shards = 12;
-  chooseDoor(run, 0);
-  finishBattle(run, 'win', run.team.map(h => ({ id: h.id, hp: h.hp })));
-  assert.equal(run.phase, 'reward');
-  pickCard(run, 0, meta);
-  assert.equal(run.phase, 'checkpoint');
-  assert.equal(run.banked, 12 + BAL.shards.guardian);
-  assert.equal(run.shards, 0);
-  assert.ok(canRetreat(run));
-  continueRun(run);
-  assert.equal(run.phase, 'map');
-  assert.equal(run.floor, 6);
-  assert.equal(canRetreat(run), false);
+test('every zone boss is a checkpoint: shards are banked and retreat is possible', () => {
+  for (const f of [5, 25, 45]) {
+    const meta = newMeta(), run = newRun(meta, ['aldric', 'selena', 'orin'], 8);
+    run.floor = f; run.shards = 12;
+    chooseDoor(run, 0);
+    assert.equal(floorOf(run).doors[0].type, 'boss');
+    finishBattle(run, 'win', run.team.map(h => ({ id: h.id, hp: h.hp })), 1, meta);
+    assert.equal(run.phase, 'reward');
+    assert.ok(run.pending.cards.some(c => c.type === 'relic'), 'boss reward has a relic');
+    pickCard(run, 0, meta);
+    assert.equal(run.phase, 'checkpoint');
+    assert.ok(run.banked > 12);
+    assert.equal(run.shards, 0);
+    assert.ok(canRetreat(run));
+    continueRun(run);
+    assert.equal(run.phase, 'map');
+    assert.equal(run.floor, f + 1);
+    assert.equal(canRetreat(run), false);
+  }
+});
+
+test('beating the floor 50 boss wins the run; floor 10 boss unlocks the start at floor 11', () => {
+  const meta = newMeta(), run = newRun(meta, ['aldric', 'selena', 'orin'], 9);
+  run.floor = 50; chooseDoor(run, 0);
+  finishBattle(run, 'win', run.team.map(h => ({ id: h.id, hp: h.hp })), 1, meta);
+  assert.equal(run.outcome, 'win');
+  const sum = endRun(meta, run);
+  assert.equal(sum.floor, 50);
+  assert.equal(meta.unlocked, 41);
+  const m2 = newMeta(), r2 = newRun(m2, ['aldric', 'selena', 'orin'], 9);
+  r2.floor = 11; r2.phase = 'checkpoint'; retreat(r2);
+  assert.equal(endRun(m2, r2).unlocked, 11);
+  assert.deepEqual(startFloors(m2), [1, 11]);
+  const m3 = newMeta(), r3 = newRun(m3, ['aldric', 'selena', 'orin'], 9);
+  r3.floor = 10; r3.outcome = 'lose'; endRun(m3, r3);
+  assert.equal(m3.unlocked, 1, 'losing to the floor 10 boss unlocks nothing');
+});
+
+test('checkpoint start: only when unlocked, with a catch-up bonus', () => {
+  const meta = newMeta();
+  assert.equal(newRun(meta, ['aldric', 'selena', 'orin'], 3, 21).floor, 1, 'locked start falls back to floor 1');
+  meta.unlocked = 21;
+  const run = newRun(meta, ['aldric', 'selena', 'orin'], 3, 21), base = newRun(meta, ['aldric', 'selena', 'orin'], 3);
+  assert.equal(run.floor, 21);
+  assert.ok(run.lv > base.lv && run.gold > base.gold && run.relics.length === 2);
+  assert.ok(run.team.every(h => h.gear.w && h.hp === h.hpMax));
+});
+
+test('heroes gain levels from fights and get stronger', () => {
+  const meta = newMeta(), run = newRun(meta, ['aldric', 'selena', 'orin'], 3);
+  const s1 = heroStats(run.team[0], meta, 1), hp1 = run.team[0].hpMax;
+  assert.equal(gainXp(run, XP.need(1), meta), 1);
+  assert.equal(run.lv, 2);
+  assert.ok(run.team[0].hpMax > hp1);
+  const s20 = heroStats(run.team[0], meta, 20);
+  for (const k of ['hpMax', 'atk', 'def']) assert.ok(s20[k] > s1[k], k);
+  meta.upgrades.ecole = 3;
+  assert.equal(newRun(meta, ['aldric', 'selena', 'orin'], 3).lv, 7);
+});
+
+test('camp upgrades: 10 levels for the main ones, force and garde change stats', () => {
+  const meta = newMeta(), run = newRun(meta, ['aldric', 'selena', 'orin'], 1), h = run.team[0];
+  const s0 = heroStats(h, meta);
+  meta.shards = 1e6;
+  for (let i = 0; i < 12; i++) { buyUpgrade(meta, 'force'); buyUpgrade(meta, 'garde'); }
+  assert.equal(meta.upgrades.force, 10);
+  const s1 = heroStats(h, meta);
+  assert.ok(s1.atk > s0.atk * 1.4 && s1.def > s0.def * 1.4);
 });
 
 test('rest, shop and events work', () => {
@@ -112,11 +171,27 @@ test('rest, shop and events work', () => {
   assert.ok(r.ok && /potion/.test(r.text));
 });
 
+test('every event choice can be resolved and changes something or says so', () => {
+  for (const E of EVENTS) E.choices.forEach((c, i) => {
+    for (let s = 0; s < 8; s++) {
+      const meta = newMeta(), run = newRun(meta, ['aldric', 'lyra', 'orin'], 50 + s);
+      run.floor = 22; run.gold = 500; run.phase = 'room'; run.pending = { kind: 'event', event: E.id };
+      const r = resolveEvent(run, i, meta);
+      assert.ok(r.ok && r.text.length > 3, `${E.id}/${i}`);
+      assert.ok(run.team.every(h => h.hp >= 1 && h.hp <= h.hpMax), `${E.id}/${i}: hp out of range`);
+    }
+  });
+  // a cost in items is checked
+  const meta = newMeta(), run = newRun(meta, ['aldric', 'lyra', 'orin'], 1);
+  run.items.pot = 0; run.phase = 'room'; run.pending = { kind: 'event', event: 'gambler' };
+  assert.equal(resolveEvent(run, 1, meta).ok, false);
+});
+
 test('reroll gives new cards and is limited', () => {
   const meta = newMeta(); meta.upgrades.relance = 1;
   const run = newRun(meta, ['aldric', 'selena', 'orin'], 4);
   chooseDoor(run, 0);
-  finishBattle(run, 'win', run.team.map(h => ({ id: h.id, hp: h.hp })));
+  finishBattle(run, 'win', run.team.map(h => ({ id: h.id, hp: h.hp })), 0, meta);
   assert.ok(reroll(run));
   assert.equal(reroll(run), false);
 });
@@ -124,8 +199,10 @@ test('reroll gives new cards and is limited', () => {
 test('whole expeditions can be played to the end (simulation)', () => {
   const out = Array.from({ length: 60 }, (_, i) => simulateRun(200 + i));
   assert.ok(out.every(r => ['win', 'lose', 'retreat'].includes(r.outcome)));
-  assert.ok(out.some(r => r.outcome === 'win'), 'boss never beaten');
+  assert.ok(out.some(r => r.floor > 5), 'first boss never beaten');
   assert.ok(out.some(r => r.outcome === 'lose'), 'never lost: too easy');
+  const med = out.map(r => r.floor).sort((a, b) => a - b)[30];
+  assert.ok(med >= 8 && med <= 35, `median floor ${med} with an empty camp`);
 });
 
 // ---- save
@@ -167,11 +244,28 @@ test('unknown version and throwing storage are handled', () => {
 
 test('finished runs are not restored; bad meta values are repaired', () => {
   const s = memory();
-  s.setItem(SAVE_KEY, JSON.stringify({ v: 1, meta: { shards: -4, upgrades: { vie: 99 } }, run: { v: 1, seed: 1, floor: 3, team: [1, 2, 3], phase: 'over' } }));
+  s.setItem(SAVE_KEY, JSON.stringify({ v: 1, meta: { shards: -4, unlocked: 13, upgrades: { vie: 99 } }, run: { v: 1, seed: 1, floor: 3, team: [1, 2, 3], phase: 'over' } }));
   const { data } = loadSave(s);
   assert.equal(data.run, null);
   assert.equal(data.meta.shards, 0);
-  assert.equal(data.meta.upgrades.vie, 3);
+  assert.equal(data.meta.upgrades.vie, 10);
+  assert.equal(data.meta.unlocked, 1);
+});
+
+test('a v0.2 save (run version 1) continues in the Tower', () => {
+  const s = memory(), meta = newMeta(); meta.shards = 40; meta.upgrades.vie = 2;
+  const old = newRun(meta, ['nyx', 'lyra', 'selena'], 12);
+  Object.assign(old, { v: 1, floor: 7, phase: 'battle', door: 1 }); delete old.lv; delete old.xp; delete old.start; delete old.bosses;
+  s.setItem(SAVE_KEY, JSON.stringify({ v: 1, meta, run: old }));
+  const { data } = loadSave(s);
+  assert.equal(data.meta.shards, 40);
+  assert.equal(data.meta.upgrades.vie, 2);
+  assert.ok(data.run, 'run kept');
+  assert.equal(data.run.v, RUN_VERSION);
+  assert.equal(data.run.phase, 'map');
+  assert.equal(data.run.floor, 7);
+  assert.ok(data.run.lv >= 1 && floorOf(data.run).doors.length >= 1);
+  assert.equal(migrateRun(null), null);
 });
 
 test('export / import code', () => {

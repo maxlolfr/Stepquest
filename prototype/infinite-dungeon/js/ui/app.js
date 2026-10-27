@@ -10,7 +10,7 @@ import { showCards, showRest, showShop, showEvent } from './screens/rooms.js';
 import { showResults, showCamp } from './screens/camp.js';
 import { runBattle } from './screens/battle.js';
 import { loadSave, writeSave } from '../save/storage.js';
-import { newRun, chooseDoor, battleConfig, finishBattle, pickCard, reroll, rest, buy, resolveEvent, leaveRoom, continueRun, retreat, endRun, currentDoor, refreshTeam } from '../run/run.js';
+import { newRun, chooseDoor, battleConfig, finishBattle, pickCard, reroll, rest, buy, resolveEvent, leaveRoom, continueRun, retreat, endRun, currentDoor, refreshTeam, startFloors } from '../run/run.js';
 import { buyUpgrade } from '../run/meta.js';
 import { newSeed } from '../core/rng.js';
 import { HEROES } from '../data/heroes.js';
@@ -39,7 +39,7 @@ export function goTitle() {
   showTitle(() => {
     const { run, meta } = app.data, items = [];
     if (run) items.push({ label: 'Continuer l’expédition', sub: `Étage ${run.floor} · ${run.team.map(t => HEROES[t.id].name).join(', ')}`, primary: true, action: () => route() });
-    items.push({ label: 'Nouvelle expédition', sub: run ? 'Abandonne l’expédition en cours' : '3 héros · 10 étages', primary: !run, action: newExpedition });
+    items.push({ label: 'Nouvelle expédition', sub: run ? 'Abandonne l’expédition en cours' : '3 héros · 50 étages · 10 boss', primary: !run, action: newExpedition });
     items.push({ label: 'Le camp', sub: `💎 ${meta.shards} éclats`, action: goCamp });
     return items;
   });
@@ -49,13 +49,13 @@ function newExpedition() {
   if (app.data.run && !window.confirm('Abandonner l’expédition en cours ? Elle compte comme une défaite (la moitié des éclats non sécurisés est gardée).')) return;
   if (app.data.run) { app.data.run.outcome = 'lose'; endRun(app.data.meta, app.data.run); app.data.run = null; save(); }
   hideTitle();
-  showTeam(view(), { initial: app.lastTeam, onBack: goTitle, onStart: ids => startRun(ids) });
+  showTeam(view(), { initial: app.lastTeam, starts: startFloors(app.data.meta), onBack: goTitle, onStart: (ids, start) => startRun(ids, { start }) });
 }
 
-export function startRun(ids, { seed = newSeed(), floor = 1 } = {}) {
+export function startRun(ids, { seed = newSeed(), floor = 0, start = 1 } = {}) {
   app.lastTeam = ids;
-  const run = newRun(app.data.meta, ids, seed);
-  run.floor = floor;
+  const run = newRun(app.data.meta, ids, seed, start);
+  if (floor) run.floor = floor; // debug panel
   app.data.run = run;
   save();
   route();
@@ -109,7 +109,8 @@ async function fight() {
   preloadSfx(['s_impact', 'crit', 'foe_die', 'hero_hurt', 'dodge', 'ald_sword', 'sel_mace', 'ori_bolt', 'lyr_arrow', 'nyx_dagger', 'aoe_warning', 'ult_cutin', 'poison', 'burn']);
   view().replaceChildren(h('div.loading', 'Le combat se prépare…'));
   const res = await runBattle(view(), { config: battleConfig(run, meta), door, floor: run.floor, settings });
-  finishBattle(run, res.result, res.heroes, res.kills);
+  finishBattle(run, res.result, res.heroes, res.kills, app.data.meta);
+  if (run.lvUp && run.phase !== 'over') { sfx('levelup'); toast(`Niveau ${run.lv} ! Les héros sont plus forts.`); }
   save();
   route();
 }

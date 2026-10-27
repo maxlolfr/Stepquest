@@ -7,14 +7,14 @@
 //   castUltimate(B, uid) / useGuard(B) / useItem(B, 'pot')   // player interventions
 import { makeRng } from '../core/rng.js';
 import { HEROES, SKILLS } from '../data/heroes.js';
-import { MONSTERS, AFFIXES } from '../data/monsters.js';
+import { AFFIXES, unitDef } from '../data/monsters.js';
 import { BAL } from '../data/balance.js';
 
 // ---------------------------------------------------------------- setup
 
 /**
  * heroes: [{ id, hp, hpMax, atk, mag, def, crit, spd, el, up: {skill: n} }]  (run state, already with gear)
- * foes:   [{ id, hpMul, atkMul, defMul, elite?: affixKey, guardian?, boss? }]
+ * foes:   [{ id, hpMul, atkMul, defMul, elite?: affixKey, boss? }]
  * relics: array of relic keys. items: { pot, fea } (shared with the run, mutated).
  */
 export function createBattle({ heroes, foes, relics = [], items = { pot: 0, fea: 0 }, seed = 1 }) {
@@ -41,18 +41,20 @@ function makeHero(B, h, slot) {
 }
 
 function makeFoe(B, f, slot, n) {
-  const M = MONSTERS[f.id], u = baseUnit(B, 'f', slot);
-  const kind = f.boss ? BAL.boss : f.guardian ? BAL.guardian : f.elite ? BAL.elite : { hp: 1, atk: 1 };
+  const M = unitDef(f.id), u = baseUnit(B, 'f', slot);
+  const kind = M.boss ? BAL.boss : f.elite ? BAL.elite : { hp: 1, atk: 1 };
   const hpMax = Math.round(M.hp * f.hpMul * kind.hp);
   Object.assign(u, { id: f.id, name: M.name, sprite: f.id, m: M, boss: !!M.boss, hpMax, hp: hpMax, atk: Math.round(M.atk * f.atkMul * kind.atk), mag: 0,
     def: Math.round(M.def * (f.defMul || 1)), crit: 0.05, spd: M.boss ? 8 : spdOf(M), trait: M.trait || '', w: M.w || [], r: M.r || [], h: M.h, n,
-    risen: false, charge: null, turn: 0, wall: 0, phase: 1, fly: !!M.fly, mul: { hp: f.hpMul, atk: f.atkMul } });
-  if (f.elite) {
+    risen: false, charge: null, turn: 0, wall: 0, phase: 1, fly: !!M.fly, mul: { hp: f.hpMul, atk: f.atkMul, def: f.defMul || 1 },
+    special: M.special || null, phaseDef: M.phase || null, thornsPct: 0, stolen: 0 });
+  if (f.elite && AFFIXES[f.elite]) {
     const A = AFFIXES[f.elite];
-    u.aff = f.elite; u.affCol = A.col; u.name = `${f.guardian ? 'Gardien · ' : ''}${M.name} ${A.n}`;
+    u.aff = f.elite; u.affCol = A.col; u.name = `${M.name} ${A.n}`;
     if (f.elite === 'armor') u.shield = Math.round(u.hpMax * 0.3);
-  } else if (f.guardian) u.name = `Gardien · ${M.name}`;
-  u.elite = !!(f.elite || f.guardian);
+    if (f.elite === 'thorns') u.thornsPct = 0.25;
+  }
+  u.elite = !!f.elite;
   return u;
 }
 
@@ -97,19 +99,21 @@ function calc(B, a, t, pow, stat = 'atk', el = 'phys', { forceCrit = false, crit
     if (B.round <= B.guardUntil) d *= 0.5;
     if (t.st.taunt) d *= 0.8;
   }
-  return { d: Math.max(1, Math.round(d)), crit, weak, resist, el };
+  return { d: Math.max(1, Math.round(d)), crit, weak, resist, el, stat };
 }
 
 /** Applies a hit. Returns damage dealt (0 if dodged). */
 function hit(B, ev, a, t, r, { melee = false, noShadow = false } = {}) {
   if (!alive(t)) return 0;
-  if (t.side === 'f' && t.trait === 'evade' && B.rng.chance(0.25)) { ev.push({ t: 'miss', uid: t.uid, src: a.uid }); return 0; }
+  if (t.side === 'f' && (t.trait === 'evade' || t.aff === 'ghost') && B.rng.chance(0.25)) { ev.push({ t: 'miss', uid: t.uid, src: a.uid }); return 0; }
   let d = r.d, absorbed = 0;
-  // boss wall: fire breaks it twice as fast
+  if (t.intangible && r.stat !== 'mag') { d = Math.max(1, Math.round(d * 0.3)); absorbed += r.d - d; }
+  if (t.shieldTaken && foesOf(B).some(x => x.summoned && x.guards === t.uid && alive(x))) { const nd = Math.max(1, Math.round(d * t.shieldTaken)); absorbed += d - nd; d = nd; }
+  // boss wall: its weakness breaks it twice as fast
   if (t.wall > 0) {
-    const eff = r.el === 'feu' ? 2 : 1, take = Math.min(t.wall, d * eff);
+    const eff = r.el === t.wallWeak ? 2 : 1, take = Math.min(t.wall, d * eff);
     t.wall -= take; absorbed += take / eff; d -= take / eff; d = Math.round(d);
-    if (t.wall <= 0) ev.push({ t: 'say', text: `La muraille d’os du ${t.name} s’effondre !`, uid: t.uid, big: true });
+    if (t.wall <= 0) ev.push({ t: 'say', text: `La protection de ${t.name} cède !`, uid: t.uid, big: true });
   }
   if (t.shield > 0 && d > 0) { const s = Math.min(t.shield, d); t.shield -= s; d -= s; absorbed += s; }
   t.hp = Math.max(0, t.hp - d);
@@ -119,12 +123,13 @@ function hit(B, ev, a, t, r, { melee = false, noShadow = false } = {}) {
   if (a.side === 'h') {
     if (a.id === 'nyx' && !noShadow && alive(t)) t.st.shadow = Math.min(3, t.st.shadow + 1);
     if (B.relics.has('vampire') && d > 0) heal(B, ev, a, Math.round(d * 0.1), { quiet: true });
-    if (melee && t.aff === 'thorns' && alive(a)) { const back = Math.max(1, Math.round(d * 0.25)); a.hp = Math.max(0, a.hp - back); ev.push({ t: 'dmg', uid: a.uid, src: t.uid, amt: back, el: 'phys', thorns: true }); checkKo(B, ev, a); }
+    if (melee && t.thornsPct && alive(a)) { const back = Math.max(1, Math.round(d * t.thornsPct)); a.hp = Math.max(0, a.hp - back); ev.push({ t: 'dmg', uid: a.uid, src: t.uid, amt: back, el: 'phys', thorns: true }); checkKo(B, ev, a); }
   } else {
     if ((a.trait === 'drain' || a.aff === 'vamp') && d > 0) heal(B, ev, a, Math.round(d * 0.5), { quiet: true });
+    if (a.trait === 'steal' && d > 0 && !a.stolen && B.items.pot > 0 && B.rng.chance(0.4)) { B.items.pot--; a.stolen++; ev.push({ t: 'say', text: `${a.name} vole une potion ! Tue-le pour la récupérer.`, uid: a.uid }); }
   }
   checkKo(B, ev, t);
-  if (t.boss && t.phase === 1 && alive(t) && pct(t) <= 0.5) bossPhase2(B, ev, t);
+  if (t.boss && t.phase === 1 && alive(t) && pct(t) <= 0.5 && t.phaseDef && t.phaseDef.kind !== 'rise') bossPhase2(B, ev, t);
   return d;
 }
 
@@ -136,10 +141,16 @@ function checkKo(B, ev, t) {
     ev.push({ t: 'heal', uid: t.uid, amt: 1 });
     return;
   }
-  if (t.side === 'f' && t.trait === 'rise' && !t.risen && !t.st.burn) {
+  if (t.side === 'f' && (t.trait === 'rise' || (t.phaseDef && t.phaseDef.kind === 'rise')) && !t.risen && !t.st.burn) {
     t.risen = true; t.hp = Math.round(t.hpMax * 0.5);
-    ev.push({ t: 'ko', uid: t.uid }); ev.push({ t: 'revive', uid: t.uid, hp: t.hp, text: `${t.name} se relève !` });
+    ev.push({ t: 'ko', uid: t.uid }); ev.push({ t: 'revive', uid: t.uid, hp: t.hp, text: `${t.name} ${t.boss ? t.phaseDef.text : 'se relève !'}` });
+    if (t.boss) { t.phase = 2; ev.push({ t: 'phase', uid: t.uid, text: `${t.name} ${t.phaseDef.text}` }); }
     return;
+  }
+  if (t.side === 'f' && t.stolen) { B.items.pot += t.stolen; ev.push({ t: 'say', text: `Potion récupérée ×${t.stolen} !`, uid: t.uid }); t.stolen = 0; }
+  if (t.side === 'f' && t.aff === 'bomb') {
+    ev.push({ t: 'say', text: `${t.name} explose !`, uid: t.uid, big: true });
+    for (const h of livingH(B)) { const d = Math.min(h.hp - 1, Math.round(h.hpMax * 0.15)); if (d > 0) { h.hp -= d; ev.push({ t: 'dmg', uid: h.uid, src: t.uid, amt: d, el: 'feu' }); } }
   }
   t.st = { poison: null, burn: null, stun: 0, freeze: 0, mark: 0, shadow: 0, taunt: 0 }; t.shield = 0; t.charge = null; t.ult = t.side === 'h' ? t.ult : 0;
   ev.push({ t: 'ko', uid: t.uid });
@@ -193,6 +204,7 @@ function startTurn(B, ev, u) {
   if (u.side === 'f') {
     if (u.trait === 'regen' && !u.st.burn) heal(B, ev, u, Math.round(u.hpMax * 0.08));
     if (u.aff === 'regen') heal(B, ev, u, Math.round(u.hpMax * 0.1));
+    if (u.regenPct && !u.st.burn) heal(B, ev, u, Math.round(u.hpMax * u.regenPct));
   }
   if (u.st.mark > 0) u.st.mark--;
   if (u.st.taunt > 0) u.st.taunt--;
@@ -318,13 +330,13 @@ function heroTurn(B, ev, u) {
       if (hurt && ready(u, 'heal')) {
         act('heal', [hurt]);
         hurt.st.poison = null; hurt.st.burn = null;
-        heal(B, ev, hurt, Math.round(u.mag * skillPow(u, 'heal') * 1.9), { overShield: true });
+        heal(B, ev, hurt, Math.round(u.mag * skillPow(u, 'heal') * BAL.healMult), { overShield: true });
         return;
       }
       if (ready(u, 'smite')) {
         const t = pickFoeTarget(B, u); act('smite', [t]);
         hit(B, ev, u, t, calc(B, u, t, skillPow(u, 'smite'), 'mag', 'foudre'));
-        for (const h of livingH(B)) heal(B, ev, h, Math.round(u.mag * 0.35), { quiet: true });
+        for (const h of livingH(B)) heal(B, ev, h, Math.round(u.mag * 0.2), { quiet: true });
         return;
       }
       break;
@@ -401,8 +413,7 @@ const ULTS = {
     ev.push({ t: 'act', uid: u.uid, kind: 'ult', name: HEROES.selena.ult.name, targets: hs.map(h => h.uid), sfx: 'sel_raise', fx: 'heal', pose: 'cast' });
     for (const h of hs) {
       if (!alive(h)) { h.hp = Math.round(h.hpMax * 0.3); ev.push({ t: 'revive', uid: h.uid, hp: h.hp, text: `${h.name} se relève !` }); }
-      else heal(B, ev, h, Math.round(h.hpMax * 0.4));
-      h.shield += Math.round(h.hpMax * 0.15); ev.push({ t: 'shield', uid: h.uid, amt: Math.round(h.hpMax * 0.15) });
+      else heal(B, ev, h, Math.round(h.hpMax * 0.3));
     }
   },
   orin(B, ev, u) {
@@ -441,20 +452,15 @@ function foeStrike(B, ev, f, t, mult, name) {
 
 function foeTurn(B, ev, f) {
   f.turn++;
-  if (f.charge) {
-    const c = f.charge; f.charge = null;
-    if (c.kind === 'scythe') {
-      ev.push({ t: 'act', uid: f.uid, kind: 'foe', name: c.name, targets: livingH(B).map(h => h.uid), pose: 'blast', big: true, sfx: 'boss_roar' });
-      for (const h of livingH(B)) hit(B, ev, f, h, calc(B, f, h, 1.5, 'atk', 'phys'));
-    } else {
-      const t = pickTarget(B);
-      foeStrike(B, ev, f, t, c.kind === 'slow' ? 2.2 : 2, c.name);
-    }
+  if (f.boss) {
+    bossAct(B, ev, f);
+    if (f.actTwice && alive(f) && !B.over && livingH(B).length) bossAct(B, ev, f, true);
     return;
   }
-  if (f.boss) {
-    if (f.turn % 3 === 2) { f.charge = { kind: 'scythe', name: 'Faux macabre' }; ev.push({ t: 'charge', uid: f.uid, name: 'Faux macabre', aoe: true, text: `${f.name} lève sa faux : la Faux macabre frappera toute l’équipe à son prochain tour !` }); return; }
-    const t = pickTarget(B); foeStrike(B, ev, f, t, f.phase === 2 ? 1.15 : 1, 'Coup d’os'); return;
+  if (f.charge) {
+    const c = f.charge; f.charge = null;
+    foeStrike(B, ev, f, pickTarget(B), c.kind === 'slow' ? 2.2 : 2, c.name);
+    return;
   }
   if ((f.trait === 'howl' || f.trait === 'slow') && f.lastCharge !== f.turn - 1 && B.rng.chance(0.4)) {
     f.lastCharge = f.turn;
@@ -467,16 +473,50 @@ function foeTurn(B, ev, f) {
   else foeStrike(B, ev, f, t, 1, 'Attaque');
 }
 
+// Bosses: every 3rd turn they announce their special attack, released on their next turn.
+function bossAct(B, ev, f, extra = false) {
+  if (f.intangibleOn && !extra) {
+    f.intangible = !f.intangible;
+    if (f.intangible) ev.push({ t: 'say', text: `${f.name} devient intangible : seule la magie le touche vraiment !`, uid: f.uid });
+  }
+  if (f.charge) {
+    const c = f.charge; f.charge = null;
+    const targets = c.target === 'all' ? livingH(B) : [pickTarget(B)];
+    ev.push({ t: 'act', uid: f.uid, kind: 'foe', name: c.name, targets: targets.map(h => h.uid), pose: 'blast', big: true, sfx: 'boss_roar' });
+    for (const h of targets) {
+      const d = hit(B, ev, f, h, calc(B, f, h, c.mult, 'atk', 'phys'));
+      if (d > 0 && alive(h) && c.status && B.rng.chance(c.chance ?? 1)) addStatus(B, ev, h, c.status, c.status === 'freeze' ? 1 : f.atk * 0.2, f);
+    }
+    return;
+  }
+  if (f.special && !extra && f.turn % 3 === 2) {
+    const S = f.special;
+    f.charge = { kind: 'special', ...S };
+    ev.push({ t: 'charge', uid: f.uid, name: S.name, aoe: S.target === 'all',
+      text: `${f.name} prépare ${S.name} : ${S.target === 'all' ? 'toute l’équipe sera frappée' : 'un héros sera frappé très fort'} à son prochain tour !` });
+    return;
+  }
+  foeStrike(B, ev, f, pickTarget(B), 1, 'Attaque');
+}
+
 function bossPhase2(B, ev, f) {
-  f.phase = 2; f.wall = Math.round(f.hpMax * 0.25);
-  ev.push({ t: 'phase', uid: f.uid, text: `${f.name} s’entoure d’une muraille d’os ! Le feu la brise deux fois plus vite.` });
-  const free = 3 - livingF(B).length;
-  for (let i = 0; i < Math.min(2, free); i++) {
-    const s = makeFoe(B, { id: 'skel', hpMul: f.mul.hp, atkMul: f.mul.atk }, 1 + i, 3);
-    s.slot = foesOf(B).length; s.summoned = true;
+  const P = f.phaseDef;
+  f.phase = 2;
+  ev.push({ t: 'phase', uid: f.uid, text: `${f.name} ${P.text}` });
+  if (P.kind === 'wall') { f.wall = Math.round(f.hpMax * P.pct); f.wallWeak = P.weak; }
+  if (P.kind === 'thorns') f.thornsPct = P.pct;
+  if (P.kind === 'enrage') f.atk = Math.round(f.atk * P.atkMul);
+  if (P.kind === 'regen') f.regenPct = P.pct;
+  if (P.kind === 'intangible') f.intangibleOn = true;
+  if (P.kind === 'double') f.actTwice = true;
+  if (P.kind === 'summonShield') f.shieldTaken = P.taken;
+  const free = Math.max(0, 3 - livingF(B).length);
+  (P.summon || []).slice(0, free).forEach((id, i) => {
+    const s = makeFoe(B, { id, hpMul: f.mul.hp, atkMul: f.mul.atk, defMul: f.mul.def }, 1 + i, 3);
+    s.slot = 1 + i; s.summoned = true; s.guards = f.uid;
     B.units.push(s); B.queue.push(s.uid);
     ev.push({ t: 'summon', uid: s.uid, src: f.uid });
-  }
+  });
 }
 
 /** Snapshot of the heroes after the fight, for the run. */
@@ -491,7 +531,7 @@ export function autoFight(B, { smart = true } = {}) {
   while (!B.over && n++ < 5000) {
     if (smart) {
       for (const h of heroesOf(B)) if (canUlt(B, h)) castUltimate(B, h.uid);
-      if (foesOf(B).some(f => alive(f) && f.charge && f.charge.kind === 'scythe') && canGuard(B)) useGuard(B);
+      if (foesOf(B).some(f => alive(f) && f.charge && f.charge.kind === 'special' && f.charge.target === 'all') && canGuard(B)) useGuard(B);
       const low = livingH(B).find(h => pct(h) < 0.3);
       if (low && canItem(B, 'pot')) useItem(B, 'pot');
       if (canItem(B, 'fea')) useItem(B, 'fea');

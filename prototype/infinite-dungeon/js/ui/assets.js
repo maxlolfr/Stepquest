@@ -4,7 +4,7 @@
 // or deletes a file, tests/assets.test.js fails instead of the game breaking silently.
 // Pure module: no DOM access, so Node tests can import it.
 import { ANIM, POSEM } from '../data/sprite-metrics.js';
-import { MONSTERS, ZONES } from '../data/monsters.js';
+import { MONSTERS, BOSSES, ZONES, ZONE_MUSIC } from '../data/monsters.js';
 import { HEROES } from '../data/heroes.js';
 import { RELICS, CONSUMABLES, EVENTS } from '../data/items.js';
 import { UPGRADES } from '../data/balance.js';
@@ -25,13 +25,15 @@ for (const [id, b] of Object.entries(HERO_SPRITE)) {
   for (const [act, n] of Object.entries(ANIM[b] || {})) for (let i = 0; i < n; i++) add(`${b}A_${act}${i}`, DB2);
 }
 // monsters (Dragonbound 1) and the boss (Dragonbound II): every pose that has floor metrics
-for (const [id, M] of Object.entries(MONSTERS)) {
+for (const [id, M] of [...Object.entries(MONSTERS), ...Object.entries(BOSSES)]) {
   const dir = M.dir === 'db2' || M.boss ? DB2 : DB1;
   for (const k of Object.keys(POSEM)) if (k === id || k.startsWith(id + '_')) add(k, dir);
 }
 // backgrounds
 IMG.bg_title = `${DB2}img/bg_c7_1.webp`;
-for (const z of ZONES) for (const [bg] of z.bgs) add(bg, DB2);
+// level backgrounds: Dragonbound II (bg_c*) or, for one level, Dragonbound 1
+export const bgDir = bg => (bg.startsWith('bg_c') ? DB2 : DB1);
+for (const z of ZONES) for (const L of z.levels) add(L.bg, bgDir(L.bg));
 // effects, gear, interface
 for (const fx of ['fire', 'heal', 'ice', 'slash', 'ult']) add(`fx_${fx}`, DB2);
 for (const hero of Object.keys(HEROES)) for (let r = 1; r <= 3; r++) add(`gw_${hero}_${r}`, DB2);
@@ -40,6 +42,7 @@ for (const k of ['uiGem', 'uiTrophy', 'uiSkull']) add(k, DB2);
 for (const k of ['uiPotion', 'uiGold', 'uiScroll', 'uiDice', 'uiChest1', 'uiChest2', 'uiChest3', 'chestR1', 'chestR2', 'chestR3', 'chestR4']) add(k, DB1);
 // original images of Infinite Dungeon (img/ of this folder)
 for (const R of [...Object.values(RELICS), ...EVENTS, ...Object.values(UPGRADES)]) if (R.art) IMG[R.art] = `img/${R.art}.webp`;
+for (const E of EVENTS) if (E.scene && !IMG[E.scene]) throw new Error(`décor manquant pour l’événement ${E.id}: ${E.scene}`);
 for (const k of ['room_rest', 'room_shop', 'camp_scene', 'bg_menu']) IMG[k] = `img/${k}.webp`;
 for (const R of [...Object.values(RELICS), ...Object.values(CONSUMABLES)]) if (!IMG[R.img]) throw new Error(`asset manquant pour ${R.name}: ${R.img}`);
 
@@ -48,7 +51,7 @@ export const IMAGES = IMG;
 const snd = (k, dir = DB2) => `${dir}audio/${k}.mp3`;
 export const AUDIO = {
   m_title: snd('m_crypt'),
-  ...Object.fromEntries(['m_crypt', 'm_swamp', 'm_necro', 'm_boss', 'm_victory', 'm_defeat', 'm_theme'].map(k => [k, snd(k)])),
+  ...Object.fromEntries([...ZONE_MUSIC, 'm_boss', 'm_victory', 'm_defeat', 'm_theme'].map(k => [k, snd(k)])),
   ...Object.fromEntries([
     'ald_sword', 'ald_taunt', 'ald_bash', 'ald_whirl', 'sel_mace', 'sel_heal', 'sel_smite', 'sel_raise', 'ori_bolt', 'ori_fire', 'ori_ice',
     'lyr_arrow', 'lyr_aimed', 'lyr_venom', 'lyr_rain', 'nyx_dagger', 'nyx_blades', 'nyx_assassin', 'nyx_shadow',

@@ -3,7 +3,7 @@
 // Reading never throws: a broken save is moved aside and the game starts fresh
 // with a message. Writing never throws: failure returns false (the UI warns).
 import { newMeta, sanitizeMeta } from '../run/meta.js';
-import { RUN_VERSION } from '../run/run.js';
+import { RUN_VERSION, migrateRun } from '../run/run.js';
 
 export const SAVE_KEY = 'sqid.save.v1';
 export const BACKUP_KEY = 'sqid.save.bak';
@@ -12,6 +12,7 @@ export const SAVE_VERSION = 1;
 const fresh = () => ({ v: SAVE_VERSION, meta: newMeta(), run: null });
 
 function validRun(r) {
+  migrateRun(r);
   return r && typeof r === 'object' && r.v === RUN_VERSION && Number.isFinite(r.seed) && Number.isFinite(r.floor)
     && Array.isArray(r.team) && r.team.length === 3 && typeof r.phase === 'string';
 }

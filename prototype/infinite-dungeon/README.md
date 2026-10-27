@@ -4,36 +4,56 @@ Roguelite fantasy mobile, nom de travail. Jeu indépendant de Dragonbound II / A
 aucun fichier de `prototype/dragonbound2/`, `prototype/dragonbound/` ni `prototype/dragonbound-tests/` n'est modifié.
 Le plan complet (audit, architecture, MVP) est dans le document « Infinite Dungeon — Audit et plan (phase 1) ».
 
-## État — version 0.2 (prototype jouable)
+## État — version 0.3 « La Tour »
 
 | Partie | Contenu | État |
 | --- | --- | --- |
-| Accueil, équipe | 3 héros parmi 5 (Aldric, Séléna, Orin, Lyra, Nyx) | Fait |
+| Accueil, équipe | 3 héros parmi 5 (Aldric, Séléna, Orin, Lyra, Nyx), choix du point de départ | Fait |
 | Moteur de combat | Automatique, déterministe, 2 compétences + passif + ultime par héros, éléments, états | Fait |
 | Interventions | Ultimes (toucher le portrait), Garde, potion, plume de phénix, pause, vitesse ×1/×2/×4 | Fait |
-| Donjon | 10 étages : combats, élites, coffres, repos, marchand, événements, Gardien (5), Roi des Os (10) | Fait |
-| Récompenses | 3 cartes : soin, statistique, compétence, élément, équipement (3 raretés), relique (12) | Fait |
-| Progression | Éclats, sécurisés à l'étage 5, retraite, camp à 4 améliorations | Fait |
-| Sauvegarde | Après chaque étape, copie de secours, erreurs gérées | Fait |
-| Mode test | `?debug` : graine, étage, équipe, combat direct, éclats, export/import | Fait |
-| Équilibrage | Simulé (`node tools/simulate.mjs`), à confirmer en jouant | À régler |
+| La Tour | 50 étages = les 50 niveaux de Dragonbound II, 10 zones de 5 étages (monstres, décors et musique de chaque chapitre) | Fait |
+| Boss | 10 boss : une attaque annoncée un tour avant + un changement à mi-vie (muraille, ronces, rage, régénération, invocations protectrices, résurrection, intangibilité, double action) | Fait |
+| Étages | 1 : deux combats · 2-3 : combat + coffre/événement/élite/marchand · 4 : repos + marchand (+ élite) · 5 : boss | Fait |
+| Élites | 8 affixes : enragé, épineux, spectral, doré, régénérant, vampirique, blindé, explosif | Fait |
+| Événements | 11 (dont 6 nouveaux : forge, obélisque, parieur, aventurier gelé, autel de sang, bibliothèque) | Fait |
+| Niveaux des héros | XP à chaque victoire, statistiques selon les courbes de Dragonbound II (niveau max 80) | Fait |
+| Progression | Éclats sécurisés après chaque boss, retraite, départs aux étages 11/21/31/41 débloqués par les boss | Fait |
+| Camp | 7 améliorations : vie, attaque/magie, défense, niveau de départ (10 niveaux chacune), or, potions, relances | Fait |
+| Sauvegarde | Après chaque étape, copie de secours ; une expédition v0.2 continue dans la Tour | Fait |
+| Mode test | `?debug` : graine, étage 1-50, équipe, combat/élite/boss direct, éclats, export/import | Fait |
+| Équilibrage | Simulé (`tools/simulate.mjs`), à confirmer en jouant | À régler |
 
 ### Règles de perte
 
-| Ressource | Victoire | Retraite | Défaite |
+| Ressource | Victoire (étage 50) | Retraite | Défaite |
 | --- | --- | --- | --- |
-| Or, équipement, reliques, bonus | perdus | perdus | perdus |
-| Éclats non sécurisés | 100 % + 20 | 100 % | 50 % |
-| Éclats sécurisés (étage 5) | gardés | gardés | gardés |
-| Améliorations du camp | gardées | gardées | gardées |
+| Or, équipement, reliques, niveaux, bonus | perdus | perdus | perdus |
+| Éclats non sécurisés | 100 % + 100 | 100 % | 50 % |
+| Éclats sécurisés (après chaque boss) | gardés | gardés | gardés |
+| Améliorations du camp, départs débloqués | gardés | gardés | gardés |
 
-Après une victoire, un héros tombé se relève avec 20 % de vie.
+Après une victoire, un héros tombé se relève avec 20 % de vie, les autres récupèrent 10 %.
+
+### Points de départ
+
+Battre le boss de l'étage 10 (20, 30, 40) permet de commencer les expéditions suivantes à l'étage 11 (21, 31, 41).
+Pour compenser les étages sautés, l'équipe part avec des niveaux, de l'or, des potions, une arme rare,
+une armure et une relique par tranche de 10 étages.
+
+### Équilibrage simulé (v0.3, joueur attentif, à confirmer en jouant)
+
+- Camp vide, départ à l'étage 1 : étage médian 20 ; le 1er boss tombe 9 fois sur 10.
+- Joueur qui enchaîne les expéditions et améliore le camp : tour terminée en 15 à 20 expéditions environ.
+- Soin de Séléna réduit (×1,3 au lieu de ×1,9), soin de groupe du Châtiment réduit, ultime 30 % sans bouclier.
+  Les équipes avec Séléna restent les plus solides (étage médian ≈ 30 contre ≈ 22).
 
 ### Adaptations par rapport à Dragonbound II
 
-Noms, rôles, passifs, compétences, ultimes, monstres, faiblesses et icônes viennent de Dragonbound II 1.9.11.
+Noms, rôles, passifs, compétences, ultimes, monstres (statistiques, traits, faiblesses), noms des zones et des niveaux,
+décors et musiques viennent de Dragonbound II (`tools/sync-db2-data.mjs` régénère `js/data/db2-data.js`, en lecture seule).
 Pour le combat automatique : 2 compétences par héros sur temps de recharge (au lieu de 3-4 sur mana),
-une statistique de vitesse pour l'ordre des tours, statistiques de départ au niveau 8.
+une statistique de vitesse pour l'ordre des tours ; le niveau 1 ici correspond au niveau 8 de Dragonbound II.
+Les statistiques et mécaniques des boss sont propres à ce jeu. Le niveau « Le pont d'étoiles » utilise un décor de Dragonbound 1.
 
 ## Adresse
 
@@ -58,7 +78,8 @@ Depuis `prototype/infinite-dungeon/` :
 
 ```bash
 node --test tests/*.test.js                 # moteur, donjon, récompenses, sauvegarde, assets (Node 22)
-node tools/simulate.mjs 300                 # équilibrage : 300 expéditions simulées
+node tools/simulate.mjs 300                 # équilibrage : 300 expéditions simulées (HEROES=1 : par héros)
+CAMPAIGN=1 node tools/simulate.mjs 40       # 40 joueurs qui enchaînent les expéditions
 NODE_PATH=$(npm root -g) node tests/smoke.js   # navigateur, tailles iPhone (Playwright + Chromium)
 ```
 
