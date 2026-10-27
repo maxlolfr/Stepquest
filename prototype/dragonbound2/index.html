@@ -355,7 +355,7 @@ if (window.DB2_LANG !== 'fr') document.write('<script src="lang-' + window.DB2_L
 <script>
 (() => {
 'use strict';
-const VERSION = 'Ardael · Version 1.9.11 (10 chapitres)';
+const VERSION = 'Ardael · Version 1.9.12 (10 chapitres)';
 // 2.0 lot 1: ONE switch for the store build. COMMERCIAL = true removes the test menu and the ×10-×30 speeds for everyone;
 // while it is false, adding ?release to the address previews the commercial build without touching the code.
 const COMMERCIAL = false;
@@ -888,9 +888,10 @@ function autoEquip() { let n = 0; const heroes = S.team.concat(Object.keys(S.own
       if (best) { plan[best] = it; taken.add(it.id); } }
     for (const id of heroes) { const it = plan[id], cur = (S.h[id].eq || {})[sl]; if (it && it.id !== cur) { equip(id, it); n++; } } }
   return n; }
-// skill ranks: 1 point every 2 levels, rank 1..5, +10 % power per rank (Ultime +12 %)
+// skill ranks: 1 point every 2 levels, rank 1..SK_MAX, +10 % power per rank (Ultime +12 %). 1.9.12: cap 5 → 8 (maxed at level 71 instead of 41)
+const SK_MAX = 8;
 const rankOf = (id, k) => ((S.h[id].sk || {})[k]) || 1;
-const maxed = id => HEROES[id].skills.concat('ult').every(k => rankOf(id, k) >= 5);
+const maxed = id => HEROES[id].skills.concat('ult').every(k => rankOf(id, k) >= SK_MAX);
 const mastery = id => maxed(id) ? Math.max(0, ptsLeft(id)) : 0; // 1.4.3: points beyond the skill cap give +1.5 % to every stat
 const spendable = id => maxed(id) ? 0 : Math.max(0, ptsLeft(id));
 const ptsLeft = id => Math.floor((S.h[id].lvl - 1) / 2) - Object.values(S.h[id].sk || {}).reduce((a, r) => a + r - 1, 0);
@@ -1997,7 +1998,7 @@ let hsCtl = { id: 'aldric', tab: 'eq' };
 function heroSheet(id, tab) { if (id) hsCtl.id = id; if (tab) hsCtl.tab = tab; const ids = HORDER.filter(k => S.own[k]); id = hsCtl.id; const H = HEROES[id], s = S.h[id], st = heroStats(id), pts = spendable(id), eq = s.eq || {};
   const slots = ['w', 'a', 'j'].map(sl => { const it = itemById(eq[sl]); return it ? `<div class="on" style="${rcss(it)}"><img src="${itemImg(it)}" alt="">${it.name}</div>` : `<div>${SLOTN[sl]}<br>vide</div>`; }).join('');
   const sks = H.skills.concat('ult').map(k => { const S2 = k === 'ult' ? { name: H.ult.name, img: null, ic: '🌟', tip: H.ult.tip } : SK[k], r = rankOf(id, k);
-    return `<div class="skrow"><i>${icon(S2.img, S2.ic)}</i><div class="grow"><b>${S2.name}</b> <span class="pips">${'◆'.repeat(r)}${'◇'.repeat(5 - r)}</span><small>${k === 'ult' ? 'Ultime · ' : ''}+${Math.round((rkMult(id, k) - 1) * 100)} % de puissance</small></div><button type="button" data-skup="${k}" ${pts > 0 && r < 5 ? '' : 'disabled'} aria-label="Améliorer">+</button></div>`; }).join('');
+    return `<div class="skrow"><i>${icon(S2.img, S2.ic)}</i><div class="grow"><b>${S2.name}</b> <span class="pips">${'◆'.repeat(r)}${'◇'.repeat(SK_MAX - r)}</span><small>${k === 'ult' ? 'Ultime · ' : ''}+${Math.round((rkMult(id, k) - 1) * 100)} % de puissance</small></div><button type="button" data-skup="${k}" ${pts > 0 && r < SK_MAX ? '' : 'disabled'} aria-label="Améliorer">+</button></div>`; }).join('');
   const bag = S.inv.filter(it => canWear(it, id)).sort((a, b) => (b.slot === 'w') - (a.slot === 'w') || b.r - a.r || b.t - a.t);
   const best = {}; for (const it of bag) if (!best[it.slot] || itemScore(it, id) > itemScore(best[it.slot], id)) best[it.slot] = it;
   const list = bag.map(it => itemHtml(it, id, `${best[it.slot] === it ? '<span class="bestb">★ Meilleur</span>' : ''}${(eq[it.slot] === it.id) ? '' : `<button type="button" data-icmp="${it.id}">Comparer</button>`}${wornBy(it) ? '' : `<button type="button" class="sell" data-isell="${it.id}">${sellPrice(it)} or</button>`}`)).join('') || '<p style="text-align:center">Aucun objet pour ce héros. Les coffres tombent à la fin de chaque niveau.</p>';
@@ -2194,7 +2195,7 @@ document.addEventListener('click', e => {
   if (d.htab) return heroSheet(null, d.htab);
   if (d.spec) { const s = S.h[hsCtl.id]; if (s.lvl < SPEC_LV) return; if (s.spec) { if (S.gold < SPEC_RE) return; S.gold -= SPEC_RE; } s.spec = d.spec; save(); SFX.levelup(); toast(`${specOf(hsCtl.id)[2]} ${HEROES[hsCtl.id].name} suit la voie : <b>${specOf(hsCtl.id)[1]}</b>`); return heroSheet(); }
   if (d.hnav) { const ids = HORDER.filter(k => S.own[k]), i = ids.indexOf(hsCtl.id); return heroSheet(ids[(i + +d.hnav + ids.length) % ids.length]); }
-  if (d.skup) { const sk = (S.h[hsCtl.id].sk = S.h[hsCtl.id].sk || {}); if (ptsLeft(hsCtl.id) > 0 && (sk[d.skup] || 1) < 5) { sk[d.skup] = (sk[d.skup] || 1) + 1; SFX.buff(); } return heroSheet(); }
+  if (d.skup) { const sk = (S.h[hsCtl.id].sk = S.h[hsCtl.id].sk || {}); if (ptsLeft(hsCtl.id) > 0 && (sk[d.skup] || 1) < SK_MAX) { sk[d.skup] = (sk[d.skup] || 1) + 1; SFX.buff(); } return heroSheet(); }
   if (d.iequip) { const it = itemById(+d.iequip); if (it) { equip(hsCtl.id, it); SFX.buff(); } return heroSheet(); }
   if (d.isell) { const it = itemById(+d.isell); if (it && !wornBy(it)) { S.inv = S.inv.filter(x => x !== it); S.gold += sellPrice(it); SFX.coin(); } return heroSheet(); }
   if (d.autoeq) { const n = autoEquip(); SFX[n ? 'buff' : 'click'](); toast(n ? `✅ ${n} objet${n > 1 ? 's' : ''} équipé${n > 1 ? 's' : ''} sur ton équipe` : 'Tes héros portent déjà leur meilleur équipement.'); return heroSheet(); }
@@ -2258,6 +2259,7 @@ renderHome();
 function afterIntro() { if (S.selLate) { delete S.selLate; save(); return story('selena', afterIntro); } if (S.pend && S.pend.length) { toast('🎁 Le butin de ton dernier combat t’attend !'); return runPend().then(afterIntro); } if (!S.seen.in) { S.seen.ver = VER; return story('in', helpSheet); } if (S.seen.ver !== VER) { S.seen.ver = VER; save(); return newsSheet(() => { if (loginReady()) loginSheet(); }); } if (loginReady()) loginSheet(); }
 // 1.1: every version's notes live here; the newest is shown once per version, the whole list from the Nouveautés button
 const CHANGELOG = [
+  { v: '1.9.12', t: 'Version 1.9.12 · Compétences niveau 8', d: `<p>• Les compétences montent maintenant jusqu’au <b>rang 8</b> (au lieu de 5) : +70 % de puissance au maximum (Ultime +84 %). Tes héros déjà au maximum retrouvent des points à dépenser.</p><p>• La Maîtrise 🏅 prend le relais une fois les 5 compétences au rang 8 (vers le niveau 71).</p>`, en: { v: '1.9.12', t: 'Version 1.9.12 · Skills up to rank 8', d: `<p>• Skills now go up to <b>rank 8</b> (instead of 5): up to +70% power (Ultimate +84%). Heroes who were already maxed get points to spend again.</p><p>• Mastery 🏅 takes over once all 5 skills reach rank 8 (around level 71).</p>` }, th: { v: '1.9.12', t: 'เวอร์ชัน 1.9.12 · สกิลถึงระดับ 8', d: `<p>• ตอนนี้สกิลอัปได้ถึง<b>ระดับ 8</b> (จากเดิม 5): พลังสูงสุด +70 % (อัลติเมต +84 %) ฮีโร่ที่สกิลเต็มแล้วจะได้แต้มกลับมาใช้</p><p>• ความชำนาญ 🏅 จะเริ่มทำงานเมื่อสกิลทั้ง 5 ถึงระดับ 8 (ประมาณเลเวล 71)</p>` } },
   { v: '1.9.11', t: 'Version 1.9.11 · Accueil et boutique', d: `<p>• Boutique : les boutons d’achat de l’équipement s’affichent correctement.</p><p>• Accueil plus aéré : boutons plus grands, le bouton Nouveautés disparaît (les nouveautés s’affichent toujours une fois après une mise à jour).</p>`, en: { v: '1.9.11', t: 'Version 1.9.11 · Home and shop', d: `<p>• Shop: the gear buy buttons now display correctly.</p><p>• Roomier home screen: bigger buttons, the What’s new button is gone (news still shows once after an update).</p>` }, th: { v: '1.9.11', t: 'เวอร์ชัน 1.9.11 · หน้าหลักและร้านค้า', d: `<p>• ร้านค้า: ปุ่มซื้ออุปกรณ์แสดงผลถูกต้องแล้ว</p><p>• หน้าหลักโปร่งขึ้น: ปุ่มใหญ่ขึ้น ปุ่มมีอะไรใหม่ถูกนำออก (ข่าวยังแสดงหนึ่งครั้งหลังอัปเดต)</p>` } },
   { v: '1.9.10', t: 'Version 1.9.10 · Ardael', d: `<p>• Le jeu a un nouveau nom : <b>Ardael: The Broken Seal</b>, avec son nouveau logo. Ta partie est conservée.</p>`, en: { v: '1.9.10', t: 'Version 1.9.10 · Ardael', d: `<p>• The game has a new name: <b>Ardael: The Broken Seal</b>, with its new logo. Your progress is kept.</p>` }, th: { v: '1.9.10', t: 'เวอร์ชัน 1.9.10 · Ardael', d: `<p>• เกมมีชื่อใหม่: <b>Ardael: The Broken Seal</b> พร้อมโลโก้ใหม่ ความคืบหน้าของคุณยังอยู่ครบ</p>` } },
   { v: '1.9.9', t: 'Version 1.9.9 · ไทย', d: `<p>• Le jeu est maintenant <b>disponible en thaï</b> (bouton 🌐 de l’accueil).</p>`, en: { v: '1.9.9', t: 'Version 1.9.9 · ไทย', d: `<p>• The game is now <b>available in Thai</b> (🌐 button on the home screen).</p>` }, th: { v: '1.9.9', t: 'เวอร์ชัน 1.9.9 · ภาษาไทย', d: `<p>• ตอนนี้เกม<b>มีภาษาไทยแล้ว</b> (ปุ่ม 🌐 ที่หน้าหลัก)</p>` } },
@@ -2364,7 +2366,7 @@ async function simCampaign(runs = 1, upto = 99, tier = 0, tch = 0) {
   }
   return out;
 }
-function simSkills() { for (const id of Object.keys(S.own)) { const s = S.h[id]; if (s.lvl >= SPEC_LV && !s.spec) s.spec = pick(SPECS[id])[0]; { const ks = HEROES[id].skills.concat('ult'); s.sk = s.sk || {}; let g = 50; while (ptsLeft(id) > 0 && g--) { const k = pick(ks); if ((s.sk[k] || 1) < 5) s.sk[k] = (s.sk[k] || 1) + 1; } } } }
+function simSkills() { for (const id of Object.keys(S.own)) { const s = S.h[id]; if (s.lvl >= SPEC_LV && !s.spec) s.spec = pick(SPECS[id])[0]; { const ks = HEROES[id].skills.concat('ult'); s.sk = s.sk || {}; let g = 50; while (ptsLeft(id) > 0 && g--) { const k = pick(ks); if ((s.sk[k] || 1) < SK_MAX) s.sk[k] = (s.sk[k] || 1) + 1; } } } }
 function autoShop() { for (const id of S.team) for (const k of ['w', 'a']) { const c = upCost(S.h[id][k]); if (S.gold >= c + 60) { S.gold -= c; S.h[id][k]++; } } while (S.gold >= 60 && S.items.pot < 3) { S.gold -= 30; S.items.pot++; } }
 window.__db2 = { simCampaign, get B() { return B; }, get S() { return S; }, set S(v) { S = v; }, runLevel, HEROES, MON, SK, LEVELS, setFast: v => { FAST = v; }, SOLO, synergy, setRoute: v => { simRoute = v; }, heroStats, statsWith, itemDecide, openChests, makeItem };
 })();
