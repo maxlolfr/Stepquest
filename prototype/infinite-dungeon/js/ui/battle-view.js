@@ -197,6 +197,7 @@ export function createView(canvas, B, door) {
       const y = t.y - k * 46;
       let tx = t.x;
       const im = t.ic && getImage(t.ic);
+      if (im && !t.text) { const s = size * 1.5; cx.drawImage(im, t.x - s / 2, y - s * 0.8, s, s); cx.globalAlpha = 1; continue; } // icon-only pop
       if (im) { const tw = cx.measureText(t.text).width, s = size * 1.05; tx = t.x + s / 2 + 2; cx.drawImage(im, tx - tw / 2 - s - 3, y - s * 0.85, s, s); }
       cx.strokeText(t.text, tx, y); cx.fillStyle = t.col; cx.fillText(t.text, tx, y);
       cx.globalAlpha = 1;

@@ -155,7 +155,8 @@ export async function runBattle(root, { config, door, floor, settings }) {
           if (e.immune) { view.text(u, 'Immunisé', '#cfe6ff'); break; }
           const lab = { poison: 'Poison', burn: 'Brûlure', stun: 'Étourdi', freeze: 'Gelé', mark: 'Marqué', taunt: 'Provocation' }[e.st];
           const col = { poison: '#a6ff6e', burn: '#ffb35c', stun: '#ffe27a', freeze: '#9fe3ff', mark: '#ff8a7a', taunt: '#cfe0ff' }[e.st];
-          if (lab) view.text(u, lab, col, false, e.st === 'taunt' ? null : `st_${e.st}`);
+          // v0.6: the status stays visible as an icon above the unit; here only a short pop (word kept for taunt and mark)
+          if (lab) view.text(u, e.st === 'taunt' || e.st === 'mark' ? lab : '', col, false, e.st === 'taunt' ? null : `st_${e.st}`);
           const s = { poison: 'poison', burn: 'burn', stun: 'stun', freeze: 'freeze' }[e.st]; if (s) sfx(s, 0.45);
           await wait(140); break;
         }

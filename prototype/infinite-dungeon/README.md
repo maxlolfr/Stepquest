@@ -4,6 +4,21 @@ Roguelite fantasy mobile, nom de travail. Jeu indépendant de Dragonbound II / A
 aucun fichier de `prototype/dragonbound2/`, `prototype/dragonbound/` ni `prototype/dragonbound-tests/` n'est modifié.
 Le plan complet (audit, architecture, MVP) est dans le document « Infinite Dungeon — Audit et plan (phase 1) ».
 
+## Version 0.6 « Juste et lisible »
+
+Rapport complet, mesures avant/après et instructions de test manuel : [docs/v0.6-rapport.md](docs/v0.6-rapport.md).
+
+- **Fin des combats interminables** : à partir du tour 30, les ennemis s'enragent (+10 % d'attaque par tour, plus aucun soin), annoncé 5 tours avant et affiché en haut de l'écran. Au tour 60, défaite explicite (« temps écoulé ») expliquée sur le bilan.
+- **Tour rééquilibrée** : après l'étage 21, les monstres ont moins de vie et frappent plus fort ; les 10 boss sont recalés un par un (Morgane n'est plus un mur, la difficulté monte régulièrement).
+- **10 emplacements de reliques** : une 11ᵉ ouvre un écran de remplacement (comparaison, avertissement si une synergie se casse, confirmation obligatoire, refus possible et remboursé chez le marchand).
+- **Portes** : élites plus dangereuses en milieu de tour, même XP qu'un combat normal (le combat normal rapporte plus d'XP et d'or qu'avant).
+- **Aldric** : Provocation lui rend 10 % de vie, Lame de l'Aube soigne l'équipe de 15 % : les équipes sans Séléna tiennent.
+- **Marchand** : Bénédiction (+5 % attaque, magie, vie pour l'équipe, rachetable, plus chère à chaque fois).
+- **Cartes Élément** : indiquent combien de monstres de la zone y sont faibles. **Départ d'un point de passage** : la dernière relique de départ est choisie (1 parmi 3).
+- **Lisibilité** : icônes peintes des statuts et de l'enrage, porte Repos dédiée, textes flottants empilés, élites désignées par leur trait.
+- **Sauvegarde** : abandonner une expédition ne valide plus ni objectif ni exploit ; une expédition lancée par le mode test (`?debug`) ne touche plus à la progression réelle.
+- Outil `tools/bench.mjs` : mesures par boss, équipe, porte, carte et relique.
+
 ## Version 0.5 « Revenir »
 
 - **Mode Cauchemar** (débloqué par le boss de l'étage 10) : 8 malédictions à choisir au départ (Fureur, Tyrans, Horde, Crocs venimeux, Fioles fêlées, Bourse percée, Feu éteint, Brume), chacune donne +10 à +25 % d'éclats.
@@ -96,6 +111,7 @@ Depuis `prototype/infinite-dungeon/` :
 node --test tests/*.test.js                 # moteur, donjon, récompenses, sauvegarde, assets (Node 22)
 node tools/simulate.mjs 300                 # équilibrage : 300 expéditions simulées (HEROES=1 : par héros)
 CAMPAIGN=1 node tools/simulate.mjs 40       # 40 joueurs qui enchaînent les expéditions
+node tools/bench.mjs all                    # v0.6 : boss par niveau de camp, 10 équipes, portes, cartes, reliques
 NODE_PATH=$(npm root -g) node tests/smoke.js   # navigateur, tailles iPhone (Playwright + Chromium)
 ```
 

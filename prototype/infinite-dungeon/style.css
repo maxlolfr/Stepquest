@@ -347,7 +347,7 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 .btn.danger{border-color:#b0303a;color:#ffb4a8}
 
 /* v0.6 — relic replacement */
-.card .full { margin-top: 6px; font-size: 13px; font-weight: 800; color: #ffb36b; }
+.card .full { margin-top: 6px; font-size: 14px; font-weight: 800; color: #ffb36b; }
 .replace .rp-h { margin: 14px 0 6px; font-size: 15px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .5px; }
 .rtiles { display: grid; gap: 8px; }
 .rtile { display: flex; gap: 10px; align-items: flex-start; width: 100%; text-align: left; padding: 10px; border-radius: 14px; border: 2px solid var(--line); background: rgba(30,22,44,.92); color: inherit; }
@@ -358,13 +358,13 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 .rtile-body { min-width: 0; }
 .rtile-body b { display: block; font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 18px; color: #ffe7a3; }
 .rtile-body p { margin: 2px 0 4px; font-size: 14px; line-height: 1.3; color: var(--ink-soft); }
-.rtile-tag { display: inline-block; font-size: 12px; font-weight: 800; color: #bfe3ff; margin-right: 8px; }
+.rtile-tag { display: inline-block; font-size: 14px; font-weight: 800; color: #bfe3ff; margin-right: 8px; }
 .rtile-tag.none { color: #998; }
-.rtile-warn { display: inline-block; font-size: 12px; font-weight: 800; color: #ffb36b; }
+.rtile-warn { display: inline-block; font-size: 14px; font-weight: 800; color: #ffb36b; }
 .pfoot.col { display: flex; flex-direction: column; gap: 8px; position: sticky; bottom: 0; margin: 0 -16px; padding: 18px 16px calc(var(--safe-b, 0px) + 10px); background: linear-gradient(rgba(11,8,18,0), rgba(11,8,18,.97) 16px); }
 .rp-verdict { margin: 0; text-align: center; font-weight: 800; font-size: 14px; color: var(--ink-soft); }
 .rp-verdict.bad { color: #ffb36b; } .rp-verdict.good { color: #9dff6a; }
-.relic-count { align-self: center; font-size: 13px; font-weight: 800; color: var(--ink-soft); padding: 0 4px; }
+.relic-count { align-self: center; font-size: 14px; font-weight: 800; color: var(--ink-soft); padding: 0 4px; }
 .relic-count.full { color: #ffb36b; }
 
 /* v0.6 — enrage */

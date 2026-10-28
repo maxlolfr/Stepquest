@@ -123,6 +123,34 @@ srv.listen(0, async () => {
       await pg.click('.pfoot .btn.primary'); await pg.waitForTimeout(500);
       check(`${tag} : expédition maudite lancée`, await pg.evaluate(() => window.__sqid.app.data.run && window.__sqid.app.data.run.curses.length === 2));
 
+      // v0.6: starting relic chosen at a checkpoint
+      await pg.evaluate(async () => { const A = await import('./js/ui/app.js'); A.app.data.meta.unlocked = 21; A.startRun(['aldric', 'lyra', 'nyx'], { seed: 31, start: 21 }); });
+      await pg.waitForTimeout(500);
+      check(`${tag} : départ à l'étage 21 → relique de départ au choix (1 parmi 3)`, /Départ/.test(await pg.textContent('.ptop h2')) && (await pg.$$('.cards .card.t-relic')).length === 3);
+      await ui('relique de départ'); await shot('7d-relique-depart');
+      await pg.click('.cards .card >> nth=1'); await pg.waitForTimeout(400);
+      check(`${tag} : la relique choisie ne fait pas sauter d'étage`, /Étage 21/.test(await pg.textContent('.ptop h2')));
+
+      // v0.6: relic slots full → explicit replacement
+      await pg.evaluate(async () => { const A = await import('./js/ui/app.js'); const run = A.app.data.run;
+        run.relics = ['venin', 'brasier', 'rempart', 'sceau', 'colere', 'clarte', 'bourreau', 'antidote', 'bourse', 'calice'];
+        run.phase = 'room'; run.pending = { kind: 'replace', key: 'peste', next: 'advance', back: null, refund: 0 }; A.route(); });
+      await pg.waitForTimeout(400);
+      check(`${tag} : écran de remplacement (10/10, rien n'est perdu avant confirmation)`, await pg.isVisible('.replace') && await pg.isDisabled('.pfoot.col .btn.primary') && (await pg.$$('.rtiles .rtile')).length === 10);
+      await pg.click('.rtile >> text=Bourse du pillard'); await pg.waitForTimeout(200);
+      await ui('remplacement de relique'); await shot('7e-remplacement');
+      await pg.click('.pfoot.col .btn.primary'); await pg.waitForTimeout(400);
+      const rel = await pg.evaluate(() => window.__sqid.app.data.run.relics);
+      check(`${tag} : relique remplacée (Bourse → Peste)`, rel.length === 10 && rel.includes('peste') && !rel.includes('bourse'), rel.join(','));
+
+      // v0.6: enrage counter (thresholds lowered for the test only)
+      await pg.evaluate(async () => { const { BAL } = await import('./js/data/balance.js'); Object.assign(BAL.enrage, { warn: 1, from: 3 }); BAL.maxRounds = 200;
+        const A = await import('./js/ui/app.js'); const R = await import('./js/run/run.js');
+        A.startRun(['aldric', 'selena', 'orin'], { seed: 9, floor: 30 }); const run = A.app.data.run; R.chooseDoor(run, R.floorOf(run).doors.findIndex(d => d.type === 'boss')); A.route(); });
+      check(`${tag} : enrage affiché (compteur « Rage ×… »)`, await waitFor(pg, () => { const r = document.querySelector('.btop .round.enraged'); return r && /Rage ×/.test(r.textContent); }, null, 60000));
+      await ui('combat enragé'); await shot('7f-enrage');
+      await waitFor(pg, () => !document.querySelector('.battle'), null, 180000);
+
       // boss through the debug panel
       await pg.goto(`${base}?debug`); await waitFor(pg, () => window.__sqid && window.__sqid.ready);
       await pg.click('.dbg-toggle'); await pg.click('.dbg-row button:has-text("Boss")');
