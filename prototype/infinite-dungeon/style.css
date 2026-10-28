@@ -200,6 +200,12 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 .btop { display: flex; align-items: center; gap: 8px; padding: calc(var(--safe-t) + 6px) 10px 6px; min-height: 56px; background: linear-gradient(#000c, #0000); position: relative; z-index: 6; }
 .btop .floor { font-size: 17px; } .btop .floor b { font-family: 'Lilita One', sans-serif; font-weight: 400; font-size: 21px; color: #ffe7a3; }
 .btop .round { margin-left: auto; color: var(--ink-soft); font-weight: 800; font-size: 15px; }
+.btop .round { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.1; text-align: right; }
+.btop .round small { font-size: 12px; font-weight: 800; }
+.btop .round.soon { color: #ffc56b; }
+.btop .round.enraged { color: #fff; background: #b3201a; border: 1px solid #ff7a5c; padding: 3px 8px; border-radius: 10px; box-shadow: 0 0 12px rgba(255,60,30,.6); animation: ragepulse 1s ease-in-out infinite; }
+@keyframes ragepulse { 50% { box-shadow: 0 0 20px rgba(255,60,30,.95); } }
+@media (prefers-reduced-motion: reduce) { .btop .round.enraged { animation: none; } }
 .btns { display: flex; gap: 8px; }
 .round-btn { width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--line); background: var(--panel); font-family: 'Lilita One', sans-serif; font-size: 19px; }
 .stage { position: relative; flex: 1; min-height: 0; margin-top: -56px; }

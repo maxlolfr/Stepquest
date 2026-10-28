@@ -17,8 +17,13 @@ export const BAL = {
   startFloors: [1, 11, 21, 31, 41, 51, 61, 71, 81, 91], // checkpoints, unlocked by beating the boss just before
   // Monster base stats already grow zone after zone (Dragonbound II values);
   // these multipliers follow the heroes' growth (levels, gear, cards, relics).
-  foeHp: f => 1.4 * climb(prog(f), 1.2, 1.05),
-  foeAtk: f => 1.1 * climb(prog(f), 1.12, 1.033),
+  // v0.6: after the knee (floor ~39) life grows slower and attack faster than in v0.5,
+  // so late fights stay short and dangerous instead of long and harmless.
+  // late(f) eases in from floor `from` to floor `to`: life is trimmed and attack lifted there.
+  curve: { hp2: 1.03, atk2: 1.05, bossHp2: 1.03, bossAtk2: 1.05, from: 21, to: 45, hpTrim: 0.5, atkLift: 2, bossTrim: 0.6 },
+  late: (f, v) => 1 + (v - 1) * Math.min(1, Math.max(0, (f - BAL.curve.from) / (BAL.curve.to - BAL.curve.from))),
+  foeHp: f => 1.4 * climb(prog(f), 1.2, BAL.curve.hp2) * BAL.late(f, BAL.curve.hpTrim),
+  foeAtk: f => 1.1 * climb(prog(f), 1.12, BAL.curve.atk2) * BAL.late(f, BAL.curve.atkLift),
   foeDef: f => 1,
   foeCount: (f, rng) => ((f - 1) % ZONE_SIZE < 2 ? 2 : rng.int(2, 3)),
   elite: { hp: 1.7, atk: 1.2 },
@@ -26,9 +31,19 @@ export const BAL = {
   cursedChance: 0.3, // per mixed floor
   boss: { hp: 1, atk: 1 },
   // bosses: their own stats (monsters.js) times a climb along the tower
-  bossHp: f => 1.6 * climb(prog(f), 1.2, 1.05),
-  bossAtk: f => 0.9 * climb(prog(f), 1.12, 1.033),
-  maxRounds: 60,
+  bossHp: f => 1.6 * climb(prog(f), 1.2, BAL.curve.bossHp2) * BAL.late(f, BAL.curve.hpTrim * BAL.curve.bossTrim),
+  bossAtk: f => 0.9 * climb(prog(f), 1.12, BAL.curve.bossAtk2) * BAL.late(f, BAL.curve.atkLift),
+  // v0.6: per-boss correction measured with tools/bench.mjs (1 = unchanged)
+  // (Dragon and Morgane lighter: they were walls; zones 5-10 heavier: they had become easy once the
+  // late curve shortened the fights). Bench targets: a steady decline from boss to boss.
+  bossTune: {
+    bossDragon: { hp: 0.8, atk: 0.8 }, bossHag: { hp: 0.9, atk: 0.85 }, bossQueen: { hp: 1.25, atk: 1.55 },
+    bossVamp: { hp: 1.4, atk: 1.5 }, bossLich: { hp: 1.6, atk: 1.7 }, bossRat: { hp: 1.4, atk: 1.35 },
+    bossVoid: { hp: 2, atk: 2 }, bossVort: { hp: 1.25, atk: 1.25 },
+  },
+  maxRounds: 60, // hard limit: explicit defeat (should almost never happen thanks to the enrage)
+  // v0.6: warning at round 20, then enemies +12 % attack per round from round 25 and no more healing
+  enrage: { warn: 20, from: 25, step: 0.12 },
   // enemy regeneration per turn (share of max life): stopped by burn, halved by poison, fades after round 8
   regen: { trait: 0.04, affix: 0.05, fadeFrom: 8, fade: 0.1 },
   ultGainAct: 14, ultGainHit: 6, ultMax: 100,

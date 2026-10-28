@@ -41,7 +41,7 @@ export const isBossFloor = floor => floor % BAL.zoneSize === 0;
 function foesFor(type, floor, rng) {
   const z = zoneOf(floor), pool = z.pool;
   const mul = { hpMul: BAL.foeHp(floor), atkMul: BAL.foeAtk(floor), defMul: BAL.foeDef(floor) };
-  if (type === 'boss') return [{ id: z.boss, boss: true, hpMul: BAL.bossHp(floor), atkMul: BAL.bossAtk(floor), defMul: 1 }];
+  if (type === 'boss') { const T = BAL.bossTune[z.boss] || {}; return [{ id: z.boss, boss: true, hpMul: BAL.bossHp(floor) * (T.hp || 1), atkMul: BAL.bossAtk(floor) * (T.atk || 1), defMul: 1 }]; }
   const n = BAL.foeCount(floor, rng), out = [];
   for (let i = 0; i < n; i++) out.push({ id: rng.pick(pool), ...mul });
   if (type === 'elite') { out[0].elite = rng.pick(affixesFor(MONSTERS[out[0].id])); if (out.length > 2) out.pop(); }

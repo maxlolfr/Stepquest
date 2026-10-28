@@ -20,7 +20,7 @@ import { BAL } from '../data/balance.js';
  */
 export function createBattle({ heroes, foes, relics = [], items = { pot: 0, fea: 0 }, seed = 1, curses = [] }) {
   const rng = makeRng(seed), R = new Set(relics);
-  const B = { rng, curses: new Set(curses), relics: R, syn: new Set(activeSynergies(relics)), items, round: 0, queue: [], units: [], over: null, uidN: 0, guardLeft: R.has('sceau') ? 2 : 1, guardUntil: -1,
+  const B = { rng, curses: new Set(curses), relics: R, syn: new Set(activeSynergies(relics)), items, round: 0, enraged: 0, enrageMul: 1, queue: [], units: [], over: null, uidN: 0, guardLeft: R.has('sceau') ? 2 : 1, guardUntil: -1,
     seleneSave: true, starSave: R.has('etoile'), log: [], foeTurns: 0, stats: { dealt: 0, taken: 0 },
     report: { by: {}, last: null, ko: null, potUsed: 0 } }; // why a fight was lost (defeat screen)
   heroes.forEach((h, i) => B.units.push(makeHero(B, h, i)));
@@ -88,6 +88,7 @@ function gainUlt(u, n, B) { if (u.side === 'h' && alive(u)) u.ult = Math.min(BAL
 function calc(B, a, t, pow, stat = 'atk', el = 'phys', { forceCrit = false, critBonus = 0 } = {}) {
   let d = a[stat] * pow * 40 / (40 + t.def) * B.rng.range(0.92, 1.08);
   if (a.side === 'f' && a.aff === 'enrage') d *= 1 + (1 - pct(a)) * 0.8;
+  if (a.side === 'f' && B.enrageMul > 1) d *= B.enrageMul; // v0.6 fight enrage
   let weak = false, resist = false;
   if (t.side === 'f') {
     if (t.w.includes(el)) { d *= B.relics.has('prisme') ? 2 : 1.5; weak = true; } else if (t.r.includes(el)) { d *= 0.5; resist = true; }
@@ -185,6 +186,7 @@ function checkKo(B, ev, t) {
 
 function heal(B, ev, u, amt, { overShield = false, quiet = false } = {}) {
   if (!alive(u) || amt <= 0) return 0;
+  if (u.side === 'f' && B.enraged) return 0; // enraged enemies no longer heal
   if (u.side === 'h') amt = Math.round(amt * (B.relics.has('calice') ? 1.3 : 1) * (B.syn.has('lumiere') ? 1.25 : 1));
   const room = u.hpMax - u.hp, g = Math.min(room, amt);
   u.hp += g;
@@ -213,10 +215,29 @@ function nextActor(B, ev) {
       if (u && alive(u)) return u;
     }
     B.round++;
-    if (B.round > BAL.maxRounds) { B.over = 'lose'; ev.push({ t: 'say', text: 'Les héros s’épuisent…' }); ev.push({ t: 'end', result: 'lose', timeout: true }); return null; }
+    if (B.round > BAL.maxRounds) { B.over = 'lose'; ev.push({ t: 'say', text: `Tour ${BAL.maxRounds} : le combat a trop duré, les héros s’effondrent, épuisés.`, big: true }); ev.push({ t: 'end', result: 'lose', timeout: true }); return null; }
     B.queue = B.units.filter(alive).sort((a, b) => b.spd - a.spd || (a.side === b.side ? a.slot - b.slot : a.side === 'h' ? -1 : 1)).map(u => u.uid);
     ev.push({ t: 'round', n: B.round });
+    enrageTick(B, ev);
   }
+}
+
+// v0.6 — Enrage: from round BAL.enrage.from the enemies hit harder every round and
+// stop healing, so a fight always ends long before the hard limit (BAL.maxRounds).
+// Announced BAL.enrage.from - BAL.enrage.warn rounds ahead, then shown every round.
+export function enrageInfo(B) {
+  const E = BAL.enrage, n = Math.max(0, B.round - E.from + 1);
+  if (n > 0) return { state: 'on', stacks: n, mul: B.enrageMul || 1 + E.step * n, left: BAL.maxRounds - B.round };
+  return { state: B.round >= E.warn ? 'soon' : 'calm', in: E.from - B.round, mul: 1 };
+}
+function enrageTick(B, ev) {
+  const E = BAL.enrage;
+  if (B.round === E.warn) ev.push({ t: 'enrage', warn: true, in: E.from - E.warn, text: `Dans ${E.from - E.warn} tours, les ennemis vont s’enrager : finissez le combat !` });
+  if (B.round < E.from) return;
+  const n = B.round - E.from + 1;
+  B.enraged = n; B.enrageMul = +(1 + E.step * n).toFixed(2);
+  ev.push({ t: 'enrage', stacks: n, mul: B.enrageMul, first: n === 1,
+    text: n === 1 ? `Les ennemis s’enragent ! +${Math.round(E.step * 100)} % d’attaque à chaque tour, et plus aucun soin pour eux.` : null });
 }
 
 /** Upcoming actors of this round (for the turn bar). */
@@ -566,7 +587,7 @@ export function fightReport(B) {
   const top = Object.entries(B.report.by).sort((a, b) => b[1] - a[1])[0];
   const boss = foesOf(B).find(f => f.boss);
   return {
-    result: B.over, rounds: B.round, timeout: B.round > BAL.maxRounds,
+    result: B.over, rounds: B.round, timeout: B.round > BAL.maxRounds, enraged: B.enraged || 0,
     ko: B.report.ko, top: top ? { name: top[0], dmg: top[1] } : null,
     potLeft: B.items.pot || 0, feaLeft: B.items.fea || 0, guardLeft: B.guardLeft,
     boss: boss ? { id: boss.id, name: boss.name, hpPct: Math.round(100 * boss.hp / boss.hpMax), tip: boss.m.tip || '' } : null,

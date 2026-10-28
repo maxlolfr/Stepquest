@@ -195,6 +195,12 @@ export function createView(canvas, B, door) {
     drawFx(now);
     drawTexts(now);
     drawBossBar(now);
+    if (V.enraged) { // v0.6: red vignette that thickens with the enrage
+      const k = Math.min(1, 0.25 + V.enraged * 0.05) * (0.85 + 0.15 * Math.sin(now / 260)) + (V.pulseT > now ? 0.25 * (V.pulseT - now) / 400 : 0);
+      const g = cx.createRadialGradient(V.W / 2, V.H * 0.55, Math.min(V.W, V.H) * 0.35, V.W / 2, V.H * 0.55, Math.max(V.W, V.H) * 0.75);
+      g.addColorStop(0, 'rgba(160,0,0,0)'); g.addColorStop(1, `rgba(170,10,0,${0.55 * k})`);
+      cx.fillStyle = g; cx.fillRect(-10, -10, V.W + 20, V.H + 20);
+    }
     if (V.flashAll > now) { cx.fillStyle = `rgba(255,240,200,${0.35 * (V.flashAll - now) / 250})`; cx.fillRect(-10, -10, V.W + 20, V.H + 20); }
     requestAnimationFrame(frame);
   }
@@ -208,6 +214,7 @@ export function createView(canvas, B, door) {
   V.flash = u => { st(u).flash = performance.now() + 140; };
   V.doShake = (amp = 8, dur = 300) => { V.shake = { amp, dur, t0: performance.now() }; };
   V.screenFlash = () => { V.flashAll = performance.now() + 250; };
+  V.pulse = () => { V.pulseT = performance.now() + 400; };
   V.tween = (u, to, ms) => new Promise(res => {
     const a = st(u), from = { ox: a.ox, oy: a.oy }, t0 = performance.now(), dur = Math.max(1, ms / V.speed);
     const tick = () => { const k = Math.min(1, (performance.now() - t0) / dur), e = 1 - Math.pow(1 - k, 3); a.ox = from.ox + (to.ox - from.ox) * e; a.oy = from.oy + (to.oy - from.oy) * e; if (k < 1 && V.running) requestAnimationFrame(tick); else res(); };

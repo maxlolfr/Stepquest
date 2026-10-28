@@ -12,8 +12,9 @@ import { RELICS } from '../../data/items.js';
 function defeatLines(r) {
   if (!r) return null;
   const lines = [];
-  if (r.timeout) lines.push(h('p', h('b', 'Combat trop long : '), 'les héros se sont épuisés après 60 tours. Il manquait des dégâts.'));
-  else if (r.ko) lines.push(h('p', h('b', 'Premier tombé : '), `${r.ko.hero}, par ${r.ko.by}${r.ko.atk && r.ko.atk !== 'Attaque' ? ` (${r.ko.atk})` : ''}.`));
+  if (r.timeout) lines.push(h('p', h('b', 'Temps écoulé : '), `au tour ${BAL.maxRounds}, les héros se sont effondrés, épuisés. Il manquait des dégâts.`));
+  else if (r.enraged) lines.push(h('p', h('b', 'Ennemis enragés : '), `le combat a duré ${r.rounds} tours. Dès le tour ${BAL.enrage.from}, les ennemis frappent plus fort à chaque tour : il fallait finir plus vite.`));
+  if (!r.timeout && r.ko) lines.push(h('p', h('b', 'Premier tombé : '), `${r.ko.hero}, par ${r.ko.by}${r.ko.atk && r.ko.atk !== 'Attaque' ? ` (${r.ko.atk})` : ''}.`));
   if (r.top) lines.push(h('p', h('b', 'Le plus dangereux : '), `${r.top.name} (${r.top.dmg} dégâts).`));
   if (r.boss) lines.push(h('p', h('b', `${r.boss.name} : `), `il lui restait ${r.boss.hpPct} % de vie. ${r.boss.tip}`));
   const tip = r.boss && r.boss.hpPct > 70 ? 'Ce boss est encore trop fort pour l’équipe : améliore le camp ou gagne des niveaux et des reliques dans les étages d’avant.'

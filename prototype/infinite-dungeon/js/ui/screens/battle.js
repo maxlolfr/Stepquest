@@ -10,7 +10,7 @@ import { HEROES } from '../../data/heroes.js';
 import { BAL } from '../../data/balance.js';
 import { doorName } from '../../run/dungeon.js';
 import { SYNERGIES } from '../../data/items.js';
-import { createBattle, step, autoNext, castUltimate, canUlt, useGuard, canGuard, useItem, canItem, heroesOf, foesOf, alive, unitByUid, heroResults, fightReport } from '../../engine/combat.js';
+import { createBattle, step, enrageInfo, autoNext, castUltimate, canUlt, useGuard, canGuard, useItem, canItem, heroesOf, foesOf, alive, unitByUid, heroResults, fightReport } from '../../engine/combat.js';
 
 const SPEEDS = [1, 2, 4, 10]; // ×10: for testing for now (could become a premium option later)
 const EL_COL = { feu: '#ff8a3d', glace: '#8fd8ff', poison: '#9dff6a', foudre: '#ffe46b', phys: '#ffffff' };
@@ -80,7 +80,12 @@ export async function runBattle(root, { config, door, floor, settings }) {
     guardBtn.classList.toggle('warn', canGuard(B) && foesOf(B).some(f => alive(f) && f.charge));
     potBtn.disabled = !canItem(B, 'pot'); potBtn.querySelector('small').textContent = `×${B.items.pot}`;
     feaBtn.disabled = !canItem(B, 'fea'); feaBtn.querySelector('small').textContent = `×${B.items.fea}`;
-    roundLbl.textContent = `Tour ${Math.max(1, B.round)}`;
+    // v0.6: round counter with the coming enrage (shown 10 rounds ahead) and its strength
+    const E = enrageInfo(B), r = Math.max(1, B.round);
+    roundLbl.className = 'round' + (E.state === 'on' ? ' enraged' : E.in <= 10 ? ' soon' : '');
+    roundLbl.replaceChildren(h('b', `Tour ${r}`), E.state === 'on' ? h('small', `Rage ×${E.mul.toFixed(2).replace('.', ',')}`) : E.in <= 10 ? h('small', `rage dans ${E.in}`) : '');
+    roundLbl.title = E.state === 'on' ? `Les ennemis sont enragés : +${Math.round((E.mul - 1) * 100)} % d’attaque, plus de soins. Défaite au tour ${BAL.maxRounds}.` : `À partir du tour ${BAL.enrage.from}, les ennemis s’enragent.`;
+    view.enraged = E.state === 'on' ? E.stacks : 0;
   }
 
   function kick() { if (wake) { const w = wake; wake = null; w(); } }
@@ -162,7 +167,12 @@ export async function runBattle(root, { config, door, floor, settings }) {
         case 'say': say(e.text, e.big ? 'danger' : '', 1700); await wait(e.big ? 700 : 450); break;
         case 'guard': sfx('enemy_shield', 0.7); for (const x of heroesOf(B)) if (alive(x)) view.ring(x, '140,200,255'); refresh(); await wait(350); break;
         case 'item': sfx('levelup', 0.5); break;
-        case 'end': break;
+        case 'enrage':
+          if (e.warn) { say(`⏳ ${e.text}`, 'danger', 2600); sfx('aoe_warning', 0.7); await wait(900); }
+          else if (e.first) { say(`😡 ${e.text}`, 'danger', 3200); sfx('boss_phase', 0.9); view.doShake(14, 600); view.screenFlash(); refresh(); await wait(1300); }
+          else { refresh(); view.pulse(); }
+          break;
+        case 'end': if (e.timeout) { say(`⌛ Tour ${BAL.maxRounds} : combat trop long, défaite.`, 'danger', 3500); await wait(1200); } break;
         default: break;
       }
     }
@@ -181,7 +191,8 @@ export async function runBattle(root, { config, door, floor, settings }) {
     refresh();
     if (!actions.length) await wait(B.units.some(u => u.boss) ? 240 : 170);
   }
-  say(B.over === 'win' ? 'Victoire !' : 'Défaite…', B.over === 'win' ? 'win' : 'danger', 3000);
+  const timedOut = B.round > BAL.maxRounds;
+  say(B.over === 'win' ? 'Victoire !' : timedOut ? 'Défaite : temps écoulé' : 'Défaite…', B.over === 'win' ? 'win' : 'danger', 3000);
   for (const u of heroesOf(B)) if (alive(u) && B.over === 'win') view.pose(u, 'cast', 900);
   playMusic(B.over === 'win' ? 'm_victory' : 'm_defeat');
   await sleep(1500);
