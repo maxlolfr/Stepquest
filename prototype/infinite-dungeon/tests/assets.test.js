@@ -26,11 +26,11 @@ test('every url() in style.css exists', () => {
   assert.deepEqual(missing, []);
 });
 
-test('no image or sound of the other games is copied here (only original art in img/)', () => {
+test('no image or sound of the other games is copied here (only original art in img/ and audio/)', () => {
   const media = /\.(webp|png|jpe?g|gif|mp3|ogg|wav|m4a|mp4|woff2?)$/i;
   const walk = (d, out = []) => { for (const f of readdirSync(d)) { const p = path.join(d, f); if (statSync(p).isDirectory()) walk(p, out); else if (media.test(f)) out.push(p); } return out; };
   const mine = walk(GAME_DIR);
-  assert.ok(mine.every(p => path.relative(GAME_DIR, p).startsWith('img' + path.sep)), 'media outside img/');
+  assert.ok(mine.every(p => ['img', 'audio'].some(d => path.relative(GAME_DIR, p).startsWith(d + path.sep))), 'media outside img/ and audio/');
   const hash = p => createHash('sha1').update(readFileSync(p)).digest('hex');
   const theirs = new Set([...walk(path.join(GAME_DIR, '../dragonbound2')), ...walk(path.join(GAME_DIR, '../dragonbound'))].map(hash));
   assert.deepEqual(mine.filter(p => theirs.has(hash(p))).map(p => path.basename(p)), [], 'copied file');

@@ -67,7 +67,7 @@ export function startRun(ids, { seed = newSeed(), floor = 0, start = 1, curses =
 
 function goTrophies() {
   hideTitle();
-  playMusic('m_theme');
+  playMusic('m_title');
   showTrophies(view(), { meta: app.data.meta, onBack: goTitle });
 }
 
@@ -76,7 +76,7 @@ function goCamp() {
   const draw = () => showCamp(view(), { meta: app.data.meta, onBack: goTitle, onBuy: k => { if (buyUpgrade(app.data.meta, k)) { save(); draw(); } },
     onRefund: () => { const back = refundUpgrades(app.data.meta); save(); toast(back ? `Camp remis à zéro : ${back} éclats rendus.` : 'Aucune amélioration à rembourser.'); draw(); },
     onWipe: () => { if (!window.confirm('Tout effacer et repartir de zéro ?\nÉclats, améliorations, points de départ, trophées et expédition en cours seront supprimés.')) return; app.data = { ...app.data, meta: newMeta(), run: null }; save(); toast('Progression remise à zéro.'); draw(); } });
-  playMusic('m_theme');
+  playMusic('m_title');
   draw();
 }
 

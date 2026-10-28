@@ -53,7 +53,8 @@ export const IMAGES = IMG;
 
 const snd = (k, dir = DB2) => `${dir}audio/${k}.mp3`;
 export const AUDIO = {
-  m_title: snd('m_crypt'),
+  // original theme of Infinite Dungeon (audio/ of this folder): title, camp, trophies
+  m_title: 'audio/m_id_theme.mp3',
   ...Object.fromEntries([...ZONE_MUSIC, 'm_boss', 'm_victory', 'm_defeat', 'm_theme'].map(k => [k, snd(k)])),
   ...Object.fromEntries([
     'ald_sword', 'ald_taunt', 'ald_bash', 'ald_whirl', 'sel_mace', 'sel_heal', 'sel_smite', 'sel_raise', 'ori_bolt', 'ori_fire', 'ori_ice',
