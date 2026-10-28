@@ -4,6 +4,9 @@ import { sfx } from '../audio.js';
 import { HEROES, HERO_ORDER, SKILLS } from '../../data/heroes.js';
 import { CURSES, CURSE_ORDER, curseBonus } from '../../data/progress.js';
 
+// v0.6: where the face is in each illustration (background-position), for the bust crop
+const ART_FOCUS = { aldric: '50% 17%', selena: '47% 14%', orin: '42% 17%', lyra: '47% 15%', nyx: '55% 13%' };
+
 export function showTeam(root, { initial = ['aldric', 'selena', 'orin'], starts = [1], nightmare = false, curses: cursesInit = [], onStart, onBack }) {
   let start = starts[starts.length - 1];
   const curses = cursesInit.filter(k => CURSES[k]);
@@ -13,7 +16,7 @@ export function showTeam(root, { initial = ['aldric', 'selena', 'orin'], starts 
   const cards = HERO_ORDER.map(id => {
     const H = HEROES[id];
     const el = h('button.hero-pick', { type: 'button', 'aria-pressed': 'false' },
-      img(`${H.sprite}-face`, 'face'),
+      h('div.face.art', { style: { '--art': `url(img/art_${id}.webp)`, '--fp': ART_FOCUS[id] } }),
       h('div.hp-body',
         h('div.hp-head', h('b', H.name), h('span.role.' + H.role, H.roleN)),
         h('p.passive', h('b', `${H.passive.name} : `), H.passive.desc),
@@ -28,6 +31,7 @@ export function showTeam(root, { initial = ['aldric', 'selena', 'orin'], starts 
   });
   function paint() {
     for (const c of cards) { const on = picked.includes(c.id); c.el.classList.toggle('on', on); c.el.setAttribute('aria-pressed', String(on)); }
+    if (root.firstChild && picked.length) root.firstChild.style.setProperty('--hero', `url(img/art_${picked[picked.length - 1]}.webp)`);
     count.textContent = picked.length === 3 ? 'Équipe prête.' : `Choisis encore ${3 - picked.length} héros.`;
     go.disabled = picked.length !== 3;
     go.textContent = start > 1 ? `Partir de l’étage ${start}` : 'Entrer dans la tour';
@@ -47,7 +51,7 @@ export function showTeam(root, { initial = ['aldric', 'selena', 'orin'], starts 
     nmInfo, h('div.curse-list', curseBtns)) : null;
   const startBtns = starts.map(f => { const b = h('button.start-pick', { type: 'button', onclick: () => { start = f; sfx('ui_click'); paint(); } }, f === 1 ? 'Étage 1' : `Étage ${f}`); b.dataset.f = f; return b; });
   const startRow = starts.length > 1 ? h('div.starts', h('p.hint', 'Point de départ (plus loin = bonus de départ : niveaux, or, équipement, reliques)'), h('div.start-row', startBtns)) : null;
-  root.replaceChildren(h('div.page',
+  root.replaceChildren(h('div.page.team-page',
     h('header.ptop', h('button.back', { type: 'button', onclick: onBack, 'aria-label': 'Retour' }, '←'), h('h2', 'Ton équipe')),
     h('p.lead', 'Choisis 3 héros. Une équipe avec Séléna survit plus facilement ; sans soigneuse, garde des potions.'),
     h('div.pick-list', cards.map(c => c.el)),

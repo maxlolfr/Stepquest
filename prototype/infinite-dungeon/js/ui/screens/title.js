@@ -1,5 +1,5 @@
-// Title screen: the necropolis gate, the five heroes waiting in front of it,
-// rising embers, then the menu once the player taps (which also unlocks sound).
+// Title screen: the key art (the five heroes before the tower, v0.6), rising embers,
+// then the menu once the player taps (which also unlocks sound).
 import { GAME } from '../../config.js';
 import { IMAGES, HERO_SPRITE } from '../assets.js';
 import { loadImage, loadImages } from '../loader.js';
@@ -20,6 +20,7 @@ const LINEUP = [
   { id: 'aldric', x: 0.5, lead: true },
 ];
 const MENU_RESERVE = 225;    // px kept free at the bottom for the menu
+const DRAW_SPRITES = false;  // v0.6: the key art already shows the heroes
 
 const $ = id => document.getElementById(id);
 let started = false, menuFn = null, visible = true;
@@ -37,7 +38,7 @@ export async function initTitle() {
   const heroes = LINEUP.map((p, i) => ({ ...p, base: HERO_SPRITE[p.id], seed: i * 1.7, frames: heroFrames(HERO_SPRITE[p.id], 'idle') }));
   const bgImg = loadImage('bg_title');
   bgEl.src = IMAGES.bg_title;
-  await Promise.all([bgImg, loadImages(heroes.flatMap(h => h.frames)), document.fonts ? document.fonts.ready : null]);
+  await Promise.all([bgImg, document.fonts ? document.fonts.ready : null]);
   bgEl.classList.add('ready');
   screen.classList.add('ready');
 
@@ -80,7 +81,7 @@ export async function initTitle() {
     cx.setTransform(dpr, 0, 0, dpr, 0, 0);
     cx.clearRect(0, 0, W, H);
     const feet = Math.max(floorY + 12, Math.min(floorY + heroH * 0.45, H - MENU_RESERVE));
-    for (const hr of heroes) {
+    if (DRAW_SPRITES) for (const hr of heroes) {
       const size = heroH * (hr.lead ? 1.06 : hr.back ? 0.8 : 0.94), y = feet - (hr.back ? heroH * 0.2 : 0) + (hr.lead ? heroH * 0.04 : 0);
       const x = W * hr.x, k = hr.frames[reduce ? 0 : pingPong(hr.frames.length, t + hr.seed * 400, 190)];
       cx.save(); cx.globalAlpha = 0.45; cx.fillStyle = '#000';

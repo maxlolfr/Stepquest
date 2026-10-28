@@ -6,6 +6,8 @@ Le plan complet (audit, architecture, MVP) est dans le document « Infinite Dung
 
 ## Version 0.6 « Juste et lisible »
 
+0.6.1 : nouvelles illustrations des 5 héros et de l'équipe (écran d'accueil et choix de l'équipe).
+
 Rapport complet, mesures avant/après et instructions de test manuel : [docs/v0.6-rapport.md](docs/v0.6-rapport.md).
 
 - **Fin des combats interminables** : à partir du tour 30, les ennemis s'enragent (+10 % d'attaque par tour, plus aucun soin), annoncé 5 tours avant et affiché en haut de l'écran. Au tour 60, défaite explicite (« temps écoulé ») expliquée sur le bilan.

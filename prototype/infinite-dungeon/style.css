@@ -30,7 +30,7 @@ button { font: inherit; color: inherit; touch-action: manipulation; }
 #titleCv { position: absolute; inset: 0; width: 100%; height: 100%; }
 .shade { position: absolute; inset: 0; pointer-events: none;
   background:
-    linear-gradient(to bottom, rgba(7,6,11,.92) 0%, rgba(7,6,11,.35) 26%, rgba(7,6,11,0) 44%, rgba(7,6,11,0) 70%, rgba(7,6,11,.85) 88%, var(--night) 100%),
+    linear-gradient(to bottom, rgba(7,6,11,.5) 0%, rgba(7,6,11,.2) 26%, rgba(7,6,11,0) 44%, rgba(7,6,11,0) 74%, rgba(7,6,11,.8) 92%, var(--night) 100%),
     radial-gradient(ellipse at 50% 60%, transparent 40%, rgba(0,0,0,.55) 100%); }
 
 .logo { position: absolute; left: 0; right: 0; top: calc(var(--safe-t) + 7vh); text-align: center; padding: 0 20px; opacity: 0; transform: translateY(-12px); transition: opacity 1s ease .3s, transform 1s ease .3s; }
@@ -370,3 +370,8 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 /* v0.6 — enrage */
 .btop .round small .rage-ic { width: 18px; height: 18px; vertical-align: -4px; margin-right: 3px; }
 .banner.rage { font-size: 17px; border-color: #ff7a5c; background: linear-gradient(rgba(120,12,8,.95), rgba(60,6,6,.95)); box-shadow: 0 0 24px rgba(255,60,30,.5); }
+
+/* v0.6 — hero illustrations */
+.hero-pick .face.art { width: 76px; height: 96px; background: var(--art) var(--fp) / 300% auto no-repeat, #0006; box-shadow: inset 0 0 0 1px rgba(0,0,0,.4); }
+.hero-pick.on .face.art { border-color: var(--gold); }
+.team-page:not(.nightmare)::before { content: ''; position: fixed; inset: 0; z-index: -1; background: linear-gradient(rgba(7,6,11,.72), rgba(7,6,11,.9) 55%, rgba(7,6,11,.97)), var(--hero, none) center 20% / cover no-repeat; transition: background-image .4s; }
