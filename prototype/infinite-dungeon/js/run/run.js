@@ -12,7 +12,7 @@ import { zoneOf, MONSTERS } from '../data/monsters.js';
 import { CURSES, NIGHTMARE_UNLOCK, curseBonus, hasCurse } from '../data/progress.js';
 import { recordRun } from './meta.js';
 import { generateDungeon, isFight, isBossFloor } from './dungeon.js';
-import { rewardCards, shopStock, upgradeCard, makeGear, statCard } from './loot.js';
+import { rewardCards, shopStock, upgradeCard, makeGear, statCard, blessOffer } from './loot.js';
 
 export const RUN_VERSION = 3;
 
@@ -183,6 +183,7 @@ export function applyCard(run, c, meta) {
       if (relicsFull(run)) { run.relicWait = c.key; break; } // v0.6: slots full, the player picks what to drop
       run.relics.push(c.key); run.stats.synMax = Math.max(run.stats.synMax || 0, activeSynergies(run.relics).length); break;
     case 'item': run.items[c.key] = (run.items[c.key] || 0) + 1; break;
+    case 'bless': run.blessN = (run.blessN || 0) + 1; for (const x of run.team) for (const st of ['atk', 'mag', 'hp']) x.bonus[st] = +((x.bonus[st] || 0) + 0.05).toFixed(3); break;
     default: throw new Error(`Carte inconnue : ${c.type}`);
   }
   refreshTeam(run, meta);
@@ -257,8 +258,9 @@ export function buy(run, id, meta) {
   const it = p.stock.find(s => s.id === id);
   if (!it || p.bought.includes(id) || run.gold < it.price) return false;
   run.gold -= it.price;
-  if (it.type !== 'item') p.bought.push(id); // potions can be bought several times
+  if (it.type !== 'item' && it.type !== 'bless') p.bought.push(id); // potions and blessings can be bought several times
   applyCard(run, it, meta);
+  if (it.type === 'bless') Object.assign(it, blessOffer(run, run.floor)); // next one costs more
   holdRelic(run, 'back', p, it.price);
   return true;
 }

@@ -2,7 +2,7 @@
 import { HEROES, SKILLS } from '../data/heroes.js';
 import { RELICS, RARITY, WEAPONS, ARMORS, JEWELS, SYNERGIES, SYN_NEED, synergyCount } from '../data/items.js';
 import { BAL, prog } from '../data/balance.js';
-import { zoneOf } from '../data/monsters.js';
+import { zoneOf, MONSTERS } from '../data/monsters.js';
 
 const zoneIdx = floor => (floor <= 15 ? 0 : floor <= 32 ? 1 : 2); // gear name tier
 
@@ -53,7 +53,10 @@ function card(type, run, rng, floor, rarityKind, exclude) {
       const who = free.length ? rng.pick(free) : hero, el = rng.pick(['feu', 'glace', 'poison', 'foudre']);
       const lab = { feu: 'Feu', glace: 'Glace', poison: 'Poison', foudre: 'Foudre' }[el], ic = { feu: '🔥', glace: '❄️', poison: '☠️', foudre: '⚡' }[el];
       const extra = { feu: ' Peut enflammer.', glace: ' Peut geler.', poison: ' Empoisonne.', foudre: '' }[el];
-      return { type, hero: who, el, title: `Arme de ${lab.toLowerCase()}`, ic, desc: `L’attaque de base de ${HEROES[who].name} devient de type ${lab} (×1,5 sur les ennemis faibles).${extra}` };
+      // v0.6: say what it is worth here: monsters of the current zone weak or resistant to it
+      const pool = zoneOf(run.floor).pool.map(k => MONSTERS[k]), weak = pool.filter(m => m.w.includes(el)).length, res = pool.filter(m => m.r.includes(el)).length;
+      const here = ` Dans cette zone : ${weak} monstre${weak > 1 ? 's' : ''} sur ${pool.length} ${weak > 1 ? 'y sont faibles' : 'y est faible'}${res ? `, ${res} ${res > 1 ? 'y résistent' : 'y résiste'}` : ''}.`;
+      return { type, hero: who, el, weak, res, title: `Arme de ${lab.toLowerCase()}`, ic, desc: `L’attaque de base de ${HEROES[who].name} devient de type ${lab} (×1,5 sur les ennemis faibles).${extra}${here}` };
     }
     case 'gear': {
       const slot = rng.pick(['w', 'a', 'j']), r = rng.weighted(BAL.rarityWeights[rarityKind] || BAL.rarityWeights.normal);
@@ -109,6 +112,8 @@ export function shopStock(run, rng, floor) {
     { id: 'gear', type: 'gear', hero, gear: g, price: P(BAL.shop.gear + 30 * g.r), title: g.name, img: g.img, rarity: g.r, desc: `Pour ${HEROES[hero].name}.` },
     relic && { id: 'relic', ...relic, price: P(BAL.shop.relic) },
     up && { id: 'up', ...up, price: P(BAL.shop.upgrade) },
+    // v0.6: a use for the gold piling up late: repeatable, a little dearer each time
+    blessOffer(run, floor),
   ].filter(Boolean);
 }
 
@@ -117,3 +122,10 @@ export const upgradeCard = (run, rng, floor) => card('upgrade', run, rng, floor)
 
 /** One stat card (events). */
 export const statCard = (run, rng) => card('stat', run, rng, run.floor);
+
+/** v0.6 shop: Bénédiction, repeatable, ×1.5 dearer after each purchase in the expedition. */
+export function blessOffer(run, floor) {
+  const n = run.blessN || 0, price = Math.round(BAL.shop.bless * BAL.shop.blessUp ** n * BAL.shopMul(zoneOf(floor).index) / 5) * 5;
+  return { id: 'bless', type: 'bless', late: true, price, title: 'Bénédiction', ic: '✨',
+    desc: `Toute l’équipe gagne 5 % d’attaque, de magie et de vie pour l’expédition.${n ? ` Déjà achetée ${n} fois.` : ''}` };
+}

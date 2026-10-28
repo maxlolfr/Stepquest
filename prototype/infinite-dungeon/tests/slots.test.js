@@ -92,3 +92,30 @@ test('an older save holding more than 10 relics keeps them all (no silent loss)'
   assert.equal(old.relics.length, 20);
   assert.ok(activeSynergies(old.relics).length >= 1);
 });
+
+test('shop Bénédiction: +5 % atk/mag/hp for the team, repeatable, dearer each time', async () => {
+  const { shopStock } = await import('../js/run/loot.js');
+  const { makeRng } = await import('../js/core/rng.js');
+  const meta = newMeta(), run = newRun(meta, ['aldric', 'selena', 'orin'], 9);
+  run.floor = 45; run.gold = 5000; run.phase = 'room';
+  run.pending = { kind: 'shop', stock: shopStock(run, makeRng(1), 45), bought: [] };
+  const p0 = run.pending.stock.find(s => s.id === 'bless').price, hp0 = run.team[0].hpMax;
+  assert.ok(buy(run, 'bless', meta));
+  const p1 = run.pending.stock.find(s => s.id === 'bless').price;
+  assert.ok(p1 > p0, 'second blessing costs more');
+  assert.ok(buy(run, 'bless', meta), 'can be bought again');
+  assert.equal(run.blessN, 2);
+  assert.equal(run.team[0].bonus.atk, 0.1);
+  assert.ok(run.team[0].hpMax > hp0);
+  assert.equal(run.gold, 5000 - p0 - p1);
+});
+
+test('element cards say how many monsters of the zone are weak to them', async () => {
+  const { rewardCards } = await import('../js/run/loot.js');
+  const { makeRng } = await import('../js/core/rng.js');
+  const meta = newMeta(), run = newRun(meta, ['aldric', 'lyra', 'nyx'], 9); run.floor = 23;
+  let found = null;
+  for (let s = 1; s < 300 && !found; s++) found = rewardCards(run, makeRng(s), 23, 'normal').find(c => c.type === 'element');
+  assert.ok(found && /Dans cette zone : \d/.test(found.desc));
+  assert.ok(Number.isInteger(found.weak));
+});

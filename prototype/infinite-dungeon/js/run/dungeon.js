@@ -22,7 +22,7 @@ export const DOOR_INFO = {
 
 // What each door promises (shown on the map) and how dangerous it is (0-3 skulls)
 export const DOOR_REWARD = {
-  fight: '3 cartes · or', elite: 'Carte rare · relique fréquente · or ×2', cursed: '1 relique au choix parmi 3 · or ×3',
+  fight: '3 cartes · or', elite: 'Carte rare · relique fréquente · plus d’or', cursed: '1 relique au choix parmi 3 · or ×3',
   chest: 'Équipement ou relique, sans combat', rest: 'Soigner ou s’entraîner', shop: 'Achats contre de l’or',
   event: 'Un choix, avec un risque', boss: '1 relique au choix parmi 3 · éclats à l’abri',
 };
@@ -44,7 +44,9 @@ function foesFor(type, floor, rng) {
   if (type === 'boss') { const T = BAL.bossTune[z.boss] || {}; return [{ id: z.boss, boss: true, hpMul: BAL.bossHp(floor) * (T.hp || 1), atkMul: BAL.bossAtk(floor) * (T.atk || 1), defMul: 1 }]; }
   const n = BAL.foeCount(floor, rng), out = [];
   for (let i = 0; i < n; i++) out.push({ id: rng.pick(pool), ...mul });
-  if (type === 'elite') { out[0].elite = rng.pick(affixesFor(MONSTERS[out[0].id])); if (out.length > 2) out.pop(); }
+  // v0.6: elites get tougher along the tower (BAL.elite at floor 21, BAL.eliteLate from floor 45)
+  const lateElite = f => { f.hpMul *= BAL.late(floor, BAL.eliteLate.hp / BAL.elite.hp); f.atkMul *= BAL.late(floor, BAL.eliteLate.atk / BAL.elite.atk); };
+  if (type === 'elite') { out[0].elite = rng.pick(affixesFor(MONSTERS[out[0].id])); lateElite(out[0]); if (out.length > 2) out.pop(); }
   if (type === 'cursed') {
     while (out.length < 3) out.push({ id: rng.pick(pool), ...mul });
     for (const f of out.slice(0, 2)) { f.elite = rng.pick(affixesFor(MONSTERS[f.id])); f.hpMul *= BAL.cursedHp; }
