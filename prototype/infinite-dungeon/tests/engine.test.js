@@ -105,14 +105,15 @@ test('10 bosses, one per zone, each with a telegraphed special and a half-life c
   for (const [id, M] of Object.entries(BOSSES)) {
     assert.ok(M.special && M.special.name && ['all', 'one'].includes(M.special.target), id);
     assert.ok(M.phase && M.phase.text && M.tip, id);
-    let charged = false, released = false;
+    let charged = false, released = false, interrupted = false;
     const B = bossFight(id, 7);
     while (!B.over && B.round < 10) for (const e of step(B)) {
       if (e.t === 'charge' && e.name === M.special.name) charged = true;
       if (e.t === 'act' && e.name === M.special.name) released = true;
+      if (e.t === 'say' && /interrompu/.test(e.text)) interrupted = true; // Aldric's Charge cancels it: allowed
     }
     assert.ok(charged, `${id}: no telegraph`);
-    assert.ok(released || B.over, `${id}: special never released`);
+    assert.ok(released || interrupted || B.over, `${id}: special never released`);
   }
 });
 

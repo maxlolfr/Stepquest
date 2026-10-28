@@ -377,7 +377,7 @@ function heroTurn(B, ev, u) {
     case 'aldric': {
       if (charging && ready(u, 'bash')) { act('bash', [charging]); doBash(B, ev, u, charging); return; }
       const fragileHurt = hs.some(h => h.id !== 'aldric' && pct(h) < 0.6);
-      if (ready(u, 'taunt') && !u.st.taunt && (fragileHurt || B.round <= 2)) { act('taunt', [u]); u.st.taunt = 2; u.rage = Math.min(5, u.rage + 2); ev.push({ t: 'status', uid: u.uid, st: 'taunt' }); return; }
+      if (ready(u, 'taunt') && !u.st.taunt && (fragileHurt || B.round <= 2)) { act('taunt', [u]); u.st.taunt = 2; u.rage = Math.min(5, u.rage + 2); ev.push({ t: 'status', uid: u.uid, st: 'taunt' }); heal(B, ev, u, Math.round(u.hpMax * BAL.aldric.taunt)); return; } // v0.6: Provocation heals him
       if (ready(u, 'bash') && fs.length) { const t = fs.slice().sort((a, b) => b.atk - a.atk)[0]; act('bash', [t]); doBash(B, ev, u, t); return; }
       break;
     }
@@ -463,6 +463,7 @@ const ULTS = {
     ev.push({ t: 'act', uid: u.uid, kind: 'ult', name: HEROES.aldric.ult.name, targets: fs.map(f => f.uid), sfx: 'ald_whirl', fx: 'ult', pose: 'cast' });
     for (const t of fs) hit(B, ev, u, t, calc(B, u, t, 1.6, 'atk', 'phys'), { melee: false });
     u.st.taunt = 2; ev.push({ t: 'status', uid: u.uid, st: 'taunt' });
+    for (const h of livingH(B)) heal(B, ev, h, Math.round(h.hpMax * BAL.aldric.ult)); // v0.6: the dawn light heals the team
   },
   selena(B, ev, u) {
     const hs = heroesOf(B);

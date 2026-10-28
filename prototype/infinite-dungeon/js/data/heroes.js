@@ -17,7 +17,7 @@ export const HEROES = {
     basic: { name: 'Coup d’épée', sfx: 'ald_sword', fx: 'slash' },
     skills: ['taunt', 'bash'],
     passive: { name: 'Rage', desc: 'Chaque coup reçu donne 1 Rage 🔥 (max 5) : +15 % de dégâts par Rage sur son attaque suivante.' },
-    ult: { name: 'Lame de l’Aube', desc: 'Frappe tous les ennemis avec une lame de lumière, puis les provoque 2 tours.' },
+    ult: { name: 'Lame de l’Aube', desc: 'Frappe tous les ennemis avec une lame de lumière, les provoque 2 tours, et sa lumière soigne l’équipe de 15 %.' },
   },
   selena: {
     name: 'Séléna', cls: 'Paladine', role: 'heal', roleN: 'Soigneuse', sprite: 'sel', melee: true, el: 'phys',
@@ -57,7 +57,7 @@ export const HERO_ORDER = ['aldric', 'selena', 'orin', 'lyra', 'nyx'];
 
 // cd = turns between two uses; pow = damage factor; stat = atk or mag
 export const SKILLS = {
-  taunt:    { hero: 'aldric', name: 'Provocation', ic: '🛡️', cd: 4, tgt: 'self', sfx: 'ald_taunt', desc: 'Tous les ennemis l’attaquent 2 tours, et il encaisse 20 % de dégâts en moins. +2 Rage.' },
+  taunt:    { hero: 'aldric', name: 'Provocation', ic: '🛡️', cd: 4, tgt: 'self', sfx: 'ald_taunt', desc: 'Tous les ennemis l’attaquent 2 tours, et il encaisse 20 % de dégâts en moins. Il récupère 10 % de sa vie. +2 Rage.' },
   bash:     { hero: 'aldric', name: 'Charge', ic: '💥', cd: 3, tgt: 'foe', pow: 1.05, stat: 'atk', sfx: 'ald_bash', desc: 'Coup de bouclier : étourdit la cible un tour et annule l’attaque qu’elle prépare.' },
   heal:     { hero: 'selena', name: 'Soin', ic: '💚', cd: 2, tgt: 'ally', pow: 1.6, stat: 'mag', sfx: 'sel_heal', desc: 'Rend beaucoup de vie à l’allié le plus blessé et guérit poison et brûlure.' },
   smite:    { hero: 'selena', name: 'Châtiment', ic: '⚡', cd: 3, tgt: 'foe', pow: 1.4, stat: 'mag', el: 'foudre', sfx: 'sel_smite', desc: 'La foudre frappe un ennemi et soigne un peu toute l’équipe.' },

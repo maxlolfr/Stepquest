@@ -20,7 +20,7 @@ export const BAL = {
   // v0.6: after the knee (floor ~39) life grows slower and attack faster than in v0.5,
   // so late fights stay short and dangerous instead of long and harmless.
   // late(f) eases in from floor `from` to floor `to`: life is trimmed and attack lifted there.
-  curve: { hp2: 1.03, atk2: 1.05, bossHp2: 1.03, bossAtk2: 1.05, from: 21, to: 45, hpTrim: 0.45, atkLift: 1.5, bossTrim: 0.6 },
+  curve: { hp2: 1.03, atk2: 1.05, bossHp2: 1.03, bossAtk2: 1.05, from: 21, to: 45, hpTrim: 0.5, atkLift: 1.65, bossTrim: 0.6 },
   late: (f, v) => 1 + (v - 1) * Math.min(1, Math.max(0, (f - BAL.curve.from) / (BAL.curve.to - BAL.curve.from))),
   foeHp: f => 1.4 * climb(prog(f), 1.2, BAL.curve.hp2) * BAL.late(f, BAL.curve.hpTrim),
   foeAtk: f => 1.1 * climb(prog(f), 1.12, BAL.curve.atk2) * BAL.late(f, BAL.curve.atkLift),
@@ -38,8 +38,8 @@ export const BAL = {
   // (Dragon and Morgane lighter: they were walls; zones 5-10 heavier: they had become easy once the
   // late curve shortened the fights). Bench targets: a steady decline from boss to boss.
   bossTune: {
-    bossDragon: { hp: 0.8, atk: 0.8 }, bossHag: { hp: 1, atk: 1 }, bossQueen: { hp: 1.6, atk: 1.95 },
-    bossVamp: { hp: 1.9, atk: 1.9 }, bossLich: { hp: 2.1, atk: 2.1 }, bossRat: { hp: 2, atk: 1.8 },
+    bossDragon: { hp: 0.8, atk: 0.8 }, bossHag: { hp: 1.1, atk: 1.05 }, bossQueen: { hp: 1.6, atk: 1.95 },
+    bossVamp: { hp: 1.9, atk: 1.9 }, bossLich: { hp: 2.1, atk: 2.1 }, bossRat: { hp: 1.8, atk: 1.65 },
     bossVoid: { hp: 2.5, atk: 2.4 }, bossVort: { hp: 1.5, atk: 1.45 },
   },
   maxRounds: 60, // hard limit: explicit defeat (should almost never happen thanks to the enrage)
@@ -49,6 +49,8 @@ export const BAL = {
   regen: { trait: 0.04, affix: 0.05, fadeFrom: 8, fade: 0.1 },
   ultGainAct: 14, ultGainHit: 6, ultMax: 100,
   healMult: 1.3, // Séléna's Soin (was 1.9 in v0.2)
+  // v0.6: Aldric's sustain, so teams without Séléna hold (measured with tools/bench.mjs, all 10 teams)
+  aldric: { taunt: 0.1, ult: 0.15 },
   // rewards (gold and shards grow with the zone: zoneMul)
   zoneMul: z => 1 + 0.2 * z, // shards
   goldMul: z => 1 + 0.15 * z,
