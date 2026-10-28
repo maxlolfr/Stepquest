@@ -178,7 +178,10 @@ export function applyCard(run, c, meta) {
     case 'upgrade': h.up[c.skill] = (h.up[c.skill] || 0) + 1; break;
     case 'element': h.el = c.el; break;
     case 'gear': h.gear[c.gear.slot] = c.gear; break;
-    case 'relic': if (!run.relics.includes(c.key) && RELICS[c.key]) { run.relics.push(c.key); run.stats.synMax = Math.max(run.stats.synMax || 0, activeSynergies(run.relics).length); } break;
+    case 'relic':
+      if (run.relics.includes(c.key) || !RELICS[c.key]) break;
+      if (relicsFull(run)) { run.relicWait = c.key; break; } // v0.6: slots full, the player picks what to drop
+      run.relics.push(c.key); run.stats.synMax = Math.max(run.stats.synMax || 0, activeSynergies(run.relics).length); break;
     case 'item': run.items[c.key] = (run.items[c.key] || 0) + 1; break;
     default: throw new Error(`Carte inconnue : ${c.type}`);
   }
@@ -189,7 +192,37 @@ export function pickCard(run, idx, meta) {
   const p = run.pending;
   if (!p || !p.cards || !p.cards[idx]) throw new Error('Aucune récompense à choisir');
   applyCard(run, p.cards[idx], meta);
+  if (holdRelic(run, 'advance')) return;
   advance(run);
+}
+
+// ---------------------------------------------------------------- relic slots (v0.6)
+// A run holds at most BAL.relicMax relics. A new one beyond that opens a choice:
+// drop one of the relics held (compared side by side), or leave the new one.
+export const relicsFull = run => BAL.relicMax != null && run.relics.length >= BAL.relicMax;
+
+function holdRelic(run, next, back = null, refund = 0) {
+  if (!run.relicWait) return false;
+  run.pending = { kind: 'replace', key: run.relicWait, next, back, refund };
+  delete run.relicWait;
+  run.phase = 'room';
+  return true;
+}
+
+/** drop = key of a held relic to give up for the new one, or null to leave the new one. */
+export function replaceRelic(run, drop, meta) {
+  const p = run.pending;
+  if (!p || p.kind !== 'replace') throw new Error('Aucune relique à remplacer');
+  if (drop) {
+    if (!run.relics.includes(drop)) throw new Error('Relique inconnue');
+    run.relics = run.relics.filter(k => k !== drop).concat(p.key);
+    run.stats.replaced = (run.stats.replaced || 0) + 1;
+    run.stats.synMax = Math.max(run.stats.synMax || 0, activeSynergies(run.relics).length);
+  } else if (p.refund) run.gold += p.refund; // bought at the shop and left: money back
+  refreshTeam(run, meta);
+  if (p.next === 'advance') { advance(run); return; }
+  run.pending = p.back;
+  run.phase = 'room';
 }
 
 export const canReroll = run => run.rerolls > 0 && run.pending && run.pending.kind === 'reward';
@@ -226,6 +259,7 @@ export function buy(run, id, meta) {
   run.gold -= it.price;
   if (it.type !== 'item') p.bought.push(id); // potions can be bought several times
   applyCard(run, it, meta);
+  holdRelic(run, 'back', p, it.price);
   return true;
 }
 
@@ -250,7 +284,12 @@ export function resolveEvent(run, choiceIdx, meta) {
     if (e.gold) { run.gold += e.gold; out.push(`+${e.gold} or.`); }
     if (e.shards) { run.shards += e.shards; out.push(`+${e.shards} éclats.`); }
     if (e.item) { run.items[e.item]++; out.push(e.item === 'pot' ? '+1 potion.' : '+1 plume de phénix.'); }
-    for (let n = 0; n < (e.relic === true ? 1 : e.relic || 0); n++) { const free = Object.keys(RELICS).filter(k => !run.relics.includes(k)); if (free.length) { const k = rng.pick(free); applyCard(run, { type: 'relic', key: k }, meta); out.push(`Relique obtenue : ${RELICS[k].name}.`); } else { run.gold += 40; out.push('Plus aucune relique à gagner : +40 or.'); } }
+    for (let n = 0; n < (e.relic === true ? 1 : e.relic || 0); n++) {
+      const free = Object.keys(RELICS).filter(k => !run.relics.includes(k) && k !== run.relicWait);
+      if (!free.length || (run.relicWait && relicsFull(run))) { run.gold += 40; out.push(free.length ? 'Une autre relique, mais plus de place : +40 or.' : 'Plus aucune relique à gagner : +40 or.'); continue; }
+      const k = rng.pick(free); applyCard(run, { type: 'relic', key: k }, meta);
+      out.push(run.relicWait === k ? `Relique trouvée : ${RELICS[k].name}. Tes emplacements sont pleins : choisis ce que tu gardes.` : `Relique obtenue : ${RELICS[k].name}.`);
+    }
     if (e.stat) { const c2 = statCard(run, rng); applyCard(run, c2, meta); out.push(c2.desc); }
     if (e.gear) {
       const hero = rng.pick(run.team.map(h => h.id)), g = makeGear(rng.pick(['w', 'a', 'j']), rng.weighted([[1, 70], [2, 30]]), run.floor, hero);
@@ -268,7 +307,9 @@ export function resolveEvent(run, choiceIdx, meta) {
   apply(c.effect);
   if (!out.length) out.push('Tu reprends ta route.');
   run.pending = { kind: 'event-done', event: E.id, text: out.join(' ') };
-  return { ok: true, text: run.pending.text };
+  const text = run.pending.text;
+  holdRelic(run, 'back', run.pending);
+  return { ok: true, text };
 }
 
 export function leaveRoom(run) {

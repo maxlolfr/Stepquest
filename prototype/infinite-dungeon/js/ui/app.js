@@ -6,13 +6,13 @@ import { getSettings, persistSettings, preloadSfx, playMusic, sfx } from './audi
 import { showTitle, hideTitle } from './screens/title.js';
 import { showTeam } from './screens/team.js';
 import { showMap, showCheckpoint } from './screens/map.js';
-import { showCards, showRest, showShop, showEvent } from './screens/rooms.js';
+import { showCards, showRest, showShop, showEvent, showReplace } from './screens/rooms.js';
 import { showResults, showCamp } from './screens/camp.js';
 import { runBattle } from './screens/battle.js';
 import { showTrophies } from './screens/trophies.js';
 import { dailyFor, dayKey, ACHIEVEMENTS } from '../data/progress.js';
 import { loadSave, writeSave } from '../save/storage.js';
-import { nightmareOpen, newRun, chooseDoor, battleConfig, finishBattle, pickCard, reroll, rest, buy, resolveEvent, leaveRoom, continueRun, retreat, endRun, currentDoor, refreshTeam, startFloors } from '../run/run.js';
+import { nightmareOpen, newRun, chooseDoor, battleConfig, finishBattle, pickCard, reroll, rest, buy, resolveEvent, replaceRelic, leaveRoom, continueRun, retreat, endRun, currentDoor, refreshTeam, startFloors } from '../run/run.js';
 import { buyUpgrade, refundUpgrades, newMeta } from '../run/meta.js';
 import { newSeed } from '../core/rng.js';
 import { HEROES } from '../data/heroes.js';
@@ -95,6 +95,7 @@ export function route() {
     case 'checkpoint': return showCheckpoint(view(), { run, onContinue: () => { continueRun(run); next(); }, onRetreat: () => { retreat(run); next(); } });
     case 'room': {
       const p = run.pending;
+      if (p.kind === 'replace') return showReplace(view(), { run, onReplace: k => { replaceRelic(run, k, meta); toast('Relique remplacée.'); next(); }, onLeave: () => { replaceRelic(run, null, meta); next(); } });
       if (p.kind === 'chest') return showCards(view(), { run, kind: 'chest', onPick: i => { pickCard(run, i, meta); next(); } });
       if (p.kind === 'train') return showCards(view(), { run, kind: 'train', onPick: i => { pickCard(run, i, meta); next(); }, onSkip: () => { leaveRoom(run); next(); } });
       if (p.kind === 'rest') return showRest(view(), { run, onHeal: () => { sfx('levelup'); rest(run, 'heal', meta); next(); }, onTrain: () => { rest(run, 'train', meta); next(); }, onRetreat: () => { retreat(run); next(); } });

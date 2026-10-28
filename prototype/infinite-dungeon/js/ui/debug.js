@@ -7,7 +7,8 @@ import { floorOf } from '../run/run.js';
 import { chooseDoor } from '../run/run.js';
 import { exportCode, importCode } from '../save/storage.js';
 import { missingAssets } from './loader.js';
-import { UPGRADES } from '../data/balance.js';
+import { UPGRADES, BAL } from '../data/balance.js';
+import { RELICS } from '../data/items.js';
 import { newMeta } from '../run/meta.js';
 import { GAME } from '../config.js';
 
@@ -46,7 +47,8 @@ export function mountDebug() {
       h('button', { type: 'button', onclick: () => go('fight') }, 'Combat'),
       h('button', { type: 'button', onclick: () => go('elite') }, 'Élite'),
       h('button', { type: 'button', onclick: () => go('cursed') }, 'Maudite'),
-      h('button', { type: 'button', onclick: () => go('boss') }, 'Boss')),
+      h('button', { type: 'button', onclick: () => go('boss') }, 'Boss'),
+      h('button', { type: 'button', onclick: () => { const run = app.data.run; if (!run) return toast('Lance d’abord une expédition.'); run.relics = Object.keys(RELICS).filter(k => !run.relics.includes(k)).slice(0, Math.max(0, BAL.relicMax - run.relics.length)).concat(run.relics).slice(0, BAL.relicMax); save(); toast(`Reliques : ${run.relics.length}/${BAL.relicMax}`); route(); box.classList.remove('open'); } }, 'Reliques pleines')),
     h('div.dbg-row',
       h('button', { type: 'button', onclick: () => { app.data.meta.shards += 500; app.data.meta.unlocked = 91; save(); toast('+500 éclats, départs débloqués'); goTitle(); } }, '+500 éclats'),
       h('button', { type: 'button', onclick: () => { const m = app.data.meta; let back = 0; for (const [k, U] of Object.entries(UPGRADES)) { back += U.costs.slice(0, m.upgrades[k] || 0).reduce((x, y) => x + y, 0); m.upgrades[k] = 0; } m.shards += back; save(); toast(`Camp remis à zéro : +${back} éclats rendus`); goTitle(); } }, 'Rembourser le camp'),

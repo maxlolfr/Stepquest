@@ -70,7 +70,8 @@ export function playRun(seed, { meta, team, start = 1, curses = [], hooks = {} }
     const p = run.pending;
     if (p.kind === 'replace') { // v0.6: relic slots full
       const k = hooks.replace ? hooks.replace(run, p) : defaultReplace(run, p);
-      R.replaceRelic(run, k, meta); log.replaced += k ? 1 : 0; continue;
+      const lost = k && activeSynergies(run.relics).filter(t => !activeSynergies(run.relics.filter(x => x !== k).concat(p.key)).includes(t)).length;
+      R.replaceRelic(run, k, meta); log.replaced += k ? 1 : 0; log.synLost = (log.synLost || 0) + (lost ? 1 : 0); log.declined = (log.declined || 0) + (k ? 0 : 1); continue;
     }
     if (run.phase === 'reward' || p.kind === 'chest' || p.kind === 'train') {
       log.offers.push(...p.cards.map(c => c.type));
@@ -179,13 +180,18 @@ export function benchCards(N = 200, lvl = 0) {
 
 /** End-of-run relics: count, synergies, how many different builds. */
 export function benchRelics(N = 200, lvl = 0.5) {
-  const cnt = [], syn = [], sets = new Set(), synSets = new Set(), repl = [], fl = [];
+  const cnt = [], syn = [], sets = new Set(), synSets = {}, repl = [], fl = [], lost = [], decl = [];
+  let all5 = 0;
   for (let i = 0; i < N; i++) {
     const { run, log, floor } = playRun(150000 + i, { meta: campMeta(lvl) });
-    cnt.push(run.relics.length); const s = activeSynergies(run.relics); syn.push(s.length);
-    sets.add(run.relics.slice().sort().join(',')); synSets.add(s.sort().join(',')); repl.push(log.replaced); fl.push(floor);
+    cnt.push(run.relics.length); const s = activeSynergies(run.relics); syn.push(s.length); if (s.length >= 5) all5++;
+    const key = s.sort().join(',') || '-'; synSets[key] = (synSets[key] || 0) + 1;
+    sets.add(run.relics.slice().sort().join(',')); repl.push(log.replaced); fl.push(floor); lost.push(log.synLost || 0); decl.push(log.declined || 0);
   }
-  return { relics: +avg(cnt).toFixed(1), synergies: +avg(syn).toFixed(1), distinctBuilds: sets.size, distinctSynergyMixes: synSets.size, replacements: +avg(repl).toFixed(1), floor: +avg(fl).toFixed(1), median: med(fl) };
+  // diversity of the synergy mixes at the end of the runs (Shannon entropy, bits)
+  const H = -Object.values(synSets).reduce((a, n) => a + (n / N) * Math.log2(n / N), 0);
+  return { relics: +avg(cnt).toFixed(1), synergies: +avg(syn).toFixed(1), allFive: `${pc(all5, N)} %`, distinctBuilds: sets.size, synergyMixes: Object.keys(synSets).length, mixEntropy: +H.toFixed(2),
+    replacements: +avg(repl).toFixed(1), synergyBroken: +avg(lost).toFixed(2), declined: +avg(decl).toFixed(1), floor: +avg(fl).toFixed(1), median: med(fl) };
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

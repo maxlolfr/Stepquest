@@ -54,6 +54,7 @@ export const BAL = {
   gold: { normal: [12, 18], elite: [30, 40], cursed: [50, 60], boss: [60, 60] },
   // v0.4.1: relics are rarer, so a run builds 1-2 styles instead of collecting everything
   relicWeight: { normal: 0.2, elite: 1.2, chest: 1.2 },
+  relicMax: 10, // v0.6: relic slots per expedition (null = no limit). 10 vs 8 vs 6 compared with tools/bench.mjs: 10 keeps most of the variety with fewer broken synergies
   shards: { normal: 1, elite: 3, cursed: 5, boss: 10, victory: 100 },
   defeatKeep: 0.5,
   restHeal: 0.4,

@@ -8,7 +8,8 @@ import { makeRng } from '../js/core/rng.js';
 import { HERO_ORDER, HEROES } from '../js/data/heroes.js';
 import { UPGRADES, BAL } from '../js/data/balance.js';
 import { createBattle, autoFight, heroResults, foesOf } from '../js/engine/combat.js';
-import { newRun, chooseDoor, battleConfig, finishBattle, pickCard, rest, buy, resolveEvent, leaveRoom, continueRun, floorOf, endRun, startFloors, canAfford } from '../js/run/run.js';
+import { newRun, chooseDoor, battleConfig, finishBattle, pickCard, rest, buy, resolveEvent, leaveRoom, continueRun, floorOf, endRun, startFloors, canAfford, replaceRelic } from '../js/run/run.js';
+import { defaultReplace } from './bench.mjs';
 import { gearScore } from '../js/run/loot.js';
 import { EVENTS } from '../js/data/items.js';
 import { newMeta, buyUpgrade, upgradeCost } from '../js/run/meta.js';
@@ -51,6 +52,7 @@ export function simulateRun(seed, { team, smart = true, meta = newMeta(), start 
       continue;
     }
     const p = run.pending;
+    if (p.kind === 'replace') { replaceRelic(run, defaultReplace(run, p), meta); continue; } // v0.6 relic slots
     if (run.phase === 'reward' || p.kind === 'chest' || p.kind === 'train') { pickCard(run, smart ? bestIdx(run, p.cards) : 0, meta); continue; }
     if (p.kind === 'rest') { rest(run, teamHp(run) < 0.8 ? 'heal' : 'train', meta); continue; }
     if (p.kind === 'shop') {
@@ -58,6 +60,7 @@ export function simulateRun(seed, { team, smart = true, meta = newMeta(), start 
       if (run.items.pot < 3) buy(run, 'pot', meta);
       if (smart) { buy(run, 'relic', meta); const g = p.stock.find(s => s.id === 'gear'); if (g && cardValue(run, g) > 3) buy(run, 'gear', meta); buy(run, 'up', meta); }
       if (run.items.fea < 1) buy(run, 'fea', meta);
+      if (run.pending.kind === 'replace') continue;
       leaveRoom(run); continue;
     }
     if (p.kind === 'event') {
