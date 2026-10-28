@@ -53,7 +53,7 @@ function makeFoe(B, f, slot, n) {
     special: M.special || null, phaseDef: M.phase || null, thornsPct: 0, stolen: 0 });
   if (f.elite && AFFIXES[f.elite]) {
     const A = AFFIXES[f.elite];
-    u.aff = f.elite; u.affCol = A.col; u.name = `${M.name} ${A.n}`;
+    u.aff = f.elite; u.affCol = A.col; u.affName = A.n[0].toUpperCase() + A.n.slice(1); u.name = `${M.name} ${A.n}`;
     if (f.elite === 'armor') u.shield = Math.round(u.hpMax * 0.3);
     if (f.elite === 'thorns') u.thornsPct = 0.25;
   }

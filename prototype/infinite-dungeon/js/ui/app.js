@@ -50,8 +50,8 @@ export function goTitle() {
 }
 
 function newExpedition() {
-  if (app.data.run && !window.confirm('Abandonner l’expédition en cours ? Elle compte comme une défaite (la moitié des éclats non sécurisés est gardée).')) return;
-  if (app.data.run) { app.data.run.outcome = 'lose'; endRun(app.data.meta, app.data.run); app.data.run = null; save(); }
+  if (app.data.run && !window.confirm('Abandonner l’expédition en cours ? Elle compte comme une défaite : la moitié des éclats non sécurisés est gardée, mais elle ne valide ni objectif du jour ni exploit.')) return;
+  if (app.data.run) { app.data.run.outcome = 'lose'; app.data.run.abandoned = true; endRun(app.data.meta, app.data.run); app.data.run = null; save(); }
   hideTitle();
   showTeam(view(), { initial: app.lastTeam, starts: startFloors(app.data.meta), nightmare: nightmareOpen(app.data.meta), curses: app.lastCurses, onBack: goTitle, onStart: (ids, start, curses) => startRun(ids, { start, curses }) });
 }
@@ -59,7 +59,7 @@ function newExpedition() {
 export function startRun(ids, { seed = newSeed(), floor = 0, start = 1, curses = [] } = {}) {
   app.lastTeam = ids; app.lastCurses = curses;
   const run = newRun(app.data.meta, ids, seed, start, curses);
-  if (floor) run.floor = floor; // debug panel
+  if (floor) { run.floor = floor; run.debug = true; } // debug panel: a test run, nothing is recorded at the end
   app.data.run = run;
   save();
   route();

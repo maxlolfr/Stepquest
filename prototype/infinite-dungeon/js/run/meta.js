@@ -18,8 +18,9 @@ export const newMeta = () => ({
  * After an expedition: journal, daily objectives and achievements. Mutates meta
  * (shards included) and returns what was newly earned, for the results screen.
  */
-export function recordRun(meta, s, day = dayKey()) {
+export function recordRun(meta, s, day = dayKey(), { rewards = true } = {}) {
   const out = { dailies: [], achievements: [], shards: 0 };
+  if (!rewards) return out; // v0.6: an abandoned expedition validates nothing
   for (const k of s.relics || []) if (RELICS[k] && !meta.relicsSeen.includes(k)) meta.relicsSeen.push(k);
   for (const b of s.bossIds || []) if (BOSSES[b] && !meta.bossesBeaten.includes(b)) meta.bossesBeaten.push(b);
   for (const h of s.team || []) meta.heroBest[h] = Math.max(meta.heroBest[h] || 0, s.floor);

@@ -127,7 +127,7 @@ test('checkpoint start: only when unlocked, with a catch-up bonus', () => {
   meta.unlocked = 21;
   const run = newRun(meta, ['aldric', 'selena', 'orin'], 3, 21), base = newRun(meta, ['aldric', 'selena', 'orin'], 3);
   assert.equal(run.floor, 21);
-  assert.ok(run.lv > base.lv && run.gold > base.gold && run.relics.length === 2);
+  assert.ok(run.lv > base.lv && run.gold > base.gold && run.relics.length === 1 && run.pending.start, '1 relic drawn + 1 to choose (v0.6)');
   assert.ok(run.team.every(h => h.gear.w && h.hp === h.hpMax));
 });
 

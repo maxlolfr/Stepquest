@@ -13,7 +13,7 @@ export const DOOR_INFO = {
   fight: { name: 'Combat', ic: '⚔️', img: 'uiDice', desc: 'Des monstres gardent le passage.' },
   elite: { name: 'Élite', ic: '💀', img: 'uiSkull', desc: 'Un ennemi d’élite : plus dur, meilleur butin.' },
   chest: { name: 'Coffre', ic: '🎁', img: 'chestR2', desc: 'Un équipement ou une relique, sans combat.' },
-  rest:  { name: 'Repos', ic: '🔥', img: 'uiChest1', desc: 'Soigner l’équipe ou s’entraîner. Retraite possible.' },
+  rest:  { name: 'Repos', ic: '🔥', img: 'door_rest', desc: 'Soigner l’équipe ou s’entraîner. Retraite possible.' },
   shop:  { name: 'Marchand', ic: '💰', img: 'uiGold', desc: 'Potions, équipement et reliques contre de l’or.' },
   event: { name: 'Événement', ic: '❓', img: 'uiScroll', desc: 'Une rencontre étrange, un choix à faire.' },
   boss:  { name: 'Boss', ic: '👑', img: 'uiTrophy', desc: 'Le maître de la zone. Après lui, tes éclats sont à l’abri.' },

@@ -119,3 +119,20 @@ test('element cards say how many monsters of the zone are weak to them', async (
   assert.ok(found && /Dans cette zone : \d/.test(found.desc));
   assert.ok(Number.isInteger(found.weak));
 });
+
+test('starting from a checkpoint: the last starting relic is chosen 1 out of 3', () => {
+  const meta = newMeta(); meta.unlocked = 31;
+  const run = newRun(meta, ['aldric', 'selena', 'orin'], 77, 31);
+  assert.equal(run.phase, 'reward');
+  assert.ok(run.pending.start);
+  assert.equal(run.pending.cards.length, 3);
+  assert.ok(run.pending.cards.every(c => c.type === 'relic'));
+  const before = run.relics.length, k = run.pending.cards[1].key;
+  pickCard(run, 1, meta);
+  assert.equal(run.relics.length, before + 1);
+  assert.ok(run.relics.includes(k));
+  assert.equal(run.phase, 'map');
+  assert.equal(run.floor, 31, 'choosing the relic does not skip a floor');
+  const fresh = newRun(newMeta(), ['aldric', 'selena', 'orin'], 77, 1);
+  assert.equal(fresh.phase, 'map', 'a start at floor 1 has no relic choice');
+});

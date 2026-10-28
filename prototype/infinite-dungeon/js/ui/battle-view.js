@@ -12,7 +12,8 @@ const FSLOT = [[[0.7, 0.6]], [[0.68, 0.42], [0.83, 0.88]], [[0.66, 0.55], [0.86,
 const BSLOT = [[0.68, 0.62], [0.9, 0.22], [0.92, 0.96]];
 const persp = v => 0.82 + 0.3 * v;
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-const STATUS_IC = { poison: '☠️', burn: '🔥', stun: '💫', freeze: '❄️', mark: '🎯', taunt: '🛡️' };
+// v0.6: painted status icons (img/st_*.webp); taunt and shadow marks are drawn
+const STATUS_IMG = { poison: 'st_poison', burn: 'st_burn', stun: 'st_stun', freeze: 'st_freeze', mark: 'st_mark' };
 
 export function createView(canvas, B, door) {
   const cx = canvas.getContext('2d');
@@ -117,7 +118,9 @@ export function createView(canvas, B, door) {
 
   function drawFoeBar(u, p, y) {
     const w = Math.max(64, Math.min(96, p.h * 0.62)), x = p.x - w / 2, by = y - p.h * (POSEM[u.sprite] ? POSEM[u.sprite][0] : 1) - 16;
-    if (u.elite) { cx.font = '700 14px Nunito, sans-serif'; cx.textAlign = 'center'; cx.fillStyle = '#ffd36e'; cx.strokeStyle = 'rgba(0,0,0,.85)'; cx.lineWidth = 3; const n = u.name.length > 22 ? u.name.slice(0, 21) + '…' : u.name; cx.strokeText(n, p.x, by - 6); cx.fillText(n, p.x, by - 6); }
+    if (u.elite) { // v0.6: only the affix (the sprite already says which monster), so names never overlap
+      const n = u.affName || ''; cx.font = '800 14px Nunito, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'alphabetic'; cx.strokeStyle = 'rgba(0,0,0,.9)'; cx.lineWidth = 4;
+      cx.fillStyle = u.affCol ? `rgb(${u.affCol})` : '#ffd36e'; cx.strokeText(n, p.x, by - 6); cx.fillText(n, p.x, by - 6); }
     cx.fillStyle = 'rgba(0,0,0,.7)'; rr(x - 2, by - 2, w + 4, 12, 5); cx.fill();
     cx.fillStyle = '#d6352b'; rr(x, by, w * u.hp / u.hpMax, 8, 4); cx.fill();
     if (u.shield > 0) { cx.fillStyle = 'rgba(140,200,255,.9)'; rr(x, by, w * Math.min(1, u.shield / u.hpMax), 4, 2); cx.fill(); }
@@ -125,13 +128,29 @@ export function createView(canvas, B, door) {
   }
 
   function drawStatus(u, x, y) {
-    const ics = [];
-    for (const [k, ic] of Object.entries(STATUS_IC)) if (u.st[k]) ics.push(ic);
-    if (u.st.shadow) ics.push('🌑'.repeat(u.st.shadow));
-    if (u.charge) ics.unshift('⚠️');
-    if (!ics.length) return;
-    cx.font = '15px system-ui, sans-serif'; cx.textAlign = 'center';
-    cx.fillText(ics.join(''), x, y);
+    const items = [];
+    if (u.charge) items.push({ k: 'warn' });
+    for (const [k, key] of Object.entries(STATUS_IMG)) if (u.st[k]) items.push({ k, key, n: k === 'poison' && u.st.poison ? u.st.poison.stacks : 0 });
+    if (u.st.taunt) items.push({ k: 'taunt' });
+    if (u.st.shadow) items.push({ k: 'shadow', n: u.st.shadow });
+    if (!items.length) return;
+    const S = 22, gap = 3, w = items.length * S + (items.length - 1) * gap;
+    let px = x - w / 2;
+    for (const it of items) {
+      const cxp = px + S / 2, cyp = y - S / 2 - 2, im = it.key && getImage(it.key);
+      cx.save();
+      if (im) cx.drawImage(im, px, cyp - S / 2, S, S);
+      else if (it.k === 'warn') { cx.fillStyle = '#d4231b'; cx.beginPath(); cx.arc(cxp, cyp, S / 2, 0, Math.PI * 2); cx.fill(); cx.strokeStyle = '#ffd36e'; cx.lineWidth = 2; cx.stroke(); cx.fillStyle = '#fff'; cx.font = '900 16px Nunito, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText('!', cxp, cyp + 1); }
+      else if (it.k === 'taunt') { cx.fillStyle = '#7fa6d8'; cx.strokeStyle = '#1b2433'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(cxp, cyp - 10); cx.lineTo(cxp + 9, cyp - 6); cx.lineTo(cxp + 7, cyp + 4); cx.lineTo(cxp, cyp + 10); cx.lineTo(cxp - 7, cyp + 4); cx.lineTo(cxp - 9, cyp - 6); cx.closePath(); cx.fill(); cx.stroke(); }
+      else if (it.k === 'shadow') { cx.fillStyle = '#2a1840'; cx.strokeStyle = '#b38cff'; cx.lineWidth = 2; cx.beginPath(); cx.arc(cxp, cyp, S / 2 - 1, 0, Math.PI * 2); cx.fill(); cx.stroke(); }
+      if (it.n > 1 || it.k === 'shadow') { // stack count badge
+        cx.font = '900 12px Nunito, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.lineWidth = 3; cx.strokeStyle = '#000'; cx.fillStyle = '#fff';
+        const bx = it.k === 'shadow' ? cxp : px + S - 3, by = it.k === 'shadow' ? cyp + 1 : cyp + S / 2 - 4;
+        cx.strokeText(String(it.n), bx, by); cx.fillText(String(it.n), bx, by);
+      }
+      cx.restore();
+      px += S + gap;
+    }
   }
 
   function drawBossBar(now) {
@@ -176,7 +195,10 @@ export function createView(canvas, B, door) {
       cx.globalAlpha = k > 0.7 ? (1 - k) / 0.3 : 1;
       cx.lineWidth = 4; cx.strokeStyle = 'rgba(0,0,0,.9)';
       const y = t.y - k * 46;
-      cx.strokeText(t.text, t.x, y); cx.fillStyle = t.col; cx.fillText(t.text, t.x, y);
+      let tx = t.x;
+      const im = t.ic && getImage(t.ic);
+      if (im) { const tw = cx.measureText(t.text).width, s = size * 1.05; tx = t.x + s / 2 + 2; cx.drawImage(im, tx - tw / 2 - s - 3, y - s * 0.85, s, s); }
+      cx.strokeText(t.text, tx, y); cx.fillStyle = t.col; cx.fillText(t.text, tx, y);
       cx.globalAlpha = 1;
     }
   }
@@ -206,7 +228,12 @@ export function createView(canvas, B, door) {
   }
 
   // ---- effects API used by the battle screen
-  V.text = (u, text, col, big) => { const c = V.center(u); V.texts.push({ x: c.x + (Math.random() - 0.5) * 24, y: c.y - pos(u).h * 0.25, text, col, big, t0: performance.now(), dur: 900 }); };
+  // v0.6: texts on the same unit stack upwards instead of overlapping; optional icon before the text
+  V.text = (u, text, col, big, ic) => {
+    const now = performance.now(), c = V.center(u);
+    const recent = V.texts.filter(t => t.uid === u.uid && now - t.t0 < 520).length;
+    V.texts.push({ uid: u.uid, x: c.x + (recent % 2 ? 14 : -14) * Math.min(1, recent), y: c.y - pos(u).h * 0.25 - recent * 26, text, col, big, ic, t0: now, dur: 900 + Math.min(3, recent) * 120 });
+  };
   V.strip = (key, u, size, dur = 420) => { const c = V.center(u); V.fx.push({ t: 'strip', key: `fx_${key}`, x: c.x, y: c.y, size: size || pos(u).h * 1.25, flip: u.side === 'h', t0: performance.now(), dur: dur / V.speed }); };
   V.ring = (u, col = '255,214,110', r) => { const p = pos(u); V.fx.push({ t: 'ring', x: p.x, y: p.y, col, r: r || p.h * 0.6, t0: performance.now(), dur: 500 / V.speed }); };
   V.sparks = (u, col = '255,200,120', n = 10) => { const c = V.center(u); V.fx.push({ t: 'spark', x: c.x, y: c.y, col, parts: Array.from({ length: reduce ? 3 : n }, () => ({ vx: (Math.random() - 0.5) * 2, vy: -Math.random() * 1.6, r: 2 + Math.random() * 3 })), t0: performance.now(), dur: 520 / V.speed }); };

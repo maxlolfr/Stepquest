@@ -36,7 +36,7 @@ function cardEl(c, run, { onPick, price, sold, afford = true }) {
 export function showCards(root, { run, kind, onPick, onReroll, onSkip }) {
   const p = run.pending;
   const relicChoice = kind === 'reward' && p.cards.every(c => c.type === 'relic');
-  const title = relicChoice ? 'Trésor : choisis une relique' : { reward: 'Victoire ! Choisis ta récompense', chest: 'Le coffre s’ouvre', train: 'Entraînement' }[kind];
+  const title = p.start ? 'Départ : choisis ta relique' : relicChoice ? 'Trésor : choisis une relique' : { reward: 'Victoire ! Choisis ta récompense', chest: 'Le coffre s’ouvre', train: 'Entraînement' }[kind];
   root.replaceChildren(h('div.page',
     h('header.ptop', h('h2', title)),
     kind === 'chest' ? img('chestR2', 'chest-art') : relicChoice ? img('chest_boss', 'chest-art') : null,

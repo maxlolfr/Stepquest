@@ -52,6 +52,7 @@ export function showResults(root, { summary, team, onCamp }) {
     h('div.res-heroes', team.map(id => img(`${HEROES[id].sprite}_${pose}`, 'res-hero'))),
     h('h2', title),
     h('p.lead', o === 'lose' ? `Défaite à l’étage ${summary.floor}.` : o === 'retreat' ? `Expédition terminée à l’étage ${summary.floor}.` : 'Vorthax le Lié est tombé. Les 100 étages sont à toi.'),
+    summary.debug ? h('p.record', '🛠 Expédition de test (mode debug) : rien n’est enregistré.') : null,
     summary.record ? h('p.record', `🏆 Nouveau record : étage ${summary.floor} !`) : null,
     summary.unlocked ? h('p.record', `🚩 Nouveau point de départ : étage ${summary.unlocked}`) : null,
     h('div.summary',

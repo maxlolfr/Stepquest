@@ -366,3 +366,7 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 .rp-verdict.bad { color: #ffb36b; } .rp-verdict.good { color: #9dff6a; }
 .relic-count { align-self: center; font-size: 13px; font-weight: 800; color: var(--ink-soft); padding: 0 4px; }
 .relic-count.full { color: #ffb36b; }
+
+/* v0.6 — enrage */
+.btop .round small .rage-ic { width: 18px; height: 18px; vertical-align: -4px; margin-right: 3px; }
+.banner.rage { font-size: 17px; border-color: #ff7a5c; background: linear-gradient(rgba(120,12,8,.95), rgba(60,6,6,.95)); box-shadow: 0 0 24px rgba(255,60,30,.5); }

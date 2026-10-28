@@ -20,7 +20,7 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 export async function runBattle(root, { config, door, floor, settings }) {
   const B = createBattle(config);
   // preload sprites for everyone on stage (+ skeletons the boss may summon)
-  const keys = new Set([door.bg, 'fx_slash', 'fx_fire', 'fx_ice', 'fx_heal', 'fx_ult']);
+  const keys = new Set([door.bg, 'fx_slash', 'fx_fire', 'fx_ice', 'fx_heal', 'fx_ult', 'fx_enrage', 'st_poison', 'st_burn', 'st_stun', 'st_freeze', 'st_mark']);
   for (const u of B.units) for (const k of spriteKeys(u.sprite)) keys.add(k);
   if (B.units.some(u => u.boss)) for (const k of spriteKeys('skel')) keys.add(k);
   for (const u of heroesOf(B)) keys.add(`ult_${u.id}`);
@@ -83,7 +83,7 @@ export async function runBattle(root, { config, door, floor, settings }) {
     // v0.6: round counter with the coming enrage (shown 10 rounds ahead) and its strength
     const E = enrageInfo(B), r = Math.max(1, B.round);
     roundLbl.className = 'round' + (E.state === 'on' ? ' enraged' : E.in <= 10 ? ' soon' : '');
-    roundLbl.replaceChildren(h('b', `Tour ${r}`), E.state === 'on' ? h('small', `Rage ×${E.mul.toFixed(2).replace('.', ',')}`) : E.in <= 10 ? h('small', `rage dans ${E.in}`) : '');
+    roundLbl.replaceChildren(h('b', `Tour ${r}`), E.state === 'on' ? h('small', icon('fx_enrage', '😡', 'rage-ic'), `Rage ×${E.mul.toFixed(2).replace('.', ',')}`) : E.in <= 10 ? h('small', `rage dans ${E.in}`) : '');
     roundLbl.title = E.state === 'on' ? `Les ennemis sont enragés : +${Math.round((E.mul - 1) * 100)} % d’attaque, plus de soins. Défaite au tour ${BAL.maxRounds}.` : `À partir du tour ${BAL.enrage.from}, les ennemis s’enragent.`;
     view.enraged = E.state === 'on' ? E.stacks : 0;
   }
@@ -153,12 +153,13 @@ export async function runBattle(root, { config, door, floor, settings }) {
         case 'shield': view.text(u, `💠 ${e.amt}`, '#9fd4ff'); view.ring(u, '140,200,255'); await wait(120); break;
         case 'status': {
           if (e.immune) { view.text(u, 'Immunisé', '#cfe6ff'); break; }
-          const lab = { poison: '☠️ Poison', burn: '🔥 Brûlure', stun: '💫 Étourdi', freeze: '❄️ Gelé', mark: '🎯 Marqué', taunt: '🛡️ Provocation' }[e.st];
-          if (lab) view.text(u, lab, '#fff');
+          const lab = { poison: 'Poison', burn: 'Brûlure', stun: 'Étourdi', freeze: 'Gelé', mark: 'Marqué', taunt: 'Provocation' }[e.st];
+          const col = { poison: '#a6ff6e', burn: '#ffb35c', stun: '#ffe27a', freeze: '#9fe3ff', mark: '#ff8a7a', taunt: '#cfe0ff' }[e.st];
+          if (lab) view.text(u, lab, col, false, e.st === 'taunt' ? null : `st_${e.st}`);
           const s = { poison: 'poison', burn: 'burn', stun: 'stun', freeze: 'freeze' }[e.st]; if (s) sfx(s, 0.45);
           await wait(140); break;
         }
-        case 'skip': view.text(u, e.why === 'gelé' ? '❄️ Gelé' : '💫 Étourdi', '#cfe6ff'); await wait(420); break;
+        case 'skip': view.text(u, e.why === 'gelé' ? 'Gelé' : 'Étourdi', '#cfe6ff', false, e.why === 'gelé' ? 'st_freeze' : 'st_stun'); await wait(420); break;
         case 'ko': view.pose(u, 'ko', 600); sfx(u.side === 'f' ? 'foe_die' : 'hero_hurt', 0.6); view.sparks(u, u.side === 'f' ? '255,200,120' : '255,90,80'); refresh(); await wait(320); break;
         case 'revive': view.text(u, 'Debout !', '#7dff9a'); view.strip('heal', u); view.unit(u).alpha = 1; say(e.text, '', 1400); refresh(); await wait(500); break;
         case 'charge': say(`⚠️ ${e.text}`, 'danger', 2600); sfx('aoe_warning', 0.8); view.ring(u, '255,60,40', view.pos(u).h); refresh(); await wait(1100); break;
@@ -169,7 +170,7 @@ export async function runBattle(root, { config, door, floor, settings }) {
         case 'item': sfx('levelup', 0.5); break;
         case 'enrage':
           if (e.warn) { say(`⏳ ${e.text}`, 'danger', 2600); sfx('aoe_warning', 0.7); await wait(900); }
-          else if (e.first) { say(`😡 ${e.text}`, 'danger', 3200); sfx('boss_phase', 0.9); view.doShake(14, 600); view.screenFlash(); refresh(); await wait(1300); }
+          else if (e.first) { say(`${e.text}`, 'danger rage', 3200); sfx('boss_phase', 0.9); view.doShake(14, 600); view.screenFlash(); refresh(); await wait(1300); }
           else { refresh(); view.pulse(); }
           break;
         case 'end': if (e.timeout) { say(`⌛ Tour ${BAL.maxRounds} : combat trop long, défaite.`, 'danger', 3500); await wait(1200); } break;

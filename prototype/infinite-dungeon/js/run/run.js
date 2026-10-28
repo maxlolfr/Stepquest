@@ -83,7 +83,7 @@ export function newRun(meta, teamIds, seed, start = 1, curses = []) {
   if (start > 1) { // checkpoint start: catch up with what a run would have gathered
     const k = (start - 1) / 10, Bn = BAL.startBonus(k), rng = makeRng(hashSeed(run.seed, 'start'));
     run.gold += Bn.gold; run.items.pot += Bn.pot; run.lv = Math.max(run.lv, Bn.lv);
-    run.relics = rng.shuffle(Object.keys(RELICS)).slice(0, Bn.relics);
+    run.relics = rng.shuffle(Object.keys(RELICS)).slice(0, Math.max(0, Bn.relics - 1));
     for (const h of run.team) {
       for (const st of ['hp', 'atk', 'mag', 'def']) h.bonus[st] = +Bn.stat.toFixed(3);
       h.gear.w = makeGear('w', 1, Bn.gearFloor, h.id);
@@ -92,6 +92,10 @@ export function newRun(meta, teamIds, seed, start = 1, curses = []) {
   }
   refreshTeam(run, meta);
   for (const h of run.team) h.hp = h.hpMax;
+  if (start > 1) { // v0.6: the last starting relic is chosen, 1 out of 3, instead of drawn at random
+    run.phase = 'reward';
+    run.pending = { kind: 'reward', start: true, cards: rewardCards(run, makeRng(hashSeed(run.seed, 'startrelic')), start, 'boss') };
+  }
   return run;
 }
 
@@ -193,6 +197,7 @@ export function pickCard(run, idx, meta) {
   const p = run.pending;
   if (!p || !p.cards || !p.cards[idx]) throw new Error('Aucune récompense à choisir');
   applyCard(run, p.cards[idx], meta);
+  if (p.start) { run.pending = null; run.phase = 'map'; return; } // starting relic: the run begins
   if (holdRelic(run, 'advance')) return;
   advance(run);
 }
@@ -226,7 +231,7 @@ export function replaceRelic(run, drop, meta) {
   run.phase = 'room';
 }
 
-export const canReroll = run => run.rerolls > 0 && run.pending && run.pending.kind === 'reward';
+export const canReroll = run => run.rerolls > 0 && run.pending && run.pending.kind === 'reward' && !run.pending.start;
 export function reroll(run) {
   if (!canReroll(run)) return false;
   run.rerolls--; run.rerollN++;
@@ -357,6 +362,7 @@ export function retreat(run) {
 
 /** Final shard count for the camp. Mutates meta, returns a summary. */
 export function endRun(meta, run) {
+  if (run.debug) return debugSummary(run); // v0.6: test runs (?debug floor jump) never touch the real progress
   const o = run.outcome;
   let kept;
   const victory = Math.round(BAL.shards.victory * (1 + curseBonus(run.curses)));
@@ -379,6 +385,13 @@ export function endRun(meta, run) {
   const summary = { outcome: o, kept, lost, banked: run.banked, floor: reached, bosses: run.bosses || 0, report: run.report || null, relics: run.relics.slice(), start: run.start || 1, record, unlocked: meta.unlocked > before ? meta.unlocked : 0, fights: st.fights, kills: st.kills,
     elites: st.elites || 0, cursedWon: st.cursedWon || 0, bossIds: (st.bossIds || []).slice(), synergies: st.synMax || 0, team: run.team.map(h => h.id), curses: (run.curses || []).slice(),
     nightmareOpened: before < NIGHTMARE_UNLOCK && meta.unlocked >= NIGHTMARE_UNLOCK };
-  summary.progress = recordRun(meta, summary); // achievements, daily objectives, journal
+  summary.abandoned = !!run.abandoned;
+  summary.progress = recordRun(meta, summary, undefined, { rewards: !run.abandoned }); // achievements, daily objectives, journal
   return summary;
+}
+
+function debugSummary(run) {
+  const st = run.stats;
+  return { outcome: run.outcome, kept: 0, lost: 0, banked: 0, floor: Math.min(BAL.floors, run.floor), bosses: run.bosses || 0, report: run.report || null, relics: run.relics.slice(), start: run.start || 1, record: false, unlocked: 0,
+    fights: st.fights, kills: st.kills, elites: st.elites || 0, cursedWon: st.cursedWon || 0, bossIds: [], synergies: st.synMax || 0, team: run.team.map(h => h.id), curses: (run.curses || []).slice(), nightmareOpened: false, debug: true, progress: { dailies: [], achievements: [], shards: 0 } };
 }

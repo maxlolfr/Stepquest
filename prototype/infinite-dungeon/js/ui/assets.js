@@ -47,6 +47,8 @@ for (const E of EVENTS) if (E.scene && !IMG[E.scene]) throw new Error(`décor ma
 for (const k of ['room_rest', 'room_shop', 'camp_scene', 'bg_menu', 'door_cursed', 'chest_boss', 'scr_victory', 'scr_defeat', 'scr_checkpoint']) IMG[k] = `img/${k}.webp`;
 // v0.5: Nightmare curses, trophies, daily objectives
 for (const k of ['scr_trophies', 'scr_nightmare', 'nm_emblem', 'daily_quest', 'daily_chest', 'ach_mystery', ...Object.values(CURSES).map(c => c.art), ...ACHIEVEMENTS.map(a => a.art)]) IMG[k] = `img/${k}.webp`;
+// v0.6: rest door, status icons above the units, enrage
+for (const k of ['door_rest', 'fx_enrage', 'st_poison', 'st_burn', 'st_stun', 'st_freeze', 'st_mark']) IMG[k] = `img/${k}.webp`;
 for (const R of [...Object.values(RELICS), ...Object.values(CONSUMABLES)]) if (!IMG[R.img]) throw new Error(`asset manquant pour ${R.name}: ${R.img}`);
 
 export const IMAGES = IMG;

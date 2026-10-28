@@ -100,3 +100,31 @@ test('test tool: refunding the camp gives every spent shard back', async () => {
   assert.equal(meta.shards, 1000);
   assert.ok(Object.values(meta.upgrades).every(v => v === 0));
 });
+
+test('v0.6: an abandoned expedition keeps half the shards but validates no objective or achievement', async () => {
+  const { newRun, endRun } = await import('../js/run/run.js');
+  const { newMeta } = await import('../js/run/meta.js');
+  const meta = newMeta(), run = newRun(meta, ['aldric', 'selena', 'orin'], 5);
+  run.floor = 12; run.bosses = 1; run.stats.bossIds = ['bossBone']; run.shards = 10; run.outcome = 'lose'; run.abandoned = true;
+  const s = endRun(meta, run);
+  assert.ok(s.abandoned);
+  assert.equal(s.progress.shards, 0);
+  assert.deepEqual(meta.ach, []);
+  assert.equal(meta.dailyCount, 0);
+  assert.equal(meta.shards, 5);
+  // the same run, not abandoned, does earn the first boss achievement
+  const meta2 = newMeta(), run2 = newRun(meta2, ['aldric', 'selena', 'orin'], 5);
+  run2.floor = 12; run2.bosses = 1; run2.stats.bossIds = ['bossBone']; run2.outcome = 'lose';
+  endRun(meta2, run2);
+  assert.ok(meta2.ach.includes('first_boss'));
+});
+
+test('v0.6: a debug test run (floor jump) leaves the real progress untouched', async () => {
+  const { newRun, endRun } = await import('../js/run/run.js');
+  const { newMeta } = await import('../js/run/meta.js');
+  const meta = newMeta(), before = JSON.stringify(meta), run = newRun(meta, ['aldric', 'selena', 'orin'], 5);
+  run.floor = 70; run.debug = true; run.shards = 50; run.outcome = 'lose';
+  const s = endRun(meta, run);
+  assert.ok(s.debug);
+  assert.equal(JSON.stringify(meta), before);
+});
