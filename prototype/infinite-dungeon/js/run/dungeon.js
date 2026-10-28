@@ -1,8 +1,8 @@
 // Generates the 100 floors of the Tower from a seed. Each floor offers 1-3 doors;
 // picking one is the player's path. Rules (checked by tests/run.test.js), per zone of 10 floors:
-//  - 1st floor: two normal fights
+//  - 1st floor: two normal fights and an event or a chest
 //  - 5th floor: rest and shop; 9th floor: rest and shop (from zone 2, sometimes an elite too)
-//  - other floors: 2-3 doors, always including a normal fight, so an elite is never forced
+//  - other floors: 3 doors, always including a normal fight, so an elite is never forced
 //  - 10th floor: the zone boss
 //  - elites from floor 3, cursed doors (never forced) from floor 4; same seed = same tower, monsters included
 import { makeRng, hashSeed } from '../core/rng.js';
@@ -65,12 +65,12 @@ export function generateDungeon(seed) {
   for (let f = 1; f <= BAL.floors; f++) {
     const k = (f - 1) % BAL.zoneSize + 1, z = zoneOf(f);
     let types;
-    if (k === 1) types = ['fight', 'fight'];
+    if (k === 1) types = rng.shuffle(['fight', 'fight', rng.pick(['event', 'chest'])]); // v0.5.2: always 3 doors
     else if (k === BAL.zoneSize) types = ['boss'];
     else if (k === 5) types = ['rest', 'shop'];
     else if (k === BAL.zoneSize - 1) types = z.index >= 2 && rng.chance(0.4) ? rng.shuffle(['rest', 'shop', 'elite']) : ['rest', 'shop'];
     else {
-      const n = rng.chance(0.55) ? 3 : 2;
+      const n = 3; // v0.5.2: always 3 doors on mixed floors (was 2 or 3)
       const pool = [['elite', f >= 3 ? 3 : 0], ['chest', 2], ['event', 3.5], ['shop', 0.4]].filter(([, w]) => w > 0);
       types = ['fight'];
       while (types.length < n) types.push(rng.weighted(pool.filter(([t]) => !types.includes(t))));

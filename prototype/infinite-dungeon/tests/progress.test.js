@@ -40,7 +40,7 @@ test('curses give more shards', () => {
   assert.equal(curseBonus([]), 0);
   assert.ok(curseBonus(CURSE_ORDER) > 1);
   const meta = open(), a = newRun(meta, ['aldric', 'selena', 'orin'], 3), b = newRun(meta, ['aldric', 'selena', 'orin'], 3, 1, ['rage', 'crown']);
-  for (const r of [a, b]) { chooseDoor(r, 0); finishBattle(r, 'win', r.team.map(h => ({ id: h.id, hp: h.hp })), 2, meta); }
+  for (const r of [a, b]) { chooseDoor(r, floorOf(r).doors.findIndex(d => d.type === 'fight')); finishBattle(r, 'win', r.team.map(h => ({ id: h.id, hp: h.hp })), 2, meta); }
   assert.ok(b.shards > a.shards || a.shards <= 1);
 });
 

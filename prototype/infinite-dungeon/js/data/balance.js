@@ -23,7 +23,7 @@ export const BAL = {
   foeCount: (f, rng) => ((f - 1) % ZONE_SIZE < 2 ? 2 : rng.int(2, 3)),
   elite: { hp: 1.7, atk: 1.2 },
   cursedHp: 1.2, // cursed doors: their two elites have 20 % more life
-  cursedChance: 0.22, // per mixed floor
+  cursedChance: 0.3, // per mixed floor
   boss: { hp: 1, atk: 1 },
   // bosses: their own stats (monsters.js) times a climb along the tower
   bossHp: f => 1.6 * climb(prog(f), 1.2, 1.05),

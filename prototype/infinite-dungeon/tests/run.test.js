@@ -22,7 +22,8 @@ test('1000 seeds: 100 floors, a boss every 10 floors, rest + shop on floors 5 an
       assert.ok(types.length >= 1 && types.length <= 3, `seed ${s} floor ${f}`);
       if (k === 10) { assert.deepEqual(types, ['boss']); assert.equal(d[f].doors[0].foes[0].id, ZONES[f / 10 - 1].boss); }
       else if (k === 5 || k === 9) { assert.ok(types.includes('rest') && types.includes('shop'), `seed ${s} floor ${f}`); }
-      else if (k === 1) assert.deepEqual(types, ['fight', 'fight']);
+      else if (k === 1) { assert.equal(types.filter(t => t === 'fight').length, 2); assert.equal(types.length, 3); }
+      else if (k !== 10 && k !== 5 && k !== 9) assert.equal(types.length, 3, `seed ${s} floor ${f}: only ${types.length} doors`);
       else assert.ok(types.includes('fight'), `seed ${s} floor ${f}: no normal fight`);
       if (f < 3) assert.ok(!types.includes('elite'));
       for (const door of d[f].doors) {
@@ -190,7 +191,7 @@ test('every event choice can be resolved and changes something or says so', () =
 test('reroll gives new cards and is limited', () => {
   const meta = newMeta(); meta.upgrades.relance = 1;
   const run = newRun(meta, ['aldric', 'selena', 'orin'], 4);
-  chooseDoor(run, 0);
+  chooseDoor(run, floorOf(run).doors.findIndex(d => d.type === 'fight'));
   finishBattle(run, 'win', run.team.map(h => ({ id: h.id, hp: h.hp })), 0, meta);
   assert.ok(reroll(run));
   assert.equal(reroll(run), false);
