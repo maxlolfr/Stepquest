@@ -38,8 +38,8 @@ export const BAL = {
   // (Dragon and Morgane lighter: they were walls; zones 5-10 heavier: they had become easy once the
   // late curve shortened the fights). Bench targets: a steady decline from boss to boss.
   bossTune: {
-    bossDragon: { hp: 0.8, atk: 0.8 }, bossHag: { hp: 1.1, atk: 1.05 }, bossQueen: { hp: 1.6, atk: 1.95 },
-    bossVamp: { hp: 1.9, atk: 1.9 }, bossLich: { hp: 2.1, atk: 2.1 }, bossRat: { hp: 1.8, atk: 1.65 },
+    bossDragon: { hp: 0.8, atk: 0.8 }, bossHag: { hp: 1.1, atk: 1.05 }, bossQueen: { hp: 1.8, atk: 2.15 }, // v0.7: +12 % / +10 % (the new builds made her easy)
+    bossVamp: { hp: 2, atk: 2 }, bossLich: { hp: 2.2, atk: 2.2 }, bossRat: { hp: 1.8, atk: 1.65 }, // v0.7: Comte and Liche +5 %
     bossVoid: { hp: 2.5, atk: 2.4 }, bossVort: { hp: 1.5, atk: 1.45 },
   },
   maxRounds: 60, // hard limit: explicit defeat (should almost never happen thanks to the enrage)
@@ -51,12 +51,19 @@ export const BAL = {
   healMult: 1.3, // Séléna's Soin (was 1.9 in v0.2)
   // v0.6: Aldric's sustain, so teams without Séléna hold (measured with tools/bench.mjs, all 10 teams)
   aldric: { taunt: 0.1, ult: 0.15 },
+  // v0.7: survival tools for teams without a healer (A1): Orin's frost barrier (Blizzard), Nyx's shadow veil
+  // (Lames: dodge for 2 turns), Lyra's mark weakens the target's blows
+  orin: { frost: 0.09, frostCap: 0.2 }, nyx: { veil: 0.4, veilTurns: 2 }, lyra: { markWeaken: 0.12 },
   // rewards (gold and shards grow with the zone: zoneMul)
   zoneMul: z => 1 + 0.2 * z, // shards
   goldMul: z => 1 + 0.15 * z,
   gold: { normal: [16, 24], elite: [30, 40], cursed: [50, 60], boss: [60, 60] },
   // v0.4.1: relics are rarer, so a run builds 1-2 styles instead of collecting everything
   relicWeight: { normal: 0.35, elite: 1.2, chest: 1.2 },
+  // v0.7: relic rarity odds per reward kind (0 commune, 1 rare, 2 légendaire), a duplicate's weight, signature chance per draw
+  relicOdds: { normal: [[0, 65], [1, 30], [2, 5]], chest: [[0, 55], [1, 35], [2, 10]], elite: [[0, 45], [1, 40], [2, 15]] },
+  dupWeight: 1,
+  sigChance: 0.1,
   relicMax: 10, // v0.6: relic slots per expedition (null = no limit). 10 vs 8 vs 6 compared with tools/bench.mjs: 10 keeps most of the variety with fewer broken synergies
   shards: { normal: 1, elite: 3, cursed: 5, boss: 10, victory: 100 },
   defeatKeep: 0.5,

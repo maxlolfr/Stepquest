@@ -143,6 +143,19 @@ srv.listen(0, async () => {
       const rel = await pg.evaluate(() => window.__sqid.app.data.run.relics);
       check(`${tag} : relique remplacée (Bourse → Peste)`, rel.length === 10 && rel.includes('peste') && !rel.includes('bourse'), rel.join(','));
 
+      // v0.7: rarity, levels, merge card, tier-3 synergy progress, blessing chip
+      await pg.evaluate(async () => { const A = await import('./js/ui/app.js'); const L = await import('./js/run/loot.js'); const run = A.app.data.run;
+        run.relicLv = { venin: 2 }; run.blessN = 2; run.relics = run.relics.filter(k => k !== 'calice').concat('sig_lyra');
+        run.phase = 'reward'; run.pending = { kind: 'reward', cards: [L.relicCard(run, 'venin'), L.relicCard(run, 'peste'), L.relicCard(run, 'chasse')] }; A.route(); });
+      await pg.waitForTimeout(400);
+      const cardTxt = await pg.textContent('.cards');
+      check(`${tag} : v0.7 carte de fusion (niveau 2 → niveau 3) et rareté affichées`, /niveau 2 → niveau 3/.test(cardTxt) && /Commune|Rare|Légendaire/.test(cardTxt), cardTxt.slice(0, 120));
+      check(`${tag} : v0.7 progression de style (x/3) affichée`, /\/3/.test(cardTxt));
+      check(`${tag} : v0.7 Bénédiction visible (×2) et badge de niveau`, /×2/.test(await pg.textContent('.bless-chip')) && (await pg.$$('.relic .rlv')).length >= 1);
+      await ui('récompense v0.7'); await shot('7g-fusion');
+      await pg.click('.cards .card >> nth=0'); await pg.waitForTimeout(400);
+      check(`${tag} : v0.7 fusion appliquée sans emplacement en plus`, await pg.evaluate(() => { const r = window.__sqid.app.data.run; return r.relicLv.venin === 3 && r.relics.length === 10; }));
+
       // v0.6: enrage counter (thresholds lowered for the test only)
       await pg.evaluate(async () => { const { BAL } = await import('./js/data/balance.js'); Object.assign(BAL.enrage, { warn: 1, from: 3 }); BAL.maxRounds = 200;
         const A = await import('./js/ui/app.js'); const R = await import('./js/run/run.js');

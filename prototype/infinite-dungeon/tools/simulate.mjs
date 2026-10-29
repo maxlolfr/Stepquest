@@ -9,7 +9,7 @@ import { HERO_ORDER, HEROES } from '../js/data/heroes.js';
 import { UPGRADES, BAL } from '../js/data/balance.js';
 import { createBattle, autoFight, heroResults, foesOf } from '../js/engine/combat.js';
 import { newRun, chooseDoor, battleConfig, finishBattle, pickCard, rest, buy, resolveEvent, leaveRoom, continueRun, floorOf, endRun, startFloors, canAfford, replaceRelic } from '../js/run/run.js';
-import { defaultReplace } from './bench.mjs';
+import { defaultReplace, relicCardValue } from './bench.mjs';
 import { gearScore } from '../js/run/loot.js';
 import { EVENTS } from '../js/data/items.js';
 import { newMeta, buyUpgrade, upgradeCost } from '../js/run/meta.js';
@@ -21,7 +21,7 @@ function cardValue(run, c) {
   const hp = teamHp(run), h = c.hero && run.team.find(x => x.id === c.hero);
   switch (c.type) {
     case 'heal': return hp < 0.45 ? 9 : hp < 0.65 ? 5 : 1;
-    case 'relic': return 6;
+    case 'relic': return relicCardValue(run, c);
     case 'gear': return gearScore(c.gear) > gearScore(h.gear[c.gear.slot]) * 1.15 ? 4 + (gearScore(c.gear) - gearScore(h.gear[c.gear.slot])) / 25 : 0.5;
     case 'stat': return c.stat === 'hp' || c.stat === 'def' ? 3.5 : 4.5;
     case 'upgrade': return 4;

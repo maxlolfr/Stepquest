@@ -4,6 +4,18 @@ Roguelite fantasy mobile, nom de travail. Jeu indépendant de Dragonbound II / A
 aucun fichier de `prototype/dragonbound2/`, `prototype/dragonbound/` ni `prototype/dragonbound-tests/` n'est modifié.
 Le plan complet (audit, architecture, MVP) est dans le document « Infinite Dungeon — Audit et plan (phase 1) ».
 
+## Version 0.7 « Builds qui comptent »
+
+Rapport complet, mesures avant/après et test manuel : [docs/v0.7-rapport.md](docs/v0.7-rapport.md). Cahier des charges : [docs/v0.7-cahier-des-charges.md](docs/v0.7-cahier-des-charges.md). Images à faire : [docs/v0.7-prompts-gemini.md](docs/v0.7-prompts-gemini.md).
+
+- **Raretés** : chaque relique est Commune ●, Rare ◆ ou Légendaire ★ (couleur + symbole + mot). Tirage 65 / 30 / 5 % après un combat, meilleur après une élite, un coffre ou un boss.
+- **Fusion** : retrouver une relique déjà possédée la fait monter de niveau (max 3, gains décroissants), sans prendre d'emplacement.
+- **Synergies à 3** : 3 reliques différentes d'un style ajoutent un second palier (Frénésie : frappe en plus après 3 critiques ; Bastion : riposte quand un bouclier absorbe tout ; Fléau : les ennemis empoisonnés ou brûlés frappent moins fort ; Arcanes : le premier ultime recharge les autres ; Lumière : un soin sur un héros en forme donne un bouclier).
+- **5 reliques signatures**, une par héros, qui changent sa façon de jouer (Rage gardée, sauvetage protégé, Surcharge plus rapide, Concentration de Lyra, Lames relancées par une exécution).
+- **Équipes sans soigneuse** : Blizzard d'Orin pose une barrière de givre, Lames donne de l'esquive à Nyx, la marque de Lyra affaiblit la cible, Tir visé interrompt l'attaque préparée d'un monstre.
+- **Écrans** : cartes de relique avec rareté, niveau, fusion et progression du style ; badge de niveau sur les reliques ; écran de remplacement avec niveau, rareté, synergies actives et perte de palier ; Bénédiction visible (×N) avec son total.
+- Reine des Glaces, Comte et Roi-Liche recalés (les nouveaux builds les avaient rendus faciles).
+
 ## Version 0.6 « Juste et lisible »
 
 0.6.1 : nouvelles illustrations des 5 héros et de l'équipe (écran d'accueil et choix de l'équipe).

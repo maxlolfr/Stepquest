@@ -7,7 +7,7 @@ import { makeRng } from '../js/core/rng.js';
 import { HERO_ORDER, HEROES } from '../js/data/heroes.js';
 import { UPGRADES, BAL } from '../js/data/balance.js';
 import { BOSSES, ZONES } from '../js/data/monsters.js';
-import { EVENTS, RELICS, activeSynergies } from '../js/data/items.js';
+import { EVENTS, RELICS, activeSynergies, relicLevel } from '../js/data/items.js';
 import * as C from '../js/engine/combat.js';
 import * as R from '../js/run/run.js';
 import { gearScore } from '../js/run/loot.js';
@@ -22,12 +22,23 @@ export const campMeta = (lvl, unlocked = 1) => {
 };
 export const TEAMS = (() => { const out = []; for (let a = 0; a < 5; a++) for (let b = a + 1; b < 5; b++) for (let c = b + 1; c < 5; c++) out.push([HERO_ORDER[a], HERO_ORDER[b], HERO_ORDER[c]]); return out; })();
 
+/** v0.7: a relic's worth to a sensible player: rarity, merges, the synergy it completes, signatures. */
+export function relicCardValue(run, c) {
+  let v = 5 + (RELICS[c.key].rar || 0) * 0.7;
+  if (c.merge) v = 5.2 + 0.3 * (RELICS[c.key].rar || 0);
+  if (c.rel && c.rel.sig) v = 6.5;
+  if (c.syn && (c.syn.completes || c.syn.completes3)) v += 1.5;
+  else if (c.syn && c.syn.have > 0) v += 0.5;
+  if (!RELICS[c.key].tag && !RELICS[c.key].sig && !c.merge) v -= 1;
+  return v;
+}
+
 /** A sensible player's value for a card (same reading as tools/simulate.mjs). */
 export function cardValue(run, c) {
   const hp = teamHp(run), h = c.hero && run.team.find(x => x.id === c.hero);
   switch (c.type) {
     case 'heal': return hp < 0.45 ? 9 : hp < 0.65 ? 5 : 1;
-    case 'relic': return 6;
+    case 'relic': return relicCardValue(run, c);
     case 'gear': return gearScore(c.gear) > gearScore(h.gear[c.gear.slot]) * 1.15 ? 4 + (gearScore(c.gear) - gearScore(h.gear[c.gear.slot])) / 25 : 0.5;
     case 'stat': return c.stat === 'hp' || c.stat === 'def' ? 3.5 : 4.5;
     case 'upgrade': return 4;
@@ -111,7 +122,8 @@ const teamHpRaw = B => C.heroesOf(B).reduce((n, h) => n + Math.max(0, h.hp) / h.
 /** Relic to drop when slots are full: the one outside the run's main styles. */
 export function defaultReplace(run, p) {
   const tags = {}; for (const k of run.relics) { const t = RELICS[k].tag; if (t) tags[t] = (tags[t] || 0) + 1; }
-  const score = k => { const t = RELICS[k].tag; return t ? (tags[t] || 0) + (k === p.key ? 1 : 0) : 0.5; };
+  // v0.7: style count first, then rarity and level; signatures are kept
+  const score = k => { const R = RELICS[k], t = R.tag; return (R.sig ? 4 : t ? (tags[t] || 0) + (k === p.key ? 1 : 0) : 0.5) + 0.3 * (R.rar || 0) + 0.4 * (k === p.key ? 0 : relicLevel(run, k) - 1); };
   const all = [...run.relics, p.key];
   const worst = all.reduce((w, k) => (score(k) < score(w) ? k : w), all[0]);
   return worst === p.key ? null : worst;

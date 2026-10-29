@@ -22,7 +22,9 @@ test('every relic has a style (or none on purpose), a name and a description; st
     assert.ok(R.tag === '' || SYNERGIES[R.tag], `${k}: unknown style ${R.tag}`);
   }
   for (const t of Object.keys(SYNERGIES)) assert.ok(Object.values(RELICS).filter(R => R.tag === t).length >= 3, `style ${t} needs at least 3 relics`);
-  assert.equal(Object.keys(RELICS).length, 22);
+  assert.equal(Object.values(RELICS).filter(R => !R.sig).length, 22);
+  assert.equal(Object.values(RELICS).filter(R => R.sig).length, 5, 'v0.7: one signature per hero');
+  for (const t of Object.keys(SYNERGIES)) assert.ok(Object.values(RELICS).filter(R => R.tag === t && R.rar < 2).length >= 3, `style ${t}: tier 3 must not need a legendary`);
 });
 
 test('two relics of one style activate its synergy, one does not', () => {

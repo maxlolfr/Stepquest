@@ -40,7 +40,7 @@ export const HEROES = {
     stats: S({ hp: 88, atk: 15, mag: 6, def: 4 }, { hp: 9, atk: 2.3, mag: 0.6, def: 0.8 }, { crit: 0.1, spd: 13 }),
     basic: { name: 'Tir', sfx: 'lyr_arrow', fx: 'slash' },
     skills: ['aimed', 'venom'],
-    passive: { name: 'Marque', desc: 'Ses tirs marquent 🎯 la cible : toute l’équipe la frappe 20 % plus fort.' },
+    passive: { name: 'Marque', desc: 'Ses tirs marquent 🎯 la cible : toute l’équipe la frappe 20 % plus fort, et elle frappe 12 % moins fort.' },
     ult: { name: 'Tempête de flèches', desc: '9 flèches, souvent critiques, sur les ennemis.' },
   },
   nyx: {
@@ -62,10 +62,10 @@ export const SKILLS = {
   heal:     { hero: 'selena', name: 'Soin', ic: '💚', cd: 2, tgt: 'ally', pow: 1.6, stat: 'mag', sfx: 'sel_heal', desc: 'Rend beaucoup de vie à l’allié le plus blessé et guérit poison et brûlure.' },
   smite:    { hero: 'selena', name: 'Châtiment', ic: '⚡', cd: 3, tgt: 'foe', pow: 1.4, stat: 'mag', el: 'foudre', sfx: 'sel_smite', desc: 'La foudre frappe un ennemi et soigne un peu toute l’équipe.' },
   fire:     { hero: 'orin', name: 'Feu', ic: '🔥', cd: 2, tgt: 'foe', pow: 1.9, stat: 'mag', el: 'feu', sfx: 'ori_fire', fx: 'fire', desc: 'Gros dégâts de feu, peut enflammer (30 %).' },
-  blizzard: { hero: 'orin', name: 'Blizzard', ic: '❄️', cd: 3, tgt: 'foes', pow: 0.85, stat: 'mag', el: 'glace', sfx: 'ori_ice', fx: 'ice', desc: 'Glace tous les ennemis, peut les geler un tour (25 %).' },
-  aimed:    { hero: 'lyra', name: 'Tir visé', ic: '🏹', cd: 3, tgt: 'foe', pow: 1.3, stat: 'atk', sfx: 'lyr_aimed', desc: 'Toujours un coup critique, et marque 🎯 la cible 3 tours.' },
+  blizzard: { hero: 'orin', name: 'Blizzard', ic: '❄️', cd: 3, tgt: 'foes', pow: 0.85, stat: 'mag', el: 'glace', sfx: 'ori_ice', fx: 'ice', desc: 'Glace tous les ennemis, peut les geler un tour (25 %), et couvre l’équipe d’une barrière de givre 💠 (9 % de vie, 20 % au plus).' },
+  aimed:    { hero: 'lyra', name: 'Tir visé', ic: '🏹', cd: 3, tgt: 'foe', pow: 1.3, stat: 'atk', sfx: 'lyr_aimed', desc: 'Toujours un coup critique, et marque 🎯 la cible 3 tours. Interrompt l’attaque qu’un monstre prépare (pas un boss).' },
   venom:    { hero: 'lyra', name: 'Venin', ic: '🧪', cd: 3, tgt: 'foe', pow: 0.7, stat: 'atk', el: 'poison', sfx: 'lyr_venom', desc: 'Empoisonne un ennemi 3 tours. Le poison s’accumule.' },
-  blades:   { hero: 'nyx', name: 'Lames', ic: '🗡️', cd: 3, tgt: 'foes', pow: 0.55, hits: 4, stat: 'atk', sfx: 'nyx_blades', desc: '4 dagues sur des ennemis au hasard.' },
+  blades:   { hero: 'nyx', name: 'Lames', ic: '🗡️', cd: 3, tgt: 'foes', pow: 0.55, hits: 4, stat: 'atk', sfx: 'nyx_blades', desc: '4 dagues sur des ennemis au hasard, puis Nyx se fond dans l’ombre : 40 % d’esquive pendant 2 tours.' },
   assassin: { hero: 'nyx', name: 'Assassinat', ic: '💀', cd: 3, tgt: 'foe', pow: 1.1, stat: 'atk', sfx: 'nyx_assassin', desc: 'Consomme les marques d’ombre (+30 % chacune). Dégâts ×3 sur un ennemi sous 35 % de vie (60 % avec des marques).' },
 };
 

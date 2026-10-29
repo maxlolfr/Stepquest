@@ -2,6 +2,7 @@
 // Pure data + pure functions: no DOM, no storage (run/meta.js holds the state).
 import { hashSeed, makeRng } from '../core/rng.js';
 import { HERO_ORDER, HEROES } from './heroes.js';
+import { RELICS } from './items.js';
 
 // ---------------------------------------------------------------- Nightmare
 // Optional curses chosen before an expedition. Each makes the tower harder and
@@ -64,7 +65,7 @@ export const ACHIEVEMENTS = [
   { id: 'floor100', art: 'ach_medal', ic: '🏅', name: 'Le sommet', desc: 'Vaincre Vorthax à l’étage 100.', reward: 200, ok: m => m.stats.wins >= 1 },
   { id: 'all_heroes', art: 'ach_helmet', ic: '⛑️', name: 'Toute la compagnie', desc: 'Atteindre l’étage 10 avec chacun des 5 héros.', reward: 40, ok: m => HERO_ORDER.every(h => (m.heroBest[h] || 0) >= 10) },
   { id: 'relics10', art: 'ach_journal', ic: '📖', name: 'Collectionneur', desc: 'Découvrir 10 reliques différentes.', reward: 20, ok: m => m.relicsSeen.length >= 10 },
-  { id: 'relics22', art: 'ach_journal', ic: '📖', name: 'Archiviste', desc: 'Découvrir les 22 reliques.', reward: 60, ok: m => m.relicsSeen.length >= 22 },
+  { id: 'relics22', art: 'ach_journal', ic: '📖', name: 'Archiviste', desc: 'Découvrir les 22 reliques de style.', reward: 60, ok: m => m.relicsSeen.filter(k => RELICS[k] && !RELICS[k].sig).length >= 22 },
   { id: 'synergy3', art: 'ach_unlock', ic: '🔓', name: 'Maître des styles', desc: 'Avoir 3 synergies actives en même temps.', reward: 30, ok: (m, s) => !!s && s.synergies >= 3 },
   { id: 'nightmare1', art: 'nm_emblem', ic: '🔥', name: 'Cauchemar', desc: 'Vaincre un boss avec au moins une malédiction.', reward: 30, ok: (m, s) => !!s && s.curses.length >= 1 && s.bosses >= 1 },
   { id: 'nightmare4', art: 'nm_emblem', ic: '🔥', name: 'Cauchemar éveillé', desc: 'Vaincre un boss avec au moins 4 malédictions.', reward: 80, ok: (m, s) => !!s && s.curses.length >= 4 && s.bosses >= 1 },

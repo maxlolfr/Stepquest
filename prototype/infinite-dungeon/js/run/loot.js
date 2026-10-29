@@ -1,6 +1,6 @@
 // Rewards: the 3 cards after a fight, chest contents, gear stats, shop stock.
 import { HEROES, SKILLS } from '../data/heroes.js';
-import { RELICS, RARITY, WEAPONS, ARMORS, JEWELS, SYNERGIES, SYN_NEED, synergyCount } from '../data/items.js';
+import { RELICS, RARITY, WEAPONS, ARMORS, JEWELS, SYNERGIES, SYN_NEED, SYN_NEED3, synergyCount, relicRarity, relicLevel, relicDesc, relicPoolFor, isSignature, RELIC_LV_MAX } from '../data/items.js';
 import { BAL, prog } from '../data/balance.js';
 import { zoneOf, MONSTERS } from '../data/monsters.js';
 
@@ -26,12 +26,37 @@ export function makeGear(slot, r, floorN, hero) {
 /** Score used to compare two pieces of gear for one hero. */
 export const gearScore = g => (g ? (g.st.atk || 0) * 2 + (g.st.mag || 0) * 2 + (g.st.hp || 0) * 0.35 + (g.st.def || 0) * 2 + (g.st.crit || 0) * 120 : 0);
 
-/** Card for one relic, with its build style and how close the synergy is. */
+/** Card for one relic: rarity, style, effect, and (v0.7) the merge or synergy it brings. */
 export function relicCard(run, key) {
-  const R = RELICS[key], S = R.tag && SYNERGIES[R.tag];
-  const n = S ? synergyCount(run.relics, R.tag) + 1 : 0;
-  return { type: 'relic', key, title: R.name, ic: R.ic, img: R.art, desc: R.desc,
-    syn: S ? { tag: R.tag, name: S.name, ic: S.ic, n: Math.min(n, SYN_NEED), need: SYN_NEED, completes: n === SYN_NEED, desc: S.desc } : null };
+  const R = RELICS[key], S = R.tag && SYNERGIES[R.tag], held = run.relics.includes(key);
+  const lv = held ? relicLevel(run, key) : 0, rar = relicRarity(key);
+  const have = S ? synergyCount(run.relics, R.tag) : 0, n = have + (held ? 0 : 1);
+  const merge = held ? { from: lv, to: Math.min(RELIC_LV_MAX, lv + 1), before: relicDesc(key, lv), after: relicDesc(key, Math.min(RELIC_LV_MAX, lv + 1)) } : null;
+  return { type: 'relic', key, title: R.name, ic: R.ic, img: R.art, desc: relicDesc(key, held ? Math.min(RELIC_LV_MAX, lv + 1) : 1),
+    rarity: null, rel: { n: rar.n, ic: rar.ic, col: rar.col, sig: !!R.sig, hero: R.hero || null }, merge,
+    syn: S ? { tag: R.tag, name: S.name, ic: S.ic, n, have, need: n >= SYN_NEED ? SYN_NEED3 : SYN_NEED, completes: !held && n === SYN_NEED, completes3: !held && n === SYN_NEED3,
+      desc: S.desc, desc3: S.desc3 } : null };
+}
+
+// v0.7 relic draws: a rarity first (BAL.relicOdds), then a relic of that rarity. Duplicates of
+// relics held (below level 3) can come up and merge; the team's signatures have their own chance.
+export function drawRelic(run, rng, kind = 'normal', exclude = []) {
+  const team = run.team.map(h => h.id);
+  const can = k => !(exclude && exclude.includes(k)) && (!run.relics.includes(k) || (!isSignature(k) && relicLevel(run, k) < RELIC_LV_MAX));
+  const pool = relicPoolFor(team).filter(can);
+  if (!pool.length) return null;
+  const sigs = pool.filter(isSignature);
+  if (sigs.length && rng.chance(BAL.sigChance)) return rng.pick(sigs);
+  const plain = pool.filter(k => !isSignature(k));
+  if (!plain.length) return rng.pick(sigs);
+  const odds = BAL.relicOdds[kind] || BAL.relicOdds.normal;
+  for (let tries = 0; tries < 3; tries++) {
+    const r = rng.weighted(odds), list = plain.filter(k => RELICS[k].rar === r);
+    if (!list.length) continue;
+    // a style the team already started comes up 3× more often (builds form); a duplicate a bit less
+    return rng.weighted(list.map(k => [k, run.relics.includes(k) ? BAL.dupWeight : RELICS[k].tag && synergyCount(run.relics, RELICS[k].tag) > 0 ? 3 : 1]));
+  }
+  return rng.pick(plain);
 }
 
 function card(type, run, rng, floor, rarityKind, exclude) {
@@ -64,11 +89,8 @@ function card(type, run, rng, floor, rarityKind, exclude) {
       return { type, hero, gear: g, title: g.name, img: g.img, rarity: r, desc: `Pour ${HEROES[hero].name}.` };
     }
     case 'relic': {
-      const free = Object.keys(RELICS).filter(k => !run.relics.includes(k) && !(exclude && exclude.includes(k)));
-      if (!free.length) return null;
-      // relics of a style the team already started come up 3× more often: builds form
-      const key = rng.weighted(free.map(k => [k, RELICS[k].tag && synergyCount(run.relics, RELICS[k].tag) > 0 ? 3 : 1]));
-      return relicCard(run, key);
+      const key = drawRelic(run, rng, rarityKind, exclude);
+      return key ? relicCard(run, key) : null;
     }
     default: return null;
   }
@@ -127,5 +149,5 @@ export const statCard = (run, rng) => card('stat', run, rng, run.floor);
 export function blessOffer(run, floor) {
   const n = run.blessN || 0, price = Math.round(BAL.shop.bless * BAL.shop.blessUp ** n * BAL.shopMul(zoneOf(floor).index) / 5) * 5;
   return { id: 'bless', type: 'bless', late: true, price, title: 'Bénédiction', ic: '✨',
-    desc: `Toute l’équipe gagne 5 % d’attaque, de magie et de vie pour l’expédition.${n ? ` Déjà achetée ${n} fois.` : ''}` };
+    desc: `Toute l’équipe gagne 5 % d’attaque, de magie et de vie pour l’expédition.${n ? ` Déjà achetée ${n} fois : +${5 * n} % en tout, +${5 * (n + 1)} % après celle-ci.` : ''}` };
 }

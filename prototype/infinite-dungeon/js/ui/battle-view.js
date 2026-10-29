@@ -133,6 +133,7 @@ export function createView(canvas, B, door) {
     for (const [k, key] of Object.entries(STATUS_IMG)) if (u.st[k]) items.push({ k, key, n: k === 'poison' && u.st.poison ? u.st.poison.stacks : 0 });
     if (u.st.taunt) items.push({ k: 'taunt' });
     if (u.st.shadow) items.push({ k: 'shadow', n: u.st.shadow });
+    if (u.st.veil) items.push({ k: 'veil' }); // v0.7 Nyx's shadow veil (dodge)
     if (!items.length) return;
     const S = 22, gap = 3, w = items.length * S + (items.length - 1) * gap;
     let px = x - w / 2;
@@ -142,6 +143,7 @@ export function createView(canvas, B, door) {
       if (im) cx.drawImage(im, px, cyp - S / 2, S, S);
       else if (it.k === 'warn') { cx.fillStyle = '#d4231b'; cx.beginPath(); cx.arc(cxp, cyp, S / 2, 0, Math.PI * 2); cx.fill(); cx.strokeStyle = '#ffd36e'; cx.lineWidth = 2; cx.stroke(); cx.fillStyle = '#fff'; cx.font = '900 16px Nunito, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.fillText('!', cxp, cyp + 1); }
       else if (it.k === 'taunt') { cx.fillStyle = '#7fa6d8'; cx.strokeStyle = '#1b2433'; cx.lineWidth = 2; cx.beginPath(); cx.moveTo(cxp, cyp - 10); cx.lineTo(cxp + 9, cyp - 6); cx.lineTo(cxp + 7, cyp + 4); cx.lineTo(cxp, cyp + 10); cx.lineTo(cxp - 7, cyp + 4); cx.lineTo(cxp - 9, cyp - 6); cx.closePath(); cx.fill(); cx.stroke(); }
+      else if (it.k === 'veil') { cx.globalAlpha = 0.85; cx.fillStyle = '#3a2266'; cx.strokeStyle = '#e0c8ff'; cx.lineWidth = 2; cx.beginPath(); cx.arc(cxp, cyp, S / 2 - 1, Math.PI * 0.25, Math.PI * 1.75); cx.fill(); cx.stroke(); cx.globalAlpha = 1; }
       else if (it.k === 'shadow') { cx.fillStyle = '#2a1840'; cx.strokeStyle = '#b38cff'; cx.lineWidth = 2; cx.beginPath(); cx.arc(cxp, cyp, S / 2 - 1, 0, Math.PI * 2); cx.fill(); cx.stroke(); }
       if (it.n > 1 || it.k === 'shadow') { // stack count badge
         cx.font = '900 12px Nunito, sans-serif'; cx.textAlign = 'center'; cx.textBaseline = 'middle'; cx.lineWidth = 3; cx.strokeStyle = '#000'; cx.fillStyle = '#fff';

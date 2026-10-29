@@ -4,7 +4,7 @@ import { h, img, icon, bar, toast } from '../dom.js';
 import { sfx } from '../audio.js';
 import { HEROES } from '../../data/heroes.js';
 import { unitDef, AFFIXES, BOSSES, zoneOf, ZONES } from '../../data/monsters.js';
-import { RELICS, SYNERGIES, activeSynergies, synergyCount } from '../../data/items.js';
+import { RELICS, SYNERGIES, activeSynergies, synergies3, synergyCount, relicLevel, relicDesc, relicRarity, SYN_NEED3 } from '../../data/items.js';
 import { CURSES, hasCurse } from '../../data/progress.js';
 import { BAL, XP } from '../../data/balance.js';
 import { DOOR_INFO, DOOR_REWARD, doorDanger, isFight, doorName } from '../../run/dungeon.js';
@@ -17,18 +17,30 @@ export function runHeader(run, { title } = {}) {
     h('span', { title: 'Potions' }, icon('uiPotion', '🧪', 'ric'), run.items.pot),
     h('span', { title: 'Plumes de phénix' }, '🪶', run.items.fea),
     h('span', { title: 'Éclats' }, '💎', run.shards + run.banked, run.banked ? h('small', ` (${run.banked} à l’abri)`) : null),
-    h('span.lv', { title: `Niveau de l’équipe · ${run.xp} / ${XP.need(run.lv)} XP` }, `Niv. ${run.lv}`));
+    h('span.lv', { title: `Niveau de l’équipe · ${run.xp} / ${XP.need(run.lv)} XP` }, `Niv. ${run.lv}`),
+    // v0.7: the shop blessings bought in this expedition, with their total
+    run.blessN ? h('button.bless-chip', { type: 'button', 'aria-label': 'Bénédictions', onclick: () => toast(blessText(run), 4200) }, icon('ui_bless', '✨', 'ric'), `×${run.blessN}`) : null);
   const team = h('div.team-strip', run.team.map(t => {
     const H = HEROES[t.id];
     return h('div.tm' + (t.hp <= 0 ? '.dead' : ''), img(`${H.sprite}-face`, 'tface'),
       h('div.tm-body', h('b', H.name), bar(t.hp / t.hpMax, 'hp'), h('span.num', `${Math.max(0, t.hp)} / ${t.hpMax}`)));
   }));
-  const relics = run.relics.length ? h('div.relics', h('span.relic-count' + (BAL.relicMax != null && run.relics.length >= BAL.relicMax ? '.full' : ''), { title: 'Emplacements de reliques' }, `${run.relics.length}/${BAL.relicMax ?? '∞'}`), run.relics.map(k => h('button.relic' + (RELICS[k].tag && activeSynergies(run.relics).includes(RELICS[k].tag) ? '.syn-on' : ''), { type: 'button', 'aria-label': RELICS[k].name, onclick: () => toast(`${RELICS[k].name} : ${RELICS[k].desc}${RELICS[k].tag ? ` (style ${SYNERGIES[RELICS[k].tag].name} ${Math.min(2, synergyCount(run.relics, RELICS[k].tag))}/2)` : ''}`, 4000) }, icon(RELICS[k].art, RELICS[k].ic, 'relic-img')))) : null;
-  const syns = activeSynergies(run.relics);
-  const synRow = syns.length ? h('div.syns', syns.map(t => h('button.synchip', { type: 'button', onclick: () => toast(`${SYNERGIES[t].ic} ${SYNERGIES[t].name} : ${SYNERGIES[t].desc}`, 4200) }, icon(SYNERGIES[t].art, SYNERGIES[t].ic, 'syn-img'), SYNERGIES[t].name))) : null;
+  const relics = run.relics.length ? h('div.relics', h('span.relic-count' + (BAL.relicMax != null && run.relics.length >= BAL.relicMax ? '.full' : ''), { title: 'Emplacements de reliques' }, `${run.relics.length}/${BAL.relicMax ?? '∞'}`), run.relics.map(k => relicButton(run, k))) : null;
+  const syns = activeSynergies(run.relics), s3 = synergies3(run.relics);
+  const synRow = syns.length ? h('div.syns', syns.map(t => h('button.synchip' + (s3.includes(t) ? '.t3' : ''), { type: 'button', onclick: () => toast(`${SYNERGIES[t].ic} ${SYNERGIES[t].name} ${s3.includes(t) ? '3/3' : `${synergyCount(run.relics, t)}/${SYN_NEED3}`} : ${SYNERGIES[t].desc}${s3.includes(t) ? ` · Palier 3 : ${SYNERGIES[t].desc3}` : ` · À 3 reliques : ${SYNERGIES[t].desc3}`}`, 5200) }, icon(SYNERGIES[t].art, SYNERGIES[t].ic, 'syn-img'), SYNERGIES[t].name, h('small', s3.includes(t) ? ' II' : ` ${synergyCount(run.relics, t)}/3`)))) : null;
   const curseRow = run.curses && run.curses.length ? h('div.curses-row', h('span.nm-tag', `🔥 Cauchemar ${run.curses.length}`), run.curses.map(k => h('button.curse-chip', { type: 'button', 'aria-label': CURSES[k].name, onclick: () => toast(`${CURSES[k].name} : ${CURSES[k].desc}`, 3500) }, icon(CURSES[k].art, CURSES[k].ic, 'curse-mini')))) : null;
   return h('div.runhead', title ? h('h2', title) : null, res, team, curseRow, synRow, relics);
 }
+
+/** v0.7 — one relic in the strip: rarity border + level badge; touch for the details. */
+export function relicButton(run, k) {
+  const R = RELICS[k], lv = relicLevel(run, k), rar = relicRarity(k), on = R.tag && activeSynergies(run.relics).includes(R.tag);
+  const style = R.tag ? ` · style ${SYNERGIES[R.tag].name} ${synergyCount(run.relics, R.tag)}/${SYN_NEED3}` : R.hero ? ` · signature de ${HEROES[R.hero].name}` : '';
+  return h('button.relic' + (on ? '.syn-on' : ''), { type: 'button', 'aria-label': `${R.name}, ${rar.n}, niveau ${lv}`, style: { '--rc': rar.col },
+    onclick: () => toast(`${rar.ic} ${R.name} (${rar.n}, niv. ${lv}) : ${relicDesc(k, lv)}${style}`, 4500) },
+  icon(R.art, R.ic, 'relic-img'), lv > 1 ? h('span.rlv', String(lv)) : null);
+}
+export const blessText = run => `✨ Bénédiction ×${run.blessN} : toute l’équipe a +${5 * run.blessN} % d’attaque, de magie et de vie pour cette expédition.`;
 
 const foeLine = d => {
   const names = d.foes.map(f => (f.elite ? `${unitDef(f.id).name} ${AFFIXES[f.elite].n}` : unitDef(f.id).name));

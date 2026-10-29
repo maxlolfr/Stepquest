@@ -375,3 +375,18 @@ h1 { margin: 6px 0 0; font-family: 'Lilita One', 'Arial Black', sans-serif; font
 .hero-pick .face.art { width: 76px; height: 96px; background: var(--art) var(--fp) / 300% auto no-repeat, #0006; box-shadow: inset 0 0 0 1px rgba(0,0,0,.4); }
 .hero-pick.on .face.art { border-color: var(--gold); }
 .team-page:not(.nightmare)::before { content: ''; position: fixed; inset: 0; z-index: -1; background: linear-gradient(rgba(7,6,11,.72), rgba(7,6,11,.9) 55%, rgba(7,6,11,.97)), var(--hero, none) center 20% / cover no-repeat; transition: background-image .4s; }
+
+/* v0.7 — relic rarity, levels, tier-3 synergies, blessing */
+.relic { position: relative; border-color: var(--rc, var(--line)); border-width: 2px; }
+.rlv { position: absolute; right: -4px; bottom: -4px; min-width: 20px; height: 20px; padding: 0 4px; border-radius: 10px; background: #ffd98a; color: #2a1b08; font: 800 14px/20px Nunito, sans-serif; text-align: center; }
+.card .rel-rar { margin: 2px 0 0; font-size: 14px; font-weight: 800; color: var(--rc); }
+.card .merge { margin: 6px 0 0; font-size: 14px; font-weight: 800; color: #9dff6a; }
+.card .merge span { font-weight: 600; color: var(--ink-soft); }
+.synchip.t3 { border-color: #ffb341; box-shadow: 0 0 10px rgba(255,179,65,.55); }
+.synchip small { font-size: 14px; color: #ffd98a; }
+.bless-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 44px; padding: 0 10px; border-radius: 22px; border: 1px solid #ffd98a; background: rgba(90,61,16,.6); color: #ffe7a3; font: 800 15px Nunito, sans-serif; }
+.rtile { border-left: 6px solid var(--rc, var(--line)); }
+.rtile-meta { display: block; font-size: 14px; font-weight: 800; color: var(--rc, var(--ink-soft)); }
+.rp-syn { margin: 0 0 4px; font-size: 14px; font-weight: 800; color: #ffd98a; text-align: center; }
+.replace .rtiles { padding-bottom: 8px; }
+.replace .rtile-body p { overflow-wrap: anywhere; }

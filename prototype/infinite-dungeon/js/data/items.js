@@ -24,44 +24,86 @@ export const STAT_NAMES = { atk: ['⚔️', 'Attaque'], mag: ['✨', 'Magie'], h
 
 // art = original icon of this game (img/relic_*.webp); missing art falls back to the emoji.
 // tag = build style; two relics of the same style activate its synergy (SYNERGIES).
+// v0.7: rar = rarity (0 commune, 1 rare, 2 légendaire), fixed per relic (no variants).
+// vals = the relic's number at level 1, 2, 3 (a duplicate merges into the relic held and
+// raises its level: decreasing gains, max 3). `{v}` in desc is replaced by that number.
+// hero = signature relic (v0.7): only for that hero, no style, never merged.
 export const RELICS = {
-  vampire:  { tag: 'lumiere', name: 'Soif de sang', ic: '🩸', img: 'uiGem', art: 'relic_vampire', desc: 'Les héros récupèrent 10 % des dégâts qu’ils infligent.' },
-  colere:   { tag: 'arcanes', name: 'Colère', ic: '🌟', img: 'uiTrophy', art: 'relic_colere', desc: 'Chaque combat commence avec les jauges d’ultime à 30 %.' },
-  clarte:   { tag: 'arcanes', name: 'Clarté', ic: '🔮', img: 'uiScroll', art: 'relic_clarte', desc: 'Les compétences sont prêtes dès le début de chaque combat.' },
-  rempart:  { tag: 'riposte', name: 'Rempart', ic: '💠', img: 'uiChest1', art: 'relic_rempart', desc: 'Chaque héros commence les combats avec un bouclier de 15 % de sa vie.' },
-  antidote: { tag: '', name: 'Antidote', ic: '🧪', img: 'uiPotion', art: 'relic_antidote', desc: 'L’équipe est immunisée au poison.' },
-  ignifuge: { tag: '', name: 'Ignifuge', ic: '🧯', img: 'uiPotion', art: 'relic_ignifuge', desc: 'L’équipe est immunisée à la brûlure.' },
-  bourreau: { tag: 'crit', name: 'Bourreau', ic: '🪓', img: 'uiSkull', art: 'relic_bourreau', desc: '+30 % de dégâts sur les ennemis sous 35 % de vie.' },
-  venin:    { tag: 'fleau', name: 'Lame venimeuse', ic: '☠️', img: 'uiSkull', art: 'relic_venin', desc: '+35 % de dégâts sur les ennemis empoisonnés.' },
-  chasse:   { tag: 'crit', name: 'Œil du chasseur', ic: '🎯', img: 'uiDice', art: 'relic_chasse', desc: '+30 % de dégâts sur les cibles marquées 🎯.' },
-  bourse:   { tag: '', name: 'Bourse du pillard', ic: '💰', img: 'uiGold', art: 'relic_bourse', desc: '+30 % d’or gagné.' },
-  braises:  { tag: 'lumiere', name: 'Braises du camp', ic: '🔥', img: 'uiChest2', art: 'relic_braises', desc: 'Les repos soignent 50 % de plus.' },
-  sceau:    { tag: 'riposte', name: 'Sceau du gardien', ic: '🛡️', img: 'uiChest3', art: 'relic_sceau', desc: 'La Garde peut être utilisée deux fois par combat.' },
+  vampire:  { tag: 'lumiere', rar: 0, vals: [10, 14, 17], name: 'Soif de sang', ic: '🩸', img: 'uiGem', art: 'relic_vampire', desc: 'Les héros récupèrent {v} % des dégâts qu’ils infligent.' },
+  colere:   { tag: 'arcanes', rar: 0, vals: [30, 42, 51], name: 'Colère', ic: '🌟', img: 'uiTrophy', art: 'relic_colere', desc: 'Chaque combat commence avec les jauges d’ultime à {v} %.' },
+  clarte:   { tag: 'arcanes', rar: 1, vals: [0, 10, 17], name: 'Clarté', ic: '🔮', img: 'uiScroll', art: 'relic_clarte', desc: 'Les compétences sont prêtes dès le début de chaque combat.', descLv: ' Les jauges d’ultime partent aussi à {v} %.' },
+  rempart:  { tag: 'riposte', rar: 0, vals: [15, 21, 25], name: 'Rempart', ic: '💠', img: 'uiChest1', art: 'relic_rempart', desc: 'Chaque héros commence les combats avec un bouclier de {v} % de sa vie.' },
+  antidote: { tag: '', rar: 0, vals: [0, 8, 14], name: 'Antidote', ic: '🧪', img: 'uiPotion', art: 'relic_antidote', desc: 'L’équipe est immunisée au poison.', descLv: ' Les ennemis empoisonnés lui font {v} % de dégâts en moins.' },
+  ignifuge: { tag: '', rar: 0, vals: [0, 8, 14], name: 'Ignifuge', ic: '🧯', img: 'uiPotion', art: 'relic_ignifuge', desc: 'L’équipe est immunisée à la brûlure.', descLv: ' Les ennemis brûlés lui font {v} % de dégâts en moins.' },
+  bourreau: { tag: 'crit', rar: 0, vals: [30, 42, 51], name: 'Bourreau', ic: '🪓', img: 'uiSkull', art: 'relic_bourreau', desc: '+{v} % de dégâts sur les ennemis sous 35 % de vie.' },
+  venin:    { tag: 'fleau', rar: 0, vals: [35, 49, 60], name: 'Lame venimeuse', ic: '☠️', img: 'uiSkull', art: 'relic_venin', desc: '+{v} % de dégâts sur les ennemis empoisonnés.' },
+  chasse:   { tag: 'crit', rar: 0, vals: [30, 42, 51], name: 'Œil du chasseur', ic: '🎯', img: 'uiDice', art: 'relic_chasse', desc: '+{v} % de dégâts sur les cibles marquées 🎯.' },
+  bourse:   { tag: '', rar: 0, vals: [30, 42, 51], name: 'Bourse du pillard', ic: '💰', img: 'uiGold', art: 'relic_bourse', desc: '+{v} % d’or gagné.' },
+  braises:  { tag: 'lumiere', rar: 0, vals: [50, 70, 85], name: 'Braises du camp', ic: '🔥', img: 'uiChest2', art: 'relic_braises', desc: 'Les repos soignent {v} % de plus.' },
+  sceau:    { tag: 'riposte', rar: 1, vals: [2, 3, 4], name: 'Sceau du gardien', ic: '🛡️', img: 'uiChest3', art: 'relic_sceau', desc: 'La Garde peut être utilisée {v} fois par combat.' },
   // v0.4: relics that change how a run plays
-  riposte:  { tag: 'riposte', name: 'Écu à pointes', ic: '🔰', img: 'uiChest1', art: 'relic_riposte', desc: 'Sous la Garde ou derrière un bouclier 💠, un héros frappé renvoie 40 % du coup à l’attaquant.' },
-  pierre:   { tag: 'riposte', name: 'Cœur de pierre', ic: '🪨', img: 'uiChest3', art: 'relic_pierre', desc: 'Sous 35 % de vie, un héros subit 30 % de dégâts en moins et frappe 30 % plus fort.' },
-  brasier:  { tag: 'fleau', name: 'Brasier toxique', ic: '🧪', img: 'uiSkull', art: 'relic_brasier', desc: 'Un ennemi à la fois empoisonné ☠️ et brûlé 🔥 subit le double de dégâts de ces deux effets.' },
-  peste:    { tag: 'fleau', name: 'Peste', ic: '🦠', img: 'uiSkull', art: 'relic_peste', desc: 'Quand un ennemi empoisonné meurt, son poison se propage à tous les autres ennemis.' },
-  prisme:   { tag: 'arcanes', name: 'Prisme', ic: '🔷', img: 'uiGem', art: 'relic_prisme', desc: 'Frapper une faiblesse fait ×2 dégâts au lieu de ×1,5.' },
-  tempete:  { tag: 'arcanes', name: 'Orbe des tempêtes', ic: '🌩️', img: 'uiGem', art: 'relic_tempete', desc: 'Chaque ultime remplit de 25 % la jauge des autres héros.' },
-  assassin: { tag: 'crit', name: 'Œil de l’assassin', ic: '👁️', img: 'uiSkull', art: 'relic_assassin', desc: 'Les coups critiques font ×2 dégâts au lieu de ×1,6.' },
-  duel:     { tag: 'crit', name: 'Lame de duel', ic: '🗡️', img: 'uiDice', art: 'relic_duel', desc: 'La première attaque de chaque héros dans un combat est toujours critique.' },
-  calice:   { tag: 'lumiere', name: 'Calice de lumière', ic: '🏆', img: 'uiTrophy', art: 'relic_calice', desc: 'Les soins sont 30 % plus forts et le surplus devient un bouclier plus épais.' },
-  etoile:   { tag: 'lumiere', name: 'Étoile du matin', ic: '⭐', img: 'uiTrophy', art: 'relic_etoile', desc: 'Une fois par combat, le premier héros qui tombe se relève avec 40 % de vie.' },
+  riposte:  { tag: 'riposte', rar: 2, vals: [40, 56, 68], name: 'Écu à pointes', ic: '🔰', img: 'uiChest1', art: 'relic_riposte', desc: 'Sous la Garde ou derrière un bouclier 💠, un héros frappé renvoie {v} % du coup à l’attaquant.' },
+  pierre:   { tag: 'riposte', rar: 1, vals: [30, 42, 51], name: 'Cœur de pierre', ic: '🪨', img: 'uiChest3', art: 'relic_pierre', desc: 'Sous 35 % de vie, un héros subit {v} % de dégâts en moins et frappe {v} % plus fort.' },
+  brasier:  { tag: 'fleau', rar: 1, vals: [2, 2.4, 2.7], name: 'Brasier toxique', ic: '🧪', img: 'uiSkull', art: 'relic_brasier', desc: 'Un ennemi à la fois empoisonné ☠️ et brûlé 🔥 subit ×{v} dégâts de ces deux effets.' },
+  peste:    { tag: 'fleau', rar: 1, vals: [1, 2, 3], name: 'Peste', ic: '🦠', img: 'uiSkull', art: 'relic_peste', desc: 'Quand un ennemi empoisonné meurt, son poison se propage à tous les autres ennemis ({v} charge{s}).' },
+  prisme:   { tag: 'arcanes', rar: 1, vals: [2, 2.2, 2.35], name: 'Prisme', ic: '🔷', img: 'uiGem', art: 'relic_prisme', desc: 'Frapper une faiblesse fait ×{v} dégâts au lieu de ×1,5.' },
+  tempete:  { tag: 'arcanes', rar: 2, vals: [25, 35, 42], name: 'Orbe des tempêtes', ic: '🌩️', img: 'uiGem', art: 'relic_tempete', desc: 'Chaque ultime remplit de {v} % la jauge des autres héros.' },
+  assassin: { tag: 'crit', rar: 2, vals: [10, 14, 17], name: 'Œil de l’assassin', ic: '👁️', img: 'uiSkull', art: 'relic_assassin', desc: 'Les coups critiques font ×2 dégâts au lieu de ×1,6, et un critique qui achève un ennemi remplit {v} % de la jauge d’ultime du héros.' },
+  duel:     { tag: 'crit', rar: 1, vals: [1, 2, 3], name: 'Lame de duel', ic: '🗡️', img: 'uiDice', art: 'relic_duel', desc: 'Les {v} premières attaques de chaque héros dans un combat sont toujours critiques.', desc1: 'La première attaque de chaque héros dans un combat est toujours critique.' },
+  calice:   { tag: 'lumiere', rar: 1, vals: [30, 42, 51], name: 'Calice de lumière', ic: '🏆', img: 'uiTrophy', art: 'relic_calice', desc: 'Les soins sont {v} % plus forts et le surplus devient un bouclier plus épais.' },
+  etoile:   { tag: 'lumiere', rar: 2, vals: [40, 55, 65], name: 'Étoile du matin', ic: '⭐', img: 'uiTrophy', art: 'relic_etoile', desc: 'Une fois par combat, le premier héros qui tombe se relève avec {v} % de vie.' },
+  // v0.7: one signature relic per hero. Useful only with that hero; no style; never merged.
+  sig_aldric: { hero: 'aldric', tag: '', rar: 1, sig: true, vals: [2], name: 'Cœur du Rempart', ic: '❤️‍🔥', img: 'uiChest3', artNext: 'relic_sig_aldric', desc: 'Aldric ne vide plus sa Rage en frappant : il en garde 2 (max 5). Chaque riposte d’un héros lui donne 1 Rage.' },
+  sig_selena: { hero: 'selena', tag: '', rar: 1, sig: true, vals: [30], name: 'Serment de l’Aurore', ic: '🌅', img: 'uiTrophy', artNext: 'relic_sig_selena', desc: 'Quand Protection retient un allié au bord de la mort, il reçoit un bouclier de 30 % de sa vie (toujours une fois par combat).' },
+  sig_orin:   { hero: 'orin', tag: '', rar: 1, sig: true, vals: [1], name: 'Cœur de Surcharge', ic: '💜', img: 'uiGem', artNext: 'relic_sig_orin', desc: 'Quand la Surcharge d’Orin se déclenche, il garde 1 charge ⚡ : la suivante arrive en 2 sorts au lieu de 3.' },
+  sig_lyra:   { hero: 'lyra', tag: '', rar: 1, sig: true, vals: [25], name: 'Œil du Prédateur', ic: '🦅', img: 'uiDice', artNext: 'relic_sig_lyra', desc: 'Chaque tir de Lyra sur une cible marquée 🎯 lui donne 1 Concentration (max 3). Son Tir visé la consomme : +25 % de dégâts par point.' },
+  sig_nyx:    { hero: 'nyx', tag: '', rar: 1, sig: true, vals: [0], name: 'Danse des Ombres', ic: '🌘', img: 'uiSkull', artNext: 'relic_sig_nyx', desc: 'Quand l’Assassinat de Nyx achève un ennemi, Lames est aussitôt prête (une fois par tour de Nyx).' },
 };
+export const RELIC_LV_MAX = 3;
+// v0.7 rarities of relics: colour + symbol + word (never colour alone)
+export const RELIC_RARITY = [
+  { n: 'Commune', ic: '●', col: '#cfc6b6' },
+  { n: 'Rare', ic: '◆', col: '#6fb3ff' },
+  { n: 'Légendaire', ic: '★', col: '#ffb341' },
+];
+export const SIG_RARITY = { n: 'Signature', ic: '✦', col: '#ff7ad9' };
+export const relicRarity = k => (RELICS[k] && RELICS[k].sig ? SIG_RARITY : RELIC_RARITY[(RELICS[k] && RELICS[k].rar) || 0]);
+export const isSignature = k => !!(RELICS[k] && RELICS[k].sig);
+export const relicLevel = (run, k) => Math.max(1, Math.min(RELIC_LV_MAX, (run && run.relicLv && run.relicLv[k]) || 1));
+/** The relic's number at a level (1-3). */
+export const relicVal = (k, lv = 1) => { const v = RELICS[k].vals; return v[Math.min(v.length, Math.max(1, lv)) - 1]; };
+const fmtV = v => String(v).replace('.', ',');
+/** Description of a relic at a level. */
+export function relicDesc(k, lv = 1) {
+  const R = RELICS[k], v = relicVal(k, lv);
+  let d = lv === 1 && R.desc1 ? R.desc1 : R.desc;
+  if (R.descLv && lv > 1) d += R.descLv;
+  return d.replaceAll('{v}', fmtV(v)).replaceAll('{s}', v > 1 ? 's' : '');
+}
+/** Relic keys a team may find (signatures only for heroes in the team). */
+export const relicPoolFor = teamIds => Object.keys(RELICS).filter(k => !RELICS[k].hero || teamIds.includes(RELICS[k].hero));
 
-// Build styles: owning 2 relics of the same style activates its bonus.
+// Build styles: owning 2 relics of the same style activates its bonus; v0.7: 3 distinct
+// relics of the style add a second tier (merged duplicates count once, signatures never).
 export const SYNERGIES = {
-  crit:    { name: 'Frénésie', ic: '⚔️', art: 'syn_crit', desc: '+10 % de chance de critique pour toute l’équipe.' },
-  riposte: { name: 'Bastion', ic: '🛡️', art: 'syn_riposte', desc: 'La Garde bloque 70 % des dégâts au lieu de 50 %, et chaque héros commence avec un bouclier de 10 %.' },
-  fleau:   { name: 'Fléau', ic: '☠️', art: 'syn_fleau', desc: 'Le poison et la brûlure infligent 50 % de dégâts en plus aux ennemis.' },
-  arcanes: { name: 'Arcanes', ic: '✨', art: 'syn_arcanes', desc: 'Les jauges d’ultime se remplissent 30 % plus vite.' },
-  lumiere: { name: 'Lumière', ic: '☀️', art: 'syn_lumiere', desc: 'Les soins sont 25 % plus forts, et l’équipe récupère 10 % de vie de plus après chaque victoire.' },
+  crit:    { name: 'Frénésie', ic: '⚔️', art: 'syn_crit', desc: '+10 % de chance de critique pour toute l’équipe.',
+    desc3: 'Après 3 coups critiques, le héros frappe une seconde fois à la fin de son tour (60 % de dégâts).' },
+  riposte: { name: 'Bastion', ic: '🛡️', art: 'syn_riposte', desc: 'La Garde bloque 70 % des dégâts au lieu de 50 %, et chaque héros commence avec un bouclier de 10 %.',
+    desc3: 'Quand un bouclier 💠 absorbe tout un coup, le héros riposte avec 30 % de ce coup.' },
+  fleau:   { name: 'Fléau', ic: '☠️', art: 'syn_fleau', desc: 'Le poison et la brûlure infligent 50 % de dégâts en plus aux ennemis.',
+    desc3: 'Un ennemi empoisonné ou brûlé frappe 15 % moins fort.' },
+  arcanes: { name: 'Arcanes', ic: '✨', art: 'syn_arcanes', desc: 'Les jauges d’ultime se remplissent 30 % plus vite.',
+    desc3: 'Le premier ultime de chaque combat remplit de 20 % la jauge des deux autres héros.' },
+  lumiere: { name: 'Lumière', ic: '☀️', art: 'syn_lumiere', desc: 'Les soins sont 25 % plus forts, et l’équipe récupère 10 % de vie de plus après chaque victoire.',
+    desc3: 'Un soin sur un héros déjà au-dessus de 80 % de vie lui donne un bouclier de 8 % (20 % au plus).' },
 };
 export const SYN_NEED = 2;
-export const synergyCount = (keys, tag) => keys.filter(k => RELICS[k] && RELICS[k].tag === tag).length;
+export const SYN_NEED3 = 3;
+export const synergyCount = (keys, tag) => new Set(keys.filter(k => RELICS[k] && RELICS[k].tag === tag)).size;
 /** Active synergy keys for a list of relic keys. */
 export const activeSynergies = keys => Object.keys(SYNERGIES).filter(t => synergyCount(keys, t) >= SYN_NEED);
+/** v0.7: styles whose second tier (3 distinct relics) is active. */
+export const synergies3 = keys => Object.keys(SYNERGIES).filter(t => synergyCount(keys, t) >= SYN_NEED3);
 
 export const CONSUMABLES = {
   pot: { name: 'Potion', ic: '🧪', img: 'uiPotion', price: 30, desc: 'Rend 50 % de vie à l’allié le plus blessé.' },

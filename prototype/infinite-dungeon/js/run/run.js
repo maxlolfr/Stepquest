@@ -7,12 +7,12 @@ import { makeRng, hashSeed } from '../core/rng.js';
 import { HEROES } from '../data/heroes.js';
 import { gearScore } from './loot.js';
 import { BAL, XP } from '../data/balance.js';
-import { EVENTS, RELICS, eventsForZone, activeSynergies } from '../data/items.js';
+import { EVENTS, RELICS, eventsForZone, activeSynergies, relicLevel, relicVal, isSignature, RELIC_LV_MAX, relicPoolFor } from '../data/items.js';
 import { zoneOf, MONSTERS } from '../data/monsters.js';
 import { CURSES, NIGHTMARE_UNLOCK, curseBonus, hasCurse } from '../data/progress.js';
 import { recordRun } from './meta.js';
 import { generateDungeon, isFight, isBossFloor } from './dungeon.js';
-import { rewardCards, shopStock, upgradeCard, makeGear, statCard, blessOffer } from './loot.js';
+import { rewardCards, shopStock, upgradeCard, makeGear, statCard, blessOffer, drawRelic } from './loot.js';
 
 export const RUN_VERSION = 3;
 
@@ -75,7 +75,7 @@ export function newRun(meta, teamIds, seed, start = 1, curses = []) {
     lv: 1 + 2 * (up.ecole || 0), xp: 0,
     team: teamIds.map(id => ({ id, hp: 1e9, hpMax: 0, up: {}, bonus: {}, gear: {}, el: 'phys' })),
     gold: BAL.startGold + 30 * up.or, items: { pot: BAL.startItems.pot + up.potion, fea: BAL.startItems.fea },
-    relics: [], shards: 0, banked: 0, rerolls: up.relance, rerollN: 0,
+    relics: [], relicLv: {}, shards: 0, banked: 0, rerolls: up.relance, rerollN: 0,
     door: null, pending: null, path: [], outcome: null, stats: { fights: 0, kills: 0, elites: 0, cursedWon: 0, bossIds: [], synMax: 0 },
     curses: nightmareOpen(meta) ? [...new Set(curses)].filter(k => CURSES[k]) : [],
   };
@@ -83,7 +83,7 @@ export function newRun(meta, teamIds, seed, start = 1, curses = []) {
   if (start > 1) { // checkpoint start: catch up with what a run would have gathered
     const k = (start - 1) / 10, Bn = BAL.startBonus(k), rng = makeRng(hashSeed(run.seed, 'start'));
     run.gold += Bn.gold; run.items.pot += Bn.pot; run.lv = Math.max(run.lv, Bn.lv);
-    run.relics = rng.shuffle(Object.keys(RELICS)).slice(0, Math.max(0, Bn.relics - 1));
+    run.relics = rng.shuffle(relicPoolFor([]) /* no signature in the catch-up draw */).slice(0, Math.max(0, Bn.relics - 1));
     for (const h of run.team) {
       for (const st of ['hp', 'atk', 'mag', 'def']) h.bonus[st] = +Bn.stat.toFixed(3);
       h.gear.w = makeGear('w', 1, Bn.gearFloor, h.id);
@@ -138,6 +138,7 @@ export function battleConfig(run, meta) {
     foes,
     curses: (run.curses || []).slice(),
     relics: run.relics.slice(),
+    relicLv: { ...(run.relicLv || {}) }, // v0.7 merged duplicates
     items: run.items, // shared: potions used in combat are gone
     seed: hashSeed(run.seed, run.floor, run.door, d.seed),
   };
@@ -156,7 +157,7 @@ export function finishBattle(run, result, heroesAfter, kills = 0, meta = null, r
   const kind = d.type === 'fight' ? 'normal' : d.type, zm = BAL.zoneMul(zoneOf(run.floor).index);
   const [g0, g1] = BAL.gold[kind];
   const rng = rngFor(run, 'loot');
-  const goldMul = (run.relics.includes('bourse') ? 1.3 : 1) * (d.foes.some(f => f.elite === 'gold') ? 2 : 1) * (hasCurse(run, 'gold') ? 0.6 : 1);
+  const goldMul = (run.relics.includes('bourse') ? 1 + relicVal('bourse', relicLevel(run, 'bourse')) / 100 : 1) * (d.foes.some(f => f.elite === 'gold') ? 2 : 1) * (hasCurse(run, 'gold') ? 0.6 : 1);
   run.gold += Math.round(rng.int(g0, g1) * BAL.goldMul(zoneOf(run.floor).index) * goldMul);
   run.shards += Math.round(BAL.shards[kind] * zm * (1 + curseBonus(run.curses)));
   const st = run.stats;
@@ -183,7 +184,8 @@ export function applyCard(run, c, meta) {
     case 'element': h.el = c.el; break;
     case 'gear': h.gear[c.gear.slot] = c.gear; break;
     case 'relic':
-      if (run.relics.includes(c.key) || !RELICS[c.key]) break;
+      if (!RELICS[c.key]) break;
+      if (run.relics.includes(c.key)) { mergeRelic(run, c.key); break; } // v0.7: a duplicate raises the level, no slot used
       if (relicsFull(run)) { run.relicWait = c.key; break; } // v0.6: slots full, the player picks what to drop
       run.relics.push(c.key); run.stats.synMax = Math.max(run.stats.synMax || 0, activeSynergies(run.relics).length); break;
     case 'item': run.items[c.key] = (run.items[c.key] || 0) + 1; break;
@@ -200,6 +202,16 @@ export function pickCard(run, idx, meta) {
   if (p.start) { run.pending = null; run.phase = 'map'; return; } // starting relic: the run begins
   if (holdRelic(run, 'advance')) return;
   advance(run);
+}
+
+// ---------------------------------------------------------------- relic levels (v0.7)
+/** Can this relic still be raised by a duplicate? (held, not a signature, below level 3) */
+export const canMerge = (run, k) => run.relics.includes(k) && !isSignature(k) && relicLevel(run, k) < RELIC_LV_MAX;
+function mergeRelic(run, k) {
+  if (!canMerge(run, k)) { run.gold += 40; return; }
+  run.relicLv = run.relicLv || {};
+  run.relicLv[k] = relicLevel(run, k) + 1;
+  run.stats.merges = (run.stats.merges || 0) + 1;
 }
 
 // ---------------------------------------------------------------- relic slots (v0.6)
@@ -222,6 +234,7 @@ export function replaceRelic(run, drop, meta) {
   if (drop) {
     if (!run.relics.includes(drop)) throw new Error('Relique inconnue');
     run.relics = run.relics.filter(k => k !== drop).concat(p.key);
+    if (run.relicLv) delete run.relicLv[drop]; // its level goes with it
     run.stats.replaced = (run.stats.replaced || 0) + 1;
     run.stats.synMax = Math.max(run.stats.synMax || 0, activeSynergies(run.relics).length);
   } else if (p.refund) run.gold += p.refund; // bought at the shop and left: money back
@@ -242,7 +255,7 @@ export function reroll(run) {
 
 // ---------------------------------------------------------------- rooms
 
-export const restHealPct = run => BAL.restHeal * (run.relics.includes('braises') ? 1.5 : 1) * (hasCurse(run, 'fire') ? 0.5 : 1);
+export const restHealPct = run => BAL.restHeal * (run.relics.includes('braises') ? 1 + relicVal('braises', relicLevel(run, 'braises')) / 100 : 1) * (hasCurse(run, 'fire') ? 0.5 : 1);
 
 export function rest(run, choice, meta) {
   const p = run.pending;
@@ -292,10 +305,11 @@ export function resolveEvent(run, choiceIdx, meta) {
     if (e.shards) { run.shards += e.shards; out.push(`+${e.shards} éclats.`); }
     if (e.item) { run.items[e.item]++; out.push(e.item === 'pot' ? '+1 potion.' : '+1 plume de phénix.'); }
     for (let n = 0; n < (e.relic === true ? 1 : e.relic || 0); n++) {
-      const free = Object.keys(RELICS).filter(k => !run.relics.includes(k) && k !== run.relicWait);
-      if (!free.length || (run.relicWait && relicsFull(run))) { run.gold += 40; out.push(free.length ? 'Une autre relique, mais plus de place : +40 or.' : 'Plus aucune relique à gagner : +40 or.'); continue; }
-      const k = rng.pick(free); applyCard(run, { type: 'relic', key: k }, meta);
-      out.push(run.relicWait === k ? `Relique trouvée : ${RELICS[k].name}. Tes emplacements sont pleins : choisis ce que tu gardes.` : `Relique obtenue : ${RELICS[k].name}.`);
+      const k = drawRelic(run, rng, 'normal', run.relicWait ? [run.relicWait] : []);
+      if (!k || (run.relicWait && relicsFull(run) && !canMerge(run, k))) { run.gold += 40; out.push(k ? 'Une autre relique, mais plus de place : +40 or.' : 'Plus aucune relique à gagner : +40 or.'); continue; }
+      const merged = canMerge(run, k);
+      applyCard(run, { type: 'relic', key: k }, meta);
+      out.push(merged ? `${RELICS[k].name} fusionne : niveau ${relicLevel(run, k)} !` : run.relicWait === k ? `Relique trouvée : ${RELICS[k].name}. Tes emplacements sont pleins : choisis ce que tu gardes.` : `Relique obtenue : ${RELICS[k].name}.`);
     }
     if (e.stat) { const c2 = statCard(run, rng); applyCard(run, c2, meta); out.push(c2.desc); }
     if (e.gear) {
@@ -382,7 +396,7 @@ export function endRun(meta, run) {
   const before = meta.unlocked || 1;
   meta.unlocked = Math.max(before, ...BAL.startFloors.filter(f => f - 1 <= lastBoss && f <= BAL.floors));
   const st = run.stats;
-  const summary = { outcome: o, kept, lost, banked: run.banked, floor: reached, bosses: run.bosses || 0, report: run.report || null, relics: run.relics.slice(), start: run.start || 1, record, unlocked: meta.unlocked > before ? meta.unlocked : 0, fights: st.fights, kills: st.kills,
+  const summary = { outcome: o, kept, lost, banked: run.banked, floor: reached, bosses: run.bosses || 0, report: run.report || null, relics: run.relics.slice(), relicLv: { ...(run.relicLv || {}) }, start: run.start || 1, record, unlocked: meta.unlocked > before ? meta.unlocked : 0, fights: st.fights, kills: st.kills,
     elites: st.elites || 0, cursedWon: st.cursedWon || 0, bossIds: (st.bossIds || []).slice(), synergies: st.synMax || 0, team: run.team.map(h => h.id), curses: (run.curses || []).slice(),
     nightmareOpened: before < NIGHTMARE_UNLOCK && meta.unlocked >= NIGHTMARE_UNLOCK };
   summary.abandoned = !!run.abandoned;

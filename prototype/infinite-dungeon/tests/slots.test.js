@@ -75,9 +75,12 @@ test('event relic with full slots: replacement, then back to the event result', 
 test('the Néant pact (2 relics) with 9 relics: one fits, the other asks, nothing is lost', () => {
   const meta = newMeta(), run = newRun(meta, ['aldric', 'selena', 'orin'], 2);
   run.relics = KEYS.slice(0, BAL.relicMax - 1); run.floor = 85; run.phase = 'room'; run.pending = { kind: 'event', event: 'pact' };
+  const before = run.relics.slice();
   resolveEvent(run, 0, meta);
-  assert.equal(run.relics.length, BAL.relicMax);
-  assert.equal(run.pending.kind, 'replace');
+  assert.ok(before.every(k => run.relics.includes(k)), 'nothing lost');
+  // v0.7: a draw may merge into a relic held (no slot used) instead of asking
+  const got = run.relics.length - before.length + (run.stats.merges || 0) + (run.pending.kind === 'replace' ? 1 : 0);
+  assert.equal(got, 2);
 });
 
 test('an older save holding more than 10 relics keeps them all (no silent loss)', () => {
