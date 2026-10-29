@@ -25,6 +25,10 @@ for (const [id, b] of Object.entries(HERO_SPRITE)) {
   for (const pose of ['win', 'ko', 'hit']) add(`${b}_${pose}`, DB2);
   for (const [act, n] of Object.entries(ANIM[b] || {})) for (let i = 0; i < n; i++) add(`${b}A_${act}${i}`, DB2);
 }
+// v0.8 optional test assets. Loaded only when Aldric is in the team.
+for (const [act, count] of [['idle', 6], ['atk', 4]]) {
+  for (let i = 0; i < count; i++) IMG[`ald_v08_${act}${i}`] = `img/aldric-v08/ald_${act}_${i}.webp`;
+}
 // monsters (Dragonbound 1) and the boss (Dragonbound II): every pose that has floor metrics
 for (const [id, M] of [...Object.entries(MONSTERS), ...Object.entries(BOSSES)]) {
   const dir = M.dir === 'db2' || M.boss ? DB2 : DB1;
