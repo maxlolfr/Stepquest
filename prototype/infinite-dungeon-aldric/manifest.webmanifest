@@ -1,0 +1,14 @@
+{
+  "name": "Infinite Dungeon",
+  "short_name": "Infinite Dungeon",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#07060b",
+  "theme_color": "#07060b",
+  "icons": [
+    { "src": "img/app_icon_192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "img/app_icon_512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

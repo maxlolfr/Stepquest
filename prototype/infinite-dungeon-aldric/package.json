@@ -1,0 +1,11 @@
+{
+  "name": "infinite-dungeon",
+  "private": true,
+  "type": "module",
+  "description": "StepQuest: Infinite Dungeon — prototype. No dependencies; tests run with node --test.",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "smoke": "node tests/smoke.js",
+    "sync-metrics": "node tools/sync-sprite-metrics.mjs"
+  }
+}

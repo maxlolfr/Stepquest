@@ -73,6 +73,7 @@ jobs:
           cp -r prototype/phaser build/web/phaser
           cp -r prototype/dragonbound2 build/web/dragonbound2
           cp -r prototype/infinite-dungeon build/web/infinite-dungeon
+          cp -r prototype/infinite-dungeon-aldric build/web/infinite-dungeon-aldric
 
       - uses: actions/upload-pages-artifact@v3
         with:
