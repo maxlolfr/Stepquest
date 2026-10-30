@@ -1,0 +1,30 @@
+name: Game Studio AI tests
+on:
+  push:
+    branches:
+      - feat/game-studio-ai-v0.1
+    paths:
+      - 'game-studio/**'
+      - '.github/workflows/game-studio-tests.yml'
+  pull_request:
+    paths:
+      - 'game-studio/**'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run tests
+        working-directory: game-studio/server
+        run: npm test
+      - name: Check syntax
+        run: |
+          node --check game-studio/server/index.js
+          node --check game-studio/server/store.js
+          node --check game-studio/web/app.js

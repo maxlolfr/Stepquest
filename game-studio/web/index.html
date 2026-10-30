@@ -1,0 +1,6 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Game Studio AI</title><link rel="stylesheet" href="style.css"></head>
+<body><main><header><p>GAME DEVELOPMENT PLATFORM</p><h1>GAME STUDIO <span>AI</span></h1><small>v0.2 · Multi-projets · Agents non connectés</small></header>
+<section class="panel"><h2>Mes jeux</h2><div id="projects"></div><form id="project-form"><label for="project-name">Nouveau projet</label><input id="project-name" maxlength="100" minlength="2" required placeholder="Nom du jeu"><button>Créer un projet</button></form></section>
+<section class="panel"><h2>Nouvelle mission</h2><form id="mission-form"><label for="project-select">Projet</label><select id="project-select" required></select><label for="prompt">Description</label><textarea id="prompt" maxlength="2000" required placeholder="Ex. Préparer les animations d'Aldric pour la v0.8"></textarea><button>Enregistrer la mission</button></form><p id="feedback" role="status"></p></section>
+<section class="panel"><h2>L'équipe</h2><div id="agents"></div></section><section class="panel"><h2>Missions enregistrées</h2><div id="missions"></div></section></main><script type="module" src="app.js"></script></body></html>
