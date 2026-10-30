@@ -1,22 +1,26 @@
-# Game Studio AI — Infinite Dungeon
+# Game Studio AI — multi-project foundation v0.2
 
-Prototype v0.1 du studio multi-agents, isolé du jeu existant.
+A Node.js application for managing game projects and development missions.
 
-## Architecture
-- `web/`: tableau de bord mobile, statuts des agents, missions.
-- `server/`: orchestrateur Node.js, API de missions et adaptateurs IA.
-- `agents/`: rôles et règles de collaboration.
-- `docs/`: architecture, sécurité et jalons.
-
-## Démarrage local
-```bash
+## Run
+Requires Node.js 20+.
+```sh
 cd game-studio/server
+npm test
 npm start
 ```
-Ouvrir http://localhost:3000
+Open http://localhost:3000 on the same machine.
 
-## Statut réel
-Le prototype permet de créer et suivre des missions locales en mémoire. Les appels aux modèles, la modification de code, les tests et la publication GitHub ne sont **pas encore branchés**. Aucun agent n'est présenté comme autonome avant la connexion de ses outils.
+## Features
+- Multiple projects (Infinite Dungeon registered by default)
+- Mission creation per project
+- Persistent JSON database stored at `game-studio/server/data/studio.json`
+- Six visible agent roles, all explicitly marked **not connected**
+- Mobile-friendly dashboard
+- Automated persistence and validation tests
 
-## Sécurité
-Pas de clés API dans le navigateur ni dans Git. Ne pas publier ni fusionner sans validation humaine. Limiter les chemins modifiables, les commandes exécutables et les budgets par mission.
+## Important limitations
+This is a **working local management application**, not an autonomous game development system yet. There are no model API calls, autonomous code edits, GitHub writes, or production hosting. Missions are saved but not executed. The local API has no authentication and must not be exposed publicly.
+
+## Planned
+AI provider adapters, authenticated backend, task execution queue, scoped GitHub permissions, isolated tests, approval-gated pull requests, pixel-art animations.
